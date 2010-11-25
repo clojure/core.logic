@@ -1,40 +1,75 @@
-(ns logic-fun.fast)
+(ns logic-fun.fast
+  (:use [clojure.pprint :only [pprint]]))
+
+;; Notes on how substitution works
+;; 1) search until we find a value
+;; 2) disallow addition substitutions that go back to the var we're looking for
+
+(defn vec-last [v]
+  (nth v (dec (count v))))
+
+(deftype lvarT [])
+
+(defn lvar? [x]
+  (instance? lvarT))
+
+(defn lvar [] (lvarT.))
 
 (defprotocol ISubstitutions
   (length [this])
   (ext [this s])
-  (pop [this s]))
+  (lookup [this v]))
 
 (defrecord Substitutions [ss order]
   ISubstitutions
   (length [this] (count order))
   (ext [this [a b :as s]]
+       ;; check that we don't come back to the same var
        (Substitutions. (update-in ss [a] (fnil conj []) b)
-                       (conj order a))))
+                       (conj order a)))
+  (lookup [this v]
+          ))
 
 (comment
  ;; test
- (let [ss (Substitutions. {'x '[y 1]
-                           'y '[5]}
-                          '[x y x])
-       ss (ext ss ['z 'y])]
-   (println ss)
+ (let [x  (lvar)
+       y  (lvar)
+       z  (lvar)
+       ss (Substitutions. {x [1]
+                           y [5]}
+                          [x y x])
+       ss (ext ss [x z])]
+   (pprint ss)
    (println (length ss)))
 
- ;; perf
+ ;; not bad 500ms
  (dotimes [_ 10]
-   (let [ss (Substitutions. {'x '(y 1)
-                            'y '(5)}
-                           ('x 'y 'x))]
+   (let [ss (Substitutions. {'x '[y 1]
+                             'y '[5]}
+                            '[x y x])
+         s  ['x 'z]]
      (time
       (dotimes [_ 1e6]
-        (push ss ['z 'y])))))
+        (ext ss s)))))
+
+ ;; last
+ (dotimes [_ 10]
+   (let [v [1 2 3 4 5]]
+    (time
+     (dotimes [_ 1e6]
+       (nth v (dec (count v)))))))
+
+ last
+ 
+ (dotimes [_ 10]
+   (let [v [1 2 3 4 5]]
+    (time
+     (dotimes [_ 1e6]
+       (first v)))))
+
+ ;; erg before we get ahead of ourselves
+ ;; preventing circularity
 )
-
-(deftype lvar [v])
-
-(defn lvar? [x]
-  (instance? lvar x ))
 
 ;; we could store all vars in a map
 (comment
