@@ -20,7 +20,7 @@
   (ext [this s])
   (lookup [this v]))
 
-(defn lookup* [v ss]
+(defn lookup* [ss v]
   (loop [v v a (first (ss v)) ss ss]
     (cond
      (nil? a)  v
@@ -35,9 +35,7 @@
        (Substitutions. (update-in ss [a] (fnil conj []) b)
                        (conj order a)))
   (lookup [this v]
-          (reduce (fn [r m] (cond
-                             (lvar? r)
-                              ())))))
+          (lookup* ss v)))
 
 (comment
   ;; remember backwards for us since we're using vectors
