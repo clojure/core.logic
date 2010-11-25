@@ -11,7 +11,7 @@
 (deftype lvarT [])
 
 (defn lvar? [x]
-  (instance? lvarT))
+  (instance? lvarT x))
 
 (defn lvar [] (lvarT.))
 
@@ -19,6 +19,13 @@
   (length [this])
   (ext [this s])
   (lookup [this v]))
+
+(defn lookup* [v ss]
+  (loop [v v a (first (ss v)) ss ss]
+    (cond
+     (nil? a)  v
+     (lvar? a) (recur a (first (ss a)) ss)
+     :else a)))
 
 (defrecord Substitutions [ss order]
   ISubstitutions
@@ -28,14 +35,19 @@
        (Substitutions. (update-in ss [a] (fnil conj []) b)
                        (conj order a)))
   (lookup [this v]
-          ))
+          (reduce (fn [r m] (cond
+                             (lvar? r)
+                              ())))))
 
 (comment
+  ;; remember backwards for us since we're using vectors
+  [[x 1] [y 5] [x y]]
+  
  ;; test
  (let [x  (lvar)
        y  (lvar)
        z  (lvar)
-       ss (Substitutions. {x [1]
+       ss (Substitutions. {x [1 y]
                            y [5]}
                           [x y x])
        ss (ext ss [x z])]
