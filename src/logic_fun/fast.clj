@@ -21,10 +21,10 @@
   (lookup [this v]))
 
 (defn lookup* [ss v]
-  (loop [v v a (first (ss v)) ss ss]
+  (loop [v v a (vec-last (ss v)) ss ss]
     (cond
      (nil? a)  v
-     (lvar? a) (recur a (first (ss a)) ss)
+     (lvar? a) (recur a (vec-last (ss a)) ss)
      :else a)))
 
 (defrecord Substitutions [ss order]
@@ -54,28 +54,20 @@
 
  ;; not bad 500ms
  (dotimes [_ 10]
-   (let [ss (Substitutions. {'x '[y 1]
-                             'y '[5]}
-                            '[x y x])
-         s  ['x 'z]]
+   (let [[x y z] [(lvar) (lvar) (lvar)]
+         ss (Substitutions. {x [y 1] y [5]} [x y x])
+         s  [x z]]
      (time
       (dotimes [_ 1e6]
         (ext ss s)))))
 
- ;; last
+ ;; ~300ms, pretty good, neet to compare to naive
  (dotimes [_ 10]
-   (let [v [1 2 3 4 5]]
-    (time
-     (dotimes [_ 1e6]
-       (nth v (dec (count v)))))))
-
- last
- 
- (dotimes [_ 10]
-   (let [v [1 2 3 4 5]]
-    (time
-     (dotimes [_ 1e6]
-       (first v)))))
+   (let [[x y z] [(lvar) (lvar) (lvar)]
+         ss (Substitutions. {x [y] y [z] z [5]} [x y z])]
+     (time
+      (dotimes [_ 1e6]
+        (lookup ss x)))))
 
  ;; erg before we get ahead of ourselves
  ;; preventing circularity
