@@ -15,9 +15,9 @@
 
 (defn lvar [] (lvarT.))
 
-(deftype pairT [lhs rhs])
+;; NOTE: consider lowering to deftype
+(defrecord pairT [lhs rhs])
 
-;; TODO: support vector destructuring
 (defn pair [lhs rhs]
   (pairT. lhs rhs))
 
@@ -36,7 +36,6 @@
 
 (defrecord Substitutions [ss order]
   ISubstitutions
-  (length [this] (count order))
   (ext [this [a b :as s]]
        (if (= (lookup* ss a) :circular)
          nil
@@ -46,7 +45,7 @@
           (lookup* ss v)))
 
 (defn empty-s []
-  (Subtitutions. {} []))
+  (Substitutions. {} []))
 
 (comment
   ;; remember backwards for us since we're using vectors
