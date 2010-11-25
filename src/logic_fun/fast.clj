@@ -23,7 +23,7 @@
 
 (defprotocol ISubstitutions
   (length [this])
-  (ext [this s])
+  (ext [this x v])
   (lookup [this v]))
 
 (defn lookup* [ss v]
@@ -36,11 +36,11 @@
 
 (defrecord Substitutions [ss order]
   ISubstitutions
-  (ext [this [a b :as s]]
-       (if (= (lookup* ss a) :circular)
+  (ext [this x v]
+       (if (= (lookup* ss x) :circular)
          nil
-         (Substitutions. (update-in ss [a] (fnil conj []) b)
-                         (conj order a))))
+         (Substitutions. (update-in ss [x] (fnil conj []) v)
+                         (conj order x))))
   (lookup [this v]
           (lookup* ss v)))
 
