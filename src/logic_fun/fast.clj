@@ -15,31 +15,48 @@
 
 (defn lvar [] (lvarT.))
 
+(deftype pairT [lhs rhs])
+
+;; TODO: support vector destructuring
+(defn pair [lhs rhs]
+  (pairT. lhs rhs))
+
 (defprotocol ISubstitutions
   (length [this])
   (ext [this s])
   (lookup [this v]))
 
 (defn lookup* [ss v]
-  (loop [v v a (vec-last (ss v)) ss ss]
+  (loop [v v a (vec-last (ss v)) ss ss orig v]
     (cond
      (nil? a)  v
-     (lvar? a) (recur a (vec-last (ss a)) ss)
+     (= a orig) :circular
+     (lvar? a) (recur a (vec-last (ss a)) ss orig)
      :else a)))
 
 (defrecord Substitutions [ss order]
   ISubstitutions
   (length [this] (count order))
   (ext [this [a b :as s]]
-       ;; check that we don't come back to the same var
-       (Substitutions. (update-in ss [a] (fnil conj []) b)
-                       (conj order a)))
+       (if (= (lookup* ss a) :circular)
+         nil
+         (Substitutions. (update-in ss [a] (fnil conj []) b)
+                         (conj order a))))
   (lookup [this v]
           (lookup* ss v)))
+
+(defn empty-s []
+  (Subtitutions. {} []))
 
 (comment
   ;; remember backwards for us since we're using vectors
   [[x 1] [y 5] [x y]]
+
+  ;; prevent circular substs
+  (let [x  (lvar)
+        y  (lvar)
+        ss (Substitutions. {x [y] y [x]} [x y])]
+    (ext ss [y y]))
   
  ;; test
  (let [x  (lvar)
