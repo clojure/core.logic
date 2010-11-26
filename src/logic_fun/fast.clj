@@ -114,6 +114,14 @@
 ;; =============================================================================
 ;; Substitutions
 
+(defn lookup* [s v]
+  (loop [v v v' (vec-last (s v)) s s ov v]
+    (cond
+     (nil? v')          v
+     (identical? v' ov) :circular
+     (lvar? v')         (recur v' (vec-last (s v')) s ov)
+     :else              v')))
+
 (defprotocol ISubstitutions
   (length [this])
   (ext [this x v])
@@ -173,12 +181,21 @@
  ;; ==================================================
  ;; TESTS
 
+  (lvar 'x)
+
+  (let [[x y z] (map lvar '[x y z])
+        s (to-s [[x 5] [y x]])]
+    s)
+
+  (let [[x y z] (map lvar '[x y z])
+        s (to-s [[x 5] [y x]])]
+    (ext s z y))
+
   ;; prevent circular substs
-  (let [x  (lvar 'x)
-        y  (lvar 'y)
+  (let [x (lvar 'x)
+        y (lvar 'y)
         s (Substitutions. {x [y] y [x]} [x y])]
     (ext s y y))
-  
   
  (let [x  (lvar 'x)
        y  (lvar 'y)
