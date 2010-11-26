@@ -8,12 +8,15 @@
 (defn vec-last [v]
   (nth v (dec (count v))))
 
-(deftype lvarT [])
+(defrecord lvarT [name])
 
 (defn lvar? [x]
   (instance? lvarT x))
 
-(defn lvar [] (lvarT.))
+(defn lvar [name] (lvarT. name))
+
+(defmethod print-method lvarT [x writer]
+           (.write writer (str "<lvar:" (:name x) ">")))
 
 ;; NOTE: consider lowering to deftype
 (defrecord pairT [lhs rhs])
@@ -52,32 +55,31 @@
   [[x 1] [y 5] [x y]]
 
   ;; prevent circular substs
-  (let [x  (lvar)
-        y  (lvar)
+  (let [x  (lvar 'x)
+        y  (lvar 'y)
         ss (Substitutions. {x [y] y [x]} [x y])]
-    (ext ss [y y]))
+    (ext ss y y))
   
  ;; test
- (let [x  (lvar)
-       y  (lvar)
-       z  (lvar)
+ (let [x  (lvar 'x)
+       y  (lvar 'y)
+       z  (lvar 'z)
        ss (Substitutions. {x [1 y]
                            y [5]}
                           [x y x])
-       ss (ext ss [x z])]
-   (pprint ss)
-   (println (length ss)))
+       ss (ext ss x z)]
+   (println ss))
 
  ;; not bad 500ms
  (dotimes [_ 10]
    (let [[x y z] [(lvar) (lvar) (lvar)]
-         ss (Substitutions. {x [y 1] y [5]} [x y x])
-         s  [x z]]
+         ss (Substitutions. {x [y 1] y [5]} [x y x])]
      (time
       (dotimes [_ 1e6]
-        (ext ss s)))))
+        (ext ss x z)))))
 
  ;; ~300ms, pretty good, neet to compare to naive
+ ;; for this degenerate case ~500ms
  (dotimes [_ 10]
    (let [[x y z] [(lvar) (lvar) (lvar)]
          ss (Substitutions. {x [y] y [z] z [5]} [x y z])]
@@ -85,54 +87,47 @@
       (dotimes [_ 1e6]
         (lookup ss x)))))
 
+ ;; ~900ms
+ ;; just a tiny bit faster than scheme
+ (dotimes [_ 10]
+   (let [[x y z c b a] [(lvar) (lvar) (lvar) (lvar) (lvar) (lvar)]
+         ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} [x y z c b a])]
+     (time
+      (dotimes [_ 1e6]
+        (lookup ss a)))))
+
+ ;; degenerate case
+ ;; same speed as above
+ ;; Scheme is ~1130ms
+ ;; so Scheme is doing okay, assq must be pretty quick
+ (dotimes [_ 10]
+   (let [[x m y n z o c p b q a] (take 11 (repeatedly lvar))
+         ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} [x m y n z o c p b q a])]
+     (time
+      (dotimes [_ 1e6]
+        (lookup ss a)))))
+
+ (let [[x m y n z o c p b q a] (take 11 (repeatedly lvar))
+         ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} [x m y n z o c p b q a])]
+     (time
+      (lookup ss a)))
+
  ;; erg before we get ahead of ourselves
  ;; preventing circularity
 )
 
-;; we could store all vars in a map
 (comment
-  {'x [y]
-   'y [5 1]}
-  )
 
-;; but what happens when we pop a substitution off ?
-(comment
-  ;; represents the above
-  [[x y] [5 y] [y 1]]
+  ;; damn doesn't work
+  (let [x []]
+    (case (class x)
+          clojure.lang.PersistentVector 'a
+          clojure.lang.PersistentList 'b
+          clojure.lang.PersistenHashMap 'c))
 
-  ;; we could construct the map each time, probably expensive
-  ;; as declaring logic vars is quite common
-
-  ;; but what would a better data structure look like
-  ;; that allows us to preserve the backtracking component ?
-
-  ;; we could keep a list of the current substitutions
-  {'x [y]
-   'y [5 1]}
-
-  ;; subst-order
-  ['x 'y 'y]
-
-  ;; do we need to make a custom data structure for this?
-
-  ;; we could hide it inside a datatype ?
-  ;; since methods are already synchronized and they are opaque
-  )
-
-;; one holds the order
-(def subst-order (ref '()))
-o;; the other holds the mappings
-(def substs (ref '{}))
-
-(def empty-s [])
-
-;; we could keep association lists for each var, refs
-;; then we wouldn't have to walk the whole shebang
-
-(defn walk [v s]
-  (cond
-   (lvar? v) (let [[_ rhs :as a] (some #(= v (first %)) s)]
-               (cond
-                a (walk rhs s)
-                :else v))
-   :else v))
+  (let [x 0]
+    (case x
+          0 'a
+          1 'b
+          2 'c))
+)
