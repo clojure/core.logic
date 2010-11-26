@@ -1,4 +1,5 @@
 (ns logic-fun.fast
+  (:refer-clojure :exclude [reify])
   (:use [clojure.pprint :only [pprint]]))
 
 (set! *warn-on-reflection* true)
@@ -14,14 +15,23 @@
 
 (deftype lvarT [name])
 
-(defn lvar? [x]
-  (instance? lvarT x))
-
 (defn ^lvarT lvar
   ([] (lvarT. (gensym)))
   ([name] (lvarT. name)))
 
+(deftype rest-lvarT [name])
+
+(defn ^rest-lvarT rest-lvar
+  ([] (rest-lvarT. (gensym)))
+  ([name] (rest-lvarT. name)))
+
+(defn lvar? [x]
+  (or (instance? lvarT x) (instance? rest-lvarT x)))
+
 (defmethod print-method lvarT [x writer]
+           (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+
+(defmethod print-method rest-lvarT [x writer]
            (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
 
 ;; TODO : why doesn't print-method get called during pretty printing ?
@@ -47,6 +57,59 @@
   (pairT. lhs rhs))
 
 ;; =============================================================================
+;; Unification
+
+(declare lookup)
+(declare ext-no-check)
+(declare ext)
+(declare unify)
+(declare length)
+(declare empty-s)
+
+(defn unify* [s u v]
+  (let [u (lookup s u)
+        v (lookup s v)]
+    (cond
+     (identical? u v) s
+     (lvar? u) (if (lvar? v)
+                 (ext-no-check s u v)
+                 (ext s u v))
+     (lvar? v) (ext s u v)
+     (and (coll? u) (coll? v)) (let [[uf & ur] u
+                                     [vf & vr] v
+                                     s (unify s uf vf)]
+                                 (and s (unify s ur vr)))
+     (= u v) s
+     :else false)))
+
+;; =============================================================================
+;; Reification
+
+; TODO: needs to handle different types - David
+
+(defn reify-lookup [s v]
+  (let [v (lookup s v)]
+    (cond
+     (lvar? v) v
+     (coll? v) (cons (reify-lookup s (first v))
+                     (reify-lookup s (rest v)))
+     :else v)))
+
+(defn reify-name [s]
+  (symbol (str "_." (length s))))
+
+(defn -reify [s v]
+  (let [v (lookup s v)]
+    (cond
+     (lvar? v) (ext s (reify-name s) v)
+     (coll? v) (-reify (-reify s (first v))(rest v))
+     :else s)))
+
+(defn reify [s v]
+  (let [v (reify-lookup s v)]
+    (reify-lookup (-reify s (empty-s)) v)))
+
+;; =============================================================================
 ;; Substitutions
 
 (defprotocol ISubstitutions
@@ -55,16 +118,6 @@
   (ext-no-check [this x v])
   (lookup [this v])
   (unify [this u v]))
-
-(defn lookup* [s v]
-  (loop [v v v' (vec-last (s v)) s s ov v]
-    (cond
-     (nil? v')          v
-     (identical? v' ov) :circular
-     (lvar? v')         (recur v' (vec-last (s v')) s ov)
-     :else              v')))
-
-(declare unify*)
 
 (defrecord Substitutions [s order]
   ISubstitutions
@@ -85,19 +138,7 @@
   (Substitutions. {} []))
 
 ;; =============================================================================
-;; Unification
-
-;; in Fogus's core.unify, the unifier deals w/ construction
-;; miniKanren only deals with substitutions
-
-(defn unify* [s u v]
-  (let [u (lookup u s)
-        v (lookup v s)]
-    (cond
-     (identical? u v) s
-     (lvar? u) (if (lvar? v)
-                 (ext-no-check s u v)
-                 (ext s u v)))))
+;; Goals and Goal Constructors
 
 ;; =============================================================================
 ;; Comments and Testing
