@@ -94,7 +94,7 @@
     (cond
      (lvar? v) v
      (coll? v) (cons (reify-lookup s (first v))
-                     (reify-lookup s (rest v)))
+                     (reify-lookup s (next v)))
      :else v)))
 
 (defn reify-name [s]
@@ -104,7 +104,7 @@
   (let [v (lookup s v)]
     (cond
      (lvar? v) (ext s (reify-name s) v)
-     (coll? v) (-reify (-reify s (first v))(rest v))
+     (coll? v) (-reify (-reify s (first v)) (next v))
      :else s)))
 
 (defn reify [s v]
@@ -131,6 +131,8 @@
 
 (defprotocol ISubstitutionsCoerce
   (to-s [this]))
+
+;; NOTE: this datastructure may be unecessary depending on how miniKanren actually works
 
 (defrecord Substitutions [s order]
   ISubstitutions
@@ -191,27 +193,38 @@
         s (to-s [[x 5] [y x]])]
     (ext s z y))
 
-  ;; prevent circular substs
+  ; nil
   (let [x (lvar 'x)
         y (lvar 'y)
         s (Substitutions. {x [y] y [x]} [x y])]
     (ext s y y))
-  
- (let [x  (lvar 'x)
-       y  (lvar 'y)
-       z  (lvar 'z)
-       ss (Substitutions. {x [1 y]
-                           y [5]}
-                          [x y x])]
-   (ext ss x z))
- 
 
+ ; 5
  (let [x  (lvar 'x)
        y  (lvar 'y)
-       ss (Substitutions. {x [1 y]
-                           y [5]}
-                          [x y x])]
-   (lookup ss x))
+       ss (to-s [[x 5] [y x]])]
+   (lookup ss y)) ; 5
+
+ ; _.2
+ (let [x  (lvar 'x)
+       y  (lvar 'y)]
+  (reify-name (to-s [[x 5] [y x]])))
+
+ ; (<lvar:x> <lvar:y>)
+ (let [x  (lvar 'x)
+       y  (lvar 'y)]
+   (lookup (to-s [[x 5] [y x]]) `(~x ~y)))
+
+ ; (5 5)
+ (let [x  (lvar 'x)
+       y  (lvar 'y)]
+   (reify-lookup (to-s [[x 5] [y x]]) `(~x ~y)))
+
+ ;; FIXME: stack overflow
+ (let [[x y z] (map lvar '[x y z])
+       v `(5 ~x (true ~y ~x) ~z)
+       r (reify (empty-s) v)]
+   r)
 
  ;; ==================================================
  ;; PERFORMANCE
