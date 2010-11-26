@@ -1,5 +1,5 @@
 (ns logic-fun.fast
-  (:refer-clojure :exclude [reify])
+  (:refer-clojure :exclude [reify inc])
   (:use [clojure.pprint :only [pprint]]))
 
 (set! *warn-on-reflection* true)
@@ -47,19 +47,21 @@
   IPair
   (lhs [this] lhs)
   (rhs [this] rhs)
-  ;; TODO : support destructuring
-  ;; clojure.lang.Indexed
-  ;; (nth [this idx] (case idx 0 lhs 1 rhs))
-  ;; (nth [this idx default] (case idx 0 lhs 1 rhs :else default))
-  )
+  clojure.lang.ISeq
+  (first [this] lhs)
+  (more [this] rhs))
 
 (defn ^pairT pair [lhs rhs]
   (pairT. lhs rhs))
+
+(defmethod print-method pairT [x writer]
+           (.write writer (str "(" (lhs x) " . " (rhs x) ")")))
 
 ;; =============================================================================
 ;; Unification
 
 (declare lookup)
+(declare lookup*)
 (declare ext-no-check)
 (declare ext)
 (declare unify)
@@ -119,6 +121,9 @@
   (lookup [this v])
   (unify [this u v]))
 
+(defprotocol ISubstitutionsCoerce
+  (to-s [this]))
+
 (defrecord Substitutions [s order]
   ISubstitutions
   (length [this] (count order))
@@ -137,8 +142,29 @@
 (defn ^Substitutions empty-s []
   (Substitutions. {} []))
 
+(defn to-s [v]
+  (let [s (reduce (fn [m [k v]]
+                    (update-in m [k] (fnil conj []) v))
+                  {} v)
+        order (vec (map first v))]
+    (Substitutions. s order)))
+
 ;; =============================================================================
 ;; Goals and Goal Constructors
+
+;; We can probably do this whole silly thing with lazy sequences
+
+(defn mzero []
+  false)
+
+(defn unit [a]
+  a)
+
+(defn choice [a f]
+  (pair a f))
+
+(defn inc [e]
+  (fn [] e))
 
 ;; =============================================================================
 ;; Comments and Testing
@@ -220,11 +246,16 @@
  )
 
 (comment
+  (let [x (lvar 'x)
+        y (lvar 'y)]
+   (to-s [[x 5] [y x]]))
+
   (dotimes [_ 10]
-    (let [v [1 2 3 4 5 6 7 8 9 0]]
+    (let [p (pair 'a (fn []))]
      (time
-      (dotimes [_ 1e6]
-        (vec-last v)))))
+      (dotimes [_ 1e8]
+        (first p)
+        (rest p)))))
 
   ;; interesting, destructuring is slow because we calling clojure.core/nth
   ;; instead of our own
