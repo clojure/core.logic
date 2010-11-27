@@ -66,6 +66,9 @@
 ;; TODO: unify* should fail in the 4th cond line if the types are not the same
 ;; lists should maybe unify with vectors
 
+(defn print-identity [v]
+  (println v) v)
+
 (defn unify* [s u v]
   (let [u (lookup s u)
         v (lookup s v)]
@@ -74,7 +77,7 @@
      (lvar? u) (if (lvar? v)
                  (ext-no-check s u v)
                  (ext s u v))
-     (lvar? v) (ext s u v)
+     (lvar? v) (ext s v u)
      (and (coll? u) (coll? v)) (let [[uf & ur] u
                                      [vf & vr] v
                                      s (unify s uf vf)]
@@ -107,7 +110,7 @@
 
 (defn reify [s v]
   (let [v (reify-lookup s v)]
-    (reify-lookup (-reify (empty-s) v) v)))
+    (reify-lookup (print-identity (-reify empty-s v)) v)))
 
 ;; =============================================================================
 ;; Substitutions
@@ -156,7 +159,7 @@
   (lookup [this v]
           (lookup* s v))
   (unify [this u v]
-         (unify* s u v)))
+         (unify* this u v)))
 
 (def empty-s (Substitutions. {} []))
 
@@ -230,7 +233,7 @@
        (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-binds [syms]
-  (flatten (map (juxt identity lvar) syms)))
+  (reduce concat (map (juxt identity (fn [s] `(lvar '~s))) syms)))
 
 (defmacro exist [[& x-rest] g0 & g-rest]
   `(fn [a#]
@@ -256,7 +259,7 @@
          (fn []
            ((exist [~x] ~g0 ~@g-rest
                    (fn [a#]
-                     (cons (reify a# ~x) nil)))
+                     (conj [] (reify a# ~x))))
             empty-s))))
 
 (defn take [n f]
@@ -275,9 +278,34 @@
 ;; Comments and Testing
 
 (comment
+
   (run* [q]
         succeed
         (== true q))
+
+  (run* [q]
+        (== true q)
+        (== false q))
+
+  (take
+   false
+   (fn []
+     ((fn [a__7765__auto__]
+        (inc
+         (let [q (lvar 'q)]
+           (bind
+            (bind (succeed a__7765__auto__) (fn [a__7732__auto__]
+                                              (if-let [s__7733__auto__ (unify a__7732__auto__ true q)]
+                                                s__7733__auto__
+                                                false)))
+            (fn [a__7785__auto__] (cons (reify a__7785__auto__ q) nil))))))
+      empty-s)))
+
+  (unify empty-s true (lvar 'q))
+
+  (lookup empty-s (lvar 'q))
+
+  (lookup empty-s true)
   
   (defmacro foo [a b]
     `(let [~a ~b]
