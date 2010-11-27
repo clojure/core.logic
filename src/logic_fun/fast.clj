@@ -136,9 +136,6 @@
   (lookup [this v])
   (unify [this u v]))
 
-(defprotocol ISubstitutionsCoerce
-  (to-s [this]))
-
 ;; NOTE: this data structure may be unecessary depending on how miniKanren actually works
 ;; because {} is already persistent, can probably just use it wholesale - David
 
@@ -172,6 +169,8 @@
 
 ;; NOTE: Consider converting to lazy sequences - David
 
+;; 4 types of a-inf
+
 (defmacro mzero [] nil)
 
 (defmacro unit [a] a)
@@ -185,12 +184,12 @@
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
-      (not a-inf#) ~e0
-      (fn? a-inf#) (let [~f' a-inf#] ~e1)
-      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)
+      (not a-inf#) ~e0                                                ; mzero
+      (fn? a-inf#) (let [~f' a-inf#] ~e1)                             ; inc
+      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)   ; choice
                                                     ~f (rhs a-inf#)]
                                                     ~e3)
-      :else (let [~a' a-inf#] ~e2))))
+      :else (let [~a' a-inf#] ~e2))))                                 ; unit
 
 (defmacro == [u v]
   `(fn [a]
@@ -208,8 +207,8 @@
   (case-inf a-inf
             nil (f)                                    ; mzero
             f' (inc (mplus (f) f'))                    ; inc
-            a (choice a f)                             ; unit
-            [a f'] (choice a (fn [] (mplus (f) f'))))) ; choice
+            a (choice a f)                             ; choice
+            [a f'] (choice a (fn [] (mplus (f) f'))))) ; unit
 
 (defmacro cond-e [])
 
@@ -228,10 +227,10 @@
 
 (defn bind [a-inf g]
   (case-inf a-inf
-            nil (mzero)
-            f (inc (bind (f) g))
-            a (g a)
-            [a f] (mplus (g a) (fn [] (bind (f) g)))))
+            nil (mzero)                                ; mzero
+            f (inc (bind (f) g))                       ; inc
+            a (g a)                                    ; choice
+            [a f] (mplus (g a) (fn [] (bind (f) g))))) ; unit
 
 (defmacro run [& [n [x] & gs]]
   `(take n
