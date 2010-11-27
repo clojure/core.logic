@@ -170,14 +170,13 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defmacro goal [[a] & body]
-  `(fn [~a] ~@body))
+(defn succeed [a]
+  (unit a))
 
-(def succeed (goal [s] (unit s)))
+(defn fail [a]
+  (mzero))
 
-(def fail (goal [s] (mzero)))
-
-(defmacro mzero [] nil)
+(defmacro mzero [] false)
 
 (defmacro unit [a] a)
 
@@ -195,13 +194,13 @@
       (fn? a-inf#) (let [~f' a-inf#] ~e1)
       (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)
                                                     ~f (rhs a-inf#)]
-                                                    ~e3)
+                                                ~e3)
       :else (let [~a' a-inf#] ~e2))))
 
 (defmacro == [u v]
-  `(goal [a]
-     (if-let [s (unify a ~u ~v)]
-       (unit s)
+  `(fn [a#]
+     (if-let [s# (unify a# ~u ~v)]
+       (unit s#)
        (mzero))))
 
 ;; a single value is just a single value
@@ -225,19 +224,19 @@
   (map (bind-cond-e-clause s) clauses))
 
 (defmacro cond-e [& clauses]
-  (let [a (gensym)]
-   `(goal [~a]
+  (let [a (gensym "a")]
+   `(fn [~a]
       (inc
-       (mplus* ~@(bind-cond-e-clauses ~a clauses))))))
+       (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-binds [syms]
   (flatten (map (juxt identity lvar) syms)))
 
 (defmacro exist [[& x-rest] g0 & g-rest]
-  `(goal [a]
+  `(fn [a#]
      (inc
       (let [~@(lvar-binds x-rest)]
-        (bind* (~g0 a) ~@g-rest)))))
+        (bind* (~g0 a#) ~@g-rest)))))
 
 (defmacro bind*
   ([e] e)
@@ -255,9 +254,9 @@
 (defmacro run [& [n [x] g0 & g-rest]]
   `(take ~n
          (fn []
-           ((exist [x] ~g0 ~@g-rest
-                   (goal [a]
-                     (cons (reify a x) nil)))
+           ((exist [~x] ~g0 ~@g-rest
+                   (fn [a#]
+                     (cons (reify a# ~x) nil)))
             empty-s))))
 
 (defn take [n f]
