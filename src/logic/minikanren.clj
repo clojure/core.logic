@@ -250,14 +250,16 @@
                      (conj [] (reify a# ~x))))
             empty-s))))
 
-(defn take [n f]
-  (if (and n zero? n)
-    []
-    (case-inf (f)
-              false []
-              f (take n f)
-              a a
-              [a f] (cons (first a) (take (and n (dec n)))))))
+(defn take
+  ([n f] (take n f [])) 
+  ([n f v]
+     (if (and n zero? n)
+       v
+       (case-inf (f)
+                 false v
+                 f (take n f v)
+                 a (conj v (first a))
+                 [a f] (take (and n (dec n)) f (conj v (first a)))))))
 
 (defmacro run* [& body]
   `(run false ~@body))
