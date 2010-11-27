@@ -176,6 +176,10 @@
 (defn fail [a]
   (mzero))
 
+(def s# succeed)
+
+(def u# fail)
+
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
@@ -235,6 +239,8 @@
             f (inc (bind (f) g))
             a (g a)
             [a f] (mplus (g a) (fn [] (bind (f) g)))))
+
+;; TODO: find for what reason are putting the value in a vector?
 
 (defmacro run [& [n [x] g0 & g-rest]]
   `(take ~n
@@ -318,6 +324,59 @@
   (run* [q]
         succeed
         (== true q))
+
+  (run* [q]
+        fail
+        (== true q))
+
+  (run* [q]
+        (== false q)
+        (== true q))
+
+  (run* [x]
+        (cond-e
+         ((== x 'olive) succeed)
+         (succeed succeed)
+         ((== x 'oil) succeed)))
+
+  (run* [r]
+        (exist [x y]
+               (cond-e
+                ((== 'split x) (== 'pea y))
+                ((== 'navy x) (== 'bean y)))
+               (== (cons x (cons y ())) r)))
+
+  (defn teacup-o [x]
+    (cond-e
+     ((== tea x) succeed)
+     ((== cup x) succeed)
+     ))
+
+  (run* [r]
+        (exists [x y]
+                ))
+
+  (take
+ false
+ (fn []
+     ((fn [a__10796__auto__]
+          (fn []
+              (let [x (lvar 'x)]
+                   (bind
+                    ((fn [a10883]
+                         (fn []
+                             (mplus
+                              (bind ((fn [a__10763__auto__]
+                                         (if-let [s__10764__auto__ (unify a__10763__auto__ x 'olive)]
+                                                 s__10764__auto__
+                                                 false)) a10883) succeed)
+                              (fn [] (bind ((fn [a__10763__auto__]
+                                                (if-let [s__10764__auto__ (unify a__10763__auto__ x 'oil)]
+                                                        s__10764__auto__
+                                                        false)) a10883) succeed)))))
+                     a__10796__auto__)
+                    (fn [a__10816__auto__] (conj [] (reify a__10816__auto__ x)))))))
+      empty-s)))
 
   ;; ==================================================
   ;; PERFORMANCE
