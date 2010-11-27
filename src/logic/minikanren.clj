@@ -171,6 +171,13 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
+(defmacro goal [[a] & body]
+  `(fn [~a] ~@body))
+
+(def succeed (goal [s] (unit s)))
+
+(def fail (goal [s] (mzero)))
+
 (defmacro mzero [] nil)
 
 (defmacro unit [a] a)
@@ -193,7 +200,7 @@
       :else (let [~a' a-inf#] ~e2))))
 
 (defmacro == [u v]
-  `(fn [a]
+  `(goal [a]
      (if-let [s (unify ~u ~v a)]
        (unit s)
        (mzero))))
@@ -220,7 +227,7 @@
 
 (defmacro cond-e [& clauses]
   (let [a (gensym)]
-   `(fn [~a]
+   `(goal [~a]
       (inc
        (mplus* ~@(bind-cond-e-clauses ~a clauses))))))
 
@@ -228,7 +235,7 @@
   (map (juxt identity lvar) syms))
 
 (defmacro exist [[& x-rest] g0 & g-rest]
-  `(fn [a]
+  `(goal [a]
      (inc
       (let [~@(lvar-binds x-rest)]
         (bind* (g0 a) ~@g-rest)))))
@@ -261,8 +268,8 @@
               a a
               [a f] (cons (first a) (take (and n (dec n)))))))
 
-(defmacro run* [& [[x] g0 & g-rest]]
-  ())
+(defmacro run* [& body]
+  `(run false ~@body))
 
 ;; =============================================================================
 ;; Comments and Testing
