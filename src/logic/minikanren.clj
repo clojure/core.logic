@@ -348,13 +348,15 @@
 
   (defn teacup-o [x]
     (cond-e
-     ((== tea x) succeed)
-     ((== cup x) succeed)
-     ))
+     ((== 'tea x) s#)
+     ((== 'cup x) u#)))
 
   (run* [r]
-        (exists [x y]
-                ))
+        (exist [x y]
+               (cond-e
+                ((teacup-o x) (== true y) s#)
+                ((== false x) (== true y)))
+               (== (cons x (cons y ())) r)))
 
   (take
  false
