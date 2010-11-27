@@ -3,12 +3,6 @@
   (:use [clojure.pprint :only [pprint]]))
 
 ;; =============================================================================
-;; Utilities
-
-(defn vec-last [v]
-  (nth v (dec (count v))))
-
-;; =============================================================================
 ;; Logic Variables
 
 (deftype lvarT [name])
@@ -69,6 +63,9 @@
 (declare length)
 (declare empty-s)
 
+;; TODO: unify* should fail in the 4th cond line if the types are not the same
+;; lists should maybe unify with vectors
+
 (defn unify* [s u v]
   (let [u (lookup s u)
         v (lookup s v)]
@@ -88,7 +85,7 @@
 ;; =============================================================================
 ;; Reification
 
-; TODO: needs to handle different types - David
+;; TODO: needs to reconstruct the correct type
 
 (defn reify-lookup [s v]
   (let [v (lookup s v)]
@@ -108,16 +105,21 @@
      (coll? v) (-reify (-reify s (first v)) (next v))
      :else s)))
 
-;; TODO: this walks the structure *twice*
-;; the first time we replace all the vars w/ themselves or their values
-;; in the second pass we map them vars to their reified names
-
 (defn reify [s v]
   (let [v (reify-lookup s v)]
     (reify-lookup (-reify (empty-s) v) v)))
 
 ;; =============================================================================
 ;; Substitutions
+
+;; FIXME: there's a subtle bug here, v' might legitimately be nil, the
+;; (vec-last (s v')), once I understand the goal part some more, we should
+;; just maybe switch over to hash-maps
+
+;; we can use find, returns the entry
+
+(defn vec-last [v]
+  (nth v (dec (count v))))
 
 (defn lookup* [s v]
   (loop [v v v' (vec-last (s v)) s s ov v]
@@ -136,6 +138,10 @@
 
 ;; NOTE: this data structure may be unecessary depending on how miniKanren actually works
 ;; because {} is already persistent, can probably just use it wholesale - David
+
+;; one advantage of the current version is that we can see the order of the
+;; substitutions, that's not possible with normal hash-map, useful for
+;; debugging
 
 (defrecord Substitutions [s order]
   ISubstitutions
@@ -164,10 +170,6 @@
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
-
-;; NOTE: Consider converting to lazy sequences, will help originality case - David
-
-;; 4 types of a-inf
 
 (defmacro mzero [] nil)
 
@@ -209,12 +211,23 @@
             a (choice a f)                             ; choice
             [a f'] (choice a (fn [] (mplus (f) f'))))) ; unit
 
-(defmacro cond-e [])
+(defn bind-cond-e-clause [s]
+  (fn [[g0 & g-rest]]
+    `(bind* (~g0 ~s) ~@g-rest)))
+
+(defn bind-cond-e-clauses [s clauses]
+  (map (bind-cond-e-clause s) clauses))
+
+(defmacro cond-e [& clauses]
+  (let [a (gensym)]
+   `(fn [~a]
+      (inc
+       (mplus* ~@(bind-cond-e-clauses ~a clauses))))))
 
 (defn lvar-binds [syms]
   (map (juxt identity lvar) syms))
 
-(defmacro exist [[:as x-rest] g0 & g-rest]
+(defmacro exist [[& x-rest] g0 & g-rest]
   `(fn [a]
      (inc
       (let [~@(lvar-binds x-rest)]
