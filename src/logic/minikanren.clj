@@ -257,7 +257,7 @@
               false []
               f (take n f)
               a a
-              [a f] (cons (first a) (take (and n (dec n)))))))
+              [a f] (cons (first a) (take (and n (dec n)) f)))))
 
 (defmacro run* [& body]
   `(run false ~@body))
@@ -349,8 +349,10 @@
   (defn teacup-o [x]
     (cond-e
      ((== 'tea x) s#)
-     ((== 'cup x) u#)))
+     ((== 'cup x) s#)))
 
+  ;; the return order is interesting
+  ;; interleaving
   (run* [r]
         (exist [x y]
                (cond-e
