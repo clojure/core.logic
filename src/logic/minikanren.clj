@@ -2,8 +2,6 @@
   (:refer-clojure :exclude [reify inc == take])
   (:use [clojure.pprint :only [pprint]]))
 
-(set! *warn-on-reflection* true)
-
 ;; =============================================================================
 ;; Utilities
 
