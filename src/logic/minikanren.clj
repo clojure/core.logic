@@ -351,7 +351,7 @@
   (defn teacup-o [x]
     (cond-e
      ((== 'tea x) s#)
-     ((== 'cup x) u#)))
+     ((== 'cup x) s#)))
 
   (run* [r]
         (exist [x y]
