@@ -110,7 +110,7 @@
 
 (defn reify [s v]
   (let [v (reify-lookup s v)]
-    (reify-lookup (print-identity (-reify empty-s v)) v)))
+    (reify-lookup (-reify empty-s v) v)))
 
 ;; =============================================================================
 ;; Substitutions
@@ -173,12 +173,6 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defn succeed [a]
-  (unit a))
-
-(defn fail [a]
-  (mzero))
-
 (defmacro mzero [] false)
 
 (defmacro unit [a] a)
@@ -188,6 +182,12 @@
 
 (defmacro inc [e]
   `(fn [] ~e))
+
+(defn succeed [a]
+  (unit a))
+
+(defn fail [a]
+  (mzero))
 
 ;; this is a conveniene binding macro for the different cases of a-inf
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
@@ -278,38 +278,6 @@
 ;; Comments and Testing
 
 (comment
-
-  (run* [q]
-        succeed
-        (== true q))
-
-  (run* [q]
-        (== true q)
-        (== false q))
-
-  (take
-   false
-   (fn []
-     ((fn [a__7765__auto__]
-        (inc
-         (let [q (lvar 'q)]
-           (bind
-            (bind (succeed a__7765__auto__) (fn [a__7732__auto__]
-                                              (if-let [s__7733__auto__ (unify a__7732__auto__ true q)]
-                                                s__7733__auto__
-                                                false)))
-            (fn [a__7785__auto__] (cons (reify a__7785__auto__ q) nil))))))
-      empty-s)))
-
-  (unify empty-s true (lvar 'q))
-
-  (lookup empty-s (lvar 'q))
-
-  (lookup empty-s true)
-  
-  (defmacro foo [a b]
-    `(let [~a ~b]
-       ~a))
  ;; ==================================================
  ;; TESTS
 
@@ -323,100 +291,109 @@
         s (to-s [[x 5] [y x]])]
     (ext s z y))
 
-  ; nil
+  ;; nil
   (let [x (lvar 'x)
         y (lvar 'y)
         s (Substitutions. {x [y] y [x]} [x y])]
     (ext s y y))
 
- ; 5
- (let [x  (lvar 'x)
-       y  (lvar 'y)
-       ss (to-s [[x 5] [y x]])]
-   (lookup ss y)) ; 5
+  ;; 5
+  (let [x  (lvar 'x)
+        y  (lvar 'y)
+        ss (to-s [[x 5] [y x]])]
+    (lookup ss y)) ; 5
 
- ; _.2
- (let [x  (lvar 'x)
-       y  (lvar 'y)]
-  (reify-name (to-s [[x 5] [y x]])))
+  ;; _.2
+  (let [x  (lvar 'x)
+        y  (lvar 'y)]
+    (reify-name (to-s [[x 5] [y x]])))
 
- ; (<lvar:x> <lvar:y>)
- (let [x  (lvar 'x)
-       y  (lvar 'y)]
-   (lookup (to-s [[x 5] [y x]]) `(~x ~y)))
+  ;; (<lvar:x> <lvar:y>)
+  (let [x  (lvar 'x)
+        y  (lvar 'y)]
+    (lookup (to-s [[x 5] [y x]]) `(~x ~y)))
 
- ; 
- (let [x  (lvar 'x)
-       y  (lvar 'y)]
-   (-reify empty-s `(~x ~y)))
+  ;; 
+  (let [x  (lvar 'x)
+        y  (lvar 'y)]
+    (-reify empty-s `(~x ~y)))
 
- ; (5 5)
- (let [x  (lvar 'x)
-       y  (lvar 'y)]
-   (reify-lookup (to-s [[x 5] [y x]]) `(~x ~y)))
+  ;; (5 5)
+  (let [x  (lvar 'x)
+        y  (lvar 'y)]
+    (reify-lookup (to-s [[x 5] [y x]]) `(~x ~y)))
 
- ;; (5 _.0 (true _.1 _.0) _.2)
- (let [[x y z] (map lvar '[x y z])
-       v `(5 ~x (true ~y ~x) ~z)
-       r (reify empty-s v)]
-   r)
-
- ;; ==================================================
- ;; PERFORMANCE
- 
- ;; sick 470ms on 1.3.0 alph3
- (dotimes [_ 10]
-   (let [[x y z :as s] (map lvar '[x y z])
-         ss (Substitutions. {x [y 1] y [5]} s)]
-     (time
-      (dotimes [_ 1e6]
-        (ext-no-check ss x z)))))
-
- ;; ~650ms
- (dotimes [_ 10]
-   (let [[x y z :as s] (map lvar '[x y z])
-         ss (Substitutions. {x [y 1] y [5]} s)]
-     (time
-      (dotimes [_ 1e6]
-        (ext ss x z)))))
-
- ;; ~1200ms
- ;; just a tiny bit slower than the Scheme version
- (dotimes [_ 10]
-   (let [[x y z c b a :as s] (map lvar '[x y z c b a])
-         ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} s)]
-     (time
-      (dotimes [_ 1e6]
-        (lookup ss a)))))
-
- ;; degenerate case
- (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
-       ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
-                           m [0] n [1] o [2] p [3] q [4]}
-                          [x m m m m y n n n n z o o o o
-                           c p p p p b q q q q a])]
-   (lookup ss a))
-
- ;; 600ms (NOTE: this jump is because array-map is slower than hash-maps)
- ;; Scheme is ~1650ms
- (dotimes [_ 10]
-   (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
-         ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
-                             m [0] n [1] o [2] p [3] q [4]}
-                            [x m m m m y n n n n z o o o o
-                             c p p p p b q q q q a])]
-     (time
-      (dotimes [_ 1e6]
-        (lookup ss a)))))
-
- (dotimes [_ 10]
+  ;; (5 _.0 (true _.1 _.0) _.2)
   (let [[x y z] (map lvar '[x y z])
         v `(5 ~x (true ~y ~x) ~z)
         r (reify empty-s v)]
-    r))
+    r)
+
+  ;; ==================================================
+  ;; PERFORMANCE
+  
+  ;; sick 470ms on 1.3.0 alph3
+  (dotimes [_ 10]
+    (let [[x y z :as s] (map lvar '[x y z])
+          ss (Substitutions. {x [y 1] y [5]} s)]
+      (time
+       (dotimes [_ 1e6]
+         (ext-no-check ss x z)))))
+
+  ;; ~650ms
+  (dotimes [_ 10]
+    (let [[x y z :as s] (map lvar '[x y z])
+          ss (Substitutions. {x [y 1] y [5]} s)]
+      (time
+       (dotimes [_ 1e6]
+         (ext ss x z)))))
+
+  ;; ~1200ms
+  ;; just a tiny bit slower than the Scheme version
+  (dotimes [_ 10]
+    (let [[x y z c b a :as s] (map lvar '[x y z c b a])
+          ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} s)]
+      (time
+       (dotimes [_ 1e6]
+         (lookup ss a)))))
+
+  ;; degenerate case
+  (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
+        ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
+                            m [0] n [1] o [2] p [3] q [4]}
+                           [x m m m m y n n n n z o o o o
+                            c p p p p b q q q q a])]
+    (lookup ss a))
+
+  ;; 600ms (NOTE: this jump is because array-map is slower than hash-maps)
+  ;; Scheme is ~1650ms
+  (dotimes [_ 10]
+    (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
+          ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
+                              m [0] n [1] o [2] p [3] q [4]}
+                             [x m m m m y n n n n z o o o o
+                              c p p p p b q q q q a])]
+      (time
+       (dotimes [_ 1e6]
+         (lookup ss a)))))
+
+  (dotimes [_ 10]
+    (let [[x y z] (map lvar '[x y z])
+          v `(5 ~x (true ~y ~x) ~z)
+          r (reify empty-s v)]
+      r))
+
+  ;; ~1s, we're a bit ahead of Scheme at ~1.3s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+             succeed
+             (== true q)))))
  )
 
 (comment
+  
   (let [x (lvar 'x)
         y (lvar 'y)]
    (to-s [[x 5] [y x]]))
