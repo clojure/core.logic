@@ -158,8 +158,7 @@
   (unify [this u v]
          (unify* s u v)))
 
-(defn empty-s []
-  (Substitutions. {} []))
+(def empty-s (Substitutions. {} []))
 
 (defn to-s [v]
   (let [s (reduce (fn [m [k v]]
@@ -232,13 +231,13 @@
        (mplus* ~@(bind-cond-e-clauses ~a clauses))))))
 
 (defn lvar-binds [syms]
-  (map (juxt identity lvar) syms))
+  (flatten (map (juxt identity lvar) syms)))
 
 (defmacro exist [[& x-rest] g0 & g-rest]
   `(goal [a]
      (inc
       (let [~@(lvar-binds x-rest)]
-        (bind* (g0 a) ~@g-rest)))))
+        (bind* (~g0 a) ~@g-rest)))))
 
 (defmacro bind*
   ([e] e)
@@ -251,12 +250,14 @@
             a (g a)
             [a f] (mplus (g a) (fn [] (bind (f) g)))))
 
+;; TODO: switch to conj onto a vector
+
 (defmacro run [& [n [x] g0 & g-rest]]
-  `(take n
+  `(take ~n
          (fn []
-           ((exist [x] g0 ~@g-rest
-                   (fn [a]
-                     (cons (reify x a) nil)))
+           ((exist [x] ~g0 ~@g-rest
+                   (goal [a]
+                     (cons (reify a x) nil)))
             empty-s))))
 
 (defn take [n f]
@@ -275,6 +276,10 @@
 ;; Comments and Testing
 
 (comment
+  (run* [q]
+        succeed
+        (== true q))
+  
   (defmacro foo [a b]
     `(let [~a ~b]
        ~a))
@@ -316,7 +321,7 @@
  ; 
  (let [x  (lvar 'x)
        y  (lvar 'y)]
-   (-reify (empty-s) `(~x ~y)))
+   (-reify empty-s `(~x ~y)))
 
  ; (5 5)
  (let [x  (lvar 'x)
@@ -326,7 +331,7 @@
  ;; (5 _.0 (true _.1 _.0) _.2)
  (let [[x y z] (map lvar '[x y z])
        v `(5 ~x (true ~y ~x) ~z)
-       r (reify (empty-s) v)]
+       r (reify empty-s v)]
    r)
 
  ;; ==================================================
@@ -380,7 +385,7 @@
  (dotimes [_ 10]
   (let [[x y z] (map lvar '[x y z])
         v `(5 ~x (true ~y ~x) ~z)
-        r (reify (empty-s) v)]
+        r (reify empty-s v)]
     r))
  )
 
