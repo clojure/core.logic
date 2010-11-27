@@ -1,5 +1,5 @@
 (ns logic-fun.fast
-  (:refer-clojure :exclude [reify inc])
+  (:refer-clojure :exclude [reify inc ==])
   (:use [clojure.pprint :only [pprint]]))
 
 (set! *warn-on-reflection* true)
@@ -54,6 +54,9 @@
 (defn ^pairT pair [lhs rhs]
   (pairT. lhs rhs))
 
+(defn pair? [x]
+  (instance? pairT x))
+
 (defmethod print-method pairT [x writer]
            (.write writer (str "(" (lhs x) " . " (rhs x) ")")))
 
@@ -103,13 +106,17 @@
 (defn -reify [s v]
   (let [v (lookup s v)]
     (cond
-     (lvar? v) (ext s (reify-name s) v)
+     (lvar? v) (ext s v (reify-name s))
      (coll? v) (-reify (-reify s (first v)) (next v))
      :else s)))
 
+;; TODO: this walks the structure *twice*
+;; the first time we replace all the vars w/ themselves or their values
+;; in the second pass we map them vars to their reified names
+
 (defn reify [s v]
   (let [v (reify-lookup s v)]
-    (reify-lookup (-reify s (empty-s)) v)))
+    (reify-lookup (-reify (empty-s) v) v)))
 
 ;; =============================================================================
 ;; Substitutions
@@ -132,7 +139,8 @@
 (defprotocol ISubstitutionsCoerce
   (to-s [this]))
 
-;; NOTE: this datastructure may be unecessary depending on how miniKanren actually works
+;; NOTE: this data structure may be unecessary depending on how miniKanren actually works
+;; because {} is already persistent, can probably just use it wholesale - David
 
 (defrecord Substitutions [s order]
   ISubstitutions
@@ -162,24 +170,81 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-;; We can probably do this whole silly thing with lazy sequences
+;; NOTE: Consider converting to lazy sequences - David
 
-(defn mzero []
-  false)
+(defmacro mzero [] nil)
 
-(defn unit [a]
-  a)
+(defmacro unit [a] a)
 
-(defn choice [a f]
-  (pair a f))
+(defmacro choice [a f]
+  `(pair ~a ~f))
 
-(defn inc [e]
-  (fn [] e))
+(defmacro inc [e]
+  `(fn [] ~e))
+
+(defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
+  `(let [a-inf# ~e]
+     (cond
+      (not a-inf#) ~e0
+      (fn? a-inf#) (let [~f' a-inf#] ~e1)
+      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)
+                                                    ~f (rhs a-inf#)]
+                                                    ~e3)
+      :else (let [~a' a-inf#] ~e2))))
+
+(defmacro == [u v]
+  `(fn [a]
+     (if-let [s (unify ~u ~v a)]
+       (unit s)
+       (mzero))))
+
+;; a single value is just a single value
+;; convert a sequence of values into a lazy stream
+(defmacro mplus*
+  ([e] e)
+  ([e0 & e-rest] `(mplus ~e0 (fn [] (mplus* ~@e-rest)))))
+
+(defn mplus [a-inf f]
+  (case-inf a-inf
+            nil (f)                                    ; mzero
+            f' (inc (mplus (f) f'))                    ; inc
+            a (choice a f)                             ; unit
+            [a f'] (choice a (fn [] (mplus (f) f'))))) ; choice
+
+(defmacro cond-e [])
+
+(defn lvar-binds [syms]
+  (map (juxt identity lvar) syms))
+
+(defmacro exist [[:as x-rest] g0 & g-rest]
+  `(fn [a]
+     (inc
+      (let [~@(lvar-binds x-rest)]
+        (bind* (g0 a) ~@g-rest)))))
+
+(defmacro bind*
+  ([e] e)
+  ([e g0 & g-rest] `(bind* (bind ~e ~g0) ~@g-rest)))
+
+(defn bind [a-inf g]
+  (case-inf a-inf
+            nil (mzero)
+            f (inc (bind (f) g))
+            a (g a)
+            [a f] (mplus (g a) (fn [] (bind (f) g)))))
+
+(defmacro run [& [n [x] & gs]]
+  `(take n
+         (fn []
+           ((exist [])))))
 
 ;; =============================================================================
 ;; Comments and Testing
 
 (comment
+  (defmacro foo [a b]
+    `(let [~a ~b]
+       ~a))
  ;; ==================================================
  ;; TESTS
 
@@ -215,12 +280,17 @@
        y  (lvar 'y)]
    (lookup (to-s [[x 5] [y x]]) `(~x ~y)))
 
+ ; 
+ (let [x  (lvar 'x)
+       y  (lvar 'y)]
+   (-reify (empty-s) `(~x ~y)))
+
  ; (5 5)
  (let [x  (lvar 'x)
        y  (lvar 'y)]
    (reify-lookup (to-s [[x 5] [y x]]) `(~x ~y)))
 
- ;; FIXME: stack overflow
+ ;; (5 _.0 (true _.1 _.0) _.2)
  (let [[x y z] (map lvar '[x y z])
        v `(5 ~x (true ~y ~x) ~z)
        r (reify (empty-s) v)]
@@ -273,6 +343,12 @@
      (time
       (dotimes [_ 1e6]
         (lookup ss a)))))
+
+ (dotimes [_ 10]
+  (let [[x y z] (map lvar '[x y z])
+        v `(5 ~x (true ~y ~x) ~z)
+        r (reify (empty-s) v)]
+    r))
  )
 
 (comment
