@@ -1,4 +1,4 @@
-(ns logic-fun.core)
+(ns logic.core)
 
 (deftype lvarT [])
 

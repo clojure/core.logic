@@ -1,5 +1,5 @@
-(ns logic-fun.fast
-  (:refer-clojure :exclude [reify inc ==])
+(ns logic.minikanren
+  (:refer-clojure :exclude [reify inc == take])
   (:use [clojure.pprint :only [pprint]]))
 
 (set! *warn-on-reflection* true)
@@ -43,7 +43,7 @@
   (lhs [this])
   (rhs [this]))
 
-(defrecord pairT [lhs rhs]
+(deftype pairT [lhs rhs]
   IPair
   (lhs [this] lhs)
   (rhs [this] rhs)
@@ -167,7 +167,7 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-;; NOTE: Consider converting to lazy sequences - David
+;; NOTE: Consider converting to lazy sequences, will help originality case - David
 
 ;; 4 types of a-inf
 
@@ -181,6 +181,7 @@
 (defmacro inc [e]
   `(fn [] ~e))
 
+;; this is a binding macro for the different cases of a-inf
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
@@ -232,10 +233,25 @@
             a (g a)                                    ; choice
             [a f] (mplus (g a) (fn [] (bind (f) g))))) ; unit
 
-(defmacro run [& [n [x] & gs]]
+(defmacro run [& [n [x] g0 & g-rest]]
   `(take n
          (fn []
-           ((exist [])))))
+           ((exist [x] g0 ~@g-rest
+                   (fn [a]
+                     (cons (reify x a) nil)))
+            empty-s))))
+
+(defn take [n f]
+  (if (and n zero? n)
+    []
+    (case-inf (f)
+              nil []
+              f (take n f)
+              a a
+              [a f] (cons (first a) (take (and n (dec n)))))))
+
+(defmacro run* [& [[x] g0 & g-rest]]
+  ())
 
 ;; =============================================================================
 ;; Comments and Testing
@@ -384,4 +400,19 @@
       (time
        (dotimes [_ 1e7]
          (let [[a b] p])))))
-)
+  )
+
+;; Todos
+;; 1) Understand the most basic case, ==
+;; 2) Understand basic cond-e
+
+;; Future Directions
+
+;; 1) remove monadic style code, just use lazy-sequences
+;; 2) more optimizations
+;; 3) support Prolog style syntax, don't have to use exist implicit
+;; 4) support using unify standalone, no need to call run
+;; 5) investigate forward-chaining
+;; 6) tabling
+;; 7) consider parallel syntax
+;; Datalog
