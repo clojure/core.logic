@@ -188,7 +188,7 @@
 (defmacro inc [e]
   `(fn [] ~e))
 
-;; this is a binding macro for the different cases of a-inf
+;; this is a conveniene binding macro for the different cases of a-inf
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
