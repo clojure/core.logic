@@ -49,8 +49,12 @@
 (defn pair? [x]
   (instance? pairT x))
 
-(defmethod print-method pairT [x writer]
-           (.write writer (str "(" (lhs x) " . " (rhs x) ")")))
+(defmethod print-method pairT [x w]
+  (.write w "(")
+  (print-method (lhs x) w)
+  (.write w " . ")
+  (print-method (rhs x) w)
+  (.write w ")"))
 
 ;; =============================================================================
 ;; Unification
