@@ -11,20 +11,20 @@
   ([] (lvarT. (gensym)))
   ([name] (lvarT. name)))
 
+(defmethod print-method lvarT [x writer]
+           (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+
 (deftype rest-lvarT [name])
 
 (defn ^rest-lvarT rest-lvar
   ([] (rest-lvarT. (gensym)))
   ([name] (rest-lvarT. name)))
 
-(defn lvar? [x]
-  (or (instance? lvarT x) (instance? rest-lvarT x)))
-
-(defmethod print-method lvarT [x writer]
-           (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
-
 (defmethod print-method rest-lvarT [x writer]
            (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+
+(defn lvar? [x]
+  (or (instance? lvarT x) (instance? rest-lvarT x)))
 
 ;; TODO : why doesn't print-method get called during pretty printing ?
 
@@ -85,7 +85,7 @@
 ;; =============================================================================
 ;; Reification
 
-;; TODO: needs to reconstruct the correct type
+;; TODO: need to reconstruct the correct type
 
 (defn reify-lookup [s v]
   (let [v (lookup s v)]
@@ -125,7 +125,7 @@
   (loop [v v v' (vec-last (s v)) s s ov v]
     (cond
      (nil? v')          v
-     (identical? v' ov) :circular
+     (identical? v' ov) ::circular
      (lvar? v')         (recur v' (vec-last (s v')) s ov)
      :else              v')))
 
@@ -147,7 +147,7 @@
   ISubstitutions
   (length [this] (count order))
   (ext [this x v]
-       (if (= (lookup* s x) :circular)
+       (if (= (lookup* s x) ::circular)
          nil
          (ext-no-check this x v)))
   (ext-no-check [this x v]
@@ -158,7 +158,7 @@
   (unify [this u v]
          (unify* s u v)))
 
-(defn ^Substitutions empty-s []
+(defn empty-s []
   (Substitutions. {} []))
 
 (defn to-s [v]
@@ -185,12 +185,12 @@
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
-      (not a-inf#) ~e0                                                ; mzero
-      (fn? a-inf#) (let [~f' a-inf#] ~e1)                             ; inc
-      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)   ; choice
+      (not a-inf#) ~e0
+      (fn? a-inf#) (let [~f' a-inf#] ~e1)
+      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)
                                                     ~f (rhs a-inf#)]
                                                     ~e3)
-      :else (let [~a' a-inf#] ~e2))))                                 ; unit
+      :else (let [~a' a-inf#] ~e2))))
 
 (defmacro == [u v]
   `(fn [a]
@@ -206,10 +206,10 @@
 
 (defn mplus [a-inf f]
   (case-inf a-inf
-            nil (f)                                    ; mzero
-            f' (inc (mplus (f) f'))                    ; inc
-            a (choice a f)                             ; choice
-            [a f'] (choice a (fn [] (mplus (f) f'))))) ; unit
+            false (f)
+            f' (inc (mplus (f) f'))
+            a (choice a f)
+            [a f'] (choice a (fn [] (mplus (f) f')))))
 
 (defn bind-cond-e-clause [s]
   (fn [[g0 & g-rest]]
@@ -239,10 +239,10 @@
 
 (defn bind [a-inf g]
   (case-inf a-inf
-            nil (mzero)                                ; mzero
-            f (inc (bind (f) g))                       ; inc
-            a (g a)                                    ; choice
-            [a f] (mplus (g a) (fn [] (bind (f) g))))) ; unit
+            false (mzero)
+            f (inc (bind (f) g))
+            a (g a)
+            [a f] (mplus (g a) (fn [] (bind (f) g)))))
 
 (defmacro run [& [n [x] g0 & g-rest]]
   `(take n
@@ -256,7 +256,7 @@
   (if (and n zero? n)
     []
     (case-inf (f)
-              nil []
+              false []
               f (take n f)
               a a
               [a f] (cons (first a) (take (and n (dec n)))))))
