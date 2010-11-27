@@ -5,7 +5,9 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype lvarT [name])
+(deftype lvarT [name]
+  Object
+  (toString [this] (str "<lvar:" name ">")))
 
 (defn ^lvarT lvar
   ([] (lvarT. (gensym)))
@@ -41,7 +43,9 @@
   (rhs [this] rhs)
   clojure.lang.ISeq
   (first [this] lhs)
-  (more [this] rhs))
+  (more [this] rhs)
+  Object
+  (toString [this] (str "(" lhs " . " rhs ")")))
 
 (defn ^pairT pair [lhs rhs]
   (pairT. lhs rhs))
@@ -50,11 +54,7 @@
   (instance? pairT x))
 
 (defmethod print-method pairT [x w]
-  (.write w "(")
-  (print-method (lhs x) w)
-  (.write w " . ")
-  (print-method (rhs x) w)
-  (.write w ")"))
+  (.write w (str "(" (lhs x)  " . " (rhs x)  ")")))
 
 ;; =============================================================================
 ;; Unification
@@ -119,22 +119,14 @@
 ;; =============================================================================
 ;; Substitutions
 
-;; FIXME: there's a subtle bug here, v' might legitimately be nil, the
-;; (vec-last (s v')), once I understand the goal part some more, we should
-;; just maybe switch over to hash-maps
-
-;; we can use find, returns the entry
-
-(defn vec-last [v]
-  (nth v (dec (count v))))
-
 (defn lookup* [s v]
-  (loop [v v v' (vec-last (s v)) s s ov v]
-    (cond
-     (nil? v')          v
-     (identical? v' ov) ::circular
-     (lvar? v')         (recur v' (vec-last (s v')) s ov)
-     :else              v')))
+  (loop [v v p (find s v) s s ov v]
+    (if (nil? p)
+      v
+      (let [[v v'] p]
+        (if (lvar? v')
+          (recur v' (find s v') s ov)
+          v')))))
 
 (defprotocol ISubstitutions
   (length [this])
@@ -142,13 +134,6 @@
   (ext-no-check [this x v])
   (lookup [this v])
   (unify [this u v]))
-
-;; NOTE: this data structure may be unecessary depending on how miniKanren actually works
-;; because {} is already persistent, can probably just use it wholesale - David
-
-;; one advantage of the current version is that we can see the order of the
-;; substitutions, that's not possible with normal hash-map, useful for
-;; debugging
 
 (defrecord Substitutions [s s']
   ISubstitutions
@@ -191,7 +176,6 @@
 (defn fail [a]
   (mzero))
 
-;; this is a conveniene binding macro for the different cases of a-inf
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
      (cond
@@ -208,8 +192,6 @@
        (unit s#)
        (mzero))))
 
-;; a single value is just a single value
-;; convert a sequence of values into a lazy stream
 (defmacro mplus*
   ([e] e)
   ([e0 & e-rest] `(mplus ~e0 (fn [] (mplus* ~@e-rest)))))
@@ -254,8 +236,6 @@
             a (g a)
             [a f] (mplus (g a) (fn [] (bind (f) g)))))
 
-;; TODO: switch to conj onto a vector
-
 (defmacro run [& [n [x] g0 & g-rest]]
   `(take ~n
          (fn []
@@ -293,17 +273,26 @@
         s (to-s [[x 5] [y x]])]
     (ext s z y))
 
-  ;; nil
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (Substitutions. {x [y] y [x]} [x y])]
-    (ext s y y))
-
   ;; 5
   (let [x  (lvar 'x)
         y  (lvar 'y)
         ss (to-s [[x 5] [y x]])]
-    (lookup ss y)) ; 5
+    (lookup ss y))
+
+  ;; 5
+  (let [[x y z c b a :as s] (map lvar '[x y z c b a])
+        ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
+    (lookup ss a))
+  
+  ;; 5, degenerate case
+  (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
+        ss (to-s [[x 5] [m 0] [m 0] [m 0] [m 0]
+                  [y x] [n 0] [n 0] [n 0] [n 0]
+                  [z y] [o 0] [o 0] [o 0] [o 0]
+                  [c z] [p 0] [p 0] [p 0] [p 0]
+                  [b c] [q 0] [q 0] [q 0] [q 0]
+                  [a b]])]
+    (lookup ss a))
 
   ;; _.2
   (let [x  (lvar 'x)
@@ -314,11 +303,6 @@
   (let [x  (lvar 'x)
         y  (lvar 'y)]
     (lookup (to-s [[x 5] [y x]]) `(~x ~y)))
-
-  ;; 
-  (let [x  (lvar 'x)
-        y  (lvar 'y)]
-    (-reify empty-s `(~x ~y)))
 
   ;; (5 5)
   (let [x  (lvar 'x)
@@ -331,61 +315,53 @@
         r (reify empty-s v)]
     r)
 
+  (run* [q]
+        succeed
+        (== true q))
+
   ;; ==================================================
   ;; PERFORMANCE
   
-  ;; sick 470ms on 1.3.0 alph3
+  ;; sick 183ms on 1.3.0 alph3
   (dotimes [_ 10]
     (let [[x y z :as s] (map lvar '[x y z])
-          ss (Substitutions. {x [y 1] y [5]} s)]
+          ss (to-s [[x 5] [y x]])]
       (time
        (dotimes [_ 1e6]
-         (ext-no-check ss x z)))))
+         (ext-no-check ss z y)))))
 
-  ;; ~650ms
+  ;; ~239ms
   (dotimes [_ 10]
     (let [[x y z :as s] (map lvar '[x y z])
-          ss (Substitutions. {x [y 1] y [5]} s)]
+          ss (to-s [[x 5] [y x]])]
       (time
        (dotimes [_ 1e6]
          (ext ss x z)))))
 
-  ;; ~1200ms
+  ;; ~700ms
   ;; just a tiny bit slower than the Scheme version
   (dotimes [_ 10]
     (let [[x y z c b a :as s] (map lvar '[x y z c b a])
-          ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]} s)]
+          ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
       (time
        (dotimes [_ 1e6]
          (lookup ss a)))))
 
-  ;; degenerate case
-  (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
-        ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
-                            m [0] n [1] o [2] p [3] q [4]}
-                           [x m m m m y n n n n z o o o o
-                            c p p p p b q q q q a])]
-    (lookup ss a))
-
-  ;; 600ms (NOTE: this jump is because array-map is slower than hash-maps)
+  ;; 200ms (NOTE: this jump is because array-map is slower than hash-maps)
   ;; Scheme is ~1650ms
   (dotimes [_ 10]
     (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
-          ss (Substitutions. {x [5] y [x] z [y] c [z] b [c] a [b]
-                              m [0] n [1] o [2] p [3] q [4]}
-                             [x m m m m y n n n n z o o o o
-                              c p p p p b q q q q a])]
+          ss (to-s [[x 5] [m 0] [m 0] [m 0] [m 0]
+                    [y x] [n 0] [n 0] [n 0] [n 0]
+                    [z y] [o 0] [o 0] [o 0] [o 0]
+                    [c z] [p 0] [p 0] [p 0] [p 0]
+                    [b c] [q 0] [q 0] [q 0] [q 0]
+                    [a b]])]
       (time
        (dotimes [_ 1e6]
          (lookup ss a)))))
 
-  (dotimes [_ 10]
-    (let [[x y z] (map lvar '[x y z])
-          v `(5 ~x (true ~y ~x) ~z)
-          r (reify empty-s v)]
-      r))
-
-  ;; ~1s, we're a bit ahead of Scheme at ~1.3s
+  ;; ~560ms!!! Scheme at ~1.3s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
@@ -400,6 +376,7 @@
         y (lvar 'y)]
    (to-s [[x 5] [y x]]))
 
+  ;; TODO : does not work, rest tries to convert the remainder into a seq
   (dotimes [_ 10]
     (let [p (pair 'a (fn []))]
      (time
