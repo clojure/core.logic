@@ -150,16 +150,16 @@
 ;; substitutions, that's not possible with normal hash-map, useful for
 ;; debugging
 
-(defrecord Substitutions [s order]
+(defrecord Substitutions [s s']
   ISubstitutions
-  (length [this] (count order))
+  (length [this] (count s'))
   (ext [this x v]
        (if (= (lookup* s x) ::circular)
          nil
          (ext-no-check this x v)))
   (ext-no-check [this x v]
-                (Substitutions. (update-in s [x] (fnil conj []) v)
-                                (conj order x)))
+                (Substitutions. (assoc s x v)
+                                (conj s' (pair x v))))
   (lookup [this v]
           (lookup* s v))
   (unify [this u v]
@@ -168,11 +168,9 @@
 (def empty-s (Substitutions. {} []))
 
 (defn to-s [v]
-  (let [s (reduce (fn [m [k v]]
-                    (update-in m [k] (fnil conj []) v))
-                  {} v)
-        order (vec (map first v))]
-    (Substitutions. s order)))
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
+        s' (vec (map (partial apply pair) v))]
+    (Substitutions. s s')))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
