@@ -200,7 +200,7 @@
 
 (defmacro == [u v]
   `(goal [a]
-     (if-let [s (unify ~u ~v a)]
+     (if-let [s (unify a ~u ~v)]
        (unit s)
        (mzero))))
 
