@@ -94,9 +94,12 @@
                  (ext s u v))
      (lvar? v) (ext s v u)
      (and (coll? u) (coll? v)) (let [[uf & ur] (seq u)
-                                     [vf & vr] (seq v)
-                                     s (unify s uf vf)]
-                                 (and s (unify s ur vr)))
+                                     [vf & vr] (seq v)]
+                                 (cond
+                                  (rest-lvar? uf) (unify s uf v)
+                                  (rest-lvar? vf) (unify s vf u)
+                                  :else (let [s (unify s uf vf)]
+                                          (and s (unify s ur vr)))))
      (= u v) s
      :else false)))
 
@@ -317,6 +320,9 @@
 ;; =============================================================================
 ;; Core functions
 
+(defn nil-o [a]
+  (== nil a))
+
 (defn cons-o [a l]
   (exist [c &d]
          (== (cons a &d) l)))
@@ -332,6 +338,9 @@
   ())
 
 (defn twin-o [p]
+  )
+
+(defn append-o [a b]
   )
 
 ;; =============================================================================
@@ -542,6 +551,14 @@
 
   (run* [q]
         (rest-o q [1 2]))
+
+  ;; FIXME: doesn't work
+
+  (run* [&q]
+        (rest-o [1 2] &q))
+
+  (run* [&q]
+        (rest-o [1 2 3 4 5 6 7 8] &q))
 
   ;; tricky need to
   (unifier '(?x ?y) '(1 2))
