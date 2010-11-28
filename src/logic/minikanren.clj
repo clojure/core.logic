@@ -268,6 +268,20 @@
 (defmacro run* [& body]
   `(run false ~@body))
 
+(defn not-quit? [s]
+  (let [e (read-string s)]
+   (if (= e '(quit))
+     ::exit
+     (eval e))))
+
+(defn logic-repl []
+  (.print System/out "?- ")
+  (.flush System/out)
+  (let [v (not-quit? (read-line))]
+    (when (not= v ::exit) 
+      (println v)
+      (recur))))
+
 ;; =============================================================================
 ;; Comments and Testing
 
