@@ -294,28 +294,35 @@
 (defn lvar-sym? [s]
   (= (first (str s)) \?))
 
+(defn rest-lvar-sym? [s]
+  (let [[f s] (str s)]
+    (and (= f \?) (= s \&))))
+
 (defn rem-? [s]
   (symbol (apply str (drop 1 (str s)))))
 
 (defn replace-lvar [expr]
-  (if (lvar-sym? expr)
-    (lvar (rem-? expr))
-    expr))
+  (cond
+   (rest-lvar-sym? expr) (rest-lvar (rem-? expr))
+   (lvar-sym? expr) (lvar (rem-? expr))
+   :else expr))
 
 (defn prep [expr]
   (postwalk replace-lvar expr))
 
 (defn unifier [u w]
-  (run* [q]
-        (== u w)
-        (== u q)))
+  (first
+   (run* [q]
+         (== u w)
+         (== u q))))
 
 (defn unifier' [u w]
   (let [u' (prep u)
         w' (prep w)]
-   (run* [q]
-         (== u' w')
-         (== u' q))))
+   (first
+    (run* [q]
+          (== u' w')
+          (== u' q)))))
 
 ;; =============================================================================
 ;; Core functions
@@ -551,8 +558,6 @@
 
   (run* [q]
         (rest-o q [1 2]))
-
-  ;; FIXME: doesn't work
 
   (run* [&q]
         (rest-o [1 2] &q))
