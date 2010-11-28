@@ -1,5 +1,5 @@
-(ns logic.test.core
-  (:use [logic.core] :reload)
+(ns logos.test.core
+  (:use [logos.core] :reload)
   (:use [clojure.test]))
 
 (deftest replace-me ;; FIXME: write

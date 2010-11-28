@@ -1,17 +1,11 @@
-# logic
+h1. Logos
 
-FIXME: write description
+A Logic Programming library for Clojure. At it's heart is an implementation of miniKanren as described in William Byrd's dissertation Relational Programming in miniKanren: Techniques, Applications, and Implementations.
 
-## Usage
+h2. About
 
-FIXME: write
+This library is under heavily development as I cover the ideas in Byrd's thesis and other sources on Logic Programming.
 
-## Installation
+This is not the first implementation of miniKanren in Clojure. Jim Duey's can be found here. The main difference is that I worked from the descriptions and source in dissertation and not the miniKanren source found on the web.
 
-FIXME: write
-
-## License
-
-Copyright (C) 2010 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+The other difference is that is that I'm specifically interested in performance. The current version runs significantly faster than the current Clojure implementation. It can also perform unification significantly faster than Fogus's clojure.unify.

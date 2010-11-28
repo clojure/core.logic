@@ -1,4 +1,4 @@
-(defproject logic "1.0.0-SNAPSHOT"
+(defproject logos "0.1.0-SNAPSHOT"
   :description "Logic programming for Clojure"
   :dependencies [[org.clojure/clojure "1.3.0-alpha3"]
                  #_[org.clojure/clojure "1.2.0"]

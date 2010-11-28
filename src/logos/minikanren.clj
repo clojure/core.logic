@@ -1,4 +1,4 @@
-(ns logic.minikanren
+(ns logos.minikanren
   (:refer-clojure :exclude [reify inc == take])
   (:use [clojure.pprint :only [pprint]]
         [clojure.walk :only [postwalk]]))

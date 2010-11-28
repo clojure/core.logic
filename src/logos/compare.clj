@@ -1,4 +1,4 @@
-(ns logic.compare
+(ns logos.compare
   (:require [mini-kanren.core :as mk]
             [clojure.core.unify :as unify]))
 
