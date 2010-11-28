@@ -67,8 +67,8 @@
 (declare length)
 (declare empty-s)
 
-;; TODO: unify* should fail in the 4th cond line if the types are not the same
-;; lists should maybe unify with vectors
+;; NOTE: should unify* fail in the 4th cond line if the coll types are not the
+;; same?
 
 (defn print-identity [v]
   (println v) v)
@@ -82,8 +82,8 @@
                  (ext-no-check s u v)
                  (ext s u v))
      (lvar? v) (ext s v u)
-     (and (coll? u) (coll? v)) (let [[uf & ur] u
-                                     [vf & vr] v
+     (and (coll? u) (coll? v)) (let [[uf & ur] (seq u)
+                                     [vf & vr] (seq v)
                                      s (unify s uf vf)]
                                  (and s (unify s ur vr)))
      (= u v) s
@@ -92,14 +92,18 @@
 ;; =============================================================================
 ;; Reification
 
-;; TODO: need to reconstruct the correct type
-
 (defn reify-lookup [s v]
   (let [v (lookup s v)]
     (cond
      (lvar? v) v
-     (coll? v) (cons (reify-lookup s (first v))
-                     (reify-lookup s (next v)))
+     (coll? v) (let [vseq (if (map? v) (reduce concat v) v)
+                     r (cons (reify-lookup s (first vseq))
+                             (reify-lookup s (next vseq)))]
+                 (cond
+                  (vector? v) (vec r)
+                  (map? v) (apply hash-map r)
+                  (set? v) (set r)
+                  :else r))
      :else v)))
 
 (defn reify-name [s]
@@ -324,6 +328,9 @@
     r)
 
   (run* [q]
+        (== true q))
+
+  (run* [q]
         succeed
         (== true q))
 
@@ -334,6 +341,59 @@
   (run* [q]
         (== false q)
         (== true q))
+
+  ;; [[1 5]]
+  (run* [q]
+        (exist [x y]
+               (== [x y] [1 5])
+               (== [x y] q)))
+
+  ;; [[1 5]]
+  (run* [q]
+        (exist [x y]
+               (== {x y} {1 5})
+               (== [x y] q)))
+
+  ;; [[_.0 _.1]]
+  (run* [q]
+        (exist [x y]
+               (== [x y] q)))
+
+  ;; error
+  (run* [q]
+        (exist [x y]
+               (== {x y} q)))
+
+  (run* [q]
+        (exist [x y z]
+               (== y z)
+               (== [1 2 {x y}] q)
+               (== z 5)))
+
+  (let [[x y q] (map lvar '[x y q])
+        s (unify empty-s {(lvar 'x) (lvar 'y)} q)]
+    (reify s q))
+
+  (run* [q]
+        (exist [x y r]
+         (== {x y} r)
+         (== {x y} {1 5})
+         (== r q)))
+
+  (run* [q]
+        (exist [x y z]
+               (== y z)
+               (== [1 2 {x y}] q)
+               (== z 5)))
+
+  (run* [q]
+        (exist [x y z]
+               (== y z)
+               (== [1 2 #{x y}] q)
+               (== z 5)))
+
+  ;; something like the following would be cool
+  ;; (unifier '(?x ?y) [1 5])
 
   (run* [x]
         (cond-e
@@ -362,26 +422,27 @@
                 ((== false x) (== true y)))
                (== (cons x (cons y ())) r)))
 
+  ;; attempt to understand the above
   (take
- false
- (fn []
+   false
+   (fn []
      ((fn [a__10796__auto__]
-          (fn []
-              (let [x (lvar 'x)]
-                   (bind
-                    ((fn [a10883]
-                         (fn []
-                             (mplus
-                              (bind ((fn [a__10763__auto__]
-                                         (if-let [s__10764__auto__ (unify a__10763__auto__ x 'olive)]
-                                                 s__10764__auto__
-                                                 false)) a10883) succeed)
-                              (fn [] (bind ((fn [a__10763__auto__]
-                                                (if-let [s__10764__auto__ (unify a__10763__auto__ x 'oil)]
-                                                        s__10764__auto__
-                                                        false)) a10883) succeed)))))
-                     a__10796__auto__)
-                    (fn [a__10816__auto__] (conj [] (reify a__10816__auto__ x)))))))
+        (fn []
+          (let [x (lvar 'x)]
+            (bind
+             ((fn [a10883]
+                (fn []
+                  (mplus
+                   (bind ((fn [a__10763__auto__]
+                            (if-let [s__10764__auto__ (unify a__10763__auto__ x 'olive)]
+                              s__10764__auto__
+                              false)) a10883) succeed)
+                   (fn [] (bind ((fn [a__10763__auto__]
+                                   (if-let [s__10764__auto__ (unify a__10763__auto__ x 'oil)]
+                                     s__10764__auto__
+                                     false)) a10883) succeed)))))
+              a__10796__auto__)
+             (fn [a__10816__auto__] (conj [] (reify a__10816__auto__ x)))))))
       empty-s)))
 
   ;; ==================================================
@@ -426,13 +487,62 @@
        (dotimes [_ 1e6]
          (lookup ss a)))))
 
-  ;; ~560ms!!! Scheme at ~1.3s
+  ;; 1.5 million unifications a second, not bad
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1.5e6]
+       (run* [q]
+             (== true q)))))
+  
+  ;; ~560ms!!!
+  ;; Scheme at ~1.3s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
        (run* [q]
              succeed
              (== true q)))))
+
+  ;; 1s for 1e5
+  ;; 2s for Scheme, so Clojure miniKanren is about twice as fast
+  (dotimes [_ 10]
+   (time
+    (dotimes [_ 1e5]
+     (run* [r]
+           (exist [x y]
+                  (cond-e
+                   ((teacup-o x) (== true y) s#)
+                   ((== false x) (== true y)))
+                  (== (cons x (cons y ())) r))))))
+
+  ;; 200,000 unifications
+  ;; what kind of boost could we get with tabling ?
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 2e5]
+       (run* [q]
+             (exist [x y]
+                    (== [x y] [1 5])
+                    (== [x y] q))))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 2e5]
+       (run* [q]
+             (exist [x y z]
+                    (== y z)
+                    (== [1 2 {x y}] q)
+                    (== z 5))))))
+
+  ;; 2.5s much slower
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 2e5]
+       (run* [q]
+             (exist [x y z]
+                    (== y z)
+                    (== [1 2 {x y}] q)
+                    (== z 5))))))
  )
 
 (comment
