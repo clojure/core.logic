@@ -39,8 +39,6 @@
 (defn rest-lvar-sym? [x]
   (= (first (str x)) \&))
 
-;; TODO : why doesn't print-method get called during pretty printing ?
-
 ;; =============================================================================
 ;; Pairs
 
@@ -569,8 +567,8 @@
   (run* [&q]
         (rest-o [1 2 3 4 5 6 7 8] &q))
 
-  ;; tricky need to
-  (unifier '(?x ?y) '(1 2))
+  (unifier' '(?x ?y) '(1 2))
+  (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
 
   ;; ==================================================
   ;; PERFORMANCE
@@ -673,16 +671,26 @@
 
   ;; this is going to be very, very slow
   ;; postwalk is not cheap
+  ;; 45 seconds
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
        (unifier '{?x ?y} {1 2}))))
 
+  ;; much faster
   (dotimes [_ 10]
     (let [[u w] (map prep ['{?x ?y} {1 2}])]
      (time
       (dotimes [_ 1e5]
         (unifier u w)))))
+
+  ;; 2 seconds
+  ;; we should add the unassociated check
+  (dotimes [_ 10]
+    (let [[u w] (map prep ['(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0)])] 
+      (time
+       (dotimes [_ 1e5]
+         (unifier u w)))))
  )
 
 (comment
