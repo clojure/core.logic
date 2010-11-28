@@ -1,32 +1,43 @@
 (ns logic.minikanren
   (:refer-clojure :exclude [reify inc == take])
-  (:use [clojure.pprint :only [pprint]]))
+  (:use [clojure.pprint :only [pprint]]
+        [clojure.walk :only [postwalk]]))
 
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype lvarT [name]
+(deftype lvarT [name s]
   Object
   (toString [this] (str "<lvar:" name ">")))
 
 (defn ^lvarT lvar
-  ([] (lvarT. (gensym)))
-  ([name] (lvarT. name)))
+  ([] (lvarT. (gensym) nil))
+  ([name] (lvarT. name nil))
+  ([name s] (lvarT. name s)))
 
 (defmethod print-method lvarT [x writer]
-           (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+  (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
 
-(deftype rest-lvarT [name])
+(deftype rest-lvarT [name s]
+  clojure.lang.Seqable
+  (seq [this] (list this)))
 
 (defn ^rest-lvarT rest-lvar
-  ([] (rest-lvarT. (gensym)))
-  ([name] (rest-lvarT. name)))
+  ([] (rest-lvarT. (gensym) nil))
+  ([name] (rest-lvarT. name nil))
+  ([name s] (rest-lvarT. name s)))
 
 (defmethod print-method rest-lvarT [x writer]
-           (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+  (.write writer (str "<lvar:" (.name ^rest-lvarT x) ">")))
 
 (defn lvar? [x]
   (or (instance? lvarT x) (instance? rest-lvarT x)))
+
+(defn rest-lvar? [x]
+  (instance? rest-lvarT x))
+
+(defn rest-lvar-sym? [x]
+  (= (first (str x)) \&))
 
 ;; TODO : why doesn't print-method get called during pretty printing ?
 
@@ -224,8 +235,14 @@
       (inc
        (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
+(defn lvar-bind [sym]
+  ((juxt identity
+         (fn [s] (if (rest-lvar-sym? s)
+                   `(rest-lvar '~s)
+                   `(lvar '~s)))) sym))
+
 (defn lvar-binds [syms]
-  (reduce concat (map (juxt identity (fn [s] `(lvar '~s))) syms)))
+  (reduce concat (map lvar-bind syms)))
 
 (defmacro exist [[& x-rest] g0 & g-rest]
   `(fn [a#]
@@ -268,13 +285,65 @@
 (defmacro run* [& body]
   `(run false ~@body))
 
+;; =============================================================================
+;; Unifier
+
+(defn lvar-sym? [s]
+  (= (first (str s)) \?))
+
+(defn rem-? [s]
+  (symbol (apply str (drop 1 (str s)))))
+
+(defn replace-lvar [expr]
+  (if (lvar-sym? expr)
+    (lvar (rem-? expr))
+    expr))
+
+(defn prep [expr]
+  (postwalk replace-lvar expr))
+
+(defn unifier [u w]
+  (run* [q]
+        (== u w)
+        (== u q)))
+
+(defn unifier' [u w]
+  (let [u' (prep u)
+        w' (prep w)]
+   (run* [q]
+         (== u' w')
+         (== u' q))))
+
+;; =============================================================================
+;; Core functions
+
+(defn cons-o [a l]
+  (exist [c &d]
+         (== (cons a &d) l)))
+
+(defn rest-o [l d]
+  (exist [a]
+         (== (cons a d) l)))
+
+(defn first-o [a l]
+  (cons-o a l))
+
+(defn pair-o [p]
+  ())
+
+(defn twin-o [p]
+  )
+
+;; =============================================================================
+;; Logic REPL
+
 (defn not-quit? [s]
   (let [e (read-string s)]
    (if (= e '(quit))
      ::exit
      (eval e))))
 
-(defn logic-repl []
+(defn repl []
   (.print System/out "?- ")
   (.flush System/out)
   (let [v (not-quit? (read-line))]
@@ -405,9 +474,6 @@
                (== [1 2 #{x y}] q)
                (== z 5)))
 
-  ;; something like the following would be cool
-  ;; (unifier '(?x ?y) [1 5])
-
   (run* [x]
         (cond-e
          ((== x 'olive) succeed)
@@ -435,6 +501,12 @@
                 ((== false x) (== true y)))
                (== (cons x (cons y ())) r)))
 
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        v [x y]]
+    (run* [q]
+          (== v q)))
+
   ;; attempt to understand the above
   (take
    false
@@ -457,6 +529,22 @@
               a__10796__auto__)
              (fn [a__10816__auto__] (conj [] (reify a__10816__auto__ x)))))))
       empty-s)))
+
+  (run* [q]
+        (cons-o 'a q))
+
+  (run* [q]
+        (exist [a]
+               (cons-o a q)))
+
+  (run* [q]
+        (first-o q [1 2]))
+
+  (run* [q]
+        (rest-o q [1 2]))
+
+  ;; tricky need to
+  (unifier '(?x ?y) '(1 2))
 
   ;; ==================================================
   ;; PERFORMANCE
@@ -538,24 +626,37 @@
                     (== [x y] [1 5])
                     (== [x y] q))))))
 
+  ;; 2.5s, much slower
   (dotimes [_ 10]
     (time
      (dotimes [_ 2e5]
        (run* [q]
              (exist [x y z]
                     (== y z)
-                    (== [1 2 {x y}] q)
+                    (== [1 2 {x z}] q)
                     (== z 5))))))
 
-  ;; 2.5s much slower
+  ;; 1.8s, if we had something eliminated the needless unifications
+  ;; not that much of an improvement for 2e5
   (dotimes [_ 10]
     (time
      (dotimes [_ 2e5]
        (run* [q]
              (exist [x y z]
-                    (== y z)
-                    (== [1 2 {x y}] q)
-                    (== z 5))))))
+                    (== [1 2 {x 5}] q))))))
+
+  ;; this is going to be very, very slow
+  ;; postwalk is not cheap
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (unifier '{?x ?y} {1 2}))))
+
+  (dotimes [_ 10]
+    (let [[u w] (map prep ['{?x ?y} {1 2}])]
+     (time
+      (dotimes [_ 1e5]
+        (unifier u w)))))
  )
 
 (comment
