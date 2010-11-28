@@ -20,7 +20,7 @@ h2. Examples
 
 <pre>
 (run* [q]
-        (rest-o q [1 2])) ; [(_.0 1 2)]
+  (rest-o q [1 2])) ; [(_.0 1 2)]
 </pre>
 
 <pre>
