@@ -291,10 +291,10 @@
 ;; =============================================================================
 ;; Unifier
 
-(defn lvar-sym? [s]
+(defn lvarq-sym? [s]
   (= (first (str s)) \?))
 
-(defn rest-lvar-sym? [s]
+(defn rest-lvarq-sym? [s]
   (let [[f s] (str s)]
     (and (= f \?) (= s \&))))
 
@@ -303,8 +303,8 @@
 
 (defn replace-lvar [expr]
   (cond
-   (rest-lvar-sym? expr) (rest-lvar (rem-? expr))
-   (lvar-sym? expr) (lvar (rem-? expr))
+   (rest-lvarq-sym? expr) (rest-lvar (rem-? expr))
+   (lvarq-sym? expr) (lvar (rem-? expr))
    :else expr))
 
 (defn prep [expr]
@@ -545,6 +545,10 @@
               a__10796__auto__)
              (fn [a__10816__auto__] (conj [] (reify a__10816__auto__ x)))))))
       empty-s)))
+
+  (run* [q]
+        (exist [&q]
+         (== &q q)))
 
   (run* [q]
         (cons-o 'a q))
