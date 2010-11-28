@@ -359,7 +359,6 @@
         (exist [x y]
                (== [x y] q)))
 
-  ;; error
   (run* [q]
         (exist [x y]
                (== {x y} q)))
@@ -584,12 +583,11 @@
   )
 
 ;; Todos
-;; 1) Understand the most basic case, ==
-;; 2) Understand basic cond-e
+;; 1) Understand basic cond-e
 
 ;; Future Directions
 
-;; 1) remove monadic style code, just use lazy-sequences
+;; 1) compare with lazy sequences instead of (a . f)
 ;; 2) more optimizations
 ;; 3) support Prolog style syntax, don't have to use exist implicit
 ;; 4) support using unify standalone, no need to call run
