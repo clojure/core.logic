@@ -1,16 +1,18 @@
 h1. Logos
 
-A Logic Programming library for Clojure. At it's heart is an implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663.
+A Logic Programming library for Clojure. At its heart is an implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663.
 
 h2. About
 
-This library is under heavily development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports Clojure 1.3.0 alphas.
+This library is under heavily development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
 
-This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. It got me interested in logic programming in the first place. The main difference from this implementation is that I worked from the descriptions and source found in the dissertation and not the miniKanren source currently available on the web.
+There are most certainly bugs. I hope to iron out a solid core version with numerous tests before working on alternate implementations (which will most likely be done in branches).
+
+This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. His work on that got me interested in logic programming in the first place. The main difference from this implementation is that I worked from the descriptions and source found in the dissertation and not the miniKanren source currently available on the web.
 
 h2. Goals
 
-* Performance. The current version runs significantly faster than Jim Duey's implementation. It can also perform unification significantly faster than Fogus's clojure.unify.
+* Performance. The Scheme version is quite fast. This implementation is significantly faster than that.
 * Emphasis on pure relational programming.
 * Parallel logic programming.
 
@@ -18,7 +20,7 @@ h2. Examples
 
 <pre>
 (run* [q]
-        (rest-o q [1 2])) ; [(_.0 1 2)]o
+        (rest-o q [1 2])) ; [(_.0 1 2)]
 </pre>
 
 <pre>
