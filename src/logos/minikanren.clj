@@ -170,7 +170,7 @@
   (symbol (str "_." (length s))))
 
 (defn reify-rest-lvar-name [s]
-  (symbol (str ". _." (length s))))
+  (symbol (str "_.&" (length s))))
 
 (defn -reify [s v]
   (let [v (lookup s v)]
@@ -345,12 +345,12 @@
     `(lvar '~sym)))
 
 (defn trace-lvar [a lvar]
-  `(println (str '~lvar) " = " (reify ~a ~(sym->lvar lvar))))
+  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~(sym->lvar lvar)))))
 
 (defmacro trace-lvars [title & lvars]
-  (println title)
   (let [a (gensym "a")]
    `(fn [~a]
+      (println ~title "--")
       ~@(map (partial trace-lvar a) lvars)
       ~a)))
 
