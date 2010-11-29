@@ -18,6 +18,7 @@ The chunk that remains least modified from the implementation found in the disse
 
 h2. Goals
 
+* Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
 * Performance. The Scheme version is quite fast. This implementation is significantly faster than that.
 * Emphasis on pure relational programming.
 * Parallel logic programming.
