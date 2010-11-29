@@ -66,6 +66,26 @@
   (.write w (str "(" (lhs x)  " . " (rhs x)  ")")))
 
 ;; =============================================================================
+;; Rest wrapper
+
+;; Adding a type information via metadata is too slow, we use this to wrap
+;; the values stored in rest vars during reification
+
+(defprotocol ILRest
+  (unwrap [this]))
+
+(deftype LRest [x]
+  clojure.lang.IPersistentCollection
+  ILRest
+  (unwrap [this] x))
+
+(defn lrest [x]
+  (LRest. x))
+
+(defn lrest? [x]
+  (instance? LRest x))
+
+;; =============================================================================
 ;; Unification
 
 (declare lookup)
@@ -104,19 +124,32 @@
 ;; =============================================================================
 ;; Reification
 
+;; TODO: need to look at this more closely for possible optimizations
+
 (defn reify-lookup [s v]
-  (let [v (lookup s v)]
+  (let [is-rest-lvar (rest-lvar? v)
+        v' (lookup s v)]
     (cond
-     (lvar? v) v
-     (coll? v) (let [vseq (if (map? v) (reduce concat v) v)
-                     r (cons (reify-lookup s (first vseq))
-                             (reify-lookup s (next vseq)))]
-                 (cond
-                  (vector? v) (vec r)
-                  (map? v) (apply hash-map r)
-                  (set? v) (set r)
-                  :else r))
-     :else v)))
+     (lvar? v') v'
+     (coll? v') (let [vseq (if (map? v') (reduce concat v') v')
+                      vf (reify-lookup s (first vseq))
+                      vn (reify-lookup s (next vseq))
+                      r (cond
+                         (lrest? vf) (if (lrest? vn)
+                                       (concat (unwrap vf) (unwrap vn))
+                                       (concat (unwrap vf) vn))
+                         :else (if (lrest? vn)
+                                 (concat vf (unwrap vn))
+                                 (cons vf vn)))]
+                 (let [r (cond
+                          (vector? v') (vec r)
+                          (map? v') (apply hash-map r)
+                          (set? v') (set r)
+                          :else r)]
+                   (if is-rest-lvar
+                     (lrest r)
+                     r)))
+     :else v')))
 
 (defn reify-name [s]
   (symbol (str "_." (length s))))
@@ -568,7 +601,16 @@
         (rest-o [1 2 3 4 5 6 7 8] &q))
 
   (unifier' '(?x ?y) '(1 2))
+
   (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
+
+  (run* [q]
+        (exist [&r]
+               (== `(1 ~&r) '(1 2 3 4 5))
+               (== &r q)))
+
+  ;; otherwise the following happens
+  (unifier' '(?x ?y [?&a] ?&b) '(1 2 [3 4 5 6 7] 8 9 0))
 
   ;; ==================================================
   ;; PERFORMANCE
@@ -691,6 +733,15 @@
       (time
        (dotimes [_ 1e5]
          (unifier u w)))))
+
+  ;; not bad 600ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (exist [&r]
+                    (== `(1 ~&r) '(1 2 3 4 5))
+                    (== &r q))))))
  )
 
 (comment
@@ -729,6 +780,20 @@
       (time
        (dotimes [_ 1e7]
          (let [[a b] p])))))
+
+  ;; ~2-3 seconds to do 2 billion type checks
+  (let [l (with-meta '[] {:type ::rest})]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e7]
+         (type l)))))
+
+  ;; much faster
+  (let [l (lrest [])]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e7]
+         (instance? LRest l)))))
   )
 
 ;; Todos
