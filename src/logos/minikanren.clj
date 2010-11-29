@@ -506,24 +506,6 @@
         (exist [&q]
          (== &q q)))
 
-  (run* [q]
-        (cons-o 'a q))
-
-  (run* [q]
-        (exist [a]
-               (cons-o a q)))
-
-  (run* [q]
-        (first-o q [1 2]))
-
-  (run* [q]
-        (rest-o q [1 2]))
-
-  (run* [&q]
-        (rest-o [1 2] &q))
-  
-  (run* [&q]
-        (rest-o [1 2 3 4 5 6 7 8] &q))
 
   (unifier' '(?x ?y) '(1 2))
 
