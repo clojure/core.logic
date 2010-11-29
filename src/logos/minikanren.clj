@@ -150,13 +150,17 @@
                      r)))
      :else v')))
 
-(defn reify-name [s]
+(defn reify-lvar-name [s]
   (symbol (str "_." (length s))))
+
+(defn reify-rest-lvar-name [s]
+  (symbol (str ". _." (length s))))
 
 (defn -reify [s v]
   (let [v (lookup s v)]
     (cond
-     (lvar? v) (ext s v (reify-name s))
+     (rest-lvar? v) (ext s v (reify-rest-lvar-name s))
+     (lvar? v) (ext s v (reify-lvar-name s))
      (coll? v) (-reify (-reify s (first v)) (next v))
      :else s)))
 
