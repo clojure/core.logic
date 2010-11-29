@@ -34,3 +34,9 @@
     (mk/run* [q]
           (mk/== u' w')
           (mk/== u' q)))))
+
+(comment
+    (unifier' '(?x ?y) '(1 2))
+    (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
+    (unifier' '(?x ?y [?&a] ?&b) '(1 2 [3 4 5 6 7] 8 9 0))
+)

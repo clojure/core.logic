@@ -5,8 +5,15 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(defrecord lvarT [name s]
+(deftype lvarT [name s]
   Object
+  (equals [this o] (boolean
+                    (or
+                     (identical? this o)
+                     (when (identical? (class this) (class o))
+                       (let [^lvarT o o]
+                        (= name (. o name)))))))
+  (hashCode [this] (.hashCode name))
   (toString [this] (str "<lvar:" name ">")))
 
 (defn ^lvarT lvar
@@ -17,11 +24,18 @@
 (defmethod print-method lvarT [x writer]
   (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
 
-(defrecord rest-lvarT [name s]
-  clojure.lang.Seqable
-  (seq [this] (list this))
+(deftype rest-lvarT [name s]
   Object
-  (toString [this] (str "<rest-lvar:" name ">")))
+  (equals [this o] (boolean
+                    (or
+                     (identical? this o)
+                     (when (identical? (class this) (class o))
+                       (let [^rest-lvarT o o]
+                        (= name (. o name)))))))
+  (hashCode [this] (.hashCode name))
+  (toString [this] (str "<rest-lvar:" name ">"))
+  clojure.lang.Seqable
+  (seq [this] (list this)))
 
 (defn ^rest-lvarT rest-lvar
   ([] (rest-lvarT. (gensym) nil))
