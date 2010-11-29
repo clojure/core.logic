@@ -68,7 +68,7 @@
 ;; =============================================================================
 ;; Rest wrapper
 
-;; Adding a type information via metadata is too slow, we use this to wrap
+;; Adding type information via metadata is too slow, we use this to wrap
 ;; the values stored in rest vars during reification
 
 (defprotocol ILRest
@@ -162,7 +162,8 @@
      :else s)))
 
 (defn reify [s v]
-  (let [v (reify-lookup s v)]
+  (let [v (reify-lookup s v)
+        v (if (lrest? v) (unwrap v) v)]
     (reify-lookup (-reify empty-s v) v)))
 
 ;; =============================================================================
@@ -596,7 +597,7 @@
 
   (run* [&q]
         (rest-o [1 2] &q))
-
+  
   (run* [&q]
         (rest-o [1 2 3 4 5 6 7 8] &q))
 
@@ -742,6 +743,13 @@
              (exist [&r]
                     (== `(1 ~&r) '(1 2 3 4 5))
                     (== &r q))))))
+
+  ;; ~380ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [&q]
+             (rest-o [1 2] &q)))))
  )
 
 (comment
