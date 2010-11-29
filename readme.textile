@@ -12,15 +12,20 @@ This is not the first implementation of miniKanren in Clojure. Jim Duey's versio
 
 h2. Notes
 
-I stayed pretty true to the structure of the original implementation. There's a bit of novelty to the substitutions implementation and most of the non-trivial core functions have been changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also since Clojure doesn't have Scheme pairs I added "rest" logical vars.
+I stayed pretty true to the *structure* of the original implementation. However there's considerable originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also since Clojure's cons operator differs significantly from Scheme's so I added "rest" logical vars.
 
-The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient.
+The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient. However am planning on replacing this code with high performance original work.
 
 h2. Goals
 
 * Performance. The Scheme version is quite fast. This implementation is significantly faster than that.
 * Emphasis on pure relational programming.
 * Parallel logic programming.
+* Original implementation. All key elements will be changed to make Logos miniKanren as idiomatic and as high performance as possible.
+
+h2. Contributing
+
+I will only take contributions from people who have submitted Clojure CAs.
 
 h2. Examples
 
