@@ -5,7 +5,7 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype lvarT [name s]
+(defrecord lvarT [name s]
   Object
   (toString [this] (str "<lvar:" name ">")))
 
@@ -17,9 +17,11 @@
 (defmethod print-method lvarT [x writer]
   (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
 
-(deftype rest-lvarT [name s]
+(defrecord rest-lvarT [name s]
   clojure.lang.Seqable
-  (seq [this] (list this)))
+  (seq [this] (list this))
+  Object
+  (toString [this] (str "<rest-lvar:" name ">")))
 
 (defn ^rest-lvarT rest-lvar
   ([] (rest-lvarT. (gensym) nil))
@@ -322,6 +324,21 @@
 
 (defmacro run* [& body]
   `(run false ~@body))
+
+(defn sym->lvar [sym]
+  (if (rest-lvar-sym? sym)
+    `(rest-lvar '~sym)
+    `(lvar '~sym)))
+
+(defn trace-lvar [a lvar]
+  `(println (str ~lvar) " = " (reify ~a ~(sym->lvar lvar))))
+
+(defmacro trace-lvars [title & lvars]
+  (println title)
+  (let [a (gensym "a")]
+   `(fn [~a]
+      ~@(map (partial trace-lvar a) lvars)
+      ~a)))
 
 ;; =============================================================================
 ;; Comments and Testing
