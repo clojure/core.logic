@@ -4,7 +4,7 @@ A Logic Programming library for Clojure. At its heart is an implementation of mi
 
 h2. About
 
-This library is under heavily development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
+This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
 
 There are most certainly bugs. I hope to iron out a solid core version with numerous tests before working on alternate implementations (which will most likely be done in branches).
 
