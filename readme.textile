@@ -30,7 +30,7 @@ h2. Examples
 </pre>
 
 <pre>
-(unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0)) ; (1 2 3 (4 5 6 7 8 9 0))
+(unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
 </pre>
 
 The above is quite slow since we have to walk the data structure and replace the logic var symbols. It's more efficient to <code>prep</code> the expressions before hand if you're going to be unifying the same expressions over and over again.
