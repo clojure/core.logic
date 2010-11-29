@@ -14,7 +14,7 @@ h2. Notes
 
 I stayed pretty true to the *structure* of the original implementation. However there's considerable originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added "rest" logical vars.
 
-The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient. However am planning on replacing this code with high performance original work.
+The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient. However I am planning on replacing this code with high performance original work.
 
 h2. Goals
 
