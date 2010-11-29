@@ -1,7 +1,6 @@
 (ns logos.minikanren
   (:refer-clojure :exclude [reify inc == take])
-  (:use [clojure.pprint :only [pprint]]
-        [clojure.walk :only [postwalk]]))
+  (:use [clojure.pprint :only [pprint]]))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -319,85 +318,6 @@
 
 (defmacro run* [& body]
   `(run false ~@body))
-
-;; =============================================================================
-;; Unifier
-
-(defn lvarq-sym? [s]
-  (= (first (str s)) \?))
-
-(defn rest-lvarq-sym? [s]
-  (let [[f s] (str s)]
-    (and (= f \?) (= s \&))))
-
-(defn rem-? [s]
-  (symbol (apply str (drop 1 (str s)))))
-
-(defn replace-lvar [expr]
-  (cond
-   (rest-lvarq-sym? expr) (rest-lvar (rem-? expr))
-   (lvarq-sym? expr) (lvar (rem-? expr))
-   :else expr))
-
-(defn prep [expr]
-  (postwalk replace-lvar expr))
-
-(defn unifier [u w]
-  (first
-   (run* [q]
-         (== u w)
-         (== u q))))
-
-(defn unifier' [u w]
-  (let [u' (prep u)
-        w' (prep w)]
-   (first
-    (run* [q]
-          (== u' w')
-          (== u' q)))))
-
-;; =============================================================================
-;; Core functions
-
-(defn nil-o [a]
-  (== nil a))
-
-(defn cons-o [a l]
-  (exist [c &d]
-         (== (cons a &d) l)))
-
-(defn rest-o [l d]
-  (exist [a]
-         (== (cons a d) l)))
-
-(defn first-o [a l]
-  (cons-o a l))
-
-(defn pair-o [p]
-  ())
-
-(defn twin-o [p]
-  )
-
-(defn append-o [a b]
-  )
-
-;; =============================================================================
-;; Logic REPL
-
-(defn not-quit? [s]
-  (let [e (read-string s)]
-   (if (= e '(quit))
-     ::exit
-     (eval e))))
-
-(defn repl []
-  (.print System/out "?- ")
-  (.flush System/out)
-  (let [v (not-quit? (read-line))]
-    (when (not= v ::exit) 
-      (println v)
-      (recur))))
 
 ;; =============================================================================
 ;; Comments and Testing
