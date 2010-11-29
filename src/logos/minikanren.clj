@@ -139,7 +139,8 @@
 ;; =============================================================================
 ;; Reification
 
-;; TODO: need to look at this more closely for possible optimizations
+;; OPTIMIZE: add interfaces to dispatch on the type of v ?
+;; means we would need to reverse the arguments
 
 (defn reify-lookup [s v]
   (let [is-rest-lvar (rest-lvar? v)
@@ -229,6 +230,8 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
+;; OPTIMIZE: can these just be represented as types ?
+
 (defmacro mzero [] false)
 
 (defmacro unit [a] a)
@@ -248,6 +251,12 @@
 (def s# succeed)
 
 (def u# fail)
+
+;; OPTIMIZE: can we also use dispatch on the type of a-inf ?
+;; MZero
+;; Fn
+;; Unit
+;; Pair
 
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
