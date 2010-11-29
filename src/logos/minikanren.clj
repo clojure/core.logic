@@ -345,7 +345,7 @@
     `(lvar '~sym)))
 
 (defn trace-lvar [a lvar]
-  `(println (str ~lvar) " = " (reify ~a ~(sym->lvar lvar))))
+  `(println (str '~lvar) " = " (reify ~a ~(sym->lvar lvar))))
 
 (defmacro trace-lvars [title & lvars]
   (println title)
@@ -395,7 +395,7 @@
   ;; _.2
   (let [x  (lvar 'x)
         y  (lvar 'y)]
-    (reify-name (to-s [[x 5] [y x]])))
+    (reify-lvar-name (to-s [[x 5] [y x]])))
 
   ;; (<lvar:x> <lvar:y>)
   (let [x  (lvar 'x)
@@ -504,6 +504,20 @@
                 ((== false x) (== true y)))
                (== (cons x (cons y ())) r)))
 
+  (defn nil-o [a]
+    (== nil a))
+
+  (defn cons-o [a d l]
+    (== (cons a d) l))
+
+  (defn append-o [l s out]
+    (cond-e
+     ((nil-o l) (== s out))
+     ((exist [a &d &res]
+             (cons-o a &d l)
+             (append-o &d s &res)
+             (cons-o a &res out)))))
+
   (let [x (lvar 'x)
         y (lvar 'y)
         v [x y]]
@@ -537,18 +551,10 @@
         (exist [&q]
          (== &q q)))
 
-
-  (unifier' '(?x ?y) '(1 2))
-
-  (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
-
   (run* [q]
         (exist [&r]
                (== `(1 ~&r) '(1 2 3 4 5))
                (== &r q)))
-
-  ;; otherwise the following happens
-  (unifier' '(?x ?y [?&a] ?&b) '(1 2 [3 4 5 6 7] 8 9 0))
 
   ;; ==================================================
   ;; PERFORMANCE
@@ -580,6 +586,7 @@
 
   ;; 200ms (NOTE: this jump is because array-map is slower than hash-maps)
   ;; Scheme is ~1650ms
+  ;; with defrecord this becomes - MUCH MUCH slower
   (dotimes [_ 10]
     (let [[x m y n z o c p b q a] (map lvar '[x m y n z o c p b q a])
           ss (to-s [[x 5] [m 0] [m 0] [m 0] [m 0]
@@ -620,7 +627,7 @@
                    ((== false x) (== true y)))
                   (== (cons x (cons y ())) r))))))
 
-  ;; 200,000 unifications
+  ;; ~200,000 unifications / sec
   ;; what kind of boost could we get with tabling ?
   (dotimes [_ 10]
     (time
@@ -680,6 +687,10 @@
              (exist [&r]
                     (== `(1 ~&r) '(1 2 3 4 5))
                     (== &r q))))))
+
+  (defn rest-o [l d]
+    (exist [a]
+           (== (cons a d) l)))
 
   ;; ~380ms
   (dotimes [_ 10]
