@@ -2,6 +2,12 @@
   (:refer-clojure :exclude [reify inc == take])
   (:use [clojure.pprint :only [pprint]]))
 
+(defprotocol IMPlus
+  (mplus [this f]))
+
+(defprotocol IBind
+  (bind [this g]))
+
 ;; =============================================================================
 ;; Logic Variables
 
@@ -133,6 +139,8 @@
                                   (rest-lvar? vf) (unify s vf u)
                                   :else (let [s (unify s uf vf)]
                                           (and s (unify s ur vr)))))
+     (and (coll? u) (nil? v) (rest-lvar? (first u))) (unify s (first u) '())
+     (and (coll? v) (nil? u) (rest-lvar? (first v))) (unify s (first v) '())
      (= u v) s
      :else false)))
 
@@ -230,8 +238,6 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-;; OPTIMIZE: can these just be represented as types ?
-
 (defmacro mzero [] false)
 
 (defmacro unit [a] a)
@@ -251,12 +257,6 @@
 (def s# succeed)
 
 (def u# fail)
-
-;; OPTIMIZE: can we also use dispatch on the type of a-inf ?
-;; MZero
-;; Fn
-;; Unit
-;; Pair
 
 (defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
   `(let [a-inf# ~e]
@@ -510,6 +510,12 @@
     (cond-e
      ((== 'tea x) s#)
      ((== 'cup x) s#)))
+
+  (defn teacup-o [x]
+    (cond-e
+     ((== 'tea x) (trace-lvars "teacup-o" x) s#)
+     ((== 'cup x) (trace-lvars "teacup-o" x) s#)
+     ((== 'time x))))
 
   ;; the return order is interesting
   ;; interleaving
@@ -768,16 +774,22 @@
          (instance? LRest l)))))
   )
 
-;; Todos
-;; 1) Understand basic cond-e
+(comment
+  (deftype MZero
+    IMPlus
+    (mplus [this f])
+    IBind
+    (bind [this g]))
 
-;; Future Directions
+  (def mzero (MZero.))
 
-;; 1) compare with lazy sequences instead of (a . f)
-;; 2) more optimizations
-;; 3) support Prolog style syntax, don't have to use exist implicit
-;; 4) support using unify standalone, no need to call run
-;; 5) investigate forward-chaining
-;; 6) tabling
-;; 7) consider parallel syntax
-;; Datalog
+  ;; what is the cost of wrapping values ?
+  (deftype Unit [x]
+    IFn
+    (invoke [this] x)
+    IMPlus
+    (mplus [this f])
+    IBind
+    (bind [this g]))
+  )
+
