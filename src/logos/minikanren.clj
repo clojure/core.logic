@@ -13,13 +13,6 @@
 
 (deftype lvarT [name s]
   Object
-  ;; (equals [this o] (boolean
-  ;;                   (or
-  ;;                    (identical? this o)
-  ;;                    (when (identical? (class this) (class o))
-  ;;                      (let [^lvarT o o]
-  ;;                       (= name (. o name)))))))
-  ;; (hashCode [this] (.hashCode name))
   (toString [this] (str "<lvar:" name ">")))
 
 (defn ^lvarT lvar
@@ -32,13 +25,6 @@
 
 (deftype rest-lvarT [name s]
   Object
-  ;; (equals [this o] (boolean
-  ;;                   (or
-  ;;                    (identical? this o)
-  ;;                    (when (identical? (class this) (class o))
-  ;;                      (let [^rest-lvarT o o]
-  ;;                       (= name (. o name)))))))
-  ;; (hashCode [this] (.hashCode name))
   (toString [this] (str "<rest-lvar:" name ">"))
   clojure.lang.Seqable
   (seq [this] (list this)))
