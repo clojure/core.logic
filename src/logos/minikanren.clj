@@ -109,6 +109,15 @@
 (defn print-identity [v]
   (println v) v)
 
+;; NOTES:
+;; * for the 4th condition, we have to check coll? seq because we don't care
+;;   about empty collections
+;; * if we're looking at collections - check to see if we should just unify
+;;   a rest var to the whole other side
+;; * for the 5th and 6th conditions. If we are traversing a seek we want to
+;;   allow unification of (list &r) to nil as unification to the empty list.
+;;   this is to support rest vars
+
 (defn unify*
   ([s u v] (unify* s u v false))
   ([s u v in-seq]
@@ -138,6 +147,14 @@
 
 ;; OPTIMIZE: add interfaces to dispatch on the type of v ?
 ;; means we would need to reverse the arguments
+
+;; NOTES:
+;; * when we reify a rest var we need some way to communicate that to the caller.
+;;   we wrap the returned value in lrest. The receiver than can use a concat
+;;   operation instead of a cons. This is becase we don't want rest vars to
+;;   actually affect the structure of the value returned from reification.
+;;   What you put in, is what you'll get out.
+;; * TODO: we're not checking what happens when two rest-lvars unify.
 
 (defn reify-lookup [s v]
   (let [is-rest-lvar (rest-lvar? v)
