@@ -142,7 +142,7 @@
                                  (rest-lvar? vf) (unify* s vf u)
                                  :else (let [s (unify* s uf vf)]
                                          (and s (unify* s ur vr true)))))
-        (and in-seq (seq u) (nil? v) (rest-lvar? (first u))) (unify* s (first u) '())
+        (and in-seq (seq u) (nil? v) (rest-lvar? (first u))) (unify* s (first u) '()) 
         (and in-seq (seq v) (nil? u) (rest-lvar? (first v))) (unify* s (first v) '())
         (= u v) s
         :else false))))
@@ -339,7 +339,7 @@
 (defn take
   ([n f] (take n f [])) 
   ([n f v]
-     (if (and n zero? n)
+     (if (and n (zero? n))
        v
        (case-inf (f)
                  false v
@@ -364,7 +364,7 @@
       (println ~title)
       ~@(map (partial trace-lvar a) lvars)
       (println)
-      ~a)))
+      (unit ~a))))
 
 (defmacro trace-s []
   (let [a (gensym "a")]
@@ -522,6 +522,13 @@
   ;; the return order is interesting
   ;; interleaving
   (run* [r]
+        (exist [x y]
+               (cond-e
+                ((teacup-o x) (== true y) s#)
+                ((== false x) (== true y)))
+               (== (cons x (cons y ())) r)))
+
+  (run 1 [r]
         (exist [x y]
                (cond-e
                 ((teacup-o x) (== true y) s#)

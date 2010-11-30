@@ -4,9 +4,6 @@
          [run run* exist reify cond-e == lvar rest-lvar
           lvar? empty-s rest-lvar? trace-lvars trace-s unify]]))
 
-(defn nil-o [a]
-  (== nil a))
-
 (defn null-o [a]
   (== '() a))
 
@@ -37,27 +34,32 @@
   (exist [x]
     (cons-o x `(~x) p)))
 
-;; AHA! a clue to how things work
-;; if a function, we call it with the arguments
-;; which will just return something we can convert
-;; back into a stream!
-
+;; this introduces many rest vars
 (defn append-o [l s out]
   (cond-e
-   ((trace-lvars "== append-o" l s out))
-   ((null-o l) (== s out) (trace-lvars "success"))
+   ((null-o l) (== s out))
    ((exist [a &d &res]
-           (trace-lvars "append-o 3" a &d &res)
            (cons-o a &d l)
-           (trace-lvars "append-o 4" a &d &res)
            (append-o &d s &res)
            (cons-o a &res out)))))
 
 (comment
+  (run* [&q]
+        (== &q &q))
+
+  (run* [&q]
+        (== q '())
+        (null-o q))
+
   ;; ()
   (run* [q]
         (== q '())
         (null-o q))
+
+  (run* [&q]
+        (== &q '())
+        (null-o &q)
+        (null-o &q))
 
   ;; FAILS, as it should
   (run* [q]
@@ -124,19 +126,60 @@
   (run* [&q]
         (rest-o [1 2 3 4 5 6 7 8] &q))
 
-  ; (_.0 _.&1)
+  ;;
+  (run* [&q]
+        (exist [a &d]
+               (cons-o a &d &q)))
+
+  ;; (_.0 _.&1)
   (run* [q]
         (pair-o q))
 
-  ; (_.0 _.&1)
+  ;; (_.0 _.&1)
   (run* [&q]
         (pair-o &q))
 
-  ; (_.0 _.0)
+  ;; (_.0 _.0)
   (run* [q]
         (twin-o q))
 
-  ;; FIXME
+  ;; '(1 2 3 4)
   (run* [q]
         (append-o '(1 2) '(3 4) q))
+
+  (run* [q]
+        (append-o '(cake) '(tastes yummy) q))
+
+  (run* [q]
+        (exist [y]
+               (append-o (list 'cake 'with 'iced y) '(tastes yummy) q)))
+
+  (run* [q]
+        (exist [&y]
+               (append-o '(cake with iced cream) &y q)))
+
+  ;; FIXME: singleton `(&y) should not be allowed
+  (run* [x]
+        (exist [&y]
+               (append-o `(~&y) '(d t) x)))
+
+  (run 5 [x]
+       (exist [&y]
+              (append-o (list 'cake &y) '(d t) x)))
+
+  ;; FIXME: trailing empty list, erg
+  (run 5 [x]
+       (exist [&y]
+              (append-o (list 'cake 'with 'ice &y)
+                        (list 'd 't &y)
+                        x)))
+
+  ;; miniKanren under Racket beats us here
+  ;; need to look into this
+  ;; ~1.4 vs ~2.3s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (append-o '(1 2) '(3 4) q)))))
   )
