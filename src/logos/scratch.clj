@@ -2,7 +2,14 @@
 
 (deftype lvarT [name s]
   Object
-  (toString [this] (str "<lvar:" name ">")))
+  (toString [this] (str "<lvar:" name ">"))
+  ;; clojure.lang.ISeq
+  ;; (first [this] this)
+  ;; (more [_] nil)
+  ;; (next [_] nil)
+  ;; (seq [_] nil)
+  ;; (equiv [this that] false)
+  )
 
 (defn ^lvarT lvar
   ([] (lvarT. (gensym) nil))
@@ -11,6 +18,24 @@
 
 (defn lvar? [x]
   (instance? lvarT x))
+
+(defprotocol IPair
+  (lhs [this])
+  (rhs [this]))
+
+;; works
+(deftype LCons [a b]
+  IPair
+  (lhs [this] a)
+  (rhs [this] b)
+  clojure.lang.ISeq
+  (first [_] a)
+  (more [_] b)
+  (next [_] (if (lvar? b)
+              nil
+              b))
+  (seq [this] this)
+  (equiv [this that] false))
 
 ;; error'ing out at the REPL
 (deftype LCons [first _more]
