@@ -147,24 +147,24 @@
         v' (lookup s v)]
     (cond
      (lvar? v') v'
-     (coll? v') (let [vseq (if (map? v') (reduce concat v') v')
-                      vf (reify-lookup s (first vseq))
-                      vn (reify-lookup s (next vseq))
-                      r (cond
-                         (lrest? vf) (if (lrest? vn)
-                                       (concat (unwrap vf) (unwrap vn))
-                                       (concat (unwrap vf) vn))
-                         :else (if (lrest? vn)
-                                 (concat vf (unwrap vn))
-                                 (cons vf vn)))]
-                 (let [r (cond
-                          (vector? v') (vec r)
-                          (map? v') (apply hash-map r)
-                          (set? v') (set r)
-                          :else r)]
-                   (if is-rest-lvar
-                     (lrest r)
-                     r)))
+     (and (coll? v') (seq v')) (let [vseq (if (map? v') (reduce concat v') v')
+                                     vf (reify-lookup s (first vseq))
+                                     vn (reify-lookup s (next vseq))
+                                     r (cond
+                                        (lrest? vf) (if (lrest? vn)
+                                                      (concat (unwrap vf) (unwrap vn))
+                                                      (concat (unwrap vf) vn))
+                                        :else (if (lrest? vn)
+                                                (concat vf (unwrap vn))
+                                                (cons vf vn)))]
+                                 (let [r (cond
+                                          (vector? v') (vec r)
+                                          (map? v') (apply hash-map r)
+                                          (set? v') (set r)
+                                          :else r)]
+                                   (if is-rest-lvar
+                                     (lrest r)
+                                     r)))
      :else v')))
 
 (defn reify-lvar-name [s]
@@ -359,8 +359,15 @@
 (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
    `(fn [~a]
-      (println ~title "--")
+      (println ~title)
       ~@(map (partial trace-lvar a) lvars)
+      (println)
+      ~a)))
+
+(defmacro trace-s []
+  (let [a (gensym "a")]
+   `(fn [~a]
+      (println ~a)
       ~a)))
 
 ;; =============================================================================
