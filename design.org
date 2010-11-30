@@ -1,0 +1,41 @@
+* Logos Design Notes
+** Rest LVars
+*** They pollute the unify logic too much.
+    We have to peek into collections to see if they contain LVars
+    during unification. This requires us to add some wacky
+    conditional logic to unify* as well as reify-lookup
+*** Consider providing a LCons
+    It would pretty much look like Pair. It would allow us to do
+    something like the following:
+
+    (== (lcons a lvar) '(a))
+
+    (== (a . lvar) '(a))
+
+    We can then check if we are looking at LCons in unify.
+
+    If we are in-lseq and we encounter an lvar, we unify with nil.
+    
+    (== (lvar) nil)
+
+    won't unify since, (lvar) is a sequence and nil is not
+*** Repercussions for convenient ?&r syntax for unifier
+
+    (unifier' '(?x ?&r) '(1 2 3 4))
+
+    This maybe the only legitimate case for rest vars. They're just
+    a marker to trigger unifying the rest of the other side.
+*** How would conj-o work?
+
+    (conj-o d a r)
+
+    We would like conj-o to *infer* the type from r if provided.
+
+    (conj-o d 'x ['x])
+    (== (conj d 'x) ['x])
+
+    But we have a general problem with primitive operators, since they
+    can't take a LVar.
+
+    What if we use LCons here ? LCons type is weak, always unify to
+    the type that isn't an LCons ?
