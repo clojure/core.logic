@@ -2,14 +2,10 @@
 
 (deftype lvarT [name s]
   Object
-  (toString [this] (str "<lvar:" name ">"))
-  ;; clojure.lang.ISeq
-  ;; (first [this] this)
-  ;; (more [_] nil)
-  ;; (next [_] nil)
-  ;; (seq [_] nil)
-  ;; (equiv [this that] false)
-  )
+  (toString [this] (str "<lvar:" name ">")))
+
+;; =============================================================================
+;; Rethinking how rest vars work, LCons
 
 (defn ^lvarT lvar
   ([] (lvarT. (gensym) nil))
@@ -23,34 +19,27 @@
   (lhs [this])
   (rhs [this]))
 
-;; works
-(deftype LCons [a b]
+(deftype LCons [a d]
   IPair
   (lhs [this] a)
-  (rhs [this] b)
+  (rhs [this] d)
   clojure.lang.ISeq
   (first [_] a)
-  (more [_] b)
-  (next [_] (if (lvar? b)
-              nil
-              b))
+  #_(more [_] d)
+  (next [_] (cond
+             (seq? d) d))
   (seq [this] this)
-  (equiv [this that] false))
-
-;; error'ing out at the REPL
-(deftype LCons [first _more]
-  clojure.lang.Seqable
-  (seq [this] this)
-  clojure.lang.ISeq
-  (next [this] _more)
-  (more [this] (if (lvar? _more)
-                 '()
-                 _more))
+  (equiv [this that] false)
   Object
-  (toString [this] (str "(" first " . " _more ")")))
+  (toString [this] (if (lvar? d)
+                     (str "(" a " . " d ")")
+                     this)))
 
-(defn lcons [first _more]
-  (LCons. first _more))
+(defn lcons [a d]
+  (LCons. a d))
+
+;; TODO: print method
+;; TODO: investigate sequence printing
 
 ;; =============================================================================
 
