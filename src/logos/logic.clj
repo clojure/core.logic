@@ -1,7 +1,8 @@
 (ns logos.logic
-  (:refer-clojure :exclude [==])
+  (:refer-clojure :exclude [== reify])
   (:use [logos.minikanren :only
-         [run run* exist cond-e == lvar? rest-lvar? trace-lvars]]))
+         [run run* exist reify cond-e == lvar rest-lvar
+          lvar? empty-s rest-lvar? trace-lvars trace-s unify]]))
 
 (defn nil-o [a]
   (== nil a))
@@ -43,30 +44,62 @@
 
 (defn append-o [l s out]
   (cond-e
-   ((trace-lvars "append-o" &d s &res))
-   ((nil-o l) (== s out))
+   ((trace-lvars "== append-o" l s out))
+   ((null-o l) (== s out) (trace-lvars "success"))
    ((exist [a &d &res]
+           (trace-lvars "append-o 3" a &d &res)
            (cons-o a &d l)
+           (trace-lvars "append-o 4" a &d &res)
            (append-o &d s &res)
            (cons-o a &res out)))))
 
 (comment
-  ;; FIXME: (nil)
+  ;; ()
+  (run* [q]
+        (== q '())
+        (null-o q))
+
+  ;; FAILS, as it should
+  (run* [q]
+        (exist [a &d]
+               (cons-o a &d '())
+               (== (cons a &d) q)))
+
+  ;; ()
+  (run* [&q]
+        (== &q '())
+        (null-o &q))
+
+  ;; FIXME
+  (run* [&q]
+        (== &q '(3 4)))
+
+  (run* [&q]
+        (exist [&l]
+               (null-o &l)
+               (== &q '(3 4))))
+  
+  ;; ()
   (run* [q]
         (null-o q))
+
+  ;; should fail
+  (run* [&q]
+        (== [&q] nil))
 
   ;; (a)
   (run* [q]
         (cons-o 'a nil q))
-  
+
+  ;; (a d)
   (run* [q]
         (cons-o 'a '(d) q))
 
-  ;; FIXME: q should be nil or empty list
+  ;; (), empty list
   (run* [&q]
         (cons-o 'a &q '(a)))
 
-  ;; works
+  ;; a
   (run* [q]
         (cons-o q '(b c) '(a b c)))
 
@@ -83,9 +116,11 @@
   (run* [q]
         (rest-o q [1 2]))
 
+  ;; (2)
   (run* [&q]
         (rest-o [1 2] &q))
-  
+
+  ;; (2 3 4 5 6 7 8)
   (run* [&q]
         (rest-o [1 2 3 4 5 6 7 8] &q))
 
@@ -93,19 +128,13 @@
   (run* [q]
         (pair-o q))
 
+  ; (_.0 _.&1)
+  (run* [&q]
+        (pair-o &q))
+
   ; (_.0 _.0)
   (run* [q]
         (twin-o q))
-
-  (run* [out]
-        (exist [a &d &res]
-               (cons-o a &d [1 2])
-               (== &d out)))
-
-  (run* [out]
-        (exist [a &d &res]
-               (cons-o a &d [1 2])
-               (cons-o a &res out)))
 
   ;; FIXME
   (run* [q]

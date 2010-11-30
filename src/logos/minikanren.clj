@@ -13,13 +13,13 @@
 
 (deftype lvarT [name s]
   Object
-  (equals [this o] (boolean
-                    (or
-                     (identical? this o)
-                     (when (identical? (class this) (class o))
-                       (let [^lvarT o o]
-                        (= name (. o name)))))))
-  (hashCode [this] (.hashCode name))
+  ;; (equals [this o] (boolean
+  ;;                   (or
+  ;;                    (identical? this o)
+  ;;                    (when (identical? (class this) (class o))
+  ;;                      (let [^lvarT o o]
+  ;;                       (= name (. o name)))))))
+  ;; (hashCode [this] (.hashCode name))
   (toString [this] (str "<lvar:" name ">")))
 
 (defn ^lvarT lvar
@@ -32,13 +32,13 @@
 
 (deftype rest-lvarT [name s]
   Object
-  (equals [this o] (boolean
-                    (or
-                     (identical? this o)
-                     (when (identical? (class this) (class o))
-                       (let [^rest-lvarT o o]
-                        (= name (. o name)))))))
-  (hashCode [this] (.hashCode name))
+  ;; (equals [this o] (boolean
+  ;;                   (or
+  ;;                    (identical? this o)
+  ;;                    (when (identical? (class this) (class o))
+  ;;                      (let [^rest-lvarT o o]
+  ;;                       (= name (. o name)))))))
+  ;; (hashCode [this] (.hashCode name))
   (toString [this] (str "<rest-lvar:" name ">"))
   clojure.lang.Seqable
   (seq [this] (list this)))
@@ -123,26 +123,29 @@
 (defn print-identity [v]
   (println v) v)
 
-(defn unify* [s u v]
-  (let [u (lookup s u)
-        v (lookup s v)]
-    (cond
-     (identical? u v) s
-     (lvar? u) (if (lvar? v)
-                 (ext-no-check s u v)
-                 (ext s u v))
-     (lvar? v) (ext s v u)
-     (and (coll? u) (coll? v)) (let [[uf & ur] (seq u)
-                                     [vf & vr] (seq v)]
-                                 (cond
-                                  (rest-lvar? uf) (unify s uf v)
-                                  (rest-lvar? vf) (unify s vf u)
-                                  :else (let [s (unify s uf vf)]
-                                          (and s (unify s ur vr)))))
-     (and (coll? u) (nil? v) (rest-lvar? (first u))) (unify s (first u) '())
-     (and (coll? v) (nil? u) (rest-lvar? (first v))) (unify s (first v) '())
-     (= u v) s
-     :else false)))
+(defn unify*
+  ([s u v] (unify* s u v false))
+  ([s u v in-seq]
+     (let [u (lookup s u)
+           v (lookup s v)]
+       (cond
+        (identical? u v) s
+        (lvar? u) (if (lvar? v)
+                    (ext-no-check s u v)
+                    (ext s u v))
+        (lvar? v) (ext s v u)
+        (and (coll? u) (coll? v)
+             (seq u) (seq v)) (let [[uf & ur] (seq u)
+                                    [vf & vr] (seq v)]
+                                (cond
+                                 (rest-lvar? uf) (unify* s uf v)
+                                 (rest-lvar? vf) (unify* s vf u)
+                                 :else (let [s (unify* s uf vf)]
+                                         (and s (unify* s ur vr true)))))
+        (and in-seq (seq u) (nil? v) (rest-lvar? (first u))) (unify* s (first u) '())
+        (and in-seq (seq v) (nil? u) (rest-lvar? (first v))) (unify* s (first v) '())
+        (= u v) s
+        :else false))))
 
 ;; =============================================================================
 ;; Reification
@@ -225,8 +228,7 @@
                                 (conj s' (pair x v))))
   (lookup [this v]
           (lookup* s v))
-  (unify [this u v]
-         (unify* this u v)))
+  (unify [this u v] (unify* this u v)))
 
 (def empty-s (Substitutions. {} []))
 
@@ -354,7 +356,7 @@
     `(lvar '~sym)))
 
 (defn trace-lvar [a lvar]
-  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~(sym->lvar lvar)))))
+  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
 (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
@@ -759,7 +761,6 @@
        (dotimes [_ 1e7]
          (let [[a b] p])))))
 
-  ;; ~2-3 seconds to do 2 billion type checks
   (let [l (with-meta '[] {:type ::rest})]
     (dotimes [_ 10]
       (time
