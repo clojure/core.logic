@@ -19,24 +19,73 @@
   (lhs [this])
   (rhs [this]))
 
+(defprotocol LConsSeq
+  (lfirst [this])
+  (lnext [this])
+  (lseq [this]))
+
+(defprotocol LConsPrint
+  (toShortString [this]))
+
+;; LCons is NOT a dotted pair
+;; it can only hold seqs or lvars in it's right hand side
+
 (deftype LCons [a d]
   IPair
   (lhs [this] a)
   (rhs [this] d)
-  clojure.lang.ISeq
-  (first [_] a)
-  #_(more [_] d)
-  (next [_] (cond
-             (seq? d) d))
-  (seq [this] this)
-  (equiv [this that] false)
+  LConsSeq
+  (lfirst [_] a)
+  (lnext [_] d)
+  (lseq [this] this)
+  LConsPrint
+  (toShortString [this]
+                 (cond
+                  (lvar? d) (str a " . " d )
+                  (instance? LCons d) (str a " " (toShortString d))))
   Object
-  (toString [this] (if (lvar? d)
-                     (str "(" a " . " d ")")
-                     this)))
+  (toString [this] (cond
+                    (lvar? d) (str "(" a " . " d ")")
+                    (instance? LCons d) (str "(" a " " (toShortString d) ")"))))
+
+(defmethod print-method LCons [x writer]
+  (.write writer (str x)))
 
 (defn lcons [a d]
   (LCons. a d))
+
+(defn lcons? [x]
+  (instance? LCons x))
+
+(extend-type clojure.lang.PersistentVector
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this))
+  (lseq [this] (seq this)))
+
+(extend-type clojure.lang.PersistentHashMap
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this))
+  (lseq [this] (seq this)))
+
+(extend-type clojure.lang.PersistentArrayMap
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this))
+  (lseq [this] (seq this)))
+
+(extend-type clojure.lang.PersistentList
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this))
+  (lseq [this] (seq this)))
+
+(extend-type clojure.lang.PersistentHashSet
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this))
+  (lseq [this] (seq this)))
 
 ;; TODO: print method
 ;; TODO: investigate sequence printing
