@@ -57,15 +57,31 @@
     linear in their legnth
     Looking at PersistentVector, equality between two small
     vectors is slower than two small PersistentLists
-    
-    (== (lcons 'a (lvar 'd)) '(a d))
-    Unification, the above should unify the lvar to 'd
-
-    (== (lcons 'a (lvar 'd)) (lvar 'q)))
-    Reification
-    We just fetch the LCons, this is correct.
 *** implement printing    
 *** implement equiv
     should see how persistent lists do it.
 *** implement equals
-*** implmenet hashCode    
+*** implement hashCode
+*** Implications of LCons
+    (== (lcons 'a (lvar 'd)) '(a d))
+    Unification, the above should unify the lvar to '(d) EASY
+
+    (== (lcons 'a (lvar 'd)) (lvar 'q)))
+    Reification, 'q no holds (lcons 'a ?d)
+    
+    (== ?x (lcons ?y ?z))
+    (== ?y 'a)
+    (== ?z '(1 2))
+    
+    (reify s ?x)
+    
+    ?x now holds (lcons 'a '(1 2))
+
+    but now it is a proper seq!, unification prevents proper
+    lcons from leaking out!
+
+    AHA!
+    
+    if the right hand side is an lcons, we lcons
+    lcons already does the right thing! normal cons if the
+    right hand side is a propery seq!

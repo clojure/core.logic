@@ -5,9 +5,6 @@
 (defn null-o [a]
   (== '() a))
 
-;; TODO: enforce that d be either a rest-lvar or a seqable type
-;; including vectors (which return false for seq?)
-
 (defn cons-o [a d l]
   (== (lcons a d) l))
 
@@ -15,14 +12,9 @@
   (exist [d]
     (cons-o a d l)))
 
-;; TODO: enforce same constraint as for cons-o
-
 (defn rest-o [l d]
   (exist [a]
     (== (lcons a d) l)))
-
-;; NOTE: something to consider, whether we should implement a
-;; proper pairs representation?
 
 (defn pair-o [p]
   (exist [a d]
@@ -32,7 +24,6 @@
   (exist [x]
          (cons-o x x p)))
 
-;; this introduces many rest vars
 (defn append-o [l s out]
   (cond-e
    ((null-o l) (== s out))
@@ -46,6 +37,11 @@
   (run* [q]
         (== q q))
 
+  (run* [q]
+        (exist [a x]
+         (== `(~a) x)
+         (== a q)))
+
   ;; '()
   (run* [q]
         (== q '())
@@ -56,6 +52,10 @@
         (exist [a d]
                (cons-o a d '())
                (== (cons a d) q)))
+
+  (run* [q]
+        (exist [a d]
+               (cons-o a d q)))
 
   ;; (3 4)
   (run* [q]
@@ -111,11 +111,11 @@
         (exist [a d]
                (cons-o a d q)))
 
-  ;; (_.0 _.1)
+  ;; (_.0 . _.1)
   (run* [q]
         (pair-o q))
 
-  ;; (_.0 _.1)
+  ;; (_.0 . _.1)
   (run* [q]
         (pair-o q))
 
@@ -143,20 +143,25 @@
         (exist [y]
                (append-o `(~y) '(d t) x)))
 
+  ;; (cake d t)
+  ;; (cake _.0 d t)
+  ;; (cake _.0 _.1 d t)
+  ;; (cake _.0 _.1 _.2 d t)
+  ;; (cake _.0 _.1 _.2 _.3 d t)
   (run 5 [x]
        (exist [y]
-              (append-o (list 'cake y) '(d t) x)))
+              (append-o (llist 'cake y) '(d t) x)))
 
   ;; FIXME: trailing empty list, erg
   (run 5 [x]
        (exist [y]
-              (append-o (list 'cake 'with 'ice y)
-                        (list 'd 't y)
+              (append-o (llist 'cake 'with 'ice y)
+                        (llist 'd 't y)
                         x)))
 
   ;; miniKanren under Racket beats us here
   ;; need to look into this
-  ;; ~1.4 vs ~2.3s
+  ;; ~1.4s vs ~1.6s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]

@@ -146,6 +146,10 @@
   (lfirst [this] (first this))
   (lnext [this] (next this)))
 
+(defmacro llist
+  ([f s] `(lcons ~f ~s))
+  ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
+
 ;; =============================================================================
 ;; Unification
 
@@ -429,4 +433,3 @@
     IBind
     (bind [this g]))
   )
-
