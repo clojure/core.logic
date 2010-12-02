@@ -32,6 +32,17 @@
            (append-o d s res)
            (cons-o a res out)))))
 
+(defn flatten-o [s out]
+  (cond-e
+   ((null-o s) (== '() out))
+   ((pair-o s)
+    (exist [a d res-a res-d]
+           (cons-o a d s)
+           (flatten-o a res-a)
+           (flatten-o d res-d)
+           (append-o res-a res-d out)))
+   ((cons-o s '() out))))
+
 (comment
   ;; _.0
   (run* [q]
@@ -155,6 +166,9 @@
                         (llist 'd 't y)
                         x)))
 
+  (run* [x]
+        (flatten-o '[[a b] c] x))
+  
   ;; miniKanren under Racket beats us here
   ;; need to look into this
   ;; ~1.4s vs ~1.6s
@@ -170,5 +184,12 @@
      (dotimes [_ 1e5]
        (run* [q]
              (rest-o [1 2] q)))))
+
+  ;; ~4.1s, Scheme is 5.5s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (run* [x]
+        (flatten-o '[[a b] c] x)))))
   )
 
