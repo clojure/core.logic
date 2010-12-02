@@ -120,50 +120,26 @@
 (defn lcons? [x]
   (instance? LCons x))
 
-(extend-type clojure.lang.Cons
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
+(defn extend-type-to-lcons-seq [type]
+  `(clojure.core/extend-type ~type
+     LConsSeq
+     (~'lfirst [this#] (clojure.core/first this#))
+     (~'lnext [this#] (clojure.core/next this#))))
 
-(extend-type clojure.lang.PersistentList
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
+(defmacro extend-to-lcons-seq [& types]
+  `(do
+     ~@(map extend-type-to-lcons-seq types)))
 
-(extend-type clojure.lang.PersistentVector
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.PersistentVector$ChunkedSeq
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.PersistentArrayMap
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.PersistentHashMap
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.MapEntry
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.PersistentHashSet
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
-
-(extend-type clojure.lang.APersistentMap$KeySeq
-  LConsSeq
-  (lfirst [this] (first this))
-  (lnext [this] (next this)))
+(extend-to-lcons-seq
+  clojure.lang.Cons
+  clojure.lang.PersistentList
+  clojure.lang.PersistentVector
+  clojure.lang.PersistentVector$ChunkedSeq
+  clojure.lang.PersistentArrayMap
+  clojure.lang.PersistentHashMap
+  clojure.lang.MapEntry
+  clojure.lang.PersistentHashSet
+  clojure.lang.APersistentMap$KeySeq)
 
 (defmacro llist
   ([f s] `(lcons ~f ~s))
