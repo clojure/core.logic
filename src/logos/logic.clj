@@ -167,4 +167,12 @@
      (dotimes [_ 1e5]
        (run* [q]
              (append-o '(1 2) '(3 4) q)))))
+
+  ;; ~300ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (rest-o [1 2] q)))))
   )
+

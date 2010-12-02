@@ -1,4 +1,5 @@
 (ns logos.perf
+  (:refer-clojure :exclude [reify inc == take])
   (:use logos.minikanren))
 
 (comment
@@ -130,18 +131,11 @@
     (time
      (dotimes [_ 1e5]
        (run* [q]
-             (exist [&r]
-                    (== `(1 ~&r) '(1 2 3 4 5))
+             (exist [r]
+                    (== `(1 ~r) '(1 2 3 4 5))
                     (== &r q))))))
 
   (defn rest-o [l d]
     (exist [a]
            (== (cons a d) l)))
-
-  ;; ~380ms
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (run* [&q]
-             (rest-o [1 2] &q)))))
   )
