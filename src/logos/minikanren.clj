@@ -165,6 +165,8 @@
   (or (lcons? x)
       (and (coll? x) (seq x))))
 
+;; TODO: move identical? check before lookup
+
 (defn unify*
   ([s u v] (unify* s u v false))
   ([s u v in-seq]
@@ -242,15 +244,13 @@
   (lookup [this v])
   (unify [this u v]))
 
-;; TODO : remove the circular bit
+;; TODO : add occurs-check, and add to ext
 
 (defrecord Substitutions [s s']
   ISubstitutions
   (length [this] (count s'))
   (ext [this x v]
-       (if (= (lookup* s x) ::circular)
-         nil
-         (ext-no-check this x v)))
+       (ext-no-check this x v))
   (ext-no-check [this x v]
                 (Substitutions. (assoc s x v)
                                 (conj s' (pair x v))))
@@ -342,6 +342,10 @@
 
 (defn lvar-binds [syms]
   (reduce concat (map lvar-bind syms)))
+
+;; TODO: put the substitution in the var
+;; then we can do an identical? check to see if
+;; we're looking at an unassociated var
 
 (defmacro exist [[& x-rest] g0 & g-rest]
   `(fn [a#]
