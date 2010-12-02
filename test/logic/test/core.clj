@@ -1,5 +1,5 @@
 (ns logos.test.core
-  (:use [logos.core] :reload)
+  (:use [logos.minikanren] :reload)
   (:use [clojure.test]))
 
 (deftest replace-me ;; FIXME: write

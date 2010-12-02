@@ -5,7 +5,7 @@
   (toString [this] (str "<lvar:" name ">")))
 
 ;; =============================================================================
-;; Rethinking how rest vars work, LCons
+;; LCons
 
 (defn ^lvarT lvar
   ([] (lvarT. (gensym) nil))
@@ -52,7 +52,9 @@
   (.write writer (str x)))
 
 (defn lcons [a d]
-  (LCons. a d))
+  (if (seq? d)
+    (cons a d)
+    (LCons. a d)))
 
 (defn lcons? [x]
   (instance? LCons x))
