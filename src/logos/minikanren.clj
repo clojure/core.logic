@@ -204,11 +204,8 @@
                                           ur (lnext u)
                                           vf (lfirst v)
                                           vr (lnext v)]
-                                      (cond
-                                       (rest-lvar? uf) (unify* s uf v)
-                                       (rest-lvar? vf) (unify* s vf u)
-                                       :else (let [s (unify* s uf vf)]
-                                               (and s (unify* s ur vr true)))))
+                                      (let [s (unify* s uf vf)]
+                                        (and s (unify* s ur vr true))))
         (= u v) s
         :else false))))
 

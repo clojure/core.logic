@@ -185,7 +185,7 @@
        (run* [q]
              (rest-o [1 2] q)))))
 
-  ;; ~4.1s, Scheme is 5.5s
+  ;; ~3.9s, Scheme is 5.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
