@@ -132,10 +132,6 @@
 
   (run* [q]
         (exist [y]
-               (append-o (list 'cake 'with 'iced y) '(tastes yummy) q)))
-
-  (run* [q]
-        (exist [y]
                (append-o '(cake with iced cream) y q)))
 
   ;; FIXME: singleton `(y) should not be allowed
