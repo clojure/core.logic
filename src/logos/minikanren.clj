@@ -19,9 +19,7 @@
 
 (deftype rest-lvarT [name s]
   Object
-  (toString [this] (str "<rest-lvar:" name ">"))
-  clojure.lang.Seqable
-  (seq [this] (list this)))
+  (toString [this] (str "<lvar:" name ">")))
 
 (defn ^rest-lvarT rest-lvar
   ([] (rest-lvarT. (gensym) nil))
@@ -71,20 +69,17 @@
 
 (defprotocol LConsSeq
   (lfirst [this])
-  (lnext [this])
-  (lseq [this]))
+  (lnext [this]))
+
+;; TODO: clean up the printing code
 
 (defprotocol LConsPrint
   (toShortString [this]))
 
 (deftype LCons [a d]
-  IPair
-  (lhs [this] a)
-  (rhs [this] d)
   LConsSeq
   (lfirst [_] a)
   (lnext [_] d)
-  (lseq [this] this)
   LConsPrint
   (toShortString [this]
                  (cond
@@ -102,6 +97,10 @@
 (defmethod print-method LCons [x writer]
   (.write writer (str x)))
 
+;; TODO: define lconj
+;; reverse the arguments and we can avoid the conditional here
+;; just dispatch on type
+
 (defn lcons [a d]
   (if (seq? d)
     (cons a d)
@@ -110,13 +109,13 @@
 (defn lcons? [x]
   (instance? LCons x))
 
-(extend-type clojure.lang.PersistentVector
+(extend-type clojure.lang.PersistentList
   LConsSeq
   (lfirst [this] (first this))
   (lnext [this] (next this))
   (lseq [this] (seq this)))
 
-(extend-type clojure.lang.PersistentHashMap
+(extend-type clojure.lang.PersistentVector
   LConsSeq
   (lfirst [this] (first this))
   (lnext [this] (next this))
@@ -128,7 +127,7 @@
   (lnext [this] (next this))
   (lseq [this] (seq this)))
 
-(extend-type clojure.lang.PersistentList
+(extend-type clojure.lang.PersistentHashMap
   LConsSeq
   (lfirst [this] (first this))
   (lnext [this] (next this))
@@ -154,9 +153,11 @@
 (defn print-identity [v]
   (println v) v)
 
+;; TODO: convert to macro
+
 (defn lcoll? [x]
   (or (lcons? x)
-      (and (coll? x) (seq? x))))
+      (and (coll? x) (seq x))))
 
 (defn unify*
   [s u v]
@@ -190,8 +191,7 @@
   (let [v' (lookup s v)]
     (cond
      (lvar? v') v'
-     (lcoll? v') (let [vseq (if (map? v')
-                              (reduce concat v') v')
+     (lcoll? v') (let [vseq (if (map? v') (reduce concat v') v')
                        vf (reify-lookup s (lfirst vseq))
                        vn (reify-lookup s (lnext vseq))
                        r (lcons vf vn)]
