@@ -141,7 +141,17 @@
   (lfirst [this] (first this))
   (lnext [this] (next this)))
 
+(extend-type clojure.lang.MapEntry
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this)))
+
 (extend-type clojure.lang.PersistentHashSet
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this)))
+
+(extend-type clojure.lang.APersistentMap$KeySeq
   LConsSeq
   (lfirst [this] (first this))
   (lnext [this] (next this)))
