@@ -30,7 +30,7 @@
 
 (defn twin-o [p]
   (exist [x]
-    (cons-o x `(~x) p)))
+         (cons-o x x p)))
 
 ;; this introduces many rest vars
 (defn append-o [l s out]
@@ -106,6 +106,7 @@
   (run* [q]
         (rest-o [1 2 3 4 5 6 7 8] q))
 
+  ;; (_.0 . _.1)
   (run* [q]
         (exist [a d]
                (cons-o a d q)))

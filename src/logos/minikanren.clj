@@ -83,12 +83,12 @@
   LConsPrint
   (toShortString [this]
                  (cond
-                  (lvar? d) (str a " . " d )
-                  (instance? LCons d) (str a " " (toShortString d))))
+                  (instance? LCons d) (str a " " (toShortString d))
+                  :else (str a " . " d )))
   Object
   (toString [this] (cond
-                    (lvar? d) (str "(" a " . " d ")")
-                    (instance? LCons d) (str "(" a " " (toShortString d) ")")))
+                    (instance? LCons d) (str "(" a " " (toShortString d) ")")
+                    :else (str "(" a " . " d ")")))
   ;; equiv
   ;; equals
   ;; hashCode
@@ -220,7 +220,7 @@
   (let [v (lookup s v)]
     (cond
      (lvar? v) (ext s v (reify-lvar-name s))
-     (coll? v) (-reify (-reify s (first v)) (next v))
+     (lcoll? v) (-reify (-reify s (lfirst v)) (lnext v))
      :else s)))
 
 (defn reify [s v]
