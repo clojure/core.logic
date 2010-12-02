@@ -1,5 +1,6 @@
 (ns logos.test.core
   (:use [logos.minikanren] :reload)
+  (:use [logos.logic] :reload)
   (:use [clojure.test]))
 
 (defn teacup-o [x]
@@ -87,3 +88,72 @@
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
          '[(false true) (tea true) (cup true)])))
+
+(deftest test-cons-o
+  (is (= (run* [q]
+               (exist [a d]
+                      (cons-o a d '())
+                      (== (cons a d) q))
+        []))))
+
+(deftest test-cons-o-2
+  (is (= (run* [q]
+               (== [q] nil))
+         [])))
+
+(deftest test-cons-o-3
+  (is (=
+       (run* [q]
+             (cons-o 'a nil q))
+       '[(a)])))
+
+(deftest test-cons-o-4
+  (is (= (run* [q]
+               (cons-o 'a '(d) q))
+         '[(a d)])))
+
+(deftest test-cons-o-empty-list
+  (is (= (run* [q]
+               (cons-o 'a q '(a)))
+         '[()])))
+
+(deftest test-cons-o-5
+  (is (= (run* [q]
+               (cons-o q '(b c) '(a b c)))
+         '[a])))
+
+(deftest test-first-o
+  (is (= (run* [q]
+               (first-o q '(1 2)))
+         '[1])))
+
+(deftest test-rest-o
+  (is (= (run* [q]
+               (rest-o q '(1 2)))
+         '[(_.0 1 2)])))
+
+(deftest test-rest-o-2
+  (is (= (run* [q]
+               (rest-o q [1 2]))
+         '[(_.0 1 2)])))
+
+(deftest test-rest-o-3
+  (is (= (run* [q]
+               (rest-o [1 2] q))
+         '[(2)])))
+
+(deftest test-rest-o-4
+  (is (= (run* [q]
+               (rest-o [1 2 3 4 5 6 7 8] q))
+         '[(2 3 4 5 6 7 8)])))
+
+(comment
+  ;; time to implement equality
+  (deftest test-cons-o-1
+    (let [a (lvar 'a)
+          d (lvar 'd)]
+      (is (= (run* [q]
+                   (cons-o a d q))
+             [(lcons a d)]))))
+
+  )

@@ -41,6 +41,9 @@
 ;; =============================================================================
 ;; Pairs
 
+;; NOTE: this abstraction is only used for the goal and goal constructor portion
+;; of the codebase
+
 (defprotocol IPair
   (lhs [this])
   (rhs [this]))
