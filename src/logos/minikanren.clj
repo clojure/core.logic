@@ -67,6 +67,12 @@
 ;; =============================================================================
 ;; LCons
 
+;; NOTE: The ISeq interface expects that next returns a Seq. LCons may or may
+;; not be real seqs. For example, if the right hand side is a logic variable. So
+;; that we can iterate over sequences that may contain logic variables at the
+;; end and Clojure sequences we define LConSeq and extend all the core Clojure
+;; datatypes to this Protocol.
+
 (defprotocol LConsSeq
   (lfirst [this])
   (lnext [this]))
@@ -259,6 +265,8 @@
   (ext-no-check [this x v])
   (lookup [this v])
   (unify [this u v]))
+
+;; TODO : remove the circular bit
 
 (defrecord Substitutions [s s']
   ISubstitutions
