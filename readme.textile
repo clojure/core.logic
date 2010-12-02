@@ -12,7 +12,7 @@ This is not the first implementation of miniKanren in Clojure. Jim Duey's versio
 
 h2. Notes
 
-I stayed pretty true to the *structure* of the original implementation. However there's considerable originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added "rest" logical vars.
+I stayed pretty true to the *structure* of the original implementation. However there's considerable originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added the LConsSeq protocol.
 
 The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient. However I am planning on replacing this code with high performance original work.
 
@@ -37,8 +37,8 @@ h2. Examples
 
 <pre>
 (run 5 [x]
-  (exist [&y]
-    (append-o (list 'cake &y) '(d t) x)))
+  (exist [y]
+    (append-o (list 'cake y) '(d t) x)))
 
 ;; [(cake _.0 d t)
 ;;  (cake _.0 _.1 d t)
