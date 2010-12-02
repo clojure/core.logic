@@ -100,44 +100,51 @@
 ;; TODO: define lconj
 ;; reverse the arguments and we can avoid the conditional here
 ;; just dispatch on type
+;; lconj also give us the freedom to create the correct type
+;; during reification
 
 (defn lcons [a d]
-  (if (seq? d)
-    (cons a d)
+  (if (or (coll? d) (nil? d))
+    (cons a (seq d))
     (LCons. a d)))
 
 (defn lcons? [x]
   (instance? LCons x))
 
+(extend-type clojure.lang.Cons
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this)))
+
 (extend-type clojure.lang.PersistentList
   LConsSeq
   (lfirst [this] (first this))
-  (lnext [this] (next this))
-  (lseq [this] (seq this)))
+  (lnext [this] (next this)))
 
 (extend-type clojure.lang.PersistentVector
   LConsSeq
   (lfirst [this] (first this))
-  (lnext [this] (next this))
-  (lseq [this] (seq this)))
+  (lnext [this] (next this)))
+
+(extend-type clojure.lang.PersistentVector$ChunkedSeq
+  LConsSeq
+  (lfirst [this] (first this))
+  (lnext [this] (next this)))
 
 (extend-type clojure.lang.PersistentArrayMap
   LConsSeq
   (lfirst [this] (first this))
-  (lnext [this] (next this))
-  (lseq [this] (seq this)))
+  (lnext [this] (next this)))
 
 (extend-type clojure.lang.PersistentHashMap
   LConsSeq
   (lfirst [this] (first this))
-  (lnext [this] (next this))
-  (lseq [this] (seq this)))
+  (lnext [this] (next this)))
 
 (extend-type clojure.lang.PersistentHashSet
   LConsSeq
   (lfirst [this] (first this))
-  (lnext [this] (next this))
-  (lseq [this] (seq this)))
+  (lnext [this] (next this)))
 
 ;; =============================================================================
 ;; Unification
@@ -160,26 +167,30 @@
       (and (coll? x) (seq x))))
 
 (defn unify*
-  [s u v]
-  (let [u (lookup s u)
-        v (lookup s v)]
-    (cond
-     (identical? u v) s
-     (lvar? u) (if (lvar? v)
-                 (ext-no-check s u v)
-                 (ext s u v))
-     (lvar? v) (ext s v u)
-     (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
-                                       ur (lnext u)
-                                       vf (lfirst v)
-                                       vr (lnext v)]
-                                   (cond
-                                    (rest-lvar? uf) (unify* s uf v)
-                                    (rest-lvar? vf) (unify* s vf u)
-                                    :else (let [s (unify* s uf vf)]
-                                            (and s (unify* s ur vr)))))
-     (= u v) s
-     :else false)))
+  ([s u v] (unify* s u v false))
+  ([s u v in-seq]
+     (let [u (lookup s u)
+           v (lookup s v)]
+       (cond
+        (identical? u v) s
+        (lvar? u) (cond
+                   (lvar? v) (ext-no-check s u v)
+                   (and in-seq (nil? v)) (ext s u '())
+                   :else (ext s u v))
+        (lvar? v) (if (and in-seq (nil? u))
+                    (ext s v '())
+                    (ext s v u))
+        (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
+                                          ur (lnext u)
+                                          vf (lfirst v)
+                                          vr (lnext v)]
+                                      (cond
+                                       (rest-lvar? uf) (unify* s uf v)
+                                       (rest-lvar? vf) (unify* s vf u)
+                                       :else (let [s (unify* s uf vf)]
+                                               (and s (unify* s ur vr true)))))
+        (= u v) s
+        :else false))))
 
 ;; =============================================================================
 ;; Reification

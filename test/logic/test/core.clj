@@ -2,9 +2,6 @@
   (:use [logos.minikanren] :reload)
   (:use [clojure.test]))
 
-(deftest replace-me ;; FIXME: write
-  (is false "No tests have been written."))
-
 (lvar 'x)
 
 (let [[x y z] (map lvar '[x y z])
