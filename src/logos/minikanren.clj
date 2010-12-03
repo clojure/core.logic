@@ -305,7 +305,10 @@
   ITake
   (take* [this n f v] v))
 
-(def mzero (MZero.))
+(def -mzero (MZero.))
+
+(defmacro mzero []
+  `-mzero)
 
 (deftype Unit [a]
   clojure.lang.IFn
@@ -317,8 +320,8 @@
   ITake
   (take* [this n f v] (conj v (first a))))
 
-(defmacro inc [e]
-  `(Inc. (fn [] ~e)))
+(defmacro unit [a]
+  `(Unit. ~a))
 
 (deftype Inc [a]
   clojure.lang.IFn
@@ -330,7 +333,13 @@
   ITake
   (take* [this n f v] (take n f v)))
 
+(defmacro inc [e]
+  `(Inc. (fn [] ~e)))
+
 (deftype Choice [a f']
+  IPair
+  (lhs [this] a)
+  (rhs [this] f')
   IMPlus
   (mplus [this f] (inc (Choice. (f) f')))
   IBind
@@ -338,11 +347,14 @@
   ITake
   (take* [this n f v] (take (and n (dec n)) f' (conj v (first a)))))
 
+(defmacro choice [a f]
+  `(Choice. ~a ~f))
+
 (defn succeed [a]
-  (Unit. a))
+  (unit a))
 
 (defn fail [a]
-  mzero)
+  (mzero))
 
 (def s# succeed)
 
