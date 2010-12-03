@@ -411,7 +411,7 @@
          (fn []
            ((exist [~x] ~g0 ~@g-rest
                    (fn [a#]
-                     (conj [] (reify a# ~x))))
+                     (unit (reify a# ~x))))
             empty-s))))
 
 (defn take
