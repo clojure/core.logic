@@ -310,6 +310,21 @@
 (defmacro mzero []
   `-mzero)
 
+(declare take)
+
+(deftype Choice [a f']
+  clojure.lang.IFn
+  (invoke [this] this)
+  IPair
+  (lhs [this] a)
+  (rhs [this] f')
+  IMPlus
+  (mplus [this f] (Choice. (f) f'))
+  IBind
+  (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
+  ITake
+  (take* [this n f v] (take (and n (dec n)) f' (conj v (a)))))
+
 (deftype Unit [a]
   clojure.lang.IFn
   (invoke [this] a)
@@ -335,19 +350,6 @@
 
 (defmacro inc [e]
   `(Inc. (fn [] ~e)))
-
-(deftype Choice [a f']
-  clojure.lang.IFn
-  (invoke [this] this)
-  IPair
-  (lhs [this] a)
-  (rhs [this] f')
-  IMPlus
-  (mplus [this f] (Choice. (f) f'))
-  IBind
-  (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
-  ITake
-  (take* [this n f v] (take (and n (dec n)) f' (conj v (a)))))
 
 (defmacro choice [a f]
   `(Choice. ~a ~f))
@@ -419,9 +421,11 @@
 (defn take
   ([n f] (take n f [])) 
   ([n f v]
+     #_(println "take" n f v)
      (if (and n (zero? n))
        v
        (let [f' (f)]
+         #_(println "f'" f')
          (take* f' n f' v)))))
 
 (defmacro run* [& body]
