@@ -337,15 +337,17 @@
   `(Inc. (fn [] ~e)))
 
 (deftype Choice [a f']
+  clojure.lang.IFn
+  (invoke [this] this)
   IPair
   (lhs [this] a)
   (rhs [this] f')
   IMPlus
-  (mplus [this f] (inc (Choice. (f) f')))
+  (mplus [this f] (Choice. (f) f'))
   IBind
   (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
   ITake
-  (take* [this n f v] (take (and n (dec n)) f' (conj v (first a)))))
+  (take* [this n f v] (take (and n (dec n)) f' (conj v (a)))))
 
 (defmacro choice [a f]
   `(Choice. ~a ~f))
