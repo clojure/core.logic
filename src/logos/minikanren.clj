@@ -292,35 +292,61 @@
 (defprotocol IBind
   (bind [this g]))
 
-(defmacro mzero [] false)
+(defprotocol ITake
+  (take* [this n f v]))
 
-(defmacro unit [a] a)
+(declare mzero)
 
-(defmacro choice [a f]
-  `(pair ~a ~f))
+(deftype MZero []
+  IMPlus
+  (mplus [this f] (f))
+  IBind
+  (bind [this g] mzero)
+  ITake
+  (take* [this n f v] v))
+
+(def mzero (MZero.))
+
+(deftype Unit [a]
+  clojure.lang.IFn
+  (invoke [this] a)
+  IMPlus
+  (mplus [this f] (Choice. this f))
+  IBind
+  (bind [this g] (g a))
+  ITake
+  (take* [this n f v] (conj v (first a))))
 
 (defmacro inc [e]
-  `(fn [] ~e))
+  `(Inc. (fn [] ~e)))
+
+(deftype Inc [a]
+  clojure.lang.IFn
+  (invoke [this] (a))
+  IMPlus
+  (mplus [this f] (Inc. (fn [] (mplus (f) a))))
+  IBind
+  (bind [this g] (Inc. (fn [] (bind (this) g))))
+  ITake
+  (take* [this n f v] (take n f v)))
+
+(deftype Choice [a f']
+  IMPlus
+  (mplus [this f] (inc (Choice. (f) f')))
+  IBind
+  (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
+  ITake
+  (take* [this n f v] (take (and n (dec n)) f' (conj v (first a)))))
 
 (defn succeed [a]
-  (unit a))
+  (Unit. a))
 
 (defn fail [a]
-  (mzero))
+  mzero)
 
 (def s# succeed)
 
 (def u# fail)
-
-(defmacro case-inf [& [e _ e0 f' e1 a' e2 [a f] e3]]
-  `(let [a-inf# ~e]
-     (cond
-      (not a-inf#) ~e0
-      (fn? a-inf#) (let [~f' a-inf#] ~e1)
-      (and (pair? a-inf#) (fn? (rhs a-inf#))) (let [~a (lhs a-inf#)
-                                                    ~f (rhs a-inf#)]
-                                                ~e3)
-      :else (let [~a' a-inf#] ~e2))))
 
 (defmacro == [u v]
   `(fn [a#]
@@ -331,13 +357,6 @@
 (defmacro mplus*
   ([e] e)
   ([e0 & e-rest] `(mplus ~e0 (fn [] (mplus* ~@e-rest)))))
-
-(defn mplus [a-inf f]
-  (case-inf a-inf
-            false (f)
-            f' (inc (mplus (f) f'))
-            a (choice a f)
-            [a f'] (choice a (fn [] (mplus (f) f')))))
 
 (defn bind-cond-e-clause [s]
   (fn [[g0 & g-rest]]
@@ -375,15 +394,6 @@
   ([e] e)
   ([e g0 & g-rest] `(bind* (bind ~e ~g0) ~@g-rest)))
 
-(defn bind [a-inf g]
-  (case-inf a-inf
-            false (mzero)
-            f (inc (bind (f) g))
-            a (g a)
-            [a f] (mplus (g a) (fn [] (bind (f) g)))))
-
-;; TODO: find for what reason are putting the value in a vector?
-
 (defmacro run [& [n [x] g0 & g-rest]]
   `(take ~n
          (fn []
@@ -397,11 +407,8 @@
   ([n f v]
      (if (and n (zero? n))
        v
-       (case-inf (f)
-                 false v
-                 f (take n f v)
-                 a (conj v (first a))
-                 [a f] (take (and n (dec n)) f (conj v (first a)))))))
+       (let [f' (f)]
+         (take* f' n f' v)))))
 
 (defmacro run* [& body]
   `(run false ~@body))
@@ -427,25 +434,3 @@
    `(fn [~a]
       (println ~a)
       ~a)))
-
-;; =============================================================================
-;; Comments and Testing
-
-(comment
-  (deftype MZero
-    IMPlus
-    (mplus [this f])
-    IBind
-    (bind [this g]))
-
-  (def mzero (MZero.))
-
-  ;; what is the cost of wrapping values ?
-  (deftype Unit [x]
-    IFn
-    (invoke [this] x)
-    IMPlus
-    (mplus [this f])
-    IBind
-    (bind [this g]))
-  )
