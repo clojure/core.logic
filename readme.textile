@@ -19,7 +19,7 @@ The chunk that remains least modified from the implementation found in the disse
 h2. Goals
 
 * Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
-* Performance. The Scheme version is quite fast. This implementation is significantly faster than that.
+* Performance. The Scheme version is quite fast. This implementation is competitive and I'm interested in seeing it run much faster.
 * Emphasis on pure relational programming.
 * Parallel logic programming.
 * Original implementation. All key elements will be changed to make Logos miniKanren as idiomatic and as high performance as possible.

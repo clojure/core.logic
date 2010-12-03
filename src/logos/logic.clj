@@ -77,6 +77,15 @@
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))
 
+  ;; Racket clocks ~720ms
+  ;; We're seeing ~900ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (run 5 [x]
+            (exist [y]
+                   (append-o (llist 'cake y) '(d t) x))))))
+
   ;; FIXME: trailing empty list, erg
   (run 5 [x]
        (exist [y]
