@@ -323,7 +323,7 @@
   IBind
   (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
   ITake
-  (take* [this n f v] (take (and n (dec n)) f' (conj v (a)))))
+  (take* [this n f v] (take (and n (dec n)) f' (conj v a))))
 
 (deftype Unit [a]
   clojure.lang.IFn

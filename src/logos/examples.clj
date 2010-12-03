@@ -1,4 +1,5 @@
 (ns logos.examples
+  (:refer-clojure :exclude [reify inc == take])
   (:use logos.minikanren))
 
 (run* [q]
@@ -6,11 +7,13 @@
 
 ;; wow nearly twice as fast!
 ;; 3 million unifications a second
-(dotimes [_ 10]
-  (time
-   (dotimes [_ 3e6]
-     (run* [q]
-       (== q true)))))
+(comment
+ (dotimes [_ 10]
+   (time
+    (dotimes [_ 3e6]
+      (run* [q]
+            (== q true)))))
+ )
 
 (run* [q]
       (== q true)
@@ -28,7 +31,20 @@
              (cond-e
               ((teacup-o x) (== true y) s#)
               ((== false x) (== true y)))
-             (== (cons x (cons y ())) r)))
+             (== (cons x (cons y ())) r))) 
+
+(comment
+  ;; 1.3s under goals branch
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [r]
+             (exist [x y]
+                    (cond-e
+                     ((teacup-o x) (== true y) s#)
+                     ((== false x) (== true y)))
+                    (== (cons x (cons y ())) r))))))
+ )
 
 (comment
   (defmulti multi-test type)
