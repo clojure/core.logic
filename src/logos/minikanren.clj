@@ -41,9 +41,6 @@
 ;; =============================================================================
 ;; Pairs
 
-;; NOTE: this abstraction is only used for the goal and goal constructor portion
-;; of the codebase
-
 (defprotocol IPair
   (lhs [this])
   (rhs [this]))
@@ -106,16 +103,6 @@
 (defmethod print-method LCons [x writer]
   (.write writer (str x)))
 
-;; TODO: define lconj
-;; reverse the arguments and we can avoid the conditional here
-;; just dispatch on type
-;; lconj also give us the freedom to create the correct type
-;; during reification
-;; lconj when given a logic var convert's to a sequence just
-;; for unification. if the var gets assocaited with a data
-;; structure of a particular type, during reification lconj
-;; can reconstruct. Even maps!
-
 (defn lcons [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
@@ -152,14 +139,6 @@
 ;; =============================================================================
 ;; Unification
 
-(declare lookup)
-(declare lookup*)
-(declare ext-no-check)
-(declare ext)
-(declare unify)
-(declare length)
-(declare empty-s)
-
 (defn print-identity [v]
   (println v) v)
 
@@ -169,112 +148,98 @@
   (or (lcons? x)
       (and (coll? x) (seq x))))
 
-;; TODO: move identical? check before lookup
-
-(defn unify*
-  ([s u v] (unify* s u v false))
-  ([s u v in-seq]
-     (let [u (lookup s u)
-           v (lookup s v)]
-       (cond
-        (identical? u v) s
-        (lvar? u) (cond
-                   (lvar? v) (ext-no-check s u v)
-                   (and in-seq (nil? v)) (ext s u '())
-                   :else (ext s u v))
-        (lvar? v) (if (and in-seq (nil? u))
-                    (ext s v '())
-                    (ext s v u))
-        (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
-                                          ur (lnext u)
-                                          vf (lfirst v)
-                                          vr (lnext v)]
-                                      (let [s (unify* s uf vf)]
-                                        (and s (unify* s ur vr true))))
-        (= u v) s
-        :else false))))
-
-;; =============================================================================
-;; Reification
-
-;; OPTIMIZE: add interfaces to dispatch on the type of v ?
-;; means we would need to reverse the arguments
-
-;; TODO: replace lcons with lconj, we can then skip the
-;; the seq-to-type coercions
-;; NOTE: how do we avoid vectors being backwards?
-;; we need to switch to a real recursion passing
-;; the current value which we'll lconj onto
-;; also might want to consider extending the core
-;; types with lempty, which just returns the empty
-;; node, when we understand the repercussions
-;; we can consider the real empty which preserves
-;; metadata
-;; NOTE: if we're going to do that, we can probably
-;; leverage transients here
-
-(defn reify-lookup [s v]
-  (let [v' (lookup s v)]
-    (cond
-     (lvar? v') v'
-     (lcoll? v') (let [vseq (if (map? v') (reduce concat v') v')
-                       vf (reify-lookup s (lfirst vseq))
-                       vn (reify-lookup s (lnext vseq))
-                       r (lcons vf vn)]
-                   (cond
-                    (vector? v') (vec r)
-                    (map? v') (apply hash-map r)
-                    (set? v') (set r)
-                    :else r))
-     :else v')))
-
-(defn reify-lvar-name [s]
-  (symbol (str "_." (length s))))
-
-(defn -reify [s v]
-  (let [v (lookup s v)]
-    (cond
-     (lvar? v) (ext s v (reify-lvar-name s))
-     (lcoll? v) (-reify (-reify s (lfirst v)) (lnext v))
-     :else s)))
-
-(defn reify [s v]
-  (let [v (reify-lookup s v)]
-    (reify-lookup (-reify empty-s v) v)))
-
 ;; =============================================================================
 ;; Substitutions
-
-(defn lookup* [s v]
-  (loop [v v p (find s v) s s ov v]
-    (if (nil? p)
-      v
-      (let [[v v'] p]
-        (if (lvar? v')
-          (recur v' (find s v') s ov)
-          v')))))
 
 (defprotocol ISubstitutions
   (length [this])
   (ext [this x v])
   (ext-no-check [this x v])
-  (lookup [this v])
-  (unify [this u v]))
+  (walk [this v])
+  (walk* [this v])
+  (unify [this u v])
+  (unify-seq [this u v in-seq])
+  (reify-lvar-name [_])
+  (-reify [this v])
+  (reify [this v]))
 
 ;; TODO : add occurs-check, and add to ext
 ;; NOTE : consider the right-hand-side optimization
 
+(declare empty-s)
+
 (defrecord Substitutions [s s']
   ISubstitutions
+
   (length [this] (count s'))
+
   (ext [this x v]
        (ext-no-check this x v))
+
   (ext-no-check [this x v]
                 (Substitutions. (assoc s x v)
                                 (conj s' (pair x v))))
-  (lookup [this v]
-          (lookup* s v))
-  (unify [this u v] (unify* this u v)))
+
+  (walk [this v]
+          (loop [v v p (find s v) s s ov v]
+            (if (nil? p)
+              v
+              (let [[v v'] p]
+                (if (lvar? v')
+                  (recur v' (find s v') s ov)
+                  v')))))
+
+  (walk* [this v]
+         (let [v' (walk this v)]
+           (cond
+            (lvar? v') v'
+            (lcoll? v') (let [vseq (if (map? v') (reduce concat v') v')
+                              vf (walk* this (lfirst vseq))
+                              vn (walk* this (lnext vseq))
+                              r (lcons vf vn)]
+                          (cond
+                           (vector? v') (vec r)
+                           (map? v') (apply hash-map r)
+                           (set? v') (set r)
+                           :else r))
+            :else v')))
+
+  (unify [this u v] (unify-seq this u v false))
+
+  (unify-seq [this u v in-seq]
+             (let [u (walk this u)
+                   v (walk this v)]
+               (cond
+                (identical? u v) this
+                (lvar? u) (cond
+                           (lvar? v) (ext-no-check this u v)
+                           (and in-seq (nil? v)) (ext this u '())
+                           :else (ext this u v))
+                (lvar? v) (if (and in-seq (nil? u))
+                            (ext this v '())
+                            (ext this v u))
+                (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
+                                                  ur (lnext u)
+                                                  vf (lfirst v)
+                                                  vr (lnext v)]
+                                              (let [s (unify this uf vf)]
+                                                (and s (unify-seq s ur vr true))))
+                (= u v) this
+                :else false)))
+
+  (reify-lvar-name [this]
+                   (symbol (str "_." (length this))))
+
+  (-reify [this v]
+          (let [v (walk this v)]
+            (cond
+             (lvar? v) (ext this v (reify-lvar-name this))
+             (lcoll? v) (-reify (-reify this (lfirst v)) (lnext v))
+             :else this)))
+
+  (reify [this v]
+         (let [v (walk* this v)]
+           (walk* (-reify empty-s v) v))))
 
 (def empty-s (Substitutions. {} []))
 

@@ -8,17 +8,17 @@
    ((== 'tea x) s#)
    ((== 'cup x) s#)))
 
-(deftest test-basic-lookup
+(deftest test-basic-walk
   (is (= (let [x  (lvar 'x)
                y  (lvar 'y)
                ss (to-s [[x 5] [y x]])]
-           (lookup ss y))
+           (walk ss y))
          5)))
 
-(deftest test-deep-lookup
+(deftest test-deep-walk
   (is (= (let [[x y z c b a :as s] (map lvar '[x y z c b a])
                ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
-           (lookup ss a)))
+           (walk ss a)))
       5))
 
 (deftest test-reify-lvar-name
@@ -27,10 +27,10 @@
            (reify-lvar-name (to-s [[x 5] [y x]])))
          '_.2)))
 
-(deftest test-reify-lookup
+(deftest test-walk*
   (is (= (let [x  (lvar 'x)
                y  (lvar 'y)]
-           (reify-lookup (to-s [[x 5] [y x]]) `(~x ~y)))
+           (walk* (to-s [[x 5] [y x]]) `(~x ~y)))
          '(5 5))))
 
 (deftest test-basic-unify

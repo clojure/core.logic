@@ -30,7 +30,7 @@
           ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
       (time
        (dotimes [_ 1e6]
-         (lookup ss a)))))
+         (walk ss a)))))
 
   ;; 200ms (NOTE: this jump is because array-map is slower than hash-maps)
   ;; Scheme is ~1650ms
@@ -45,12 +45,12 @@
                     [a b]])]
       (time
        (dotimes [_ 1e6]
-         (lookup ss a)))))
+         (walk ss a)))))
 
-  ;; 1.5 million unifications a second, not bad
+  ;; 3 million unifications in about 1.2s, not bad
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1.5e6]
+     (dotimes [_ 3e6]
        (run* [q]
              (== true q)))))
   
