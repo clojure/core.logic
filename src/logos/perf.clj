@@ -1,9 +1,10 @@
 (ns logos.perf
   (:refer-clojure :exclude [reify inc == take])
-  (:use logos.minikanren))
+  (:use logos.minikanren
+        logos.logic))
 
 (comment
-    ;; ==================================================
+  ;; ==================================================
   ;; PERFORMANCE
   
   ;; sick 183ms on 1.3.0 alph3
@@ -138,4 +139,31 @@
   (defn rest-o [l d]
     (exist [a]
            (== (cons a d) l)))
+
+  ;; miniKanren under Racket beats us here
+  ;; need to look into this
+  ;; ~1.4s vs ~1.6s
+  ;; under goals branch
+  ;; we're competitive with Racket
+  ;; little less than 1.4s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (append-o '(1 2) '(3 4) q)))))
+
+  ;; ~300ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (rest-o [1 2] q)))))
+
+  ;; 3.8-3.9s, Scheme is 5.5s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (run* [x]
+        (flatten-o '[[a b] c] x)))))
+
   )
