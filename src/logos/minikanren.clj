@@ -421,11 +421,9 @@
 (defn take
   ([n f] (take n f [])) 
   ([n f v]
-     #_(println "take" n f v)
      (if (and n (zero? n))
        v
        (let [f' (f)]
-         #_(println "f'" f')
          (take* f' n f' v)))))
 
 (defmacro run* [& body]

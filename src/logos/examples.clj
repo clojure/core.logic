@@ -53,7 +53,7 @@
 
   ;; multimethods are almost twice as fast
   ;; can we get very close to that?
-  ;; I bet we can via tabling
+  ;; perhaps via tabling
   (dotimes [_ 10]
     (let [x (with-meta {} {:type ::a})]
      (time
