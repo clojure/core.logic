@@ -127,10 +127,14 @@
   clojure.lang.PersistentVector
   clojure.lang.PersistentVector$ChunkedSeq
   clojure.lang.PersistentArrayMap
+  clojure.lang.PersistentArrayMap$Seq
   clojure.lang.PersistentHashMap
   clojure.lang.MapEntry
   clojure.lang.PersistentHashSet
-  clojure.lang.APersistentMap$KeySeq)
+  clojure.lang.APersistentMap$KeySeq
+  clojure.lang.PersistentHashMap$NodeSeq
+  clojure.lang.LazySeq
+  clojure.lang.ChunkedCons)
 
 (defmacro llist
   ([f s] `(lcons ~f ~s))

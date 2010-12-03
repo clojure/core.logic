@@ -45,4 +45,13 @@
     ;; other things out
     (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
     (unifier' '(?x ?y [?&a] ?&b) '(1 2 [3 4 5 6 7] 8 9 0))
+
+    (def json-path (prep '{:foo ?x
+                           :bar {:baz [?y '#{valid}]}}))
+
+    (unifier json-path {:foo 1
+                        :bar {:baz [:correct '#{valid}]}})
+
+    (unifier json-path {:foo 1
+                        :bar {:baz [:incorrect false]}})
 )
