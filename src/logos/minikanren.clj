@@ -314,11 +314,11 @@
   clojure.lang.IFn
   (invoke [this] a)
   IMPlus
-  (mplus [this f] (Choice. this f))
+  (mplus [this f] (Choice. a f))
   IBind
   (bind [this g] (g a))
   ITake
-  (take* [this n f v] (conj v (first a))))
+  (take* [this n f v] (conj v a)))
 
 (defmacro unit [a]
   `(Unit. ~a))
