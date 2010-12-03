@@ -295,13 +295,13 @@
 (defprotocol ITake
   (take* [this n f v]))
 
-(declare mzero)
-
 (deftype MZero []
+  clojure.lang.IFn
+  (invoke [this] this)
   IMPlus
   (mplus [this f] (f))
   IBind
-  (bind [this g] mzero)
+  (bind [this g] this)
   ITake
   (take* [this n f v] v))
 
