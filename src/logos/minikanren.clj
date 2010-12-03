@@ -111,6 +111,10 @@
 ;; just dispatch on type
 ;; lconj also give us the freedom to create the correct type
 ;; during reification
+;; lconj when given a logic var convert's to a sequence just
+;; for unification. if the var gets assocaited with a data
+;; structure of a particular type, during reification lconj
+;; can reconstruct. Even maps!
 
 (defn lcons [a d]
   (if (or (coll? d) (nil? d))
@@ -196,6 +200,19 @@
 ;; OPTIMIZE: add interfaces to dispatch on the type of v ?
 ;; means we would need to reverse the arguments
 
+;; TODO: replace lcons with lconj, we can then skip the
+;; the seq-to-type coercions
+;; NOTE: how do we avoid vectors being backwards?
+;; we need to switch to a real recursion passing
+;; the current value which we'll lconj onto
+;; also might want to consider extending the core
+;; types with lempty, which just returns the empty
+;; node, when we understand the repercussions
+;; we can consider the real empty which preserves
+;; metadata
+;; NOTE: if we're going to do that, we can probably
+;; leverage transients here
+
 (defn reify-lookup [s v]
   (let [v' (lookup s v)]
     (cond
@@ -245,6 +262,7 @@
   (unify [this u v]))
 
 ;; TODO : add occurs-check, and add to ext
+;; NOTE : consider the right-hand-side optimization
 
 (defrecord Substitutions [s s']
   ISubstitutions
