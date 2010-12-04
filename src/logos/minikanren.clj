@@ -443,4 +443,4 @@
   (let [a (gensym "a")]
    `(fn [~a]
       (println ~a)
-      ~a)))
+      (unit ~a))))
