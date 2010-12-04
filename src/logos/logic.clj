@@ -29,8 +29,8 @@
    ((null-o l) (== s out))
    ((exist [a d res]
            (cons-o a d l)
-           (append-o d s res)
-           (cons-o a res out)))))
+           (cons-o a res out)
+           (append-o d s res)))))
 
 (defn flatten-o [s out]
   (cond-e
@@ -52,6 +52,10 @@
   (run* [q]
         (twin-o q))
 
+  (run* [q]
+        (exist [r]
+         (cons-o r '() q)))
+
   ;; '(1 2 3 4)
   (run* [q]
         (append-o '(1 2) '(3 4) q))
@@ -63,7 +67,6 @@
         (exist [y]
                (append-o '(cake with iced cream) y q)))
 
-  ;; FIXME: singleton `(y) should not be allowed
   (run* [x]
         (exist [y]
                (append-o `(~y) '(d t) x)))
@@ -77,16 +80,7 @@
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))
 
-  ;; Racket clocks ~720ms
-  ;; We're seeing ~900ms
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e4]
-       (run 5 [x]
-            (exist [y]
-                   (append-o (llist 'cake y) '(d t) x))))))
-
-  ;; FIXME: trailing empty list, erg
+  ;; works
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake 'with 'ice y)
@@ -95,5 +89,5 @@
 
   (run* [x]
         (flatten-o '[[a b] c] x))
-    )
+  )
 

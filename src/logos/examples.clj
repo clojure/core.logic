@@ -31,7 +31,7 @@
              (cond-e
               ((teacup-o x) (== true y) s#)
               ((== false x) (== true y)))
-             (== (cons x (cons y ())) r))) 
+             (== (cons x (cons y ())) r)))
 
 (comment
   ;; 1.3s under goals branch

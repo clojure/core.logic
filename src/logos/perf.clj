@@ -1,7 +1,13 @@
 (ns logos.perf
   (:refer-clojure :exclude [reify inc == take])
   (:use logos.minikanren
-        logos.logic))
+        logos.logic
+        logos.unify))
+
+(defn teacup-o [x]
+  (cond-e
+   ((== 'tea x) s#)
+   ((== 'cup x) s#)))
 
 (comment
   ;; ==================================================
@@ -152,6 +158,15 @@
        (run* [q]
              (append-o '(1 2) '(3 4) q)))))
 
+  ;; Racket clocks ~720ms
+  ;; We're seeing ~900ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (run 5 [x]
+            (exist [y]
+                   (append-o (llist 'cake y) '(d t) x))))))
+
   ;; ~300ms
   (dotimes [_ 10]
     (time
@@ -159,7 +174,7 @@
        (run* [q]
              (rest-o [1 2] q)))))
 
-  ;; 3.8-3.9s, Scheme is 5.5s
+  ;; 3.2s Scheme is 5.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]

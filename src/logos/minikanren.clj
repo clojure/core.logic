@@ -288,7 +288,7 @@
   (lhs [this] a)
   (rhs [this] f')
   IMPlus
-  (mplus [this f] (Choice. (f) f'))
+  (mplus [this f] (Choice. a (fn [] (mplus (f) f'))))
   IBind
   (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
   ITake
@@ -313,9 +313,9 @@
   IMPlus
   (mplus [this f] (Inc. (fn [] (mplus (f) a))))
   IBind
-  (bind [this g] (Inc. (fn [] (bind (this) g))))
+  (bind [this g] (Inc. (fn [] (bind (a) g))))
   ITake
-  (take* [this n f v] (take n f v)))
+  (take* [this n f v] (take n a v)))
 
 (defmacro inc [e]
   `(Inc. (fn [] ~e)))
