@@ -12,9 +12,9 @@ This is not the first implementation of miniKanren in Clojure. Jim Duey's versio
 
 h2. Notes
 
-I stayed pretty true to the *structure* of the original implementation. However there's considerable originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added the LConsSeq protocol.
+I stayed pretty true to the structure of the original implementation. However there's some originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added the LConsSeq protocol. All iterable Clojure data structures are extended to this protocol.
 
-The chunk that remains least modified from the implementation found in the dissertation is code related to goals and goal constructors. There's quite a bit of clever macro magic there which makes miniKanren code efficient. However I am planning on replacing this code with high performance original work.
+The goal and goal constructor portion of the origin implementation has been adapted to protocols (IBind, IMPlus) and deftypes (MZero, Unit, Inc, Choice). <code>take</code> has been changed to return a Clojure vector of answers. 
 
 h2. Goals
 
@@ -22,7 +22,7 @@ h2. Goals
 * Performance. The Scheme version is quite fast. This implementation is competitive and and on many operations it's considerably faster.
 * Emphasis on pure relational programming.
 * Parallel logic programming.
-* Original implementation. All key elements will be changed to make Logos miniKanren as idiomatic and as high performance as possible.
+* Original implementation. This will take some time as I acquire a deeper understanding of miniKanren and dive into the vast literature on logic programming.
 
 h2. Contributing
 
