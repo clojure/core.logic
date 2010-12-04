@@ -1,0 +1,10 @@
+* Immediate
+** TODO : Investigate - Skew Random Binary Access Lists (Okasaki)
+* Backlog
+** TODO : Fix rest lvars for logos.unify/unifier and logos.unify/unifier'
+* Future
+** TODO : Compare with lazy sequences instead of (a . f)
+** TODO : Investigate forward-chaining
+** TODO : tabling
+** TODO : consider parallel syntax
+** TODO : Datalog
