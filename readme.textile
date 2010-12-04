@@ -89,3 +89,14 @@ The above is quite slow since we have to walk the data structure and replace the
 (let [[u w] (map prep ['(?x ?y) (1 2)])]
   (unifier u w))
 </pre>
+
+h2. Resources
+
+* "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html
+* "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663
+* "Efficient representations for triangular substitutions: A comparison in miniKanren":https://www.cs.indiana.edu/~lkuper/papers/walk.pdf
+* "A pattern matcher for miniKanren, or, how to get into trouble with CPS macros":http://www.cs.indiana.edu/~lkuper/papers/lambdae.pdf
+* "Kanren":http://kanren.sourceforge.net/
+* "Logical JVM: Implementing the miniKanren logic system in Scala":http://hircus.multics.org/kanren/presentation.html
+* "minikanren-scala":https://github.com/hircus/minikanren-scala
+* "Purely Functional Data Strucutres":http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.3080&rep=rep1&type=pdf
