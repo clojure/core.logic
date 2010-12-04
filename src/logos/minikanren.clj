@@ -157,6 +157,7 @@
 
 (defprotocol ISubstitutions
   (length [this])
+  (occurs-check [this u v])
   (ext [this x v])
   (ext-no-check [this x v])
   (walk [this v])
@@ -177,12 +178,21 @@
 
   (length [this] (count s'))
 
-  (ext [this x v]
-       (ext-no-check this x v))
+  (occurs-check [this u v]
+                (cond
+                 (lvar? v) (= (walk this v) v)
+                 (lcoll? v) (or (occurs-check this u (lfirst v))
+                                (occurs-check this u (lnext v))))
+                :else false)
+  
+  (ext [this u v]
+       (if (occurs-check this u v)
+         this
+         (ext-no-check this u v)))
 
-  (ext-no-check [this x v]
-                (Substitutions. (assoc s x v)
-                                (conj s' (pair x v))))
+  (ext-no-check [this u v]
+                (Substitutions. (assoc s u v)
+                                (conj s' (pair u v))))
 
   (walk [this v]
           (loop [v v p (find s v) s s ov v]
