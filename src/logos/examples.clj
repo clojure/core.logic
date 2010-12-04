@@ -2,48 +2,33 @@
   (:refer-clojure :exclude [reify inc == take])
   (:use logos.minikanren))
 
-(run* [q]
-      (== q true))
-
-;; wow nearly twice as fast!
-;; 3 million unifications a second
-(comment
- (dotimes [_ 10]
-   (time
-    (dotimes [_ 3e6]
-      (run* [q]
-            (== q true)))))
- )
-
-(run* [q]
-      (== q true)
-      (== q false))
-
-(defn teacup-o [x]
+(defn likes [x y]
   (cond-e
-   ((== 'tea x) s#)
-   ((== 'cup x) s#)))
+   ((== x 'john) (== y 'mary))
+   ((== x 'mary) (== y 'join))))
 
-;; Cons cannot be cast to clojure.lang.IFn
-;; sounds like something not wrapped in unit
-(run* [r]
-      (exist [x y]
-             (cond-e
-              ((teacup-o x) (== true y) s#)
-              ((== false x) (== true y)))
-             (== (cons x (cons y ())) r)))
+(defn musician [x]
+  (cond-e
+   ((== x 'john))
+   ((== x 'bob))))
 
 (comment
-  ;; 1.3s under goals branch
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (run* [r]
-             (exist [x y]
-                    (cond-e
-                     ((teacup-o x) (== true y) s#)
-                     ((== false x) (== true y)))
-                    (== (cons x (cons y ())) r))))))
+
+  (run* [q]
+        (likes q 'mary)
+        (musician q)) ;; [john]
+
+  (run* [q]
+        (musician q)) ;; [john bob]
+
+  ;; not the question is how would one go about creating
+  ;; a knowledge base of facts and chaining them together?
+
+  ;; that is it important to keep the system open?
+
+  ;; (?- likes 'john 'mary)
+  ;; (?- likes 'mary 'john)
+  ;; (?- likes ?x 'mary)
  )
 
 (comment

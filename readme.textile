@@ -48,6 +48,25 @@ h2. Examples
 </pre>
 
 <pre>
+(defn likes [x y]
+  (cond-e
+   ((== x 'john) (== y 'mary))
+   ((== x 'mary) (== y 'join))))
+
+(defn musician [x]
+  (cond-e
+   ((== x 'john))
+   ((== x 'bob))))
+
+(run* [q]
+      (likes q 'mary)
+      (musician q)) ;; [john]
+
+(run* [q]
+      (musician q)) ;; [john bob]
+</pre>
+
+<pre>
 (unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
 </pre>
 
