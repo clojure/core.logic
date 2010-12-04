@@ -163,13 +163,14 @@
            (a b c ())
            (a b () c)
            (a b () c ())])))
+
+(deftest test-cons-o-1
+  (let [a (lvar 'a)
+        d (lvar 'd)]
+    (is (= (run* [q]
+                 (cons-o a d q))
+           [(lcons a d)]))))
+
 (comment
   ;; time to implement equality
-  (deftest test-cons-o-1
-    (let [a (lvar 'a)
-          d (lvar 'd)]
-      (is (= (run* [q]
-                   (cons-o a d q))
-             [(lcons a d)]))))
-
   )

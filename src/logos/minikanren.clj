@@ -82,6 +82,8 @@
 (defprotocol LConsPrint
   (toShortString [this]))
 
+(declare lcons?)
+
 (deftype LCons [a d]
   LConsSeq
   (lfirst [_] a)
@@ -95,8 +97,21 @@
   (toString [this] (cond
                     (instance? LCons d) (str "(" a " " (toShortString d) ")")
                     :else (str "(" a " . " d ")")))
-  ;; equiv
-  ;; equals
+  (equals [this o]
+          (or (identical? this o)
+              (and (lcons? o)
+                   (loop [me this
+                          you o]
+                     (cond
+                      (nil? me) (nil? you)
+                      (lvar? me) true
+                      (lvar? you) true
+                      :else (let [mef  (lfirst me)
+                                  youf (lfirst you)]
+                              (and (or (= mef youf)
+                                       (lvar? mef)
+                                       (lvar? youf))
+                                   (recur (lnext me) (lnext you)))))))))
   ;; hashCode
   )
 
