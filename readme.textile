@@ -18,16 +18,16 @@ I stayed pretty true to the structure of the original implementation. However th
 (lcons 'a (lvar 'b)) ; (a . <lvar:b>)
 </pre>
 
-Logic variables are istances of <code>lvarT</code> not vectors as they are Scheme.
+Logic variables are istances of <code>lvarT</code> not vectors as they are in Scheme.
 
 The goal and goal constructor portion of the original implementation has been adapted to protocols (<code>IBind</code>, <code>IMPlus</code>) and deftypes (<code>MZero</code>, <code>Unit</code>, <code>Inc</code>, <code>Choice</code>). <code>take</code> has been changed to return a Clojure vector of answers.
 
-Currently the <code>Substitutions</code> uses <code>clojure.lang.PersistentHashMap</code> internally. This will probably be replaced with something more suitable for triangular substitutions. I'll be investigating Skew Binary Random Access Lists as well as Finger Trees (Okasaki).
+Currently the <code>Substitutions</code> defrecord uses <code>clojure.lang.PersistentHashMap</code> internally. This will probably be replaced with something more suitable for triangular substitutions. I'll be investigating Skew Binary Random Access Lists as well as Finger Trees (Okasaki).
 
 h2. Goals
 
 * Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
-* Performance. The Scheme version is quite fast. This implementation is competitive and and on many operations it's considerably faster.
+* Performance. I've made sure that this version is competitive with miniKanren running under Racket. A long term goal is to have Logos perform well enough that a predicate dispatch system could be built on top of it. 
 * Emphasis on pure relational programming.
 * Parallel logic programming.
 * Original implementation. This will take some time as I acquire a deeper understanding of miniKanren and dive into the vast literature on logic programming.
