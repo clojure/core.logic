@@ -147,6 +147,22 @@
                (rest-o [1 2 3 4 5 6 7 8] q))
          '[(2 3 4 5 6 7 8)])))
 
+(deftest test-flatten-o
+  (is (= (run* [x]
+               (flatten-o '[[a b] c] x))
+         '[([[a b] c])
+           ([a b] (c))
+           ([a b] c)
+           (a (b) (c))
+           ([a b] c ())
+           (a (b) c)
+           (a (b) c ())
+           (a b (c))
+           (a b () (c))
+           (a b c)
+           (a b c ())
+           (a b () c)
+           (a b () c ())])))
 (comment
   ;; time to implement equality
   (deftest test-cons-o-1
