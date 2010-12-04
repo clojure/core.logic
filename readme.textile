@@ -51,7 +51,7 @@ h2. Examples
 (defn likes [x y]
   (cond-e
    ((== x 'john) (== y 'mary))
-   ((== x 'mary) (== y 'join))))
+   ((== x 'mary) (== y 'john))))
 
 (defn musician [x]
   (cond-e
@@ -59,11 +59,16 @@ h2. Examples
    ((== x 'bob))))
 
 (run* [q]
-      (likes q 'mary)
-      (musician q)) ;; [john]
+  (likes q 'mary)
+  (musician q)) ;; [john]
 
 (run* [q]
-      (musician q)) ;; [john bob]
+  (musician q)) ;; [john bob]
+
+(run* [q]
+  (exist [x y]
+    (likes x y)
+    (== [x y] q))) ;; [[john mary] [mary john]]
 </pre>
 
 <pre>

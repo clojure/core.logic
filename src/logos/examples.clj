@@ -23,13 +23,13 @@
 
   (run* [q]
         (musician q))
+  
+  ;; [john bob]
 
   (run* [q]
         (exist [x y]
                (likes x y)
-               (== (cons x (cons y '())) q)))
-  
-  ;; [john bob]
+               (== [x y] q)))
 
   ;; this is already useful of course
 
@@ -40,32 +40,45 @@
   ;; (?- likes 'john 'mary)
   ;; first time, creates a function likes of two arities
   ;; 2 argument, and 3 argument one that takes a next
-  ;; parameter
-  
+  ;; parameter which is just a goal
+
   ;; (?- likes 'mary 'john)
   ;; (?- likes ?x 'mary)
 
-  ;; chained goals?
+  (defn likes [a b]
+    (fn [x y g]
+      (cond-e
+       ((== x a) (== y b))
+       (g))))
+
+  (likes 'john 'mary)
+
+  (def kb
+       [(?- likes 'john 'mary)
+        (?- likes 'mary 'john)])
+
+  (defn likes
+    ([x y]
+       (likes x y u#))
+    ([x y next]
+       (cond-e
+        ((== x 'john) (== y 'mary))
+        ((== x 'mary) (== y 'john))
+        (next))))
+
+  (defn g1 [x g2]
+    (cond-e
+     ((== x 'foo))
+     (g2)))
+
+  ;; interesting we can pass goals as parameters
+  (run* [q]
+        (g1 q (== q 'bar)))
+
+  (run* [q]
+        (cond-e
+         ()))
   )
-
-(defn likes
-  ([x y]
-     (likes x y u#))
-  ([x y next]
-     (cond-e
-      ((== x 'john) (== y 'mary))
-      ((== x 'mary) (== y 'join))
-      (next))))
-
-
-(defn g1 [x g2]
-  (cond-e
-   ((== x 'foo))
-   (g2)))
-
-;; interesting we can pass goals as parameters
-(run* [q]
-      (g1 q (== q 'foo)))
 
 (comment
   (defmulti multi-test type)
