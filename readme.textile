@@ -38,7 +38,7 @@ h2. Examples
 <pre>
 (run 5 [x]
   (exist [y]
-    (append-o (list 'cake y) '(d t) x)))
+    (append-o (llist 'cake y) '(d t) x)))
 
 ;; [(cake _.0 d t)
 ;;  (cake _.0 _.1 d t)
