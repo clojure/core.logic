@@ -155,12 +155,6 @@
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
-;; =============================================================================
-;; Unification
-
-(defn print-identity [v]
-  (println v) v)
-
 ;; TODO: convert to macro
 
 (defn lcoll? [x]
@@ -182,9 +176,6 @@
   (reify-lvar-name [_])
   (-reify [this v])
   (reify [this v]))
-
-;; TODO : add occurs-check, and add to ext
-;; NOTE : consider the right-hand-side optimization
 
 (declare empty-s)
 
