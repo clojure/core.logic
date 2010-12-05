@@ -5,8 +5,8 @@
 
 (defn teacup-o [x]
   (cond-e
-   ((== 'tea x) s#)
-   ((== 'cup x) s#)))
+   ((== 'tea x) s*)
+   ((== 'cup x) s*)))
 
 (deftest test-basic-walk
   (is (= (let [x  (lvar 'x)
@@ -84,7 +84,7 @@
   (is (= (run* [r]
                (exist [x y]
                       (cond-e
-                       ((teacup-o x) (== true y) s#)
+                       ((teacup-o x) (== true y) s*)
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
          '[(false true) (tea true) (cup true)])))

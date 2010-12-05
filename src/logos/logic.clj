@@ -2,13 +2,15 @@
   (:refer-clojure :exclude [reify inc == take])
   (:use logos.minikanren))
 
+(def _ (lvar '_))
+
 (defn null-o [a]
   (== '() a))
 
 (defn cons-o [a d l]
   (== (lcons a d) l))
 
-(defn first-o [a l]
+(defn first-o [l a]
   (exist [d]
     (cons-o a d l)))
 
@@ -43,7 +45,23 @@
            (append-o res-a res-d out)))
    ((cons-o s '() out))))
 
+(defn member-o [x l]
+  (cond-e
+   ((exist [r]
+           (== (lcons x r) l)))
+   ((exist [r]
+           (rest-o l r)
+           (member-o x r)))))
+
 (comment
+  ;; just shows all the members
+  (run* [q]
+        (member-o q '(hummus with pita)))
+
+  ;; sweet
+  (run 5 [q]
+       (member-o 'hummus q))
+
   ;; (_.0 . _.1)
   (run* [q]
         (pair-o q))

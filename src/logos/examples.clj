@@ -18,6 +18,16 @@
   (run* [q]
         (likes q 'mary)
         (musician q))
+
+  ;; 2.3s for 1e6
+  ;; not bad
+  ;; ~1.1 for half a million
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 5e5]
+       (run* [q]
+             (likes q 'mary)
+             (musician q)))))
   
   ;; [john]
 
@@ -30,6 +40,14 @@
         (exist [x y]
                (likes x y)
                (== [x y] q)))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (exist [x y]
+                    (likes x y)
+                    (== [x y] q))))))
 
   ;; this is already useful of course
 

@@ -59,6 +59,17 @@
      (dotimes [_ 3e6]
        (run* [q]
              (== true q)))))
+
+  ;; easy optimization unifying with a constant
+  ;; convert to regular let
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+             (exist [x y]
+                    (== x 4)
+                    (== y 5)
+                    (== true q))))))
   
   ;; ~560ms!!!
   ;; Scheme at ~1.3s
@@ -174,11 +185,36 @@
        (run* [q]
              (rest-o [1 2] q)))))
 
-  ;; 3.2s Scheme is 5.5s
+  ;; 3.8s Scheme is 5.5s
+  ;; wow removing vectors make hardly any difference
+  ;; should consider using vectors
+  ;; or even lists
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
        (run* [x]
-        (flatten-o '[[a b] c] x)))))
+             (flatten-o '[[a b] c] x)))))
 
+  ;; 3.2-3.3 if we don't reify result
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (run* [x]
+             (exist [y]
+              (flatten-o '[[a b] c] y))))))
+
+  (run 5 [x]
+       (flatten-o x '[a b c]))
+
+  (dotimes [_ 10]
+    (let [x {1 2 3 4 5 6 7 8 9 0}]
+     (time
+      (dotimes [_ 1e8]
+        (count x)))))
+
+  (dotimes [_ 10]
+    (let [x [1 2 3 4 5 6 7 8 9 0]]
+     (time
+      (dotimes [_ 1e8]
+        (count x)))))
   )

@@ -345,9 +345,9 @@
 (defn fail [a]
   (mzero))
 
-(def s# succeed)
+(def s* succeed)
 
-(def u# fail)
+(def u* fail)
 
 (defmacro == [u v]
   `(fn [a#]
@@ -435,3 +435,8 @@
    `(fn [~a]
       (println ~a)
       (unit ~a))))
+
+(defmacro all
+  ([] `s*)
+  ([g] `(fn [s#] (~g s#)))
+  ([g & g-rest] `(fn [s#] (bind (~g s#) (all ~@g-rest)))))
