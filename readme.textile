@@ -10,6 +10,16 @@ There are most certainly bugs. I hope to iron out a solid core version with nume
 
 This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. His work on that got me interested in logic programming in the first place.
 
+h2. YourKit
+
+YourKit has has given me a free license for their profiler, greatly simplifying the profiling of Logos performance. 
+
+YourKit is kindly supporting open source projects with its full-featured Java Profiler.
+YourKit, LLC is the creator of innovative and intelligent tools for profiling
+Java and .NET applications. Take a look at YourKit's leading software products:
+<a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
+<a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
+
 h2. Notes
 
 I stayed pretty true to the structure of the original implementation. However there's some originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. All iterable Clojure data structures are extended to this protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
