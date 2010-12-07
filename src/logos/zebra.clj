@@ -12,13 +12,12 @@
      (on-right-o x y r)))))
 
 (defn next-to-o [x y l]
-  (exist [r]
-   (cond-e
-    ((== (llist x y r) l))
-    ((== (llist y x r) l))
-    ((rest-o l r)
-     (next-to-o x y r)))))
+  (cond-e
+   ((on-right-o x y l))
+   ((on-right-o y x l))))
 
+;; this is a fast ordering
+;; why?
 (defn zebra [hs]
   (macro/symbol-macrolet [_ (lvar)]
    (all
@@ -37,19 +36,49 @@
     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          ;; kools are smoked in the house next to the horse
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)))) ;; the man who smokes chesterfields is next to the the man who owns a fox
 
-(comment
+;; different ordering
+(defn zebra [hs]
+  (macro/symbol-macrolet [_ (lvar)]
+   (all
+    (== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (first-o hs ['norwegian _ _ _ _])
+    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
+    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (member-o ['englishman _ _ _ 'red] hs)
+    (member-o [_ 'kools _ _ 'yellow] hs)
+    (member-o [_ _ 'coffee _ 'green] hs)
+    (member-o [_ 'oldgolds _ 'snails _] hs)
+    (member-o ['spaniard _ _ 'dog _] hs)
+    (member-o ['ukrainian _ 'tea _ _] hs)
+    (member-o [_ 'lucky-strikes 'oj _ _] hs)
+    (member-o ['japanese 'parliaments _ _ _] hs)
+    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
+    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
+)
+   ))
+
+(defn zebra-o []
   (run* [q]
-        (zebra q))
+        (zebra q)))
+
+(comment
+  (zebra-o)
 
   ;; < 14-20ms now, but still not that fast
   ;; compared to Chez Scheme + SBRALs 2.4-2.8s, that means 2ms
   ;; slowest walk is 4.6s means 4ms
   ;; so that 5-10X faster than what we have
+  ;; member version takes longer!
   (dotimes [_ 50]
     (time
      (dotimes [_ 1]
-       (run* [q]
-             (zebra q)))))
+       (zebra-o))))
+
+  ;; NOTE : the order is important if wrong, stack overflow error
+  ;; so lazy sequences will probably drop out perf by at least 2X
+  ;; correctness first
+  ;; if all the next-to-o statement are together at the beginning
+  ;; boom!
 
   ;; it's still not clear to me - what exactly is slow
 

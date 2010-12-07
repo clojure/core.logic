@@ -234,25 +234,27 @@
   (unify [this u v] (unify-seq this u v false))
 
   (unify-seq [this u v in-seq]
-             (let [u (walk this u)
-                   v (walk this v)]
-               (cond
-                (identical? u v) this
-                (lvar? u) (cond
-                           (lvar? v) (ext-no-check this u v)
-                           (and in-seq (nil? v)) (ext this u '())
-                           :else (ext this u v))
-                (lvar? v) (if (and in-seq (nil? u))
-                            (ext this v '())
-                            (ext this v u))
-                (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
-                                                  ur (lnext u)
-                                                  vf (lfirst v)
-                                                  vr (lnext v)]
-                                              (let [s (unify this uf vf)]
-                                                (and s (unify-seq s ur vr true))))
-                (= u v) this
-                :else false)))
+             (if (identical? u v)
+               this
+               (let [u (walk this u)
+                     v (walk this v)]
+                 (cond
+                  (identical? u v) this
+                  (lvar? u) (cond
+                             (lvar? v) (ext-no-check this u v)
+                             (and in-seq (nil? v)) (ext this u '())
+                             :else (ext this u v))
+                  (lvar? v) (if (and in-seq (nil? u))
+                              (ext this v '())
+                              (ext this v u))
+                  (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
+                                                    ur (lnext u)
+                                                    vf (lfirst v)
+                                                    vr (lnext v)]
+                                                (let [s (unify this uf vf)]
+                                                  (and s (unify-seq s ur vr true))))
+                  (= u v) this
+                  :else false))))
 
   (reify-lvar-name [this]
                    (symbol (str "_." (length this))))
