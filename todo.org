@@ -1,4 +1,25 @@
 * Immediate
+** TODO : protocol and deftype for goals and goal constructors
+   turns out, maybe not such a great idea. for complex logic programs
+   this causes a large number of instantiations.
+   
+   For ten iterations of the zebra problem:
+   - ~570K Inc$fn
+   - ~464K Inc
+   
+   Compare to:
+   - 59k lvarT
+   - 31k LCons
+   - 17k Unit
+  
+   on-right-o$fn$fn took 21ms
+   mplus took the longest time 12ms
+
+   also the whole thing is not tail recursive. We don't recur on
+   take, rather we call take* on an object.
+
+   yet another reason to think about lazy sequences.
+
 ** TODO : Investigate - Skew Random Binary Access Lists (Okasaki)
 * Backlog
 ** TODO : Fix rest lvars for logos.unify/unifier and logos.unify/unifier'
