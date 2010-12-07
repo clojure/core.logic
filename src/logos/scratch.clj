@@ -1,96 +1,71 @@
-(ns logos.scratch)
+(ns logos.scratch
+  (:use logos.minikanren))
 
-(deftype Unit [a]
-  clojure.lang.IFn
-  (invoke [this] a))
+(declare b)
 
-(defn unit [a]
-  (Unit. a))
+(defn a [x]
+  (if (> x 18000)
+    x
+    (+ (b (+ x 1)) 1)))
 
-;; 700ms
-;; which is really good
+(defn b [x]
+  (if (> x 18000)
+    x
+    (+ (a (+ x 1)) 1)))
+
 (dotimes [_ 10]
   (time
-   (dotimes [_ 1e8]
-     (unit 'a))))
+   (dotimes [_ 1000]
+     (a 1))))
 
-;; ~130ms
-(dotimes [_ 10]
-  (let [a-inf (unit 'a)]
-   (time
-    (dotimes [_ 1e8]
-      (a-inf)))))
+(def as (repeat (fn ^long [x] (+ x 1))))
 
-;; the same
+(def bs (repeat (fn ^long [x] (+ x 1))))
+
+(def abs (interleave as bs))
+
+;; the below is twice as slow
+;; very similar to trampoline
+;; POINT IS
+;; stack depth does seem to affect performance
 (dotimes [_ 10]
   (time
-   (dotimes [_ 1e8]
-     'a)))
+   (dotimes [_ 1000]
+     (loop [x 0 abs abs]
+       (if (> x 18000)
+         x
+         (recur ((first abs) x) (next abs)))))))
 
-;; Construction not access seems like the primary cost
+;; but can handle much larger depths
+;; I wonder how much difference this makes
+;; when the stack sizes are really deep
+(dotimes [_ 10]
+  (time
+   (dotimes [_ 1000]
+     (loop [x 0 abs abs]
+       (if (> x 36000)
+         x
+         (recur (+ ((first abs) x) 1) (next abs)))))))
 
-;; TODO: print method
-;; TODO: investigate sequence printing
-
-;; =============================================================================
-
-(defprotocol ICondT
-  (aPlusB [this ^int a ^int b]))
-
-(deftype CondT []
-  ICondT
-  (aPlusB [this a b] (+ a b)))
-
-(defn choice [a b]
-  (cond
-   (instance? CondT a) false
-   (instance? CondT b) false
-   (fn? a) false
-   :else (+ a b)))
-
-(defprotocol IReify
-  (reify-lookup [this s]))
-
-(extend-type clojure.lang.IPersistentVector
-  IReify
-  (reify-lookup [this s] s))
+;; hmm back to the drawing board
 
 (comment
+  (def x (cons 'a (lazy-seq
+                   (do
+                     (println "b")
+                     'b))))
 
-  (dotimes [_ 10]
-    (let [x 1]
-      (time
-       (dotimes [_ 1e8]
-         (let [m  (CondT.)]
-           (.aPlusB m 1 2)
-           (.aPlusB m 1 2))))))
+  ;; but what about exhausted streams?
 
-  (dotimes [_ 10]
-    (let [x 1]
-      (time
-       (dotimes [_ 1e8]
-         (choice 1 2)))))
+  (interleave (interleave '[a b c] '[1 2 3] '[x y z]) '[i j k])
 
-  (dotimes [_ 10]
-    (let [v []
-          x 1]
-      (time
-       (dotimes [_ 1e8]
-         (reify-lookup v 1)))))
+  ;; this allows us to abandaon values
+  ;; what we're getting here is removing the need to unwind the stack
+  (defn [a b]
+    (cons (first a)
+          (lazy-seq
+           (cons (b) (rest a)))))
 
-  ;; < 1 s w/o type check
-  ;; ~1.8s to get the value out of the map
-  ;; < 2 s w/ type check
-  (dotimes [_ 10]
-    (let [v (with-meta [1] {:type ::foo})]
-      (time
-       (dotimes [_ 1e8]
-         (:type (meta v))))))
-
-  ;; ~550ms
-  (dotimes [_ 10]
-    (let [v [1]]
-      (time
-       (dotimes [_ 1e8]
-         (nth v 0)))))
+  (take lazy-goals
+        )
   )

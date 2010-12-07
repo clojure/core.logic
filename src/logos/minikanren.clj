@@ -323,18 +323,16 @@
 (defmacro unit [a]
   `(Unit. ~a))
 
-(deftype Inc [a]
-  clojure.lang.IFn
-  (invoke [this] (a))
+(extend-type clojure.lang.Fn
   IMPlus
-  (mplus [this f] (Inc. (fn [] (mplus (f) a))))
+  (mplus [this f] (fn [] (mplus (f) this)))
   IBind
-  (bind [this g] (Inc. (fn [] (bind (a) g))))
+  (bind [this g] (fn [] (bind (this) g)))
   ITake
-  (take* [this n f v] (take n a v)))
+  (take* [this n f v] (take n this v)))
 
 (defmacro inc [e]
-  `(Inc. (fn [] ~e)))
+  `(fn [] ~e))
 
 (defmacro choice [a f]
   `(Choice. ~a ~f))

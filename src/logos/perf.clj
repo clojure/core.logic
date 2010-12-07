@@ -88,7 +88,7 @@
      (run* [r]
            (exist [x y]
                   (cond-e
-                   ((teacup-o x) (== true y) s#)
+                   ((teacup-o x) (== true y) s*)
                    ((== false x) (== true y)))
                   (== (cons x (cons y ())) r))))))
 
@@ -135,23 +135,6 @@
      (time
       (dotimes [_ 1e5]
         (unifier u w)))))
-
-  ;; 2 seconds
-  ;; we should add the unassociated check
-  (dotimes [_ 10]
-    (let [[u w] (map prep ['(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0)])] 
-      (time
-       (dotimes [_ 1e5]
-         (unifier u w)))))
-
-  ;; not bad 600ms
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (run* [q]
-             (exist [r]
-                    (== `(1 ~r) '(1 2 3 4 5))
-                    (== &r q))))))
 
   (defn rest-o [l d]
     (exist [a]

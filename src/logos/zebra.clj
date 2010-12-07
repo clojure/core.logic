@@ -39,12 +39,17 @@
   (run* [q]
         (zebra q))
 
-  ;; 22ms, kinda slow
-  (dotimes [_ 10]
+  ;; < 20ms now, but still not that fast
+  ;; compared to Chez Scheme + SBRALs 2.4-2.8s, that means 2ms
+  ;; slowest walk is 4.6s means 4ms
+  ;; so that 5-10X faster than what we have
+  (dotimes [_ 50]
     (time
      (dotimes [_ 1]
        (run* [q]
              (zebra q)))))
+
+  ;; it's still not clear to me - what exactly is slow
 
   (macro/symbol-macrolet [_ (lvar)]
     (run* [q]
