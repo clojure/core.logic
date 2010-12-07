@@ -112,8 +112,15 @@
                                        (lvar? mef)
                                        (lvar? youf))
                                    (recur (lnext me) (lnext you)))))))))
-  ;; hashCode
-  )
+  (hashCode [this]
+            (loop [hash 1 xs this]
+              (if (or (nil? xs) (lvar? xs))
+                hash
+                (let [val (lfirst xs)]
+                 (recur (unchecked-add-int
+                         (unchecked-multiply-int 31 hash)
+                         (clojure.lang.Util/hash val))
+                        (lnext xs)))))))
 
 (defmethod print-method LCons [x writer]
   (.write writer (str x)))
