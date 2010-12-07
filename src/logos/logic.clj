@@ -47,8 +47,7 @@
 
 (defn member-o [x l]
   (cond-e
-   ((exist [r]
-           (== (lcons x r) l)))
+   ((first-o l x))
    ((exist [r]
            (rest-o l r)
            (member-o x r)))))

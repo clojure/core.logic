@@ -5,17 +5,19 @@
   (:require [clojure.contrib.macro-utils :as macro]))
 
 (defn on-right-o [x y l]
-  (cond-e
-   ((exist [fst snd r]
-           (== (llist fst snd r) l)
-           (== fst x) (== snd y)))
-   ((exist [r]
-           (rest-o l r) (on-right-o x y r)))))
+  (exist [r]
+   (cond-e
+    ((== (llist x y r) l))
+    ((rest-o l r)
+     (on-right-o x y r)))))
 
 (defn next-to-o [x y l]
-  (cond-e
-   ((on-right-o x y l))
-   ((on-right-o y x l))))
+  (exist [r]
+   (cond-e
+    ((== (llist x y r) l))
+    ((== (llist y x r) l))
+    ((rest-o l r)
+     (next-to-o x y r)))))
 
 (defn zebra [hs]
   (macro/symbol-macrolet [_ (lvar)]
@@ -39,7 +41,7 @@
   (run* [q]
         (zebra q))
 
-  ;; < 20ms now, but still not that fast
+  ;; < 14-20ms now, but still not that fast
   ;; compared to Chez Scheme + SBRALs 2.4-2.8s, that means 2ms
   ;; slowest walk is 4.6s means 4ms
   ;; so that 5-10X faster than what we have
@@ -69,6 +71,9 @@
   ;; succeeds twice
   (run* [q]
         (on-right-o 'cat 'dog '[cat dog cat dog]))
+
+  (run* [q]
+        (next-to-o 'cat 'dog '[cat dog cat dog]))
 
   ;; succeed once
   (run* [q]
