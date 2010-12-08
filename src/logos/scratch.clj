@@ -1,31 +1,49 @@
 (ns logos.scratch)
 
-;; NOTE: tree-seq that is interleaving ?
+;; I think we can do this, done properly I don't think we'll see much of a per hit
+;; the streams are "frozen", it's not like "new" streams are getting introduced.
 
-(def as ((fn a [x]
-           (lazy-seq
-            (cons x (a (+ x 1)))))
-         1))
+;; a cond-e with two clauses will produce two streams of goals
+;; if the second clause calls a function with a cond-e with
+;; two clause the streams will look something like this
 
-(def bs ((fn b [x]
-           (lazy-seq
-            (cons x (b (+ x 2)))))
-         1))
-
-(loop [f (first as) n (next as)]
-  (if (> f 1000)
-    f
-    (recur (first n) (next n))))
-
-(dotimes [_ 10]
-  (time
-   (dotimes [_ 10]
-     (loop [f (first as) n (next as)]
-       (if (> f 1000)
-         f
-         (recur (first n) (next n)))))))
+;; a0 b0 a1 b'0 a2 b1 a3 b'1
 
 (declare b)
+
+(defn a [x]
+  (let [x (inc x)]
+   (lazy-seq
+    (cons x (b x)))))
+
+(defn b [x]
+  (let [x (inc x)]
+   (lazy-seq
+    (cons x (a x)))))
+
+;; ~700ms
+(dotimes [_ 10]
+  (let [as (a 1)]
+   (time
+    (dotimes [_ 10000]
+      (loop [f (first as) n (next as)]
+        (if (> f 1000)
+          f
+          (recur (first n) (next n))))))))
+
+; ~350ms, caching of values?
+(dotimes [_ 10]
+  (let [as (a 1)]
+   (time
+    (dotimes [_ 10000]
+      (nth as 999)))))
+
+;; not much slower
+(dotimes [_ 10]
+  (time
+   (dotimes [_ 10000]
+     (let [as (a 1)]
+       (nth as 999)))))
 
 (defn a [x]
   (if (> x 1000)
@@ -35,31 +53,74 @@
 (defn b [x]
   (if (> x 1000)
     x
-    (a (+ x 2))))
+    (a (+ x 1))))
 
-;; ~240ms
+;; holy crap, hardly faster
 (dotimes [_ 10]
   (time
    (dotimes [_ 10000]
      (a 1))))
 
-;; but what about exhausted streams?
-
-(interleave (interleave '[a b c] '[1 2 3] '[x y z]) '[i j k])
-
-;; this allows us to abandaon values
-;; what we're getting here is removing the need to unwind the stack
-(defn [a b]
-  (cons (first a)
-        (lazy-seq
-         (cons (b) (rest a)))))
-
-(take lazy-goals
-      )
-
-(def lazy-goals (cons choice (lazy-seq (fn []) (lazy-seq (fn [])))))
-
 (comment
+  ;; NOTE: tree-seq that is interleaving ?
+
+  (def as ((fn a [x]
+             (lazy-seq
+              (cons x (a (+ x 1)))))
+           1))
+
+  (def bs ((fn b [x]
+             (lazy-seq
+              (cons x (b (+ x 2)))))
+           1))
+
+  (loop [f (first as) n (next as)]
+    (if (> f 1000)
+      f
+      (recur (first n) (next n))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 10]
+       (loop [f (first as) n (next as)]
+         (if (> f 1000)
+           f
+           (recur (first n) (next n)))))))
+
+  (declare b)
+
+  (defn a [x]
+    (if (> x 1000)
+      x
+      (b (+ x 1))))
+
+  (defn b [x]
+    (if (> x 1000)
+      x
+      (a (+ x 2))))
+
+  ;; ~240ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 10000]
+       (a 1))))
+
+  ;; but what about exhausted streams?
+
+  (interleave (interleave '[a b c] '[1 2 3] '[x y z]) '[i j k])
+
+  ;; this allows us to abandaon values
+  ;; what we're getting here is removing the need to unwind the stack
+  (defn [a b]
+    (cons (first a)
+          (lazy-seq
+           (cons (b) (rest a)))))
+
+  (take lazy-goals
+        )
+
+  (def lazy-goals (cons choice (lazy-seq (fn []) (lazy-seq (fn [])))))
+
 
   (declare b)
 

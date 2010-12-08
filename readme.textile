@@ -97,6 +97,10 @@ The above is quite slow since we have to walk the data structure and replace the
   (unifier u w))
 </pre>
 
+h2. Issues
+
+
+
 h2. Resources
 
 * "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html
@@ -107,3 +111,6 @@ h2. Resources
 * "Logical JVM: Implementing the miniKanren logic system in Scala":http://hircus.multics.org/kanren/presentation.html
 * "minikanren-scala":https://github.com/hircus/minikanren-scala
 * "Purely Functional Data Strucutres":http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.3080&rep=rep1&type=pdf
+* "Using Datalog with Binary Decision Diagrams for Program Analysis":http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf
+* "Memoing for Logic Programs":http://portal.acm.org/citation.cfm?id=131299
+* "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":www.labri.fr/perso/lepine/Rapports_internes/RR-34493.ps.Z
