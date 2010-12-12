@@ -1,7 +1,22 @@
 (ns logos.scratch)
 
-;; I think we can do this, done properly I don't think we'll see much of a per hit
-;; the streams are "frozen", it's not like "new" streams are getting introduced.
+(defn weave
+  "Like interleave but keeps going even after some sequences are exhausted."
+  ([c1 c2]
+     (lazy-seq
+      (let [s1 (seq c1)
+            s2 (seq c2)]
+        (cond
+         (and s1 s2) (cons (first s1)
+                           (cons (first s2) 
+                                 (weave (rest s1) (rest s2))))
+         s1 s1
+         s2 s2))))
+  ([c1 c2 & colls] 
+     (lazy-seq 
+      (let [ss (map seq (conj colls c2 c1))]
+        (when-let [ss (seq (remove nil? ss))]
+          (concat (map first ss) (apply weave (map rest ss))))))))
 
 ;; a cond-e with two clauses will produce two streams of goals
 ;; if the second clause calls a function with a cond-e with
