@@ -1,4 +1,5 @@
 (ns logos.test.core
+  (:refer-clojure :exclude [reify ==])
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
   (:use [clojure.test]))
@@ -18,8 +19,8 @@
 (deftest test-deep-walk
   (is (= (let [[x y z c b a :as s] (map lvar '[x y z c b a])
                ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
-           (walk ss a)))
-      5))
+           (walk ss a))
+         5)))
 
 (deftest test-reify-lvar-name
   (is (= (let [x  (lvar 'x)
