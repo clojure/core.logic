@@ -1,5 +1,5 @@
 (ns logos.minikanren
-  (:refer-clojure :exclude [reify inc == take])
+  (:refer-clojure :exclude [reify ==])
   (:use [clojure.pprint :only [pprint]]))
 
 ;; =============================================================================
@@ -17,52 +17,8 @@
 (defmethod print-method lvarT [x writer]
   (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
 
-(deftype rest-lvarT [name s]
-  Object
-  (toString [this] (str "<lvar:" name ">")))
-
-(defn ^rest-lvarT rest-lvar
-  ([] (rest-lvarT. (gensym) nil))
-  ([name] (rest-lvarT. name nil))
-  ([name s] (rest-lvarT. name s)))
-
-(defmethod print-method rest-lvarT [x writer]
-  (.write writer (str "<lvar:" (.name ^rest-lvarT x) ">")))
-
 (defn lvar? [x]
-  (or (instance? lvarT x) (instance? rest-lvarT x)))
-
-(defn rest-lvar? [x]
-  (instance? rest-lvarT x))
-
-(defn rest-lvar-sym? [x]
-  (= (first (str x)) \&))
-
-;; =============================================================================
-;; Pairs
-
-(defprotocol IPair
-  (lhs [this])
-  (rhs [this]))
-
-(deftype pairT [lhs rhs]
-  IPair
-  (lhs [this] lhs)
-  (rhs [this] rhs)
-  clojure.lang.ISeq
-  (first [this] lhs)
-  (more [this] rhs)
-  Object
-  (toString [this] (str "(" lhs " . " rhs ")")))
-
-(defn ^pairT pair [lhs rhs]
-  (pairT. lhs rhs))
-
-(defn pair? [x]
-  (instance? pairT x))
-
-(defmethod print-method pairT [x w]
-  (.write w (str "(" (lhs x)  " . " (rhs x)  ")")))
+  (instance? lvarT x))
 
 ;; =============================================================================
 ;; LCons
@@ -205,7 +161,7 @@
 
   (ext-no-check [this u v]
                 (Substitutions. (assoc s u v)
-                                (conj s' (pair u v))))
+                                (conj s' [u v])))
 
   (walk [this v]
           (loop [v v p (find s v) s s ov v]
@@ -274,77 +230,42 @@
 
 (defn to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
-        s' (vec (map (partial apply pair) v))]
+        s' (vec (map (partial apply vector) v))]
     (Substitutions. s s')))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defprotocol IMPlus
-  (mplus [this f]))
+(defn weave
+  ([c1 c2]
+     (lazy-seq
+      (let [s1 (seq c1)
+            s2 (seq c2)]
+        (cond
+         (and s1 s2) (cons (first s1)
+                           (cons (first s2) 
+                                 (weave (rest s1) (rest s2))))
+         s1 s1
+         s2 s2))))
+  ([c1 c2 & colls] 
+     (lazy-seq 
+      (let [ss (remove nil? (map seq (conj colls c2 c1)))]
+        (concat (map first ss) (apply weave (map rest ss)))))))
 
-(defprotocol IBind
-  (bind [this g]))
-
-(defprotocol ITake
-  (take* [this n f v]))
-
-(deftype MZero []
-  clojure.lang.IFn
-  (invoke [this] this)
-  IMPlus
-  (mplus [this f] (f))
-  IBind
-  (bind [this g] this)
-  ITake
-  (take* [this n f v] v))
-
-(def -mzero (MZero.))
+(defn bind
+  ([a] a)
+  ([a & gs]
+     (loop [a a g0 (first gs) g-rest (next gs)]
+       (let [a' (remove nil? (map g0 a))]
+         (if g-rest
+           (recur a' (first g-rest) (next g-rest))
+           a')))))
 
 (defmacro mzero []
-  `-mzero)
-
-(declare take)
-
-(deftype Choice [a f']
-  clojure.lang.IFn
-  (invoke [this] this)
-  IPair
-  (lhs [this] a)
-  (rhs [this] f')
-  IMPlus
-  (mplus [this f] (Choice. a (fn [] (mplus (f) f'))))
-  IBind
-  (bind [this g] (mplus (g a) (fn [] (bind (f') g))))
-  ITake
-  (take* [this n f v] (take (and n (dec n)) f' (conj v a))))
-
-(deftype Unit [a]
-  clojure.lang.IFn
-  (invoke [this] a)
-  IMPlus
-  (mplus [this f] (Choice. a f))
-  IBind
-  (bind [this g] (g a))
-  ITake
-  (take* [this n f v] (conj v a)))
+  `nil)
 
 (defmacro unit [a]
-  `(Unit. ~a))
-
-(extend-type clojure.lang.Fn
-  IMPlus
-  (mplus [this f] (fn [] (mplus (f) this)))
-  IBind
-  (bind [this g] (fn [] (bind (this) g)))
-  ITake
-  (take* [this n f v] (take n this v)))
-
-(defmacro inc [e]
-  `(fn [] ~e))
-
-(defmacro choice [a f]
-  `(Choice. ~a ~f))
+  `(list ~a))
 
 (defn succeed [a]
   (unit a))
@@ -358,73 +279,49 @@
 
 (defmacro == [u v]
   `(fn [a#]
-     (if-let [s# (unify a# ~u ~v)]
-       (unit s#)
+     (if-let [a'# (unify a# ~u ~v)]
+       (unit a'#)
        (mzero))))
 
-(defmacro mplus*
-  ([e] e)
-  ([e0 & e-rest] `(mplus ~e0 (fn [] (mplus* ~@e-rest)))))
-
-(defn bind-cond-e-clause [s]
+(defn bind-cond-e-clause [a]
   (fn [[g0 & g-rest]]
-    `(bind* (~g0 ~s) ~@g-rest)))
+    `(bind (~g0 ~a) ~@g-rest)))
 
-(defn bind-cond-e-clauses [s clauses]
-  (map (bind-cond-e-clause s) clauses))
+(defn bind-cond-e-clauses [ss clauses]
+  (map (bind-cond-e-clause ss) clauses))
 
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
    `(fn [~a]
-      (inc
-       (mplus* ~@(bind-cond-e-clauses a clauses))))))
+      (weave ~@(bind-cond-e-clauses a clauses)))))
 
 (defn lvar-bind [sym]
   ((juxt identity
-         (fn [s] (if (rest-lvar-sym? s)
-                   `(rest-lvar '~s)
-                   `(lvar '~s)))) sym))
+         (fn [s] `(lvar '~s))) sym))
 
 (defn lvar-binds [syms]
   (reduce concat (map lvar-bind syms)))
 
-;; TODO: put the substitution in the var
-;; then we can do an identical? check to see if
-;; we're looking at an unassociated var
-
 (defmacro exist [[& x-rest] g0 & g-rest]
   `(fn [a#]
-     (inc
+     (lazy-seq
       (let [~@(lvar-binds x-rest)]
-        (bind* (~g0 a#) ~@g-rest)))))
-
-(defmacro bind*
-  ([e] e)
-  ([e g0 & g-rest] `(bind* (bind ~e ~g0) ~@g-rest)))
+        (bind (~g0 a#) ~@g-rest)))))
 
 (defmacro run [& [n [x] g0 & g-rest]]
-  `(take ~n
-         (fn []
-           ((exist [~x] ~g0 ~@g-rest
-                   (fn [a#]
-                     (unit (reify a# ~x))))
-            empty-s))))
-
-(defn take
-  ([n f] (take n f [])) 
-  ([n f v]
-     (if (and n (zero? n))
-       v
-       (let [f' (f)]
-         (take* f' n f' v)))))
+  `(let [a# ((exist [~x] ~g0 ~@g-rest
+                    (fn [a#]
+                      (reify a# ~x)))
+             empty-s)]
+    (if ~n
+      (take ~n a#)
+      a#)))
 
 (defmacro run* [& body]
   `(run false ~@body))
 
 (defn sym->lvar [sym]
-  (if (rest-lvar-sym? sym)
-    `(rest-lvar '~sym)
-    `(lvar '~sym)))
+  `(lvar '~sym))
 
 (defn trace-lvar [a lvar]
   `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
@@ -447,3 +344,18 @@
   ([] `s*)
   ([g] `(fn [s#] (~g s#)))
   ([g & g-rest] `(fn [s#] (bind (~g s#) (all ~@g-rest)))))
+
+(comment
+  (run* [q]
+        (== q 5))
+
+  (run* [q]
+        (cond-e
+         ((== q 5))
+         ((== q 6))))
+
+  (run* [q]
+        (exist [x y]
+               (== [x y] [1 5])
+               (== [x y] q)))
+ )
