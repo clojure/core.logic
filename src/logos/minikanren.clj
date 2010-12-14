@@ -236,6 +236,9 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
+(defmacro unit [a]
+  `(list ~a))
+
 (defn weave
   ([c1 c2]
      (lazy-seq
@@ -252,26 +255,72 @@
       (let [ss (remove nil? (map seq (conj colls c2 c1)))]
         (concat (map first ss) (apply weave (map rest ss)))))))
 
+;; TODO : the problem is that bind really needs to be able to deal with different
+;; types. That was the purpose of case-inf, to distinguish how to combine two functions
+;; which take different inputs and output.
+
+;; if fn, just pass each subst
+;; if stream, pass all substs
+
+;; do we need to bring back our types for bind?
+;; what about mplus?
+
+;; previously mplus needed to 'know' how to combine different types of a-inf
+;; same with bind
+;; why? I'm almost there
+
+;; we need to distinguish between nil, single values and sequences
+;; a choice is just a substitution
+
+;; (defprotocol IBind
+;;   (bind [this a])
+;;   (bind [this a g & gs]))
+
+(deftype Choice [a]
+  clojure.lang.Seqable
+  (seq [_] (list a))
+  clojure.lang.ISeq
+  (first [_] a)
+  (next [_] nil)
+  (more [_] nil))
+
+;; the problem is that a goal may take a substitution
+;; and returns multiple values for that substitution
+;; again, we're only dealing with substitutions
+;; we need to concat them
+;; goals should always return sequences
+;;
+;; ==     nope
+;; exist  nope
+;; cond-e check
+
 (defn bind
-  ([a] a)
+  ([a] (unit a))
   ([a & gs]
-     (loop [a a g0 (first gs) g-rest (next gs)]
-       (let [a' (remove nil? (map g0 a))]
-         (if g-rest
-           (recur a' (first g-rest) (next g-rest))
-           a')))))
+     (let [a (if (seq? a) a (unit a))]
+      (loop [a a g0 (first gs) g-rest (next gs)]
+        (let [a' (reduce concat (remove nil? (map g0 a)))]
+          (if g-rest
+            (recur a' (first g-rest) (next g-rest))
+            a'))))))
 
-(defmacro mzero []
-  `nil)
+(comment
+  ;; not particular fast
+  ;; 2 sec for 10 million
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (reduce concat '((a) (b) (c))))))
 
-(defmacro unit [a]
-  `(list ~a))
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       '(a b c))))
+  )
 
-(defn succeed [a]
-  (unit a))
+(defn succeed [a] a)
 
-(defn fail [a]
-  (mzero))
+(defn fail [a] nil)
 
 (def s* succeed)
 
@@ -281,14 +330,14 @@
   `(fn [a#]
      (if-let [a'# (unify a# ~u ~v)]
        (unit a'#)
-       (mzero))))
+       nil)))
 
 (defn bind-cond-e-clause [a]
-  (fn [[g0 & g-rest]]
-    `(bind (~g0 ~a) ~@g-rest)))
+  (fn [g-rest]
+    `(bind ~a ~@g-rest)))
 
-(defn bind-cond-e-clauses [ss clauses]
-  (map (bind-cond-e-clause ss) clauses))
+(defn bind-cond-e-clauses [a clauses]
+  (map (bind-cond-e-clause a) clauses))
 
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
@@ -302,19 +351,19 @@
 (defn lvar-binds [syms]
   (reduce concat (map lvar-bind syms)))
 
-(defmacro exist [[& x-rest] g0 & g-rest]
+;; bind is not lazy, will this cause trouble ?
+(defmacro exist [[& x-rest] & g-rest]
   `(fn [a#]
-     (lazy-seq
-      (let [~@(lvar-binds x-rest)]
-        (bind (~g0 a#) ~@g-rest)))))
+     (let [~@(lvar-binds x-rest)]
+       (bind a# ~@g-rest))))
 
-(defmacro run [& [n [x] g0 & g-rest]]
-  `(let [a# ((exist [~x] ~g0 ~@g-rest
-                    (fn [a#]
-                      (reify a# ~x)))
+(defmacro run [& [n [x] & g-rest]]
+  `(let [a# ((exist [~x] ~@g-rest
+                    (fn [a'#]
+                      (unit (reify a'# ~x))))
              empty-s)]
     (if ~n
-      (take ~n a#)
+      (take ~n (reduce concat a#))
       a#)))
 
 (defmacro run* [& body]
@@ -332,18 +381,18 @@
       (println ~title)
       ~@(map (partial trace-lvar a) lvars)
       (println)
-      (unit ~a))))
+      ~a)))
 
 (defmacro trace-s []
   (let [a (gensym "a")]
    `(fn [~a]
       (println ~a)
-      (unit ~a))))
+      ~a)))
 
 (defmacro all
   ([] `s*)
-  ([g] `(fn [s#] (~g s#)))
-  ([g & g-rest] `(fn [s#] (bind (~g s#) (all ~@g-rest)))))
+  ([g] `(fn [a#] (~g a#)))
+  ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
 
 (comment
   (run* [q]
@@ -355,7 +404,34 @@
          ((== q 6))))
 
   (run* [q]
+        (== q [1 2]))
+
+  ;; exist causes the trouble
+  (run* [q]
+        (exist [x y]
+               (== x 5)
+               (== q x)))
+
+  (run* [q]
+        (exist [x y]
+               (== y 5)
+               (== x q)))
+
+  (run* [q]
+        (exist [x y]
+               (== [x y] [1 5])
+               (== q x)))
+  
+  (run* [q]
         (exist [x y]
                (== [x y] [1 5])
                (== [x y] q)))
+
+  ;; 5
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        q (lvar 'q)]
+   (-> (unify empty-s [x y] [1 5])
+       (unify q y)
+       (reify q)))
  )
