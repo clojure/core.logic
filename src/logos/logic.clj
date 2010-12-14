@@ -77,6 +77,12 @@
   (run* [q]
         (append-o '(1 2) '(3 4) q))
 
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (append-o '(1 2) '(3 4) q)))))
+
   (run* [q]
         (append-o '(cake) '(tastes yummy) q))
 
@@ -93,6 +99,8 @@
   ;; (cake _.0 _.1 d t)
   ;; (cake _.0 _.1 _.2 d t)
   ;; (cake _.0 _.1 _.2 _.3 d t)
+
+  ;; FIXME : divergence
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))

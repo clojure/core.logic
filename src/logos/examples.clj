@@ -41,6 +41,7 @@
                (likes x y)
                (== [x y] q)))
 
+  ;; 1.8s for 1e5
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]

@@ -255,45 +255,6 @@
       (let [ss (remove nil? (map seq (conj colls c2 c1)))]
         (concat (map first ss) (apply weave (map rest ss)))))))
 
-;; TODO : the problem is that bind really needs to be able to deal with different
-;; types. That was the purpose of case-inf, to distinguish how to combine two functions
-;; which take different inputs and output.
-
-;; if fn, just pass each subst
-;; if stream, pass all substs
-
-;; do we need to bring back our types for bind?
-;; what about mplus?
-
-;; previously mplus needed to 'know' how to combine different types of a-inf
-;; same with bind
-;; why? I'm almost there
-
-;; we need to distinguish between nil, single values and sequences
-;; a choice is just a substitution
-
-;; (defprotocol IBind
-;;   (bind [this a])
-;;   (bind [this a g & gs]))
-
-(deftype Choice [a]
-  clojure.lang.Seqable
-  (seq [_] (list a))
-  clojure.lang.ISeq
-  (first [_] a)
-  (next [_] nil)
-  (more [_] nil))
-
-;; the problem is that a goal may take a substitution
-;; and returns multiple values for that substitution
-;; again, we're only dealing with substitutions
-;; we need to concat them
-;; goals should always return sequences
-;;
-;; ==     nope
-;; exist  nope
-;; cond-e check
-
 (defn bind
   ([a] (unit a))
   ([a & gs]
@@ -303,20 +264,6 @@
           (if g-rest
             (recur a' (first g-rest) (next g-rest))
             a'))))))
-
-(comment
-  ;; not particular fast
-  ;; 2 sec for 10 million
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e6]
-       (reduce concat '((a) (b) (c))))))
-
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e6]
-       '(a b c))))
-  )
 
 (defn succeed [a] a)
 
@@ -351,7 +298,6 @@
 (defn lvar-binds [syms]
   (reduce concat (map lvar-bind syms)))
 
-;; bind is not lazy, will this cause trouble ?
 (defmacro exist [[& x-rest] & g-rest]
   `(fn [a#]
      (let [~@(lvar-binds x-rest)]
@@ -395,6 +341,15 @@
   ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
 
 (comment
+  ; TODO : succeed is borked, probably fail as well
+
+  (run* [q]
+        (exist [x]
+               (== x 5)
+               (exist [y]
+                      (== x y)
+                      (== q x))))
+
   (run* [q]
         (== q 5))
 
@@ -406,7 +361,6 @@
   (run* [q]
         (== q [1 2]))
 
-  ;; exist causes the trouble
   (run* [q]
         (exist [x y]
                (== x 5)

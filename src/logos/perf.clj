@@ -54,9 +54,17 @@
          (walk ss a)))))
 
   ;; 3 million unifications in about 1.2s, not bad
+  ;; lazy sequences are significantly slower
+  ;; about 3X at 3s
   (dotimes [_ 10]
     (time
      (dotimes [_ 3e6]
+       (run* [q]
+             (== true q)))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
        (run* [q]
              (== true q)))))
 
@@ -65,11 +73,12 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
-       (run* [q]
-             (exist [x y]
-                    (== x 4)
-                    (== y 5)
-                    (== true q))))))
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (== x 4)
+                     (== y 5)
+                     (== true q)))))))
   
   ;; ~560ms!!!
   ;; Scheme at ~1.3s

@@ -42,8 +42,10 @@
    (all
     (== [_ _ [_ _ 'milk _ _] _ _] hs)
     (first-o hs ['norwegian _ _ _ _])
-    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
     (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
+    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
+    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
     (member-o ['englishman _ _ _ 'red] hs)
     (member-o [_ 'kools _ _ 'yellow] hs)
     (member-o [_ _ 'coffee _ 'green] hs)
@@ -51,11 +53,7 @@
     (member-o ['spaniard _ _ 'dog _] hs)
     (member-o ['ukrainian _ 'tea _ _] hs)
     (member-o [_ 'lucky-strikes 'oj _ _] hs)
-    (member-o ['japanese 'parliaments _ _ _] hs)
-    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
-    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
-)
-   ))
+    (member-o ['japanese 'parliaments _ _ _] hs))))
 
 (defn zebra-o []
   (run* [q]
@@ -69,10 +67,15 @@
   ;; slowest walk is 4.6s means 4ms
   ;; so that 5-10X faster than what we have
   ;; member version takes longer!
+
+  ;; very, very, very interesting
+  ;; zebra is no slower under lazy
+  ;; no stackoverflow error on orderings!
   (dotimes [_ 50]
     (time
      (dotimes [_ 1]
-       (zebra-o))))
+       (doall (zebra-o)))))
+  ;; whoa on lazy branch much closer to 13 than 20ms
 
   ;; NOTE : the order is important if wrong, stack overflow error
   ;; so lazy sequences will probably drop out perf by at least 2X
