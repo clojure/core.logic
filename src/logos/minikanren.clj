@@ -243,25 +243,33 @@
   `(list ~a))
 
 (defn mplus
-  ([a] (mplus* a nil))
-  ([a b] (mplus* a b))
-  ([a b & rest]
-     (println a b rest)
+  "Like interleave but keeps going even after some seqs are exhausted."
+  ([c1 c2]
      (lazy-seq
-      (let [ss (remove empty-seq? (conj rest a b))]
-       (concat (map first-or-subst ss)
-               (apply mplus (map rest (remove substitution? ss))))))))
+      (let [s1 (seq c1) s2 (seq c2)]
+        (cond
+         (and s1 s2) (cons (first s1) (cons (first s2) 
+                                            (mplus (rest s1) (rest s2))))
+         s1 s1
+         s2 s2))))
+  ([c1 c2 & colls] 
+     (lazy-seq 
+      (let [ss (map seq (conj colls c2 c1))]
+        (when-let [ss (remove nil? ss)]
+          (concat (map first ss) (apply mplus (map rest ss))))))))
 
+;; the problem is that this is not lazy
+;; we can just convert this into a reduce
 (defn bind
-  ([a] (if (fn? a) (a) a))
+  ([a] (force a))
   ([a & gs]
      (let [a (if (seq? a) a (unit a))]
       (loop [a a g0 (first gs) g-rest (next gs)]
-        (let [a' (apply mplus
-                        (map force (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
-          (if g-rest
+        (let [a' (seq (apply mplus
+                             (map force (remove nil? (map g0 a)))))] ;; #_(reduce concat (remove nil? (map g0 a)))
+          (if (and a' g-rest)
             (recur a' (first g-rest) (next g-rest))
-            a'))))))
+            nil))))))
 
 (defn succeed [a] a)
 
