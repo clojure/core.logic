@@ -244,6 +244,8 @@
 
 (defn mplus
   "Like interleave but keeps going even after some seqs are exhausted."
+  ([] nil)
+  ([c1] (force c1))
   ([c1 c2]
      (lazy-seq
       (let [s1 (seq c1) s2 (seq c2)]
@@ -258,8 +260,9 @@
         (when-let [ss (remove nil? ss)]
           (concat (map first ss) (apply mplus (map rest ss))))))))
 
-;; the problem is that this is not lazy
-;; we can just convert this into a reduce
+;; it maybe be a problem that this is not lazy
+;; each time around we force a lazy seq
+;; we might want to just convert this into a reduce
 (defn bind
   ([a] (force a))
   ([a & gs]
@@ -313,7 +316,7 @@
 (defmacro run [& [n [x] & g-rest]]
   `(let [a# ((exist [~x] ~@g-rest
                     (fn [a'#]
-                      (reify a'# ~x)))
+                      (unit (reify a'# ~x))))
              empty-s)]
     (if ~n
       (take ~n (reduce concat a#)) ;; hmm why do we need this here?
