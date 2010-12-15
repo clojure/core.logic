@@ -1,4 +1,13 @@
 * Immediate
+** TODO : fix lazy branch to not diverge on append-o
+   I think this has to do with using (reduce concat ...) over
+   (weave ...) when applied to mapped goal
+** TODO : bring back types [ ]
+   [ ] bring back MZero
+   [ ] extend MZero to IBind
+   [ ] extend MZero to MPlus
+   [ ] extend ISubstitution to IBind
+   [ ] extend ISubstitution to Mplus
 ** TODO : protocol and deftype for goals and goal constructors
    turns out, maybe not such a great idea. for complex logic programs
    this causes a large number of instantiations.

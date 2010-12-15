@@ -236,34 +236,98 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defmacro unit [a]
-  `(list ~a))
+(defprotocol IMPlus
+  (mplus* [this args]))
 
-(defn weave
-  ([c1 c2]
+;; MZero
+(extend-protocol IMPlus
+  nil
+  (mplus* [_ b]
+          (if b
+            (cond
+             (nil? b) nil
+             (seq? b) b
+             (fn? b)  (b)
+             :else    b)
+            nil)))
+
+;; Unit
+(extend-type Substitutions
+  IMPlus
+  (mplus* [this b]
+          (if b
+           (cond
+            (nil? b) this
+            (seq? b) (cons this b)
+            (fn? b)  (lazy-seq (cons this (b)))
+            :else    (list this b)))
+          this))
+
+;; Inc
+(extend-type clojure.lang.Fn
+  IMPlus
+  (mplus* [this b]
+          (if b
+            (cond
+             (nil? b) (this)
+             (seq? b) (mplus* (this) b)
+             (fn? b)  (mplus* (b) this)
+             :else    (cons b (this)))
+            (this))))
+
+;; Stream
+(extend-protocol IMPlus
+  clojure.lang.ISeq
+  (mplus* [this b]
+          (if b
+            (cond
+             (nil? b) this
+             (seq? b) (lazy-seq
+                       (let [s1 (seq this)
+                             s2 (seq b)]
+                         (cond
+                          (and s1 s2) (cons (first s1)
+                                            (cons (first s2) 
+                                                  (mplus* (rest s1) (rest s2))))
+                          s1 s1
+                          s2 s2)))
+             (fn? b)   (mplus* this (b))
+             :else     (lazy-seq (cons b this))))
+          this))
+
+(defn empty-seq? [x]
+  (cond
+   (not (seq? x)) false
+   (seq x) false
+   :else true))
+
+(defn first-or-subst [x]
+  (if (seq? x) (first x) x))
+
+(defn mplus
+  ([a] (mplus* a nil))
+  ([a b] (mplus* a b))
+  ([a b & rest]
      (lazy-seq
-      (let [s1 (seq c1)
-            s2 (seq c2)]
-        (cond
-         (and s1 s2) (cons (first s1)
-                           (cons (first s2) 
-                                 (weave (rest s1) (rest s2))))
-         s1 s1
-         s2 s2))))
-  ([c1 c2 & colls] 
-     (lazy-seq 
-      (let [ss (remove nil? (map seq (conj colls c2 c1)))]
-        (concat (map first ss) (apply weave (map rest ss)))))))
+      (let [ss (remove empty-seq? (conj rest a b))]
+       (concat (map first-or-subst ss)
+               (apply mplus (map rest (filter coll? ss))))))))
+
+;; multiple values always come from cond-e!
+;; it's ok to use mplus in bind
+
+(defn release [x]
+  (if (fn? x) (x) x))
 
 (defn bind
-  ([a] (unit a))
+  ([a] (if (fn? a) (a) a))
   ([a & gs]
-     (let [a (if (seq? a) a (unit a))]
-      (loop [a a g0 (first gs) g-rest (next gs)]
-        (let [a' (reduce concat (remove nil? (map g0 a)))]
-          (if g-rest
-            (recur a' (first g-rest) (next g-rest))
-            a'))))))
+     (loop [a a g0 (first gs) g-rest (next gs)]
+       (let [a' (apply mplus
+                       (map release (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
+         (if g-rest
+           (recur a' (first g-rest) (next g-rest))
+           a')))))
 
 (defn succeed [a] a)
 
@@ -289,7 +353,8 @@
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
    `(fn [~a]
-      (weave ~@(bind-cond-e-clauses a clauses)))))
+      (fn []
+        (mplus ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-bind [sym]
   ((juxt identity
@@ -309,7 +374,7 @@
                       (unit (reify a'# ~x))))
              empty-s)]
     (if ~n
-      (take ~n (reduce concat a#))
+      (take ~n (reduce concat a#)) ;; hmm why do we need this here?
       a#)))
 
 (defmacro run* [& body]

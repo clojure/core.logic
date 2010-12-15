@@ -82,6 +82,9 @@
   
   ;; ~560ms!!!
   ;; Scheme at ~1.3s
+  ;; lazy: 2.4s, the speed of pure unifications is much slower
+  ;; we need to make comprehensive basic bench suite to
+  ;; document the differences
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
