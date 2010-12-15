@@ -1,7 +1,15 @@
 * Immediate
 ** TODO : fix lazy branch to not diverge on append-o
-   I think this has to do with using (reduce concat ...) over
-   (weave ...) when applied to mapped goal
+   This has to do wth thunks. The simplest thing to do is leave types alone for now.
+   unit a -> list a.
+   lazily interleave the values (mplus). if a thunk is encoutered leave it be.
+   we'll expand it in the next goal, or during take.
+   in bind upond receiving a thunk, will first call it. unit will of course just get
+   wrapped in a list.
+
+   Design is hard. Very hard.
+   Is there another way to accomplish the same thing w/o thunks. Why a function call?
+   Why not just property access? Probably the same.
 ** TODO : bring back types [ ]
    [ ] bring back MZero
    [ ] extend MZero to IBind

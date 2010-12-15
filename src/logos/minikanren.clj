@@ -228,6 +228,9 @@
 
 (def empty-s (Substitutions. {} []))
 
+(defn substitution? [x]
+  (instance? Substitutions x))
+
 (defn to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         s' (vec (map (partial apply vector) v))]
@@ -251,7 +254,7 @@
              :else    b)
             nil)))
 
-;; Unit
+
 (extend-type Substitutions
   IMPlus
   (mplus* [this b]
@@ -260,8 +263,8 @@
             (nil? b) this
             (seq? b) (cons this b)
             (fn? b)  (lazy-seq (cons this (b)))
-            :else    (list this b)))
-          this))
+            :else    (list this b))
+           this)))
 
 ;; Inc
 (extend-type clojure.lang.Fn
@@ -308,10 +311,13 @@
   ([a] (mplus* a nil))
   ([a b] (mplus* a b))
   ([a b & rest]
+     (println a b rest)
      (lazy-seq
       (let [ss (remove empty-seq? (conj rest a b))]
        (concat (map first-or-subst ss)
-               (apply mplus (map rest (filter coll? ss))))))))
+               (apply mplus (map rest (remove substitution? ss))))))))
+
+;; we can write a version of interleave that works with reduce?
 
 ;; multiple values always come from cond-e!
 ;; it's ok to use mplus in bind
@@ -340,7 +346,7 @@
 (defmacro == [u v]
   `(fn [a#]
      (if-let [a'# (unify a# ~u ~v)]
-       (unit a'#)
+       a'#
        nil)))
 
 (defn bind-cond-e-clause [a]
@@ -371,7 +377,7 @@
 (defmacro run [& [n [x] & g-rest]]
   `(let [a# ((exist [~x] ~@g-rest
                     (fn [a'#]
-                      (unit (reify a'# ~x))))
+                      (reify a'# ~x)))
              empty-s)]
     (if ~n
       (take ~n (reduce concat a#)) ;; hmm why do we need this here?
