@@ -267,13 +267,14 @@
 (defn bind
   ([a] (unit a))
   ([a & gs]
-     (let [a (if (seq? a) a (unit a))]
-       (loop [a a g0 (first gs) g-rest (next gs)]
-         (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
-           (cond
-            (nil? a') nil
-            g-rest (recur a' (first g-rest) (next g-rest))
-            :else a'))))))
+     (lazy-seq
+      (let [a (if (seq? a) a (unit a))]
+        (loop [a a g0 (first gs) g-rest (next gs)]
+          (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
+            (cond
+             (nil? a') nil
+             g-rest (recur a' (first g-rest) (next g-rest))
+             :else a')))))))
 
 (defn succeed [a] (unit a))
 
@@ -299,8 +300,7 @@
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (lazy-seq
-        (mplus ~@(bind-cond-e-clauses a clauses))))))
+       (mplus ~@(bind-cond-e-clauses a clauses)))))
 
 (defn lvar-bind [sym]
   ((juxt identity
@@ -329,8 +329,6 @@
 (defn sym->lvar [sym]
   `(lvar '~sym))
 
-;; TODO: put debugging data into a atom that can be pretty printed
-;; better yet, create a trace macro that prints trace goals.
 (def *debug* (atom []))
 
 (defmacro trace [a & lm]
@@ -361,6 +359,13 @@
   ([] `s*)
   ([g] `(fn [a#] (~g a#)))
   ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
+
+(deftype ThunkSeq [f]
+  clojure.lang.Seqable
+  (seq [this] (force f)))
+
+(defmacro thunk-seq [e]
+  `(ThunkSeq. (delay (lazy-seq ~e))))
 
 (comment
   ; TODO : succeed is borked, probably fail as well
@@ -412,11 +417,105 @@
                (== [x y] [1 5])
                (== [x y] q)))
 
-  ;; 5
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        q (lvar 'q)]
-   (-> (unify empty-s [x y] [1 5])
-       (unify q y)
-       (reify q)))
+  ;; minimum required for a stack overflow error
+  (defn truth [q]
+    (cond-e
+     ((== q true))
+     ((truth q))))
+
+  (run 5 [q]
+       (truth q))
+
+  ;; hmm even w/ recursive functions we don't see this problem
+  ;; (a x x x x)
+  (letfn [(rec [x] (lazy-seq (cons 'x (rec x))))]
+    (take 5
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 'a rec))))
+  
+  ;; (a x)
+  (letfn [(rec [x] (lazy-seq (cons 'x (rec x))))]
+    (take 5
+          (interleave (bind 'a (fn [x] (list x)))
+                      (bind 'a rec))))
+
+  ;; smoking gun
+  (letfn [(rec [x] (mplus (bind 'a (fn [x] (list x)))
+                          (bind 'a rec)))]
+    (take 5
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 'a rec))))
+
+  ;; we still have a stack overflow error
+  ;; even if we wrap the binds in rec with
+  ;; lazy-seq still stack overflow
+  (letfn [(rec [x] (interleave (bind 'a (fn [x] (list x)))
+                               (bind 'a rec)))]
+    (take 5
+          (interleave (bind 'a (fn [x] (list x)))
+                      (bind 'a rec))))
+
+  ;; still a stack overflow
+  ;; NOTE: this works if bind returns a lazy-seq
+  ;; (a a) 
+  (letfn [(rec [x] (interleave (bind 'a (fn [x] (list x)))
+                               (lazy-seq (cons nil (bind 'a rec)))))]
+    (take 5
+          (interleave (bind 'a (fn [x] (list x)))
+                      (bind 'a rec))))
+
+  ;; this looks ok
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (lazy-seq (cons x (bind (inc x) rec)))))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 0 rec))))
+
+  ;; works if we stick nil in there
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (lazy-seq (cons nil (bind (inc x) rec)))))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 0 rec))))
+
+  ;; stackoverflow if we don't
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (remove nil? (lazy-seq (cons nil (bind (inc x) rec))))))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 0 rec))))
+
+  ;; this works
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (lazy-seq (cons nil (bind (inc x) rec)))))]
+    (take 20
+          (remove nil?
+                  (mplus (bind 'a (fn [x] (list x)))
+                         (bind 0 rec)))))
+
+  (letfn [(rec [x] (mplus (thunk-seq (bind x (fn [x] (list (str x)))))
+                          (thunk-seq (bind (inc x) rec))))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (thunk-seq (bind 0 rec)))))
+
+  ;; doesn't work
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (bind (inc x) rec)))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 0 rec))))
+
+  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
+                          (bind (inc x) rec)))]
+    (take 20
+          (mplus (bind 'a (fn [x] (list x)))
+                 (bind 0 rec))))
+
+  ;; we probably want to go back to our original code
+  ;; and just return lazy seqs, mplus will only work
+  ;; with pairs
+
+  ;; this is a problem of *evaluation*
+  ;; laziness would really make this simpler
  )
