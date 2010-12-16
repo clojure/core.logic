@@ -29,7 +29,7 @@
 (defn append-o [l s out]
   (cond-e
    ((trace-lvars "append-o" l s out))
-   ((null-o l) (== s out))
+   ((null-o l) (trace-lvars "success!" l s out) (== s out))
    ((exist [a d res]
            (cons-o a d l)
            (cons-o a res out)
