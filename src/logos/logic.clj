@@ -1,5 +1,5 @@
 (ns logos.logic
-  (:refer-clojure :exclude [reify inc == take])
+  (:refer-clojure :exclude [reify ==])
   (:use logos.minikanren))
 
 (def _ (lvar '_))

@@ -71,7 +71,7 @@
   ;; very, very, very interesting
   ;; zebra is no slower under lazy
   ;; no stackoverflow error on orderings!
-  (dotimes [_ 50]
+  (dotimes [_ 10]
     (time
      (let  [a (zebra-o)]
        (dotimes [_ 1]

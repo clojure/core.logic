@@ -267,12 +267,12 @@
   ([a] (unit a))
   ([a & gs]
      (let [a (if (seq? a) a (unit a))]
-      (loop [a a g0 (first gs) g-rest (next gs)]
-        (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
-          (cond
-           (nil? a') nil
-           g-rest (recur a' (first g-rest) (next g-rest))
-           :else a'))))))
+       (loop [a a g0 (first gs) g-rest (next gs)]
+         (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
+           (cond
+            (nil? a') nil
+            g-rest (recur a' (first g-rest) (next g-rest))
+            :else a'))))))
 
 (defn succeed [a] (unit a))
 
@@ -298,7 +298,8 @@
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (mplus ~@(bind-cond-e-clauses a clauses)))))
+       (lazy-seq
+        (mplus ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-bind [sym]
   ((juxt identity
@@ -318,7 +319,7 @@
                       (unit (reify a'# ~x))))
              empty-s)]
     (if ~n
-      (take ~n (reduce concat a#)) ;; hmm why do we need this here?
+      (take ~n a#) 
       a#)))
 
 (defmacro run* [& body]
@@ -326,6 +327,9 @@
 
 (defn sym->lvar [sym]
   `(lvar '~sym))
+
+;; TODO: put debugging data into a atom that can be pretty printed
+;; better yet, create a trace macro that prints trace goals.
 
 (defn trace-lvar [a lvar]
   `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
@@ -363,9 +367,18 @@
         (== q 5))
 
   (run* [q]
+        (== q 5)
+        (== q 6))
+
+  (run* [q]
         (cond-e
          ((== q 5))
          ((== q 6))))
+
+  (run 1 [q]
+       (cond-e
+        ((== q 5))
+        ((== q 6))))
 
   (run* [q]
         (== q [1 2]))
