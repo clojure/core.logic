@@ -330,23 +330,31 @@
 
 ;; TODO: put debugging data into a atom that can be pretty printed
 ;; better yet, create a trace macro that prints trace goals.
+(def *debug* (atom []))
+
+(defmacro trace [a & lm]
+  `(binding [*debug* (or ~a *debug*)]
+     ~@lm))
 
 (defn trace-lvar [a lvar]
-  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
+  `(swap! *debug* conj (format "%5s = %s\n" (str '~lvar) (reify ~a ~lvar))))
 
- (defmacro trace-lvars [title & lvars]
+(defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
-   `(fn [~a]
-      (println ~title)
-      ~@(map (partial trace-lvar a) lvars)
-      (println)
-      ~a)))
+    `(fn [~a]
+       (swap! *debug* conj (str ~title "\n"))
+       ~@(map (partial trace-lvar a) lvars)
+       (swap! *debug* conj "\n")
+       (unit ~a))))
+
+(defn print-debug [a]
+  (println (reduce str @a)))
 
 (defmacro trace-s []
   (let [a (gensym "a")]
    `(fn [~a]
-      (println ~a)
-      ~a)))
+      (swap! *debug* conj ~a)
+      (unit ~a))))
 
 (defmacro all
   ([] `s*)

@@ -28,6 +28,7 @@
 
 (defn append-o [l s out]
   (cond-e
+   ((trace-lvars "append-o" l s out))
    ((null-o l) (== s out))
    ((exist [a d res]
            (cons-o a d l)
@@ -77,6 +78,11 @@
   (run* [q]
         (append-o '(1 2) '(3 4) q))
 
+  (def *foo* (atom []))
+  (trace *foo*
+         (run* [q]
+               (append-o '(1 2) '(3 4) q)))
+
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
@@ -105,6 +111,12 @@
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))
+
+  (def *foo* (atom []))
+  (trace *foo*
+   (run 5 [x]
+        (exist [y]
+               (append-o (llist 'cake y) '(d t) x))))
 
   ;; hmm
   (run 5 [x]
