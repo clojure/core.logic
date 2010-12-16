@@ -228,7 +228,7 @@
 
 (def empty-s (Substitutions. {} []))
 
-(defn substitution? [x]
+(defn subst? [x]
   (instance? Substitutions x))
 
 (defn to-s [v]
