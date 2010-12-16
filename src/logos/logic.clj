@@ -101,9 +101,15 @@
   ;; (cake _.0 _.1 _.2 _.3 d t)
 
   ;; FIXME : divergence
+  ;; why do we diverge?
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))
+
+  ;; hmm
+  (run 5 [x]
+       (exist [y]
+              (append-o (llist 'cake y) '(t) x)))
 
   ;; works
   (run 5 [x]
@@ -112,7 +118,17 @@
                         (llist 'd 't y)
                         x)))
 
+  ;; work and interesting has a more correct ordering
   (run* [x]
         (flatten-o '[[a b] c] x))
+
+  ;; 800ms
+  ;; 8s much slower than Racket now
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1000]
+       (doall
+        (run* [x]
+              (flatten-o '[[a b] c] x))))))
   )
 

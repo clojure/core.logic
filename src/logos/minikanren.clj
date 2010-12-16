@@ -245,7 +245,7 @@
 (defn mplus
   "Like interleave but keeps going even after some seqs are exhausted."
   ([] nil)
-  ([c1] (force c1))
+  ([c1] c1)
   ([c1 c2]
      (lazy-seq
       (let [s1 (seq c1) s2 (seq c2)]
@@ -264,17 +264,17 @@
 ;; each time around we force a lazy seq
 ;; we might want to just convert this into a reduce
 (defn bind
-  ([a] (force a))
+  ([a] (unit a))
   ([a & gs]
      (let [a (if (seq? a) a (unit a))]
       (loop [a a g0 (first gs) g-rest (next gs)]
-        (let [a' (seq (apply mplus
-                             (map force (remove nil? (map g0 a)))))] ;; #_(reduce concat (remove nil? (map g0 a)))
-          (if (and a' g-rest)
-            (recur a' (first g-rest) (next g-rest))
-            nil))))))
+        (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
+          (cond
+           (nil? a') nil
+           g-rest (recur a' (first g-rest) (next g-rest))
+           :else a'))))))
 
-(defn succeed [a] a)
+(defn succeed [a] (unit a))
 
 (defn fail [a] nil)
 
@@ -297,9 +297,8 @@
 
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
-   `(delay
-      (fn []
-        (mplus ~@(bind-cond-e-clauses a clauses))))))
+    `(fn [~a]
+       (mplus ~@(bind-cond-e-clauses a clauses)))))
 
 (defn lvar-bind [sym]
   ((juxt identity
@@ -331,7 +330,7 @@
 (defn trace-lvar [a lvar]
   `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
-(defmacro trace-lvars [title & lvars]
+ (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
    `(fn [~a]
       (println ~title)
