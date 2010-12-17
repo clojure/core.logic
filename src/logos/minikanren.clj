@@ -367,6 +367,12 @@
 (defn trace-lvar [a lvar]
   `(swap! *debug* conj (format "%5s = %s\n" (str '~lvar) (reify ~a ~lvar))))
 
+(defmacro log [title & exprs]
+  `(do
+     (swap! *debug* conj (str ~title "\n"))
+     (swap! *debug* conj (str ~@exprs "\n"))
+     (swap! *debug* conj "\n")))
+
 (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
     `(fn [~a]
