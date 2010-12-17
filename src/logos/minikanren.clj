@@ -297,7 +297,13 @@
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (lazy-seq (mplus* ~@e-rest)))))
+     `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
+                            (if (subst? r#) (list r#) r#))))))
+
+;; (defmacro mplus*
+;;   ([e] e)
+;;   ([e & e-rest]
+;;      `(mplus ~e (lazy-seq (mplus* ~@e-rest)))))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -382,12 +388,8 @@
   ([] `s*)
   ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
 
-;; hmmm do we need a custom take?
-;; this an evaluation problem
-
 (comment
-  ;; FIX DIVERGENCE
-
+  ;; works
   (defn any-o [g]
     (cond-e
      (s*)
@@ -397,15 +399,12 @@
        (== q true)
        (any-o q))
 
-  ;; TODO : succeed is borked, probably fail as well
-
   (run* [q]
         (exist [x]
                (== x 5)
                (exist [y]
                       (== x y)
                       (== q x))))
-
 
   (run* [q]
         (== q 5))
@@ -426,6 +425,22 @@
         (cond-e
          ((== q 5))
          ((== q 6))))
+
+  ;; exception
+  (run* [q]
+        (all
+         (cond-e
+          ((== q 5))
+          ((== q 6)))
+         u*))
+
+  ;; works
+  (run* [q]
+        (all
+         (cond-e
+          ((== q 5))
+          ((== q 6)))
+         s*))
 
   ;; at least we're seeing real laziness
   (run 1 [q]
@@ -461,5 +476,4 @@
         (exist [x y]
                (== [x y] [1 5])
                (== [x y] q)))
-
  )

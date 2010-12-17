@@ -128,7 +128,7 @@
   (run* [x]
         (flatten-o '((a) b) x))
   
-  ;; hmm
+  ;; hmm, complaint about PersistentEmptyList
   (run* [x]
         (flatten-o '((a b) c) x))
 
