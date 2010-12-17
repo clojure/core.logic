@@ -28,8 +28,7 @@
 
 (defn append-o [l s out]
   (cond-e
-   ((trace-lvars "append-o" l s out))
-   ((null-o l) (trace-lvars "success!" l s out) (== s out))
+   ((null-o l) (== s out))
    ((exist [a d res]
            (cons-o a d l)
            (cons-o a res out)
@@ -106,19 +105,11 @@
   ;; (cake _.0 _.1 _.2 d t)
   ;; (cake _.0 _.1 _.2 _.3 d t)
 
-  ;; FIXME : divergence
-  ;; why do we diverge?
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake y) '(d t) x)))
 
-  (def *foo* (atom []))
-  (trace *foo*
-   (run 5 [x]
-        (exist [y]
-               (append-o (llist 'cake y) '(d t) x))))
-
-  ;; hmm
+  ;; works
   (run 5 [x]
        (exist [y]
               (append-o (llist 'cake y) '(t) x)))
@@ -130,9 +121,13 @@
                         (llist 'd 't y)
                         x)))
 
-  ;; work and interesting has a more correct ordering
+  ;; vectors cause problems
   (run* [x]
         (flatten-o '[[a b] c] x))
+
+  ;; hmm
+  (run* [x]
+        (flatten-o '((a b) c) x))
 
   ;; 800ms
   ;; 8s much slower than Racket now

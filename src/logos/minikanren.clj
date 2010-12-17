@@ -266,17 +266,7 @@
          (cond
           (nil? b) this
           (subst? b) (lazy-seq (cons this (list b)))
-          (delay? b) (mplus this (force b))
           :else (lazy-seq (cons this b)))))
-
-;; Inc
-(extend-type clojure.lang.Delay
-  IBind
-  (bind [this g]
-        (bind (force this) g))
-  IMPlus
-  (mplus [this b]
-         (mplus (force this) b)))
 
 ;; Stream
 (extend-type clojure.lang.LazySeq
@@ -288,11 +278,10 @@
          (cond
           (nil? b) this
           (subst? b) (lazy-seq (cons b this))
-          (delay? b) (mplus this (force b))
           :else (lazy-seq
                  (cons (first this)
                        (cons (first b)
-                             (mplus (rest b) (rest this))))))))
+                             (mplus (rest b) (lazy-seq (rest this)))))))))
 
 (defn succeed [a] a)
 
@@ -305,7 +294,7 @@
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (mplus* ~@e-rest))))
+     `(mplus ~e (lazy-seq (mplus* ~@e-rest)))))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -328,7 +317,7 @@
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (delay
+       (lazy-seq
         (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-bind [sym]
@@ -348,9 +337,11 @@
                     (fn [a'#]
                       (reify a'# ~x)))
              empty-s)]
-    (if ~n
-      (take ~n a#) 
-      a#)))
+    (cond
+     ~n (take ~n a#) 
+     (nil? a#) '()
+     (seq? a#) a#
+     :else (list a#))))
 
 (defmacro run* [& body]
   `(run false ~@body))
@@ -389,8 +380,22 @@
   ([g] `(fn [a#] (~g a#)))
   ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
 
+;; hmmm do we need a custom take?
+;; this an evaluation problem
+
 (comment
-  ; TODO : succeed is borked, probably fail as well
+  ;; FIX DIVERGENCE
+
+  (defn any-o [g]
+    (cond-e
+     (s*)
+     ((any-o g))))
+
+  (run 5 [q]
+       (== q true)
+       (any-o q))
+
+  ;; TODO : succeed is borked, probably fail as well
 
   (run* [q]
         (exist [x]
@@ -399,7 +404,16 @@
                       (== x y)
                       (== q x))))
 
+
   (run* [q]
+        (== q 5))
+
+  (run* [q]
+        s*
+        (== q 5))
+
+  (run* [q]
+        u*
         (== q 5))
 
   (run* [q]
@@ -411,7 +425,7 @@
          ((== q 5))
          ((== q 6))))
 
-  (run 1 [q]
+  (run 2 [q]
        (cond-e
         ((== q 5))
         ((== q 6))))
@@ -439,105 +453,4 @@
                (== [x y] [1 5])
                (== [x y] q)))
 
-  ;; minimum required for a stack overflow error
-  (defn truth [q]
-    (cond-e
-     ((== q true))
-     ((truth q))))
-
-  (run 5 [q]
-       (truth q))
-
-  ;; hmm even w/ recursive functions we don't see this problem
-  ;; (a x x x x)
-  (letfn [(rec [x] (lazy-seq (cons 'x (rec x))))]
-    (take 5
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 'a rec))))
-  
-  ;; (a x)
-  (letfn [(rec [x] (lazy-seq (cons 'x (rec x))))]
-    (take 5
-          (interleave (bind 'a (fn [x] (list x)))
-                      (bind 'a rec))))
-
-  ;; smoking gun
-  (letfn [(rec [x] (mplus (bind 'a (fn [x] (list x)))
-                          (bind 'a rec)))]
-    (take 5
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 'a rec))))
-
-  ;; we still have a stack overflow error
-  ;; even if we wrap the binds in rec with
-  ;; lazy-seq still stack overflow
-  (letfn [(rec [x] (interleave (bind 'a (fn [x] (list x)))
-                               (bind 'a rec)))]
-    (take 5
-          (interleave (bind 'a (fn [x] (list x)))
-                      (bind 'a rec))))
-
-  ;; still a stack overflow
-  ;; NOTE: this works if bind returns a lazy-seq
-  ;; (a a) 
-  (letfn [(rec [x] (interleave (bind 'a (fn [x] (list x)))
-                               (lazy-seq (cons nil (bind 'a rec)))))]
-    (take 5
-          (interleave (bind 'a (fn [x] (list x)))
-                      (bind 'a rec))))
-
-  ;; this looks ok
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (lazy-seq (cons x (bind (inc x) rec)))))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 0 rec))))
-
-  ;; works if we stick nil in there
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (lazy-seq (cons nil (bind (inc x) rec)))))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 0 rec))))
-
-  ;; stackoverflow if we don't
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (remove nil? (lazy-seq (cons nil (bind (inc x) rec))))))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 0 rec))))
-
-  ;; this works
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (lazy-seq (cons nil (bind (inc x) rec)))))]
-    (take 20
-          (remove nil?
-                  (mplus (bind 'a (fn [x] (list x)))
-                         (bind 0 rec)))))
-
-  (letfn [(rec [x] (mplus (thunk-seq (bind x (fn [x] (list (str x)))))
-                          (thunk-seq (bind (inc x) rec))))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (thunk-seq (bind 0 rec)))))
-
-  ;; doesn't work
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (bind (inc x) rec)))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 0 rec))))
-
-  (letfn [(rec [x] (mplus (bind x (fn [x] (list (str x))))
-                          (bind (inc x) rec)))]
-    (take 20
-          (mplus (bind 'a (fn [x] (list x)))
-                 (bind 0 rec))))
-
-  ;; we probably want to go back to our original code
-  ;; and just return lazy seqs, mplus will only work
-  ;; with pairs
-
-  ;; this is a problem of *evaluation*
-  ;; laziness would really make this simpler
  )
