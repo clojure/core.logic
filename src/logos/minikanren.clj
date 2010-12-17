@@ -175,6 +175,9 @@
                   (recur v' (find s v') s ov)
                   v')))))
 
+  ;; TODO : revisit recur here. Main issue was how to reconstruct
+  ;; types ?
+
   (walk* [this v]
          (let [v' (walk this v)]
            (cond
@@ -191,6 +194,10 @@
             :else v')))
 
   (unify [this u v] (unify-seq this u v false))
+
+  ;; TODO : for sequences this unnecessarily stack-consuming
+  ;; as well as checking for conditions that don't matter
+  ;; for sequences
 
   (unify-seq [this u v in-seq]
              (if (identical? u v)
@@ -217,6 +224,8 @@
 
   (reify-lvar-name [this]
                    (symbol (str "_." (length this))))
+
+  ;; TODO : unnecessarily stack consuming
 
   (-reify [this v]
           (let [v (walk this v)]
