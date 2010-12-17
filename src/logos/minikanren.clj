@@ -313,8 +313,7 @@
   IBind
   (bind [this g]
         (if-let [r (seq (map g this))]
-          #_(reduce mplus r)
-          r))
+          (reduce mplus r)))
   IMPlus
   (mplus [this b]
          (cond
