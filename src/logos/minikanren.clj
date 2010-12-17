@@ -281,47 +281,30 @@
                              :else r#))))))
 
 ;; Streams
-(extend-type clojure.lang.LazySeq
-  IBind
-  (bind [this g]
-        (if-let [r (seq (map g this))]
-          (reduce mplus r)))
-  IMPlus
-  (mplus [this b]
-         (cond
-          (nil? b) this
-          (subst? b) (cons b this)
-          :else (cons (first this)
-                      (cons (first b)
-                            (mplus* (next b) (next this)))))))
 
-(extend-type clojure.lang.PersistentList
-  IBind
-  (bind [this g]
-        (if-let [r (seq (map g this))]
-          (reduce mplus r)))
-  IMPlus
-  (mplus [this b]
-         (cond
-          (nil? b) this
-          (subst? b) (cons b this)
-          :else (cons (first this)
-                      (cons (first b)
-                            (mplus* (next b) (next this)))))))
+(defn extend-seq-type-to-bind-and-mplus [type]
+  `(clojure.core/extend-type ~type
+     IBind
+     (~'bind [this# g#]
+           (clojure.core/if-let [r# (clojure.core/seq (clojure.core/map g# this#))]
+             (clojure.core/reduce mplus r#)))
+     IMPlus
+     (~'mplus [this# b#]
+            (clojure.core/cond
+             (clojure.core/nil? b#) this#
+             (subst? b#) (clojure.core/cons b# this#)
+             :else (clojure.core/cons (clojure.core/first this#)
+                         (clojure.core/cons (clojure.core/first b#)
+                               (mplus* (clojure.core/next b#) (clojure.core/next this#))))))))
 
-(extend-type clojure.lang.Cons
-  IBind
-  (bind [this g]
-        (if-let [r (seq (map g this))]
-          (reduce mplus r)))
-  IMPlus
-  (mplus [this b]
-         (cond
-          (nil? b) this
-          (subst? b) (cons b this)
-          :else (cons (first this)
-                      (cons (first b)
-                            (mplus* (next b) (next this)))))))
+(defmacro extend-seq-types-to-bind-and-mplus [& types]
+  `(do
+     ~@(map extend-seq-type-to-bind-and-mplus types)))
+
+(extend-seq-types-to-bind-and-mplus
+  clojure.lang.LazySeq
+  clojure.lang.PersistentList
+  clojure.lang.Cons)
 
 (defn succeed [a] a)
 
@@ -330,16 +313,6 @@
 (def s* succeed)
 
 (def u* fail)
-
-;; lazy-seq needs a sequence so if the right hand side
-;; return an unwrapped substitution wrap it. this is
-;; less than ideal, but first we just need something
-;; that works like the orginal minus stackoverflows
-
-;; (defmacro mplus*
-;;   ([e] e)
-;;   ([e & e-rest]
-;;      `(mplus ~e (lazy-seq (mplus* ~@e-rest)))))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -390,6 +363,7 @@
 (defmacro run [& [n [x] & g-rest]]
   `(let [r# (let [~x (lvar '~x)]
               (->> (to-seq ((fn [a#] (bind* a# ~@g-rest)) empty-s))
+                   (remove nil?)
                    (map (reifier ~x))))]
     (if ~n (take ~n r#) r#)))
 

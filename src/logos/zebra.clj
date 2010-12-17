@@ -34,44 +34,36 @@
     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          ;; kools are smoked in the house next to the horse
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)))) ;; the man who smokes chesterfields is next to the the man who owns a fox
 
-;; different ordering
-;; (defn zebra [hs]
-;;   (macro/symbol-macrolet [_ (lvar)]
-;;    (all
-;;     (== [_ _ [_ _ 'milk _ _] _ _] hs)
-;;     (first-o hs ['norwegian _ _ _ _])
-;;     (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
-;;     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
-;;     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
-;;     (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
-;;     (member-o ['englishman _ _ _ 'red] hs)
-;;     (member-o [_ 'kools _ _ 'yellow] hs)
-;;     (member-o [_ _ 'coffee _ 'green] hs)
-;;     (member-o [_ 'oldgolds _ 'snails _] hs)
-;;     (member-o ['spaniard _ _ 'dog _] hs)
-;;     (member-o ['ukrainian _ 'tea _ _] hs)
-;;     (member-o [_ 'lucky-strikes 'oj _ _] hs)
-;;     (member-o ['japanese 'parliaments _ _ _] hs))))
+;; slow ordering
+(defn zebra [hs]
+  (macro/symbol-macrolet [_ (lvar)]
+   (all
+    (== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (first-o hs ['norwegian _ _ _ _])
+    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
+    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
+    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
+    (member-o ['englishman _ _ _ 'red] hs)
+    (member-o [_ 'kools _ _ 'yellow] hs)
+    (member-o [_ _ 'coffee _ 'green] hs)
+    (member-o [_ 'oldgolds _ 'snails _] hs)
+    (member-o ['spaniard _ _ 'dog _] hs)
+    (member-o ['ukrainian _ 'tea _ _] hs)
+    (member-o [_ 'lucky-strikes 'oj _ _] hs)
+    (member-o ['japanese 'parliaments _ _ _] hs))))
 
 (defn zebra-o []
   (run* [q]
         (zebra q)))
 
 (comment
-  ;; FAIL: same lazy-seq complaint as flatten
   (zebra-o)
 
-  ;; < 14-20ms now, but still not that fast
-  ;; compared to Chez Scheme + SBRALs 2.4-2.8s, that means 2ms
-  ;; slowest walk is 4.6s means 4ms
-  ;; so that 5-10X faster than what we have
-  ;; member version takes longer!
-
-  ;; very, very, very interesting
-  ;; zebra is no slower under lazy
-  ;; no stackoverflow error on orderings!
-  
-  (dotimes [_ 10]
+  ;; WOW
+  ;; worst case ordering is now only 230ms
+  ;; down to 10 ms on a fast ordering !
+  (dotimes [_ 50]
     (time
      (let  [a (zebra-o)]
        (dotimes [_ 1]
