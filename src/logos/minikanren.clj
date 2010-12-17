@@ -389,13 +389,6 @@
   ([g] `(fn [a#] (~g a#)))
   ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
 
-(deftype ThunkSeq [f]
-  clojure.lang.Seqable
-  (seq [this] (force f)))
-
-(defmacro thunk-seq [e]
-  `(ThunkSeq. (delay (lazy-seq ~e))))
-
 (comment
   ; TODO : succeed is borked, probably fail as well
 
