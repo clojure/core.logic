@@ -119,15 +119,15 @@
                         (llist 'd 't y)
                         x)))
 
-  ;; FAIL: no reify for clojure.lang.LazySeq
+  ;; works beautifully
   (run* [x]
         (flatten-o '[[a b] c] x))
 
-  ;; 800ms
-  ;; 8s much slower than Racket now
+  ;; heh, that was too good to be true
+  ;; 4s, still nice lead over Racket at 5.5s
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1000]
+     (dotimes [_ 10000]
        (doall
         (run* [x]
               (flatten-o '[[a b] c] x))))))

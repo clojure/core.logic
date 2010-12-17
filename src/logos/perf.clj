@@ -53,7 +53,7 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
-  ;; not bad 1.6s
+  ;; 2.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 3e6]
