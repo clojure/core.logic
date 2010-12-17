@@ -373,6 +373,13 @@
 (defn sym->lvar [sym]
   `(lvar '~sym))
 
+(defmacro all
+  ([] `s*)
+  ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
+
+;; =============================================================================
+;; Debugging
+
 (def *debug* (atom []))
 
 (defmacro trace [a & lm]
@@ -404,139 +411,3 @@
    `(fn [~a]
       (swap! *debug* conj ~a)
       ~a)))
-
-(defmacro all
-  ([] `s*)
-  ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
-
-(comment
-  ;; bind does not concat the results of goals
-  ;; this is why bind does an mplus in Scheme.
-  (run* [q]
-        (cond-e
-         ((cond-e
-           ((== q 1))
-           ((== q 2))))
-         ((cond-e
-           ((== q 3))
-           ((== q 4))))))
-
-  ;; works
-  (defn any-o [g]
-    (cond-e
-     (s*)
-     ((any-o g))))
-
-  (run 5 [q]
-       (== q true)
-       (any-o q))
-
-  (run 1 [q]
-       (== q true)
-       (any-o q))
-
-  ;; how in the hell could the unification leak out?
-  (run 5 [q]
-       (== q 1)
-       (any-o q))
-
-  (run* [q]
-        (exist [x]
-               (== x 5)
-               (exist [y]
-                      (== x y)
-                      (== q x))))
-
-  (run* [q]
-        (== q 5))
-
-  (run* [q]
-        s*
-        (== q 5))
-
-  (run* [q]
-        u*
-        (== q 5))
-
-  (run* [q]
-        (== q 5)
-        (== q 6))
-
-  (run* [q]
-        (exist [x y]
-         (cond-e
-          ((== q x))
-          ((== q 5)))))
-
-  (run* [q]
-        (all
-         (cond-e
-          ((== q 1)))
-         u*))
-
-  (run* [q]
-        (cond-e
-         (u*)))
-
-  (run* [q]
-        (cond-e
-         ((== q 1))
-         (u*)))
-
-  ;; works
-  (run* [q]
-        (exist [x]
-         (all
-          (== q 5)
-          (== q 5)
-          (== q 5)
-          (== x q)
-          (== x 1))))
-
-  ;; works
-  (run* [q]
-        (all
-         (cond-e
-          ((== q 5))
-          ((== q 6)))
-         s*))
-
-  ;; at least we're seeing real laziness
-  (run 1 [q]
-       (cond-e
-        ((== q 5))
-        ((== q 6))))
-
-  (run 2 [q]
-       (cond-e
-        ((== q 5))
-        ((== q 6))))
-
-  (run* [q]
-        (cond-e
-         ((== q 5))
-         ((== q 6))))
-
-  (run* [q]
-        (== q [1 2]))
-
-  (run* [q]
-        (exist [x y]
-               (== x 5)
-               (== q x)))
-
-  (run* [q]
-        (exist [x y]
-               (== y 5)
-               (== x q)))
-
-  (run* [q]
-        (exist [x y]
-               (== [x y] [1 5])
-               (== q x)))
-  
-  (run* [q]
-        (exist [x y]
-               (== [x y] [1 5])
-               (== [x y] q)))
- )

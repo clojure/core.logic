@@ -75,16 +75,13 @@
   (run* [q]
         (append-o '(1 2) '(3 4) q))
 
-  (def *foo* (atom []))
-  (trace *foo*
-         (run* [q]
-               (append-o '(1 2) '(3 4) q)))
-
+  ;; 2 seconds
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
-       (run* [q]
-             (append-o '(1 2) '(3 4) q)))))
+       (doall
+        (run* [q]
+              (append-o '(1 2) '(3 4) q))))))
 
   (run* [q]
         (append-o '(cake) '(tastes yummy) q))
@@ -123,8 +120,7 @@
   (run* [x]
         (flatten-o '[[a b] c] x))
 
-  ;; heh, that was too good to be true
-  ;; 4s, still nice lead over Racket at 5.5s
+  ;; 4s, nice lead over Racket at 5.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 10000]

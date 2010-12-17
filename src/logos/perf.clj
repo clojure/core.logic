@@ -53,15 +53,15 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
-  ;; 2.5s
+  ;; ~1.1s
   (dotimes [_ 10]
     (time
-     (dotimes [_ 3e6]
+     (dotimes [_ 1e6]
        (doall
         (run* [q]
               (== true q))))))
 
-  ;; 800ms
+  ;; ~2s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
@@ -70,12 +70,6 @@
               (cond-e
                ((== q 1))
                ((== q 2))))))))
-
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e6]
-       (run* [q]
-             (== true q)))))
 
   ;; easy optimization unifying with a constant
   ;; convert to regular let
@@ -89,49 +83,49 @@
                      (== y 5)
                      (== true q)))))))
   
-  ;; ~560ms!!!
+  ; 1.1s
   ;; Scheme at ~1.3s
-  ;; lazy: 2.4s, the speed of pure unifications is much slower
-  ;; we need to make comprehensive basic bench suite to
-  ;; document the differences
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
-       (run* [q]
-             succeed
-             (== true q)))))
+       (doall
+        (run* [q]
+              succeed
+              (== true q))))))
 
-  ;; 1s for 1e5
-  ;; 2s for Scheme, so Clojure miniKanren is about twice as fast
+  ;; 2s
+  ;; 2s for Scheme
   (dotimes [_ 10]
    (time
     (dotimes [_ 1e5]
-     (run* [r]
-           (exist [x y]
-                  (cond-e
-                   ((teacup-o x) (== true y) s*)
-                   ((== false x) (== true y)))
-                  (== (cons x (cons y ())) r))))))
-
-  ;; ~200,000 unifications / sec
-  ;; what kind of boost could we get with tabling ?
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 2e5]
-       (run* [q]
+      (doall
+       (run* [r]
              (exist [x y]
-                    (== [x y] [1 5])
-                    (== [x y] q))))))
+                    (cond-e
+                     ((teacup-o x) (== true y) s*)
+                     ((== false x) (== true y)))
+                    (== (cons x (cons y ())) r)))))))
 
-  ;; 2.5s, much slower
+  ;; ~1.6-2s
   (dotimes [_ 10]
     (time
      (dotimes [_ 2e5]
-       (run* [q]
-             (exist [x y z]
-                    (== y z)
-                    (== [1 2 {x z}] q)
-                    (== z 5))))))
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (== [x y] [1 5])
+                     (== [x y] q)))))))
+
+  ;; 4s, much slower
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 2e5]
+       (doall
+        (run* [q]
+              (exist [x y z]
+                     (== y z)
+                     (== [1 2 {x z}] q)
+                     (== z 5)))))))
 
   ;; 1.8s, if we had something eliminated the needless unifications
   ;; not that much of an improvement for 2e5
@@ -179,47 +173,36 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
-       (run 5 [x]
-            (exist [y]
-                   (append-o (llist 'cake y) '(d t) x))))))
+       (doall
+        (run 5 [x]
+             (exist [y]
+                    (append-o (llist 'cake y) '(d t) x)))))))
 
   ;; ~300ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
-       (run* [q]
-             (rest-o [1 2] q)))))
+       (doall
+        (run* [q]
+              (rest-o [1 2] q))))))
 
-  ;; 3.8s Scheme is 5.5s
+  ;; 4s Scheme is 5.5s
   ;; wow removing vectors make hardly any difference
   ;; should consider using vectors
   ;; or even lists
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
-       (run* [x]
-             (flatten-o '[[a b] c] x)))))
+       (doall
+        (run* [x]
+              (flatten-o '[[a b] c] x))))))
 
   ;; 3.2-3.3 if we don't reify result
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
-       (run* [x]
-             (exist [y]
-              (flatten-o '[[a b] c] y))))))
-
-  (run 5 [x]
-       (flatten-o x '[a b c]))
-
-  (dotimes [_ 10]
-    (let [x {1 2 3 4 5 6 7 8 9 0}]
-     (time
-      (dotimes [_ 1e8]
-        (count x)))))
-
-  (dotimes [_ 10]
-    (let [x [1 2 3 4 5 6 7 8 9 0]]
-     (time
-      (dotimes [_ 1e8]
-        (count x)))))
+       (doall
+        (run* [x]
+              (exist [y]
+                     (flatten-o '[[a b] c] y)))))))
   )
