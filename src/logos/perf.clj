@@ -62,6 +62,15 @@
        (run* [q]
              (== true q)))))
 
+  ;; 800ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+             (cond-e
+              ((== q 1))
+              ((== q 2)))))))
+
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]

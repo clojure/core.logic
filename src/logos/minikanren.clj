@@ -265,7 +265,7 @@
   (mplus [this b]
          (cond
           (nil? b) this
-          (subst? b) (list this b)
+          (subst? b) (lazy-seq (cons this (list b)))
           (delay? b) (mplus this (force b))
           :else (lazy-seq (cons this b)))))
 
