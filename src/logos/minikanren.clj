@@ -294,7 +294,7 @@
           :else (lazy-seq
                  (cons (first this)
                        (cons (first b)
-                             (mplus* (rest b) (rest this))))))))
+                             (mplus* (next b) (next this))))))))
 
 (defn succeed [a] a)
 
@@ -442,11 +442,6 @@
           ((== q x))
           ((== q 5)))))
 
-  ;; FAIL: exception
-  ;; can't reify nil
-  ;; interesting, we get two nils
-  ;; if we extend ISubstitution to nil
-  ;; alright tomorrow
   (run* [q]
         (all
          (cond-e

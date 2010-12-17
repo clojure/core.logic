@@ -53,21 +53,23 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
-  ;; back at about 1.5s
+  ;; not bad 1.6s
   (dotimes [_ 10]
     (time
      (dotimes [_ 3e6]
-       (run* [q]
-             (== true q)))))
+       (doall
+        (run* [q]
+              (== true q))))))
 
   ;; 800ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
-       (run* [q]
-             (cond-e
-              ((== q 1))
-              ((== q 2)))))))
+       (doall
+        (run* [q]
+              (cond-e
+               ((== q 1))
+               ((== q 2))))))))
 
   (dotimes [_ 10]
     (time

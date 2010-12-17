@@ -6,7 +6,6 @@
 
 (defn on-right-o [x y l]
   (exist [r]
-   (trace-lvars "on-right-o" x y l)
    (cond-e
     ((== (llist x y r) l))
     ((rest-o l r)
@@ -14,12 +13,9 @@
 
 (defn next-to-o [x y l]
   (cond-e
-   ((trace-lvars "next-to-o" x y l))
    ((on-right-o x y l))
    ((on-right-o y x l))))
 
-;; this is a fast ordering
-;; why?
 (defn zebra [hs]
   (macro/symbol-macrolet [_ (lvar)]
    (all
@@ -62,7 +58,7 @@
         (zebra q)))
 
 (comment
-  ;; FAIL: lazy-seq complaint
+  ;; FAIL: now we have an mplus missing from clojure.lang.Cons complaint
   (zebra-o)
 
   ;; < 14-20ms now, but still not that fast
@@ -89,13 +85,7 @@
   (run* [q]
         (on-right-o 'dog 'cat '[cat dog cat dog]))
 
-  ;; FAIL: should suceed three times!
-  ;; no implementation of method found for class nil
+  ;; succeed three times
   (run* [q]
         (next-to-o 'cat 'dog '[cat dog cat dog]))
-
-  (def *test* (atom []))
-  (trace *test*
-         (run* [q]
-               (next-to-o 'cat 'dog '[cat dog cat dog])))
   )

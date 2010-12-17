@@ -119,17 +119,9 @@
                         (llist 'd 't y)
                         x)))
 
-  ;; doens't work
+  ;; FAIL: no reify for clojure.lang.LazySeq
   (run* [x]
         (flatten-o '[[a b] c] x))
-
-  ;; doesn't work
-  (run* [x]
-        (flatten-o '((a) b) x))
-  
-  ;; hmm, complaint about PersistentEmptyList
-  (run* [x]
-        (flatten-o '((a b) c) x))
 
   ;; 800ms
   ;; 8s much slower than Racket now
