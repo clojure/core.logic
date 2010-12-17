@@ -88,7 +88,7 @@
                        ((teacup-o x) (== true y) s*)
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
-         '[(false true) (tea true) (cup true)])))
+         '((cup true) (tea true) (false true)))))
 
 (deftest test-cons-o
   (is (= (run* [q]
@@ -126,7 +126,7 @@
 (deftest test-first-o
   (is (= (run* [q]
                (first-o q '(1 2)))
-         '[1])))
+         '(((1 2) . _.0)))))
 
 (deftest test-rest-o
   (is (= (run* [q]
@@ -151,19 +151,19 @@
 (deftest test-flatten-o
   (is (= (run* [x]
                (flatten-o '[[a b] c] x))
-         '[([[a b] c])
+         '((a b c)
+           ([[a b] c])
+           ([a b] c ())
+           (a b c ())
+           (a b (c))
+           (a b () c ())
            ([a b] (c))
            ([a b] c)
-           (a (b) (c))
-           ([a b] c ())
-           (a (b) c)
            (a (b) c ())
-           (a b (c))
            (a b () (c))
-           (a b c)
-           (a b c ())
            (a b () c)
-           (a b () c ())])))
+           (a (b) (c))
+           (a (b) c)))))
 
 (deftest test-cons-o-1
   (let [a (lvar 'a)
