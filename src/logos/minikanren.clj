@@ -268,14 +268,24 @@
   (mplus [this b]
          (cond
           (nil? b) this
-          (subst? b) (lazy-seq (cons this (list b)))
+          (subst? b) (lazy-seq
+                      (cons this
+                            (lazy-seq (cons b nil))))
           :else (lazy-seq (cons this b)))))
+
+(defmacro mplus*
+  ([e] e)
+  ([e & e-rest]
+     `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
+                            (cond
+                             (subst? r#) (lazy-seq (cons r# nil))
+                             :else r#))))))
 
 ;; Stream
 (extend-type clojure.lang.LazySeq
   IBind
   (bind [this g]
-        (map g this))
+        (remove nil? (map g this)))
   IMPlus
   (mplus [this b]
          (cond
@@ -284,7 +294,7 @@
           :else (lazy-seq
                  (cons (first this)
                        (cons (first b)
-                             (mplus (rest b) (lazy-seq (rest this)))))))))
+                             (mplus* (rest b) (rest this))))))))
 
 (defn succeed [a] a)
 
@@ -294,11 +304,10 @@
 
 (def u* fail)
 
-(defmacro mplus*
-  ([e] e)
-  ([e & e-rest]
-     `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
-                            (if (subst? r#) (list r#) r#))))))
+;; lazy-seq needs a sequence so if the right hand side
+;; return an unwrapped substitution wrap it. this is
+;; less than ideal, but first we just need something
+;; that works like the orginal minus stackoverflows
 
 ;; (defmacro mplus*
 ;;   ([e] e)
@@ -428,17 +437,40 @@
         (== q 6))
 
   (run* [q]
-        (cond-e
-         ((== q 5))
-         ((== q 6))))
+        (exist [x y]
+         (cond-e
+          ((== q x))
+          ((== q 5)))))
 
-  ;; exception
+  ;; FAIL: exception
+  ;; can't reify nil
+  ;; interesting, we get two nils
+  ;; if we extend ISubstitution to nil
+  ;; alright tomorrow
   (run* [q]
         (all
          (cond-e
-          ((== q 5))
-          ((== q 6)))
+          ((== q 1)))
          u*))
+
+  (run* [q]
+        (cond-e
+         (u*)))
+
+  (run* [q]
+        (cond-e
+         ((== q 1))
+         (u*)))
+
+  ;; works
+  (run* [q]
+        (exist [x]
+         (all
+          (== q 5)
+          (== q 5)
+          (== q 5)
+          (== x q)
+          (== x 1))))
 
   ;; works
   (run* [q]
@@ -454,11 +486,15 @@
         ((== q 5))
         ((== q 6))))
 
-  ;; fails
   (run 2 [q]
        (cond-e
         ((== q 5))
         ((== q 6))))
+
+  (run* [q]
+        (cond-e
+         ((== q 5))
+         ((== q 6))))
 
   (run* [q]
         (== q [1 2]))

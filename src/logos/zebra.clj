@@ -6,6 +6,7 @@
 
 (defn on-right-o [x y l]
   (exist [r]
+   (trace-lvars "on-right-o" x y l)
    (cond-e
     ((== (llist x y r) l))
     ((rest-o l r)
@@ -13,6 +14,7 @@
 
 (defn next-to-o [x y l]
   (cond-e
+   ((trace-lvars "next-to-o" x y l))
    ((on-right-o x y l))
    ((on-right-o y x l))))
 
@@ -60,6 +62,7 @@
         (zebra q)))
 
 (comment
+  ;; FAIL: lazy-seq complaint
   (zebra-o)
 
   ;; < 14-20ms now, but still not that fast
@@ -71,57 +74,28 @@
   ;; very, very, very interesting
   ;; zebra is no slower under lazy
   ;; no stackoverflow error on orderings!
+  
   (dotimes [_ 10]
     (time
      (let  [a (zebra-o)]
        (dotimes [_ 1]
          (doall a)))))
 
-  (let [a (zebra-o)]
-   (dotimes [_ 10]
-     (time
-      (dotimes [_ 1]
-        (doall a)))))
-
-  ;; whoa on lazy branch much closer to 13 than 20ms
-
-  ;; NOTE : the order is important if wrong, stack overflow error
-  ;; so lazy sequences will probably drop out perf by at least 2X
-  ;; correctness first
-  ;; if all the next-to-o statement are together at the beginning
-  ;; boom!
-
-  ;; it's still not clear to me - what exactly is slow
-
-  (macro/symbol-macrolet [_ (lvar)]
-    (run* [q]
-          (exist [x]
-                 (== x [[_ 2] _])
-                 (== q [[1 _] _])
-                 (== q [_ _])
-                 (== q x))))
-
-  (macro/symbol-macrolet [_ (lvar)]
-   (run* [q]
-         (exist [x]
-                (== x [1 _])
-                (first-o `[[~_ 2] 2 3 4] x)
-                (== x q))))
-
   ;; succeeds twice
   (run* [q]
         (on-right-o 'cat 'dog '[cat dog cat dog]))
-
-  (run* [q]
-        (next-to-o 'cat 'dog '[cat dog cat dog]))
 
   ;; succeed once
   (run* [q]
         (on-right-o 'dog 'cat '[cat dog cat dog]))
 
+  ;; FAIL: should suceed three times!
+  ;; no implementation of method found for class nil
   (run* [q]
-        (exist [x]
-               (== x [_ _])
-               (== q [1 _])
-               (== x q)))
+        (next-to-o 'cat 'dog '[cat dog cat dog]))
+
+  (def *test* (atom []))
+  (trace *test*
+         (run* [q]
+               (next-to-o 'cat 'dog '[cat dog cat dog])))
   )

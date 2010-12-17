@@ -1,47 +1,11 @@
 * Immediate
-** TODO : fix lazy branch to not diverge on append-o
-   This has to do wth thunks. The simplest thing to do is leave types alone for now.
-   unit a -> list a.
-   lazily interleave the values (mplus). if a thunk is encoutered leave it be.
-   we'll expand it in the next goal, or during take.
-   in bind upond receiving a thunk, will first call it. unit will of course just get
-   wrapped in a list.
-
-   Design is hard. Very hard.
-   Is there another way to accomplish the same thing w/o thunks. Why a function call?
-   Why not just property access? Probably the same.
-** TODO : bring back types [ ]
-   [ ] bring back MZero
-   [ ] extend MZero to IBind
-   [ ] extend MZero to MPlus
-   [ ] extend ISubstitution to IBind
-   [ ] extend ISubstitution to Mplus
-** TODO : protocol and deftype for goals and goal constructors
-   turns out, maybe not such a great idea. for complex logic programs
-   this causes a large number of instantiations.
-   
-   For ten iterations of the zebra problem:
-   - ~570K Inc$fn
-   - ~464K Inc
-   
-   Compare to:
-   - 59k lvarT
-   - 31k LCons
-   - 17k Unit
-  
-   on-right-o$fn$fn took 21ms
-   mplus took the longest time 12ms
-
-   also the whole thing is not tail recursive. We don't recur on
-   take, rather we call take* on an object.
-
-   yet another reason to think about lazy sequences.
-
+** TODO : flatten-o broken
+** TODO : don't really understand how nils flow through
+** TODO : zebra broken   
 ** TODO : Investigate - Skew Random Binary Access Lists (Okasaki)
 * Backlog
 ** TODO : Fix rest lvars for logos.unify/unifier and logos.unify/unifier'
 * Future
-** TODO : Compare with lazy sequences instead of (a . f)
 ** TODO : Investigate forward-chaining
 ** TODO : tabling
 ** TODO : consider parallel syntax

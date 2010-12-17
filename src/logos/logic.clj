@@ -2,8 +2,6 @@
   (:refer-clojure :exclude [reify ==])
   (:use logos.minikanren))
 
-(def _ (lvar '_))
-
 (defn null-o [a]
   (== '() a))
 
@@ -121,10 +119,11 @@
                         (llist 'd 't y)
                         x)))
 
-  ;; vectors cause problems
+  ;; doens't work
   (run* [x]
         (flatten-o '[[a b] c] x))
 
+  ;; doesn't work
   (run* [x]
         (flatten-o '((a) b) x))
   
