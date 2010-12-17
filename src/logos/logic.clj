@@ -125,6 +125,9 @@
   (run* [x]
         (flatten-o '[[a b] c] x))
 
+  (run* [x]
+        (flatten-o '((a) b) x))
+  
   ;; hmm
   (run* [x]
         (flatten-o '((a b) c) x))

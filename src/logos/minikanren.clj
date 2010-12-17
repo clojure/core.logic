@@ -29,6 +29,9 @@
 ;; end and Clojure sequences we define LConSeq and extend all the core Clojure
 ;; datatypes to this Protocol.
 
+;; LConsSeq is not a general datastructure, it's only meant to be used within
+;; miniKaren logic operations.
+
 (defprotocol LConsSeq
   (lfirst [this])
   (lnext [this]))
@@ -377,8 +380,7 @@
 
 (defmacro all
   ([] `s*)
-  ([g] `(fn [a#] (~g a#)))
-  ([g0 & g-rest] `(fn [a#] (bind a# ~g0 ~@g-rest))))
+  ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
 
 ;; hmmm do we need a custom take?
 ;; this an evaluation problem
@@ -425,6 +427,13 @@
          ((== q 5))
          ((== q 6))))
 
+  ;; at least we're seeing real laziness
+  (run 1 [q]
+       (cond-e
+        ((== q 5))
+        ((== q 6))))
+
+  ;; fails
   (run 2 [q]
        (cond-e
         ((== q 5))

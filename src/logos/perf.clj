@@ -53,9 +53,7 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
-  ;; 3 million unifications in about 1.2s, not bad
-  ;; lazy sequences are significantly slower
-  ;; about 3X at 3s
+  ;; back at about 1.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 3e6]
@@ -170,8 +168,9 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
-       (run* [q]
-             (append-o '(1 2) '(3 4) q)))))
+       (doall
+        (run* [q]
+              (append-o '(1 2) '(3 4) q))))))
 
   ;; Racket clocks ~720ms
   ;; We're seeing ~900ms
