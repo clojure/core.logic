@@ -382,19 +382,16 @@
     (reify a lvar)))
 
 (defn to-seq [x]
-  (if (seq? x)
-    x
-    (list x)))
+  (cond
+   (nil? x) '()
+   (seq? x) x
+   :else (list x)))
 
 (defmacro run [& [n [x] & g-rest]]
   `(let [r# (let [~x (lvar '~x)]
               (->> (to-seq ((fn [a#] (bind* a# ~@g-rest)) empty-s))
                    (map (reifier ~x))))]
-    (cond
-     ~n (take ~n r#) 
-     (nil? r#) '()
-     (seq? r#) r#
-     :else (list r#))))
+    (if ~n (take ~n r#) r#)))
 
 (defmacro run* [& body]
   `(run false ~@body))
