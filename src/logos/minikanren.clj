@@ -145,7 +145,7 @@
 
 (declare empty-s)
 
-(defrecord Substitutions [s s']
+(deftype Substitutions [s s']
   ISubstitutions
 
   (length [this] (count s'))
@@ -268,33 +268,61 @@
   (mplus [this b]
          (cond
           (nil? b) this
-          (subst? b) (lazy-seq
-                      (cons this
-                            (lazy-seq (cons b nil))))
-          :else (lazy-seq (cons this b)))))
+          (subst? b) (cons this
+                           (cons b nil))
+          :else (cons this b))))
 
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
      `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
                             (cond
-                             (subst? r#) (lazy-seq (cons r# nil))
+                             (subst? r#) (cons r# nil)
                              :else r#))))))
 
-;; Stream
+;; Streams
 (extend-type clojure.lang.LazySeq
   IBind
   (bind [this g]
-        (remove nil? (map g this)))
+        (if-let [r (seq (map g this))]
+          (reduce mplus r)))
   IMPlus
   (mplus [this b]
          (cond
           (nil? b) this
-          (subst? b) (lazy-seq (cons b this))
-          :else (lazy-seq
-                 (cons (first this)
-                       (cons (first b)
-                             (mplus* (next b) (next this))))))))
+          (subst? b) (cons b this)
+          :else (cons (first this)
+                      (cons (first b)
+                            (mplus* (next b) (next this)))))))
+
+(extend-type clojure.lang.PersistentList
+  IBind
+  (bind [this g]
+        (if-let [r (seq (map g this))]
+          (reduce mplus r)))
+  IMPlus
+  (mplus [this b]
+         (cond
+          (nil? b) this
+          (subst? b) (cons b this)
+          :else (cons (first this)
+                      (cons (first b)
+                            (mplus* (next b) (next this)))))))
+
+(extend-type clojure.lang.Cons
+  IBind
+  (bind [this g]
+        (if-let [r (seq (map g this))]
+          #_(reduce mplus r)
+          r))
+  IMPlus
+  (mplus [this b]
+         (cond
+          (nil? b) this
+          (subst? b) (cons b this)
+          :else (cons (first this)
+                      (cons (first b)
+                            (mplus* (next b) (next this)))))))
 
 (defn succeed [a] a)
 
@@ -350,16 +378,24 @@
      (let [~@(lvar-binds x-rest)]
        (bind* a# ~@g-rest))))
 
+(defn reifier [lvar]
+  (fn [a]
+    (reify a lvar)))
+
+(defn to-seq [x]
+  (if (seq? x)
+    x
+    (list x)))
+
 (defmacro run [& [n [x] & g-rest]]
-  `(let [a# ((exist [~x] ~@g-rest
-                    (fn [a'#]
-                      (reify a'# ~x)))
-             empty-s)]
+  `(let [r# (let [~x (lvar '~x)]
+              (->> (to-seq ((fn [a#] (bind* a# ~@g-rest)) empty-s))
+                   (map (reifier ~x))))]
     (cond
-     ~n (take ~n a#) 
-     (nil? a#) '()
-     (seq? a#) a#
-     :else (list a#))))
+     ~n (take ~n r#) 
+     (nil? r#) '()
+     (seq? r#) r#
+     :else (list r#))))
 
 (defmacro run* [& body]
   `(run false ~@body))
@@ -404,6 +440,17 @@
   ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
 
 (comment
+  ;; bind does not concat the results of goals
+  ;; this is why bind does an mplus in Scheme.
+  (run* [q]
+        (cond-e
+         ((cond-e
+           ((== q 1))
+           ((== q 2))))
+         ((cond-e
+           ((== q 3))
+           ((== q 4))))))
+
   ;; works
   (defn any-o [g]
     (cond-e
@@ -412,6 +459,15 @@
 
   (run 5 [q]
        (== q true)
+       (any-o q))
+
+  (run 1 [q]
+       (== q true)
+       (any-o q))
+
+  ;; how in the hell could the unification leak out?
+  (run 5 [q]
+       (== q 1)
        (any-o q))
 
   (run* [q]

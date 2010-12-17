@@ -58,7 +58,7 @@
         (zebra q)))
 
 (comment
-  ;; FAIL: now we have an mplus missing from clojure.lang.Cons complaint
+  ;; FAIL: same lazy-seq complaint as flatten
   (zebra-o)
 
   ;; < 14-20ms now, but still not that fast
