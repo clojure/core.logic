@@ -346,7 +346,7 @@
 (defmacro run [& [n [x] & g-rest]]
   `(let [a# ((exist [~x] ~@g-rest
                     (fn [a'#]
-                      (unit (reify a'# ~x))))
+                      (reify a'# ~x)))
              empty-s)]
     (if ~n
       (take ~n a#) 
@@ -373,7 +373,7 @@
        (swap! *debug* conj (str ~title "\n"))
        ~@(map (partial trace-lvar a) lvars)
        (swap! *debug* conj "\n")
-       (unit ~a))))
+       ~a)))
 
 (defn print-debug [a]
   (println (reduce str @a)))
@@ -382,7 +382,7 @@
   (let [a (gensym "a")]
    `(fn [~a]
       (swap! *debug* conj ~a)
-      (unit ~a))))
+      ~a)))
 
 (defmacro all
   ([] `s*)
