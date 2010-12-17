@@ -239,44 +239,62 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defmacro unit [a]
-  `(list ~a))
+(defprotocol IBind
+  (bind [this g]))
 
-(defn mplus
-  "Like interleave but keeps going even after some seqs are exhausted."
-  ([] nil)
-  ([c1] c1)
-  ([c1 c2]
-     (lazy-seq
-      (let [s1 (seq c1) s2 (seq c2)]
-        (cond
-         (and s1 s2) (cons (first s1)
-                           (cons (first s2) 
-                                 (mplus (rest s1) (rest s2))))
-         s1 s1
-         s2 s2))))
-  ([c1 c2 & colls] 
-     (lazy-seq 
-      (let [ss (map seq (conj colls c2 c1))]
-        (when-let [ss (remove nil? ss)]
-          (concat (map first ss) (apply mplus (map rest ss))))))))
+(defprotocol IMPlus
+  (mplus [a b]))
 
-;; it maybe be a problem that this is not lazy
-;; each time around we force a lazy seq
-;; we might want to just convert this into a reduce
-(defn bind
-  ([a] (unit a))
-  ([a & gs]
-     (lazy-seq
-      (let [a (if (seq? a) a (unit a))]
-        (loop [a a g0 (first gs) g-rest (next gs)]
-          (let [a' (seq (reduce concat (remove nil? (map g0 a))))] ;; #_(reduce concat (remove nil? (map g0 a)))
-            (cond
-             (nil? a') nil
-             g-rest (recur a' (first g-rest) (next g-rest))
-             :else a')))))))
+;; MZero
+(extend-protocol IBind
+  nil
+  (bind [_ g]
+        nil))
 
-(defn succeed [a] (unit a))
+(extend-protocol IMPlus
+  nil
+  (mplus [_ b]
+         b))
+
+;; Unit
+(extend-type Substitutions
+  IBind
+  (bind [this g]
+        (g this))
+  IMPlus
+  (mplus [this b]
+         (cond
+          (nil? b) this
+          (subst? b) (list this b)
+          (delay? b) (mplus this (force b))
+          :else (lazy-seq (cons this b)))))
+
+;; Inc
+(extend-type clojure.lang.Delay
+  IBind
+  (bind [this g]
+        (bind (force this) g))
+  IMPlus
+  (mplus [this b]
+         (mplus (force this) b)))
+
+;; Stream
+(extend-type clojure.lang.LazySeq
+  IBind
+  (bind [this g]
+        (map g this))
+  IMPlus
+  (mplus [this b]
+         (cond
+          (nil? b) this
+          (subst? b) (lazy-seq (cons b this))
+          (delay? b) (mplus this (force b))
+          :else (lazy-seq
+                 (cons (first this)
+                       (cons (first b)
+                             (mplus (rest b) (rest this))))))))
+
+(defn succeed [a] a)
 
 (defn fail [a] nil)
 
@@ -284,15 +302,25 @@
 
 (def u* fail)
 
+(defmacro mplus*
+  ([e] e)
+  ([e & e-rest]
+     `(mplus ~e (mplus* ~@e-rest))))
+
+(defmacro bind*
+  ([a g] `(bind ~a ~g))
+  ([a g & g-rest]
+     `(bind* (bind ~a ~g) ~@g-rest)))
+
 (defmacro == [u v]
   `(fn [a#]
      (if-let [a'# (unify a# ~u ~v)]
-       (unit a'#)
+       a'#
        nil)))
 
 (defn bind-cond-e-clause [a]
   (fn [g-rest]
-    `(bind ~a ~@g-rest)))
+    `(bind* ~a ~@g-rest)))
 
 (defn bind-cond-e-clauses [a clauses]
   (map (bind-cond-e-clause a) clauses))
@@ -300,7 +328,8 @@
 (defmacro cond-e [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (mplus ~@(bind-cond-e-clauses a clauses)))))
+       (delay
+        (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
 (defn lvar-bind [sym]
   ((juxt identity
@@ -312,7 +341,7 @@
 (defmacro exist [[& x-rest] & g-rest]
   `(fn [a#]
      (let [~@(lvar-binds x-rest)]
-       (bind a# ~@g-rest))))
+       (bind* a# ~@g-rest))))
 
 (defmacro run [& [n [x] & g-rest]]
   `(let [a# ((exist [~x] ~@g-rest
