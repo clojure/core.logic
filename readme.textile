@@ -27,7 +27,7 @@ I stayed pretty true to the structure of the original implementation. However th
 
 Logic variables are instances of <code>lvarT</code> not vectors as they are in Scheme.
 
-The goal and goal constructor portion has been written from scratch on top of the protocols <code>IBind</code> and <code>IMPlus</code>. These are extended to the relevant types (<code>nil (mzero)</code>, <code>Substitution (unit)</code>, <code>clojure.lang.Cons (stream)</code>, <code>clojure.lang.PersistentList (stream)</code>, <code>clojure.lang.LazySeq (stream)<code>). <code>take</code> is used to get the sequence of results.
+The goal and goal constructor portion has been written from scratch on top of the protocols <code>IBind</code> and <code>IMPlus</code>. These are extended to the relevant types (<code>nil (mzero)</code>, <code>Substitution (unit)</code>, <code>clojure.lang.Cons (stream)</code>, <code>clojure.lang.PersistentList (stream)</code>, <code>clojure.lang.LazySeq (stream)</code>). <code>take</code> is used to get the sequence of results.
 
 Currently the <code>Substitutions</code> defrecord uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions. I'll be investigating Skew Binary Random Access Lists as well as Finger Trees (Okasaki).
 
