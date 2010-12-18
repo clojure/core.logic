@@ -126,7 +126,7 @@
 (deftest test-first-o
   (is (= (run* [q]
                (first-o q '(1 2)))
-         '(((1 2) . _.0)))))
+         (list (lcons '(1 2) (lvar 'x))))))
 
 (deftest test-rest-o
   (is (= (run* [q]

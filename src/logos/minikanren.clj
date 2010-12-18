@@ -1,5 +1,6 @@
 (ns logos.minikanren
   (:refer-clojure :exclude [reify ==])
+  (:require [clojure.core :as cc])
   (:use [clojure.pprint :only [pprint]]))
 
 ;; =============================================================================
@@ -292,19 +293,19 @@
 ;; Streams
 
 (defn extend-seq-type-to-bind-and-mplus [type]
-  `(clojure.core/extend-type ~type
+  `(cc/extend-type ~type
      IBind
      (~'bind [this# g#]
-           (clojure.core/if-let [r# (clojure.core/seq (clojure.core/map g# this#))]
-             (clojure.core/reduce mplus r#)))
+           (cc/if-let [r# (cc/seq (cc/map g# this#))]
+             (cc/reduce mplus r#)))
      IMPlus
      (~'mplus [this# b#]
-            (clojure.core/cond
-             (clojure.core/nil? b#) this#
-             (subst? b#) (clojure.core/cons b# this#)
-             :else (clojure.core/cons (clojure.core/first this#)
-                         (clojure.core/cons (clojure.core/first b#)
-                               (mplus* (clojure.core/next b#) (clojure.core/next this#))))))))
+            (cc/cond
+             (cc/nil? b#) this#
+             (subst? b#) (cc/cons b# this#)
+             :else (cc/cons (cc/first this#)
+                         (cc/cons (cc/first b#)
+                               (mplus* (cc/next b#) (cc/next this#))))))))
 
 (defmacro extend-seq-types-to-bind-and-mplus [& types]
   `(do
