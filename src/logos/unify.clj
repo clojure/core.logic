@@ -32,9 +32,14 @@
 
 (comment
     (unifier' '(?x ?y) '(1 2))
+    (unifier' '(?x ?y 3) '(1 2 ?z))
     (unifier' '[?x ?y] [1 2])
     (unifier' '{?x ?y} {1 2})
-    (unifier' '#{?x ?y} #{1 2})
+    (unifier' '#{?x ?y} '#{1 2})
+    
+    ;; FIXME: sets do not have an order nor hashmap
+    ;; we need a special unify case for them
+    (unifier' '#{?x ?y 3} '#{1 2 ?z})
     
     ;; Not supported at the moment while I iron some
     ;; other things out

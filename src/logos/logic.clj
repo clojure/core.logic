@@ -120,6 +120,10 @@
   (run* [x]
         (flatten-o '[[a b] c] x))
 
+  ;; stack overflow expected from looking at TRS
+  (run 1 [x]
+        (flatten-o x '[[a b] c]))
+
   ;; 4s, nice lead over Racket at 5.5s
   (dotimes [_ 10]
     (time
