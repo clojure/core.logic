@@ -353,7 +353,7 @@
          (fn [s] `(lvar '~s))) sym))
 
 (defn lvar-binds [syms]
-  (reduce concat (map lvar-bind syms)))
+  (mapcat lvar-bind syms))
 
 (defmacro exist [[& x-rest] & g-rest]
   `(fn [a#]
