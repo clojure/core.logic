@@ -103,6 +103,8 @@
   `(do
      ~@(map extend-type-to-lcons-seq types)))
 
+;; Should probably just extend-protocol to IPersistentCollection
+
 (extend-to-lcons-seq
   clojure.lang.Cons
   clojure.lang.PersistentList
@@ -261,13 +263,11 @@
 ;; MZero
 (extend-protocol IBind
   nil
-  (bind [_ g]
-        nil))
+  (bind [_ g] nil))
 
 (extend-protocol IMPlus
   nil
-  (mplus [_ b]
-         b))
+  (mplus [_ b] b))
 
 ;; Unit
 (extend-type Substitutions
