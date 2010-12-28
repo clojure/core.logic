@@ -237,7 +237,22 @@
 (defprotocol IMPlus
   (mplus [a b]))
 
+(defmacro bind*
+  ([a g] `(bind ~a ~g))
+  ([a g & g-rest]
+     `(bind* (bind ~a ~g) ~@g-rest)))
+
+(defmacro mplus*
+  ([e] e)
+  ([e & e-rest]
+     `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
+                            (cond
+                             (subst? r#) (cons r# nil)
+                             :else r#))))))
+
+;; -----------------------------------------------------------------------------
 ;; MZero
+
 (extend-protocol IBind
   nil
   (bind [_ g] nil))
@@ -246,7 +261,9 @@
   nil
   (mplus [_ b] b))
 
+;; -----------------------------------------------------------------------------
 ;; Unit
+
 (extend-type Substitutions
   IBind
   (bind [this g]
@@ -259,15 +276,9 @@
                            (cons b nil))
           :else (cons this b))))
 
-(defmacro mplus*
-  ([e] e)
-  ([e & e-rest]
-     `(mplus ~e (lazy-seq (let [r# (mplus* ~@e-rest)]
-                            (cond
-                             (subst? r#) (cons r# nil)
-                             :else r#))))))
 
-;; Streams
+;; -----------------------------------------------------------------------------
+;; Stream
 
 (extend-protocol IBind
   clojure.lang.ISeq
@@ -285,6 +296,9 @@
                       (cons (first b)
                             (mplus* (next b) (next this)))))))
 
+;; =============================================================================
+;; Syntax
+
 (defn succeed [a] a)
 
 (defn fail [a] nil)
@@ -292,11 +306,6 @@
 (def s* succeed)
 
 (def u* fail)
-
-(defmacro bind*
-  ([a g] `(bind ~a ~g))
-  ([a g & g-rest]
-     `(bind* (bind ~a ~g) ~@g-rest)))
 
 (defmacro == [u v]
   `(fn [a#]
