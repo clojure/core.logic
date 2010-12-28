@@ -93,32 +93,10 @@
 (defn lcons? [x]
   (instance? LCons x))
 
-(defn extend-type-to-lcons-seq [type]
-  `(clojure.core/extend-type ~type
-     LConsSeq
-     (~'lfirst [this#] (clojure.core/first this#))
-     (~'lnext [this#] (clojure.core/next this#))))
-
-(defmacro extend-to-lcons-seq [& types]
-  `(do
-     ~@(map extend-type-to-lcons-seq types)))
-
-;; Should probably just extend-protocol to IPersistentCollection
-
-(extend-to-lcons-seq
-  clojure.lang.Cons
-  clojure.lang.PersistentList
-  clojure.lang.PersistentVector
-  clojure.lang.PersistentVector$ChunkedSeq
-  clojure.lang.PersistentArrayMap
-  clojure.lang.PersistentArrayMap$Seq
-  clojure.lang.PersistentHashMap
-  clojure.lang.MapEntry
-  clojure.lang.PersistentHashSet
-  clojure.lang.APersistentMap$KeySeq
-  clojure.lang.PersistentHashMap$NodeSeq
-  clojure.lang.LazySeq
-  clojure.lang.ChunkedCons)
+(extend-protocol LConsSeq
+  clojure.lang.IPersistentCollection
+  (lfirst [this] (clojure.core/first this))
+  (lnext [this] (clojure.core/next this)))
 
 (defmacro llist
   ([f s] `(lcons ~f ~s))
