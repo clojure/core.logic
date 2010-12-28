@@ -269,29 +269,21 @@
 
 ;; Streams
 
-(defn extend-seq-type-to-bind-and-mplus [type]
-  `(extend-type ~type
-     IBind
-     (~'bind [this# g#]
-           (if-let [r# (seq (map g# this#))]
-             (reduce mplus r#)))
-     IMPlus
-     (~'mplus [this# b#]
-            (cond
-             (nil? b#) this#
-             (subst? b#) (cons b# this#)
-             :else (cons (first this#)
-                         (cons (first b#)
-                               (mplus* (next b#) (next this#))))))))
+(extend-protocol IBind
+  clojure.lang.ISeq
+  (bind [this g]
+        (if-let [r (seq (map g this))]
+          (reduce mplus r))))
 
-(defmacro extend-seq-types-to-bind-and-mplus [& types]
-  `(do
-     ~@(map extend-seq-type-to-bind-and-mplus types)))
-
-(extend-seq-types-to-bind-and-mplus
-  clojure.lang.LazySeq
-  clojure.lang.PersistentList
-  clojure.lang.Cons)
+(extend-protocol IMPlus
+  clojure.lang.ISeq
+  (mplus [this b]
+         (cond
+          (nil? b) this
+          (subst? b) (cons b this)
+          :else (cons (first this)
+                      (cons (first b)
+                            (mplus* (next b) (next this)))))))
 
 (defn succeed [a] a)
 
