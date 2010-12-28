@@ -23,15 +23,6 @@
 ;; =============================================================================
 ;; LCons
 
-;; NOTE: The ISeq interface expects that next returns a Seq. LCons may or may
-;; not be real seqs. For example, if the right hand side is a logic variable. So
-;; that we can iterate over sequences that may contain logic variables at the
-;; end and Clojure sequences we define LConSeq and extend all the core Clojure
-;; datatypes to this Protocol.
-
-;; LConsSeq is not a general datastructure, it's only meant to be used within
-;; miniKaren logic operations.
-
 (defprotocol LConsSeq
   (lfirst [this])
   (lnext [this]))
