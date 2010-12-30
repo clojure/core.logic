@@ -121,6 +121,8 @@
 
   (length [this] (count s'))
 
+  ;; TODO : revisit recur here
+
   (occurs-check [this u v]
                 (cond
                  (lvar? v) (= (walk this v) v)
@@ -255,6 +257,8 @@
 ;; -----------------------------------------------------------------------------
 ;; Unit
 
+;; OPTIMIZE: flip the argument to mplus and dispatch on type of second arg
+
 (extend-type Substitutions
   IBind
   (bind [this g]
@@ -275,6 +279,8 @@
   (bind [this g]
         (if-let [r (seq (map g this))]
           (reduce mplus r))))
+
+;; OPTIMIZE: flip the arguments to mplus and dispatch on type of second arg
 
 (extend-protocol IMPlus
   clojure.lang.ISeq
