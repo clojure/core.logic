@@ -257,7 +257,8 @@
 ;; -----------------------------------------------------------------------------
 ;; Unit
 
-;; OPTIMIZE: flip the argument to mplus and dispatch on type of second arg
+(defprotocol IMPlusUnit
+  (mplus-u [this a]))
 
 (extend-type Substitutions
   IBind
@@ -265,11 +266,21 @@
         (g this))
   IMPlus
   (mplus [this b]
-         (cond
-          (nil? b) this
-          (subst? b) (cons this
-                           (cons b nil))
-          :else (cons this b))))
+         (mplus-u b this)))
+
+(extend-protocol IMPlusUnit
+  nil
+  (mplus-u [_ a] a))
+
+(extend-type Substitutions
+  IMPlusUnit
+  (mplus-u [this a]
+           (list a this)))
+
+(extend-protocol IMPlusUnit
+  clojure.lang.ISeq
+  (mplus-u [this a]
+           (cons a this)))
 
 ;; -----------------------------------------------------------------------------
 ;; Stream
@@ -280,17 +291,28 @@
         (if-let [r (seq (map g this))]
           (reduce mplus r))))
 
-;; OPTIMIZE: flip the arguments to mplus and dispatch on type of second arg
+(defprotocol IMPlusStream
+  (mplus-s [this a]))
 
 (extend-protocol IMPlus
   clojure.lang.ISeq
   (mplus [this b]
-         (cond
-          (nil? b) this
-          (subst? b) (cons b this)
-          :else (cons (first this)
-                      (cons (first b)
-                            (mplus* (next b) (next this)))))))
+         (mplus-s b this)))
+
+(extend-protocol IMPlusStream
+  nil
+  (mplus-s [_ a] a))
+
+(extend-type Substitutions
+  IMPlusStream
+  (mplus-s [this a] (cons this a)))
+
+(extend-protocol IMPlusStream
+  clojure.lang.ISeq
+  (mplus-s [this a]
+           (cons (first a)
+                 (cons (first this)
+                       (mplus* (next this) (next a))))))
 
 ;; =============================================================================
 ;; Syntax
