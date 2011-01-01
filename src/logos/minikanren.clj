@@ -34,7 +34,7 @@
 
 (declare lcons?)
 
-(deftype LCons [a d]
+(deftype LCons [a d cache]
   LConsSeq
   (lfirst [_] a)
   (lnext [_] d)
@@ -62,15 +62,18 @@
                                        (lvar? mef)
                                        (lvar? youf))
                                    (recur (lnext me) (lnext you)))))))))
+
   (hashCode [this]
-            (loop [hash 1 xs this]
-              (if (or (nil? xs) (lvar? xs))
-                hash
-                (let [val (lfirst xs)]
-                 (recur (unchecked-add-int
-                         (unchecked-multiply-int 31 hash)
-                         (clojure.lang.Util/hash val))
-                        (lnext xs)))))))
+            (if @cache
+              @cache
+              (loop [hash 1 xs this]
+                (if (or (nil? xs) (lvar? xs))
+                  (reset! cache hash)
+                  (let [val (lfirst xs)]
+                    (recur (unchecked-add-int
+                            (unchecked-multiply-int 31 hash)
+                            (clojure.lang.Util/hash val))
+                           (lnext xs))))))))
 
 (defmethod print-method LCons [x writer]
   (.write writer (str x)))
@@ -78,7 +81,7 @@
 (defn lcons [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
-    (LCons. a d)))
+    (LCons. a d (atom nil))))
 
 (defn lcons? [x]
   (instance? LCons x))
@@ -140,13 +143,11 @@
                                 (conj s' [u v])))
 
   (walk [this v]
-          (loop [v v p (find s v) s s ov v]
-            (if (nil? p)
-              v
-              (let [[v v'] p]
-                (if (lvar? v')
-                  (recur v' (find s v') s ov)
-                  v')))))
+        (loop [[_ v' :as p] [nil v] lv v]
+          (cond
+           (nil? p) lv
+           (not (lvar? v')) v'
+           :else (recur (find s v') v'))))
 
   ;; TODO : revisit recur here. Main issue was how to reconstruct
   ;; types ?
