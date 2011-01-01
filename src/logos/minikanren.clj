@@ -144,11 +144,11 @@
                 (Substitutions. (assoc s u v)))
 
   (walk [this v]
-        (loop [[_ v' :as p] [nil v] lv v]
+        (loop [v' v lv nil]
           (cond
-           (nil? p) lv
+           (= v' :not-found) lv
            (not (lvar? v')) v'
-           :else (recur (find s v') v'))))
+           :else (recur (get s v' :not-found) v'))))
 
   ;; TODO : revisit recur here. Main issue was how to reconstruct
   ;; types ?
