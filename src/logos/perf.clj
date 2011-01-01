@@ -210,6 +210,15 @@
         (run* [x]
               (flatten-o '[[a b] c] x))))))
 
+  ;; down to 3.5-3.6
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run* [x]
+               (flatten-o '[[a b] c] x)))))))
+
   ;; 3.2-3.3 if we don't reify result
   (dotimes [_ 10]
     (time
@@ -219,6 +228,7 @@
               (exist [y]
                      (flatten-o '[[a b] c] y)))))))
 
+  ;; down to 2.8-2.9
   (binding [*occurs-check* false]
    (dotimes [_ 10]
      (time

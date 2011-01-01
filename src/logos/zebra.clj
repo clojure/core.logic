@@ -79,6 +79,13 @@
         (dotimes [_ 1]
           (doall a))))))
 
+  ;; 7s-8s
+  (binding [*occurs-check* false]
+   (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e3]
+       (doall (zebra-o))))))
+
   ;; succeeds twice
   (run* [q]
         (on-right-o 'cat 'dog '[cat dog cat dog]))
