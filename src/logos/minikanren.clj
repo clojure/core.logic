@@ -197,7 +197,7 @@
                   :else false))))
 
   (reify-lvar-name [this]
-                   (symbol (str "_." (length this))))
+                   (symbol (str "_." (count s))))
 
   ;; TODO : unnecessarily stack consuming
 
