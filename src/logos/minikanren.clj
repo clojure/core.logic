@@ -147,6 +147,7 @@
           (cond
            (nil? p) lv
            (not (lvar? v')) v'
+           (identical? (.s ^lvarT v') this) v'
            :else (recur (find s v') v'))))
 
   ;; TODO : revisit recur here. Main issue was how to reconstruct
@@ -345,17 +346,19 @@
        (lazy-seq
         (mplus* ~@(bind-cond-e-clauses a clauses))))))
 
-(defn lvar-bind [sym]
-  ((juxt identity
-         (fn [s] `(lvar '~s))) sym))
+(defn lvar-bind [a]
+  (fn [sym]
+   ((juxt identity
+          (fn [s] `(lvar '~s ~a))) sym)))
 
-(defn lvar-binds [syms]
-  (mapcat lvar-bind syms))
+(defn lvar-binds [syms a]
+  (mapcat (lvar-bind a) syms))
 
 (defmacro exist [[& x-rest] & g-rest]
-  `(fn [a#]
-     (let [~@(lvar-binds x-rest)]
-       (bind* a# ~@g-rest))))
+  (let [a (gensym "a")]
+   `(fn [~a]
+      (let [~@(lvar-binds x-rest a)]
+        (bind* ~a ~@g-rest)))))
 
 (defn reifier [lvar]
   (fn [a]
