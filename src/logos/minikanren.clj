@@ -119,10 +119,10 @@
 
 (declare empty-s)
 
-(deftype Substitutions [s s']
+(deftype Substitutions [s]
   ISubstitutions
 
-  (length [this] (count s'))
+  (length [this] (count s))
 
   ;; TODO : revisit recur here
 
@@ -139,8 +139,7 @@
          (ext-no-check this u v)))
 
   (ext-no-check [this u v]
-                (Substitutions. (assoc s u v)
-                                (conj s' [u v])))
+                (Substitutions. (assoc s u v)))
 
   (walk [this v]
         (loop [[_ v' :as p] [nil v] lv v]
@@ -213,15 +212,14 @@
          (let [v (walk* this v)]
            (walk* (-reify empty-s v) v))))
 
-(def empty-s (Substitutions. {} []))
+(def empty-s (Substitutions. {}))
 
 (defn subst? [x]
   (instance? Substitutions x))
 
 (defn to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
-        s' (vec (map (partial apply vector) v))]
-    (Substitutions. s s')))
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)]
+    (Substitutions. s)))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
