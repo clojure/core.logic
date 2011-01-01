@@ -57,7 +57,7 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
-  ;; ~1.1s
+  ;; < 1.1s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
@@ -65,6 +65,15 @@
         (run* [q]
               (== true q))))))
 
+  ;; hardly any effect in this case
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e6]
+        (doall
+         (run* [q]
+               (== true q)))))))
+  
   ;; ~2s
   (dotimes [_ 10]
     (time
@@ -172,8 +181,17 @@
         (run* [q]
               (append-o '(1 2) '(3 4) q))))))
 
+  ;; 1.2-3s
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (doall
+         (run* [q]
+               (append-o '(1 2) '(3 4) q)))))))
+
   ;; Racket clocks ~720ms
-  ;; We're seeing ~900ms
+  ;; We're at 700ms now
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
@@ -182,8 +200,17 @@
              (exist [y]
                     (append-o (llist 'cake y) '(d t) x)))))))
 
+  ;; 630-50ms
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run 5 [x]
+              (exist [y]
+                     (append-o (llist 'cake y) '(d t) x))))))))
+
   ;; ~300ms
-  (set! *occurs-check* false)
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
@@ -191,6 +218,7 @@
         (run* [q]
               (rest-o [1 2] q))))))
 
+  ;; ~280ms
   (binding [*occurs-check* false]
    (dotimes [_ 10]
      (time
@@ -210,7 +238,7 @@
         (run* [x]
               (flatten-o '[[a b] c] x))))))
 
-  ;; down to 3.5-3.6
+  ;; down to 3.1-2
   (binding [*occurs-check* false]
    (dotimes [_ 10]
      (time
@@ -219,7 +247,7 @@
          (run* [x]
                (flatten-o '[[a b] c] x)))))))
 
-  ;; 3.2-3.3 if we don't reify result
+  ;; 3.1-2 if we don't reify result
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
@@ -228,7 +256,9 @@
               (exist [y]
                      (flatten-o '[[a b] c] y)))))))
 
-  ;; down to 2.8-2.9
+  ;; down to 2.6-7 if we don't reify
+  ;; reification is significant chunk of time
+  ;; 1s, or 1/6th of all the time
   (binding [*occurs-check* false]
    (dotimes [_ 10]
      (time
