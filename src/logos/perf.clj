@@ -38,6 +38,10 @@
        (dotimes [_ 1e6]
          (walk ss a)))))
 
+  (let [[x y z c b a :as s] (map lvar '[x y z c b a])
+          ss (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
+    (walk ss a))
+
   ;; 200ms (NOTE: this jump is because array-map is slower than hash-maps)
   ;; Scheme is ~1650ms
   ;; with defrecord this becomes - MUCH MUCH slower
@@ -179,12 +183,21 @@
                     (append-o (llist 'cake y) '(d t) x)))))))
 
   ;; ~300ms
+  (set! *occurs-check* false)
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
        (doall
         (run* [q]
               (rest-o [1 2] q))))))
+
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (doall
+         (run* [q]
+               (rest-o [1 2] q)))))))
 
   ;; 4s Scheme is 5.5s
   ;; wow removing vectors make hardly any difference
@@ -205,4 +218,13 @@
         (run* [x]
               (exist [y]
                      (flatten-o '[[a b] c] y)))))))
+
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run* [x]
+               (exist [y]
+                      (flatten-o '[[a b] c] y))))))))
   )

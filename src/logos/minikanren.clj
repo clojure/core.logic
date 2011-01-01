@@ -2,6 +2,8 @@
   (:refer-clojure :exclude [reify ==])
   (:use [clojure.pprint :only [pprint]]))
 
+(def ^:dynamic *occurs-check* true)
+
 ;; =============================================================================
 ;; Logic Variables
 
@@ -134,7 +136,7 @@
                 :else false)
   
   (ext [this u v]
-       (if (occurs-check this u v)
+       (if (and *occurs-check* (occurs-check this u v))
          this
          (ext-no-check this u v)))
 

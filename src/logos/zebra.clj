@@ -60,6 +60,9 @@
 (comment
   (zebra-o)
 
+  (binding [*occurs-check* false]
+    (zebra-o))
+
   ;; WOW
   ;; worst case ordering is now only 230ms
   ;; down to 10 ms on a fast ordering !
@@ -68,6 +71,13 @@
      (let  [a (zebra-o)]
        (dotimes [_ 1]
          (doall a)))))
+
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (let  [a (zebra-o)]
+        (dotimes [_ 1]
+          (doall a))))))
 
   ;; succeeds twice
   (run* [q]
