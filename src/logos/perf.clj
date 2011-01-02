@@ -210,6 +210,14 @@
               (exist [y]
                      (append-o (llist 'cake y) '(d t) x))))))))
 
+  (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run-nc 5 [x]
+                 (exist [y]
+                        (append-o (llist 'cake y) '(d t) x)))))))
+
   ;; ~300ms
   (dotimes [_ 10]
     (time
@@ -247,6 +255,13 @@
          (run* [x]
                (flatten-o '[[a b] c] x)))))))
 
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run-nc* [x]
+                 (flatten-o '[[a b] c] x))))))
+
   ;; 3.1-2 if we don't reify result
   (dotimes [_ 10]
     (time
@@ -267,4 +282,12 @@
          (run* [x]
                (exist [y]
                       (flatten-o '[[a b] c] y))))))))
+
+  (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run-nc* [x]
+                  (exist [y]
+                         (flatten-o '[[a b] c] y)))))))
   )

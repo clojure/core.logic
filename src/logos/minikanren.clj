@@ -377,6 +377,15 @@
 (defmacro run* [& body]
   `(run false ~@body))
 
+;; TODO : fix when we get scopes
+
+(defmacro run-nc [& [n [x] & g-rest]]
+  `(binding [*occurs-check* false]
+     (doall (run ~n [~x] ~@g-rest))))
+
+(defmacro run-nc* [& body]
+  `(run-nc false ~@body))
+
 (defn sym->lvar [sym]
   `(lvar '~sym))
 
@@ -387,7 +396,7 @@
 ;; =============================================================================
 ;; Debugging
 
-(def *debug* (atom []))
+(def ^:dynamic *debug* (atom []))
 
 (defmacro trace [a & lm]
   `(binding [*debug* (or ~a *debug*)]
