@@ -1,12 +1,19 @@
-* Immediate
-** TODO : flatten-o broken
-** TODO : don't really understand how nils flow through
-** TODO : zebra broken   
-** TODO : Investigate - Skew Random Binary Access Lists (Okasaki)
-* Backlog
-** TODO : Fix rest lvars for logos.unify/unifier and logos.unify/unifier'
-* Future
-** TODO : Investigate forward-chaining
-** TODO : tabling
-** TODO : consider parallel syntax
-** TODO : Datalog
+* Logos Todos
+** Immediate [/]
+   - [ ] Fix Unification - IN PROGRESS
+   - [ ] Disequality Constraints
+   - [ ] Basic Type Inferencer
+   - [ ] Read up on Prolog implementation in CL
+   - [ ] Read up on compiled Prolog implementation in CL
+   - [ ] Investigate - Skew Random Binary Access Lists (Okasaki) 
+** Future [/]
+   - [ ] Investigate forward-chaining
+   - [ ] Investigate partial evaluation
+   - [ ] Tabling
+   - [ ] Consider parallel syntax
+   - [ ] Datalog
+** Alternate Strategies [/]
+   - [ ] Compile into "normal" Clojure programs (forward chaining,
+     partial evaluation)
+** Backlog [/]
+   - [ ] Fix rest lvars for logos.unify/unifier and logos.unify/unifier'

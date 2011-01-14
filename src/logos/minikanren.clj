@@ -36,6 +36,8 @@
 
 (declare lcons?)
 
+;; TODO: LCons is Sequential
+
 (deftype LCons [a d cache]
   LConsSeq
   (lfirst [_] a)
@@ -173,6 +175,22 @@
   ;; TODO : for sequences this unnecessarily stack-consuming
   ;; as well as checking for conditions that don't matter
   ;; for sequences
+
+  ;; TODO : wow, we can really, really, really speed up unification
+  ;;
+  ;; a) declare IUnifyLeft protocol
+  ;;    (unify-left u v s)
+  ;; b) declare default implementation for Object
+  ;; c) we flip args from b to look for a match on the other side
+  ;;    IUnifyRight protocol, whose implementations look just like
+  ;;    if Object, just do equality check
+  ;;    (unify-right v u s)
+  ;; d) implementation for lvarT, Sequential, PersistentHashMap, PersistentHashSet
+  ;;    flip args and dispatch on second arg
+  ;;
+  ;; this means we have n^2 possible matches, in our case 25
+  ;;
+  ;; (if (identical? u v) this (unify u v))
 
   (unify-seq [this u v in-seq]
              (if (identical? u v)
