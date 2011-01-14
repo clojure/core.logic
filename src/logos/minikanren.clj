@@ -190,7 +190,7 @@
   ;;
   ;; this means we have n^2 possible matches, in our case 25
   ;;
-  ;; (if (identical? u v) this (unify u v))
+  ;; (if (identical? u v) this (unify-left u v this))
 
   (unify-seq [this u v in-seq]
              (if (identical? u v)
