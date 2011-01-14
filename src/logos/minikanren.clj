@@ -241,6 +241,158 @@
     (Substitutions. s)))
 
 ;; =============================================================================
+;; Unification
+
+(defprotocol IUnifyTerms
+  (unify-terms [u v s]))
+
+;; -----------------------------------------------------------------------------
+;; Unify Object with X
+
+(defprotocol IUnifyWithObject
+  (unify-with-object [v u s]))
+
+(extend-type Object
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-object v u s)))
+
+(extend-type lvarT
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (ext s u v)))
+
+(extend-protocol IUnifyWithObject
+  clojure.lang.Sequential
+  (unify-with-object [v u s] false))
+
+(extend-type clojure.lang.PersistentHashMap
+  IUnifyWithObject
+  (unify-with-object [v u s] false))
+
+(extend-type clojure.lang.PersistentHashSet
+  IUnifyWithObject
+  (unify-with-object [v u s] false))
+
+(extend-type Object
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (if (= v u) s)))
+
+;; -----------------------------------------------------------------------------
+;; Unify lvarT with X
+
+(defprotocol IUnifyWithLVar
+  (unify-with-lvar [v u s]))
+
+(extend-type lvarT
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-lvar v u s)))
+
+(extend-type Object
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext s u v)))
+
+(extend-protocol IUnifyWithLVar
+  clojure.lang.Sequential
+  (unify-with-lvar [v u s]
+    (ext s u v)))
+
+(extend-type clojure.lang.PersistentHashMap
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext s u v)))
+
+(extend-type clojure.lang.PersistentHashSet
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext s u v)))
+
+;; -----------------------------------------------------------------------------
+;; Unify Sequential with X
+
+(defprotocol IUnifyWithSequential
+  (unify-with-seq [v u s]))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.Sequential
+  (unify-terms [u v s]
+    (unify-with-seq v u s)))
+
+(extend-type Object
+  IUnifyWithSequential
+  (unify-with-seq [v u s] false))
+
+(extend-type lvarT
+  IUnifyWithSequential
+  (unify-with-seq [v u s]
+    (ext s v u)))
+
+(extend-type clojure.lang.PersistentHashMap
+  IUnifyWithSequential
+  (unify-with-seq [v u s] false))
+
+(extend-type clojure.lang.PersistentHashSet
+  IUnifyWithSequential
+  (unify-with-seq [v u s] false))
+
+(extend-protocol IUnifyWithSequential
+  clojure.lang.Sequential
+  (unify-with-seq [v u s]
+    ;; ... yup ...
+    ))
+
+;; -----------------------------------------------------------------------------
+;; Unify PersistentHashMap with X
+
+(defprotocol IUnifyWithMap
+  (unify-with-map [v u s]))
+
+(extend-type Object
+  IUnifyWithMap
+  (unify-with-map [v u s] false))
+
+(extend-type lvarT
+  IUnifyWithMap
+  (unify-with-map [v u s]
+    (ext s v u)))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.PersistentHashMap
+  (unify-terms [u v s]
+    (unify-with-map v u s)))
+
+;; same length
+;; iterate over keys
+;; they must exist or the number of missing keys
+;; same as set but constraint on keys *and* values
+
+;; -----------------------------------------------------------------------------
+;; Unify PersistentHashSet with X
+
+(defprotocol IUnifyWithSet
+  (unify-with-set [v u s]))
+
+(extend-type Object
+  IUnifyWithSet
+  (unify-with-map [v u s] false))
+
+(extend-type lvarT
+  IUnifyWithSet
+  (unify-with-map [v u s]
+    (ext s v u)))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.PersistentHashMap
+  (unify-terms [u v s]
+    (unify-with-map v u s)))
+
+;; same length
+;; the difference should only contain lvars
+
+;; =============================================================================
 ;; Goals and Goal Constructors
 
 (defprotocol IBind
