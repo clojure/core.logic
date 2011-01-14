@@ -28,7 +28,7 @@
     (unify [this other]))
 
   (extend-protocol IUnify
-    logos.minikanren.lvarT
+    logos.minikanren.LVar
     clojure.lang.ISeq
     clojure.lang.LConsSeq)
 

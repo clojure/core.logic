@@ -7,20 +7,20 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype lvarT [name s]
+(deftype LVar [name s]
   Object
   (toString [this] (str "<lvar:" name ">")))
 
-(defn ^lvarT lvar
-  ([] (lvarT. (gensym) nil))
-  ([name] (lvarT. name nil))
-  ([name s] (lvarT. name s)))
+(defn ^LVar lvar
+  ([] (LVar. (gensym) nil))
+  ([name] (LVar. name nil))
+  ([name s] (LVar. name s)))
 
-(defmethod print-method lvarT [x writer]
-  (.write writer (str "<lvar:" (.name ^lvarT x) ">")))
+(defmethod print-method LVar [x writer]
+  (.write writer (str "<lvar:" (.name ^LVar x) ">")))
 
 (defn lvar? [x]
-  (instance? lvarT x))
+  (instance? LVar x))
 
 ;; =============================================================================
 ;; LCons
@@ -221,7 +221,7 @@
 (defprotocol IUnifyWithLVar
   (unify-with-lvar [v u s]))
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lvar v u s)))
@@ -253,7 +253,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyWithObject
   (unify-with-object [v u s]
     (ext s u v)))
@@ -276,14 +276,14 @@
     (if (= v u) s)))
 
 ;; -----------------------------------------------------------------------------
-;; Unify lvarT with X
+;; Unify LVar with X
 
 (extend-type Object
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext s u v)))
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext-no-check s u v)))
@@ -310,7 +310,7 @@
   IUnifyWithSequential
   (unify-with-seq [v u s] false))
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (ext s v u)))
@@ -336,7 +336,7 @@
   IUnifyWithMap
   (unify-with-map [v u s] false))
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyWithMap
   (unify-with-map [v u s]
     (ext s v u)))
@@ -367,7 +367,7 @@
   IUnifyWithSet
   (unify-with-map [v u s] false))
 
-(extend-type lvarT
+(extend-type LVar
   IUnifyWithSet
   (unify-with-map [v u s]
     (ext s v u)))
