@@ -170,57 +170,14 @@
                            :else r))
             :else v')))
 
-  (unify [this u v] (unify-seq this u v false))
-
-  ;; TODO : for sequences this unnecessarily stack-consuming
-  ;; as well as checking for conditions that don't matter
-  ;; for sequences
-
-  ;; TODO : wow, we can really, really, really speed up unification
-  ;;
-  ;; a) declare IUnifyLeft protocol
-  ;;    (unify-left u v s)
-  ;; b) declare default implementation for Object
-  ;; c) we flip args from b to look for a match on the other side
-  ;;    IUnifyRight protocol, whose implementations look just like
-  ;;    if Object, just do equality check
-  ;;    (unify-right v u s)
-  ;; d) implementation for lvarT, Sequential, PersistentHashMap, PersistentHashSet
-  ;;    flip args and dispatch on second arg
-  ;;
-  ;; this means we have n^2 possible matches, in our case 25
-  ;;
-  ;; (if (identical? u v) this (unify-terms u v this))
-
-  (unify-seq [this u v in-seq]
+  (unify [this u v]
+         (if (identical? u v)
+           this
+           (let [u (walk this u)
+                 v (walk this v)]
              (if (identical? u v)
                this
-               (let [u (walk this u)
-                     v (walk this v)]
-                 (cond
-                  (identical? u v) this
-                  (lvar? u) (cond
-                             (lvar? v) (ext-no-check this u v)
-                             (and in-seq (nil? v)) (ext this u '())
-                             :else (ext this u v))
-                  (lvar? v) (if (and in-seq (nil? u))
-                              (ext this v '())
-                              (ext this v u))
-                  (and (lcoll? u) (lcoll? v)) (let [uf (lfirst u)
-                                                    ur (lnext u)
-                                                    vf (lfirst v)
-                                                    vr (lnext v)]
-                                                (let [s (unify this uf vf)]
-                                                  (and s (unify-seq s ur vr true))))
-                  (= u v) this
-                  :else false))))
-
-  ;; (unify [this u v in]
-  ;;        (if (identical? u v)
-  ;;          this
-  ;;          (let [u (walk this u)
-  ;;                v (walk this v)]
-  ;;            (if (identical? u v) this (unify-terms u v this)))))
+               (unify-terms u v this)))))
 
   (reify-lvar-name [this]
                    (symbol (str "_." (count s))))
@@ -256,25 +213,45 @@
 (defprotocol IUnifyWithObject
   (unify-with-object [v u s]))
 
-(defprotocol IUnifyWithLVar
-  (unify-with-lvar [v u s]))
-
-(defprotocol IUnifyWithSequential
-  (unify-with-seq [v u s]))
-
-(defprotocol IUnifyWithMap
-  (unify-with-map [v u s]))
-
-(defprotocol IUnifyWithSet
-  (unify-with-set [v u s]))
-
-;; -----------------------------------------------------------------------------
-;; Unify Object with X
-
 (extend-type Object
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-object v u s)))
+
+(defprotocol IUnifyWithLVar
+  (unify-with-lvar [v u s]))
+
+(extend-type lvarT
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-lvar v u s)))
+
+(defprotocol IUnifyWithSequential
+  (unify-with-seq [v u s]))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.Sequential
+  (unify-terms [u v s]
+    (unify-with-seq v u s)))
+
+(defprotocol IUnifyWithMap
+  (unify-with-map [v u s]))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.IPersistentMap
+  (unify-terms [u v s]
+    (unify-with-map v u s)))
+
+(defprotocol IUnifyWithSet
+  (unify-with-set [v u s]))
+
+(extend-protocol IUnifyTerms
+  clojure.lang.IPersistentSet
+  (unify-terms [u v s]
+    (unify-with-set v u s)))
+
+;; -----------------------------------------------------------------------------
+;; Unify Object with X
 
 (extend-type lvarT
   IUnifyWithObject
@@ -300,11 +277,6 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify lvarT with X
-
-(extend-type lvarT
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-lvar v u s)))
 
 (extend-type Object
   IUnifyWithLVar
@@ -334,11 +306,6 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
-(extend-protocol IUnifyTerms
-  clojure.lang.Sequential
-  (unify-terms [u v s]
-    (unify-with-seq v u s)))
-
 (extend-type Object
   IUnifyWithSequential
   (unify-with-seq [v u s] false))
@@ -364,11 +331,6 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify PersistentHashMap with X
-
-(extend-protocol IUnifyTerms
-  clojure.lang.IPersistentMap
-  (unify-terms [u v s]
-    (unify-with-map v u s)))
 
 (extend-type Object
   IUnifyWithMap
@@ -400,14 +362,6 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify PersistentHashSet with X
-
-(defprotocol IUnifyWithSet
-  (unify-with-set [v u s]))
-
-(extend-protocol IUnifyTerms
-  clojure.lang.IPersistentSet
-  (unify-terms [u v s]
-    (unify-with-set v u s)))
 
 (extend-type Object
   IUnifyWithSet
