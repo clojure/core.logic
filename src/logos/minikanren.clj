@@ -246,6 +246,8 @@
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
 
+;; TODO: extend to IPersistentSet and IPersistentMap instead
+
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
