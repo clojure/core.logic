@@ -403,15 +403,13 @@
 (extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
-    (if (and (counted? u) (counted? v)
-             (not= (count u) (count v)))
-      false
-      (loop [u u v v s s]
-        (cond
-         (nil? (seq u)) (if (nil? (seq v)) s false)
-         :else (if-let [s (unify-terms (first u) (first v) s)]
-                 (recur (next u) (next v) s)
-                 false))))))
+    (loop [u u v v s s]
+      (if (seq u)
+        (if (seq v)
+          (if-let [s (unify-terms (first u) (first v) s)]
+            (recur (next u) (next v) s)
+            false))
+        (if (seq v) false s)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
@@ -702,8 +700,18 @@
 
 (comment
   (dotimes [_ 10]
-    (let [x (lvar 'x)]
+    (let [x (lvar 'x)
+          v1 `[1 ~x 3]
+          v2 `[1 2 3]]
      (time
       (dotimes [_ 1e6]
-        (unify empty-s `(1 ~x 3) `(1 2 3))))))
+        (unify empty-s v1 v2)))))
+
+  (dotimes [_ 10]
+    (let [x (lvar 'x)
+          l1 `(1 ~x 3)
+          l2 `(1 2 3)]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s l1 l2)))))
   )
