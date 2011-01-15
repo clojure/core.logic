@@ -116,7 +116,6 @@
   (walk [this v])
   (walk* [this v])
   (unify [this u v])
-  (unify-seq [this u v in-seq])
   (reify-lvar-name [_])
   (-reify [this v])
   (reify [this v]))
@@ -226,6 +225,14 @@
   (unify-terms [u v s]
     (unify-with-lvar v u s)))
 
+(defprotocol IUnifyWithLSeq
+  (unify-with-lseq [v u s]))
+
+(extend-type LConsSeq
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-lseq v u s)))
+
 (defprotocol IUnifyWithSequential
   (unify-with-seq [v u s]))
 
@@ -258,6 +265,10 @@
   (unify-with-object [v u s]
     (ext s u v)))
 
+(extend-type LConsSeq
+  IUnifyWithObject
+  (unify-with-object [v u s] false))
+
 (extend-protocol IUnifyWithObject
   clojure.lang.Sequential
   (unify-with-object [v u s] false))
@@ -288,6 +299,11 @@
   (unify-with-lvar [v u s]
     (ext-no-check s u v)))
 
+(extend-type LConsSeq
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext s u v)))
+
 (extend-protocol IUnifyWithLVar
   clojure.lang.Sequential
   (unify-with-lvar [v u s]
@@ -302,6 +318,52 @@
   clojure.lang.IPersistentSet
   (unify-with-lvar [v u s]
     (ext s u v)))
+
+;; -----------------------------------------------------------------------------
+;; Unify LConsSeq with X
+
+(extend-type Object
+  IUnifyWithLSeq
+  (unify-with-lseq [v u s] false))
+
+(extend-type LVar
+  IUnifyWithLSeq
+  (unify-with-lseq [v u s]
+    (ext s v u)))
+
+(extend-type LConsSeq
+  IUnifyWithLSeq
+  (unify-with-lseq [v u s]
+    (loop [u u v v s s]
+      (cond
+       (lvar? u) (and (lvar? v) (unify-terms u v s))
+       :else (let [uf (lfirst u)
+                   vf (lfirst v)]
+               (if-let [s (unify-terms uf vf s)]
+                 (recur (lnext u) (lnext v) s)
+                 false))))))
+
+(extend-protocol IUnifyWithLSeq
+  clojure.lang.Sequential
+  (unify-with-lseq [v u s]
+    (loop [u u v v s s]
+      (cond
+       (lvar? u) (if (nil? v)
+                   (ext s u '()))
+       (nil? v) false
+       :else (let [uf (lfirst u)
+                   vf (lfirst v)]
+               (if-let [s (unify-terms uf vf s)]
+                 (recur (lnext u) (lnext v) s)
+                 false))))))
+
+(extend-protocol IUnifyWithLSeq
+  clojure.lang.IPersistentMap
+  (unify-with-lseq [v u s] false))
+
+(extend-protocol IUnifyWithLSeq
+  clojure.lang.IPersistentSet
+  (unify-with-lseq [v u s] false))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
@@ -315,6 +377,11 @@
   (unify-with-seq [v u s]
     (ext s v u)))
 
+(extend-type LConsSeq
+  IUnifyWithSequential
+  (unify-with-seq [v u s]
+    (unify-with-lseq v u s)))
+
 (extend-protocol IUnifyWithSequential
   clojure.lang.IPersistentMap
   (unify-with-seq [v u s] false))
@@ -323,11 +390,22 @@
   clojure.lang.IPersistentSet
   (unify-with-seq [v u s] false))
 
+;; OPTIMIZATION : if both u v are clojure.lang.Counted, check they have the
+;; same length
+
 (extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
-    ;; ... yup ...
-    ))
+    (if (and (seq v) (seq s))
+      (loop [u u v v s s]
+        (cond
+         (nil? u) (if (nil? v) s false)
+         (let [uf (first u)
+               vf (first v)]
+           (if-let [s (unify-terms uf vf)]
+             (recur (next u) (next v) s)
+             false))))
+      false)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify PersistentHashMap with X
@@ -341,6 +419,10 @@
   (unify-with-map [v u s]
     (ext s v u)))
 
+(extend-type LConsSeq
+  IUnifyWithMap
+  (unify-with-map [v u s] false))
+
 (extend-protocol IUnifyWithMap
   clojure.lang.Sequential
   (unify-with-map [v u s] false))
@@ -353,8 +435,9 @@
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
-    ;; ... yup ...
-    ))
+    (if (= (count u) (count v))
+      
+      false)))
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentSet
@@ -380,14 +463,25 @@
   clojure.lang.IPersistentMap
   (unify-with-set [v u s] false))
 
-;; same length
-;; the difference should only contain lvars
+;; remove keys as we unify them
 
 (extend-protocol IUnifyWithSet
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
-    ;; ... yup ...
-    ))
+    (if (= (count u) (count v))
+      (loop [u u v v s s lvars #{}]
+        (cond
+         (seq u) (if (seq v)
+                   (let [uf (first u)]
+                     (cond
+                      (lvar? uf) (recur (disj u uf) v (conj lvars uf))
+                      ))
+                   false)
+         (seq lvars) (if (= (count lvars) (count v))
+                       (unify-terms (seq lvars) (seq v) s)
+                       false)
+         :else false))
+      false)))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
