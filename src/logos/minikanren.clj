@@ -400,22 +400,18 @@
   clojure.lang.IPersistentSet
   (unify-with-seq [v u s] false))
 
-;; OPTIMIZATION : if both u v are clojure.lang.Counted, check they have the
-;; same length
-
 (extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
-    (if (and (seq v) (seq s))
+    (if (and (counted? u) (counted? v)
+             (not= (count u) (count v)))
+      false
       (loop [u u v v s s]
         (cond
-         (nil? u) (if (nil? v) s false)
-         :else (let [uf (first u)
-                     vf (first v)]
-                 (if-let [s (unify-terms uf vf s)]
-                   (recur (next u) (next v) s)
-                   false))))
-      false)))
+         (nil? (seq u)) (if (nil? (seq v)) s false)
+         :else (if-let [s (unify-terms (first u) (first v) s)]
+                 (recur (next u) (next v) s)
+                 false))))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
@@ -703,3 +699,11 @@
    `(fn [~a]
       (swap! *debug* conj ~a)
       ~a)))
+
+(comment
+  (dotimes [_ 10]
+    (let [x (lvar 'x)]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s `(1 ~x 3) `(1 2 3))))))
+  )

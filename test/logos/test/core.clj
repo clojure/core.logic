@@ -11,21 +11,48 @@
 ;; object
 
 (deftest unify-object-object-1
-  (is (= (unify empty-s 1 1)
-         empty-s)))
+  (is (= (unify empty-s 1 1) empty-s)))
 
 (deftest unify-object-object-2
-  (is (= (unify empty-s 1 2)
-         false)))
+  (is (= (unify empty-s :foo :foo) empty-s)))
 
 (deftest unify-object-object-3
-  (is (= (unify empty-s 2 1)
-         false)))
+  (is (= (unify empty-s 'foo 'foo) empty-s)))
+
+(deftest unify-object-object-4
+  (is (= (unify empty-s "foo" "foo") empty-s)))
+
+(deftest unify-object-object-5
+  (is (= (unify empty-s 1 2) false)))
+
+(deftest unify-object-object-6
+  (is (= (unify empty-s 2 1) false)))
+
+(deftest unify-object-object-7
+  (is (= (unify empty-s :foo :bar) false)))
+
+(deftest unify-object-object-8
+  (is (= (unify empty-s 'foo 'bar) false)))
+
+(deftest unify-object-object-9
+  (is (= (unify empty-s "foo" "bar") false)))
 
 (deftest unify-object-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
     (= (unify empty-s 1 x) os)))
+
+(deftest unify-object-seq-1
+  (= (unify empty-s 1 '()) false))
+
+(deftest unify-object-seq-2
+  (= (unify empty-s 1 '[]) false))
+
+(deftest unify-object-map-1
+  (= (unify empty-s 1 {}) false))
+
+(deftest unify-object-set-1
+  (= (unify empty-s 1 #{}) false))
 
 ;; -----------------------------------------------------------------------------
 ;; lvar
@@ -66,21 +93,66 @@
         os (ext-no-check empty-s x {})]
     (= (unify empty-s x {}) os)))
 
+(deftest unify-lvar-map-2
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x {1 2 3 4})]
+    (= (unify empty-s x {1 2 3 4}) os)))
+
 (deftest unify-lvar-set-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{})]
     (= (unify empty-s x #{}) os)))
 
+(deftest unify-lvar-set-2
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x #{1 2 3})]
+    (= (unify empty-s x #{1 2 3}) os)))
+
 ;; -----------------------------------------------------------------------------
 ;; seq
+
+(deftest unify-seq-object-1
+  (= (unify empty-s '() 1) false))
+
+(deftest unify-seq-object-2
+  (= (unify empty-s [] 1) false))
 
 (deftest unify-seq-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x [])]
     (= (unify empty-s [] x) os)))
 
+(deftest unify-seq-seq-1
+  (= (unify empty-s [1 2 3] [1 2 3]) empty-s))
+
+(deftest unify-seq-seq-2
+  (= (unify empty-s '(1 2 3) [1 2 3]) empty-s))
+
+(deftest unify-seq-seq-3
+  (= (unify empty-s '(1 2 3) '(1 2 3)) empty-s))
+
+(deftest unify-seq-seq-4
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x 2)]
+   (= (unify empty-s `(1 ~x 3) `(1 2 3)) os)))
+
+(deftest unify-seq-map-1
+  (= (unify empty-s [] {}) false))
+
+(deftest unify-seq-map-2
+  (= (unify empty-s '() {}) false))
+
+(deftest unify-seq-set-1
+  (= (unify empty-s [] #{}) false))
+
+(deftest unify-seq-set-2
+  (= (unify empty-s '() #{}) false))
+
 ;; -----------------------------------------------------------------------------
 ;; map
+
+(deftest unify-map-object-1
+  (= (unify empty-s {} 1) false))
 
 (deftest unify-map-lvar-1
   (let [x (lvar 'x)
@@ -89,6 +161,9 @@
 
 ;; -----------------------------------------------------------------------------
 ;; set
+
+(deftest unify-set-object-1
+  (= (unify empty-s #{} 1) false))
 
 (deftest unify-set-lvar-1
   (let [x (lvar 'x)
