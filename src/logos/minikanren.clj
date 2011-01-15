@@ -697,21 +697,3 @@
    `(fn [~a]
       (swap! *debug* conj ~a)
       ~a)))
-
-(comment
-  (dotimes [_ 10]
-    (let [x (lvar 'x)
-          v1 `[1 ~x 3]
-          v2 `[1 2 3]]
-     (time
-      (dotimes [_ 1e6]
-        (unify empty-s v1 v2)))))
-
-  (dotimes [_ 10]
-    (let [x (lvar 'x)
-          l1 `(1 ~x 3)
-          l2 `(1 2 3)]
-     (time
-      (dotimes [_ 1e6]
-        (unify empty-s l1 l2)))))
-  )

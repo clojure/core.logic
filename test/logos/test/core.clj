@@ -136,6 +136,15 @@
         os (ext-no-check empty-s x 2)]
    (= (unify empty-s `(1 ~x 3) `(1 2 3)) os)))
 
+(deftest unify-seq-seq-5
+  (= (unify empty-s [1 2] [1 2 3]) false))
+
+(deftest unify-seq-seq-6
+  (= (unify empty-s '(1 2) [1 2 3]) false))
+
+(deftest unify-seq-seq-7
+  (= (unify empty-s [1 2 3] [3 2 1]) false))
+
 (deftest unify-seq-map-1
   (= (unify empty-s [] {}) false))
 
