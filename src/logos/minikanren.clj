@@ -121,6 +121,7 @@
   (reify [this v]))
 
 (declare empty-s)
+(declare unify-terms)
 
 (deftype Substitutions [s]
   ISubstitutions
@@ -212,45 +213,45 @@
 (defprotocol IUnifyWithObject
   (unify-with-object [v u s]))
 
+(defprotocol IUnifyWithLVar
+  (unify-with-lvar [v u s]))
+
+(defprotocol IUnifyWithLSeq
+  (unify-with-lseq [v u s]))
+
+(defprotocol IUnifyWithSequential
+  (unify-with-seq [v u s]))
+
+(defprotocol IUnifyWithMap
+  (unify-with-map [v u s]))
+
+(defprotocol IUnifyWithSet
+  (unify-with-set [v u s]))
+
 (extend-type Object
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-object v u s)))
-
-(defprotocol IUnifyWithLVar
-  (unify-with-lvar [v u s]))
 
 (extend-type LVar
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lvar v u s)))
 
-(defprotocol IUnifyWithLSeq
-  (unify-with-lseq [v u s]))
-
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lseq v u s)))
-
-(defprotocol IUnifyWithSequential
-  (unify-with-seq [v u s]))
 
 (extend-protocol IUnifyTerms
   clojure.lang.Sequential
   (unify-terms [u v s]
     (unify-with-seq v u s)))
 
-(defprotocol IUnifyWithMap
-  (unify-with-map [v u s]))
-
 (extend-protocol IUnifyTerms
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
     (unify-with-map v u s)))
-
-(defprotocol IUnifyWithSet
-  (unify-with-set [v u s]))
 
 (extend-protocol IUnifyTerms
   clojure.lang.IPersistentSet
@@ -265,7 +266,7 @@
   (unify-with-object [v u s]
     (ext s u v)))
 
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyWithObject
   (unify-with-object [v u s] false))
 
@@ -299,7 +300,7 @@
   (unify-with-lvar [v u s]
     (ext-no-check s u v)))
 
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext s u v)))
@@ -320,7 +321,7 @@
     (ext s u v)))
 
 ;; -----------------------------------------------------------------------------
-;; Unify LConsSeq with X
+;; Unify LCons with X
 
 (extend-type Object
   IUnifyWithLSeq
@@ -331,7 +332,7 @@
   (unify-with-lseq [v u s]
     (ext s v u)))
 
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
@@ -377,7 +378,7 @@
   (unify-with-seq [v u s]
     (ext s v u)))
 
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (unify-with-lseq v u s)))
@@ -400,15 +401,15 @@
       (loop [u u v v s s]
         (cond
          (nil? u) (if (nil? v) s false)
-         (let [uf (first u)
-               vf (first v)]
-           (if-let [s (unify-terms uf vf)]
-             (recur (next u) (next v) s)
-             false))))
+         :else (let [uf (first u)
+                     vf (first v)]
+                 (if-let [s (unify-terms uf vf s)]
+                   (recur (next u) (next v) s)
+                   false))))
       false)))
 
 ;; -----------------------------------------------------------------------------
-;; Unify PersistentHashMap with X
+;; Unify IPersistentMap with X
 
 (extend-type Object
   IUnifyWithMap
@@ -419,7 +420,7 @@
   (unify-with-map [v u s]
     (ext s v u)))
 
-(extend-type LConsSeq
+(extend-type LCons
   IUnifyWithMap
   (unify-with-map [v u s] false))
 
@@ -444,7 +445,7 @@
   (unify-with-map [v u s] false))
 
 ;; -----------------------------------------------------------------------------
-;; Unify PersistentHashSet with X
+;; Unify IPersistentSet with X
 
 (extend-type Object
   IUnifyWithSet
@@ -464,23 +465,27 @@
   (unify-with-set [v u s] false))
 
 ;; remove keys as we unify them
+;; we need the seq check
 
 (extend-protocol IUnifyWithSet
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
     (if (= (count u) (count v))
       (loop [u u v v s s lvars #{}]
-        (cond
-         (seq u) (if (seq v)
-                   (let [uf (first u)]
-                     (cond
-                      (lvar? uf) (recur (disj u uf) v (conj lvars uf))
-                      ))
-                   false)
-         (seq lvars) (if (= (count lvars) (count v))
-                       (unify-terms (seq lvars) (seq v) s)
-                       false)
-         :else false))
+        (let [us (seq u)
+              vs (seq v)]
+          (cond
+           (nil? us) (cond
+                     (nil? vs) s
+                     (and (seq lvars)
+                          (= (count v) (count lvars))) (unify-terms
+                                                        (seq lvars) (seq v) s)
+                     :else false)
+           (seq v) (let [uf (first u)]
+                     (if (contains? v uf)
+                       (recur (disj u uf) (disj v uf) s lvars)
+                       (recur (disj u uf) v s (conj lvars uf))))
+           :else false)))
       false)))
 
 ;; =============================================================================
