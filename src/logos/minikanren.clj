@@ -134,6 +134,7 @@
   (length [this] (count s))
 
   ;; TODO : revisit recur here, will need to be an internal loop/recur
+  ;; OPTIMIZATION : we can dispatch on a protocol here
 
   (occurs-check [this u v]
                 (cond
@@ -159,6 +160,7 @@
 
   ;; TODO : revisit recur here. Main issue was how to reconstruct
   ;; types ? will need to be an internal loop/recur
+  ;; OPTIMIZATION : we can dispatch on a protocol here
 
   (walk* [this v]
          (let [v' (walk this v)]
@@ -189,6 +191,7 @@
 
   ;; TODO : unnecessarily stack consuming, will need to be an internal
   ;; loop/recur
+  ;; OPTIMIZATION : we can dispatch on a protocol here
 
   (-reify [this v]
           (let [v (walk this v)]
