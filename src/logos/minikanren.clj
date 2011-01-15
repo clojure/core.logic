@@ -124,11 +124,16 @@
 (declare unify-terms)
 
 (deftype Substitutions [s]
-  ISubstitutions
+  Object
+  (equals [this o]
+    (or (identical? this o)
+        (and (instance? Substitutions o)
+             (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
 
+  ISubstitutions
   (length [this] (count s))
 
-  ;; TODO : revisit recur here
+  ;; TODO : revisit recur here, will need to be an internal loop/recur
 
   (occurs-check [this u v]
                 (cond
@@ -153,7 +158,7 @@
            :else (recur (get s v' ::not-found) v'))))
 
   ;; TODO : revisit recur here. Main issue was how to reconstruct
-  ;; types ?
+  ;; types ? will need to be an internal loop/recur
 
   (walk* [this v]
          (let [v' (walk this v)]
@@ -182,7 +187,8 @@
   (reify-lvar-name [this]
                    (symbol (str "_." (count s))))
 
-  ;; TODO : unnecessarily stack consuming
+  ;; TODO : unnecessarily stack consuming, will need to be an internal
+  ;; loop/recur
 
   (-reify [this v]
           (let [v (walk this v)]
@@ -261,6 +267,11 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
+(extend-type Object
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (if (= u v) s false)))
+
 (extend-type LVar
   IUnifyWithObject
   (unify-with-object [v u s]
@@ -281,11 +292,6 @@
 (extend-protocol IUnifyWithObject
   clojure.lang.IPersistentSet
   (unify-with-object [v u s] false))
-
-(extend-type Object
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (if (= v u) s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -476,10 +482,11 @@
               vs (seq v)]
           (cond
            (nil? us) (cond
-                     (nil? vs) s
-                     (and (seq lvars)
-                          (= (count v) (count lvars))) (unify-terms
-                                                        (seq lvars) (seq v) s)
+                      (nil? vs) s
+                      (and (seq lvars)
+                           (= (count v)
+                              (count lvars))) (unify-terms
+                                               (seq lvars) (seq v) s)
                      :else false)
            (seq v) (let [uf (first u)]
                      (if (contains? v uf)
