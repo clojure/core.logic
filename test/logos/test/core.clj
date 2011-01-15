@@ -48,13 +48,28 @@
 
 (deftest unify-lvar-seq-2
   (let [x (lvar 'x)
-        os (ext-no-check empty-s x [1 2])]
-    (= (unify empty-s x [1 2]) os)))
+        os (ext-no-check empty-s x [1 2 3])]
+    (= (unify empty-s x [1 2 3]) os)))
+
+(deftest unify-lvar-seq-3
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x '())]
+    (= (unify empty-s x '()) os)))
+
+(deftest unify-lvar-seq-4
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x '(1 2 3))]
+    (= (unify empty-s x '(1 2 3)) os)))
 
 (deftest unify-lvar-map-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x {})]
     (= (unify empty-s x {}) os)))
+
+(deftest unify-lvar-set-1
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x #{})]
+    (= (unify empty-s x #{}) os)))
 
 ;; -----------------------------------------------------------------------------
 ;; seq
@@ -75,10 +90,10 @@
 ;; -----------------------------------------------------------------------------
 ;; set
 
-(deftest unify-lvar-set-1
+(deftest unify-set-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{})]
-    (= (unify empty-s x #{}) os)))
+    (= (unify empty-s #{} x) os)))
 
 ;; =============================================================================
 ;; walk

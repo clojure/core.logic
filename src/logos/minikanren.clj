@@ -458,11 +458,11 @@
 
 (extend-type Object
   IUnifyWithSet
-  (unify-with-map [v u s] false))
+  (unify-with-set [v u s] false))
 
 (extend-type LVar
   IUnifyWithSet
-  (unify-with-map [v u s]
+  (unify-with-set [v u s]
     (ext s v u)))
 
 (extend-protocol IUnifyWithSet
