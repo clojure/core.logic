@@ -177,8 +177,8 @@
 (deftest unify-lcons-lcons-6
   (let [x (lvar 'x)
         y (lvar 'y)
-        lc2 (lcons 1 (lcons 2 x))
-        lc1 (lcons 1 (lcons 2 y))
+        lc1 (lcons 1 (lcons 2 x))
+        lc2 (lcons 1 (lcons 2 y))
         os (ext-no-check empty-s x y)]
     (is (= (unify empty-s lc1 lc2) os))))
 
@@ -238,7 +238,12 @@
         os (ext-no-check empty-s x [])]
     (is (= (unify empty-s [] x) os))))
 
-;; unify-seq-lcons-1, same as unify-lcons-seq
+(deftest unify-seq-lcons-1
+  (let [x (lvar 'x)
+        lc1 (lcons 1 (lcons 2 x))
+        l1 '(1 2 3 4)
+        os (ext-no-check empty-s x '(3 4))]
+    (is (= (unify empty-s l1 lc1) os))))
 
 (deftest unify-seq-seq-1
   (is (= (unify empty-s [1 2 3] [1 2 3]) empty-s)))

@@ -432,17 +432,15 @@
   clojure.lang.Sequential
   (unify-with-map [v u s] false))
 
-;; same length
-;; iterate over keys
-;; they must exist or the number of missing keys
-;; same as set but constraint on keys *and* values
+;; disallow maps with logic vars as keys
+;; throw exception
+;; remove the k-v pairs that actually match
+;; unifying lvars in the value position is easy
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
-    (if (= (count u) (count v))
-      
-      false)))
+    ))
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentSet
@@ -460,6 +458,10 @@
   (unify-with-set [v u s]
     (ext s v u)))
 
+(extend-type LCons
+  IUnifyWithSet
+  (unify-with-set [v u s] false))
+
 (extend-protocol IUnifyWithSet
   clojure.lang.Sequential
   (unify-with-set [v u s] false))
@@ -468,30 +470,31 @@
   clojure.lang.IPersistentMap
   (unify-with-set [v u s] false))
 
-;; remove keys as we unify them
-;; we need the seq check
-
 (extend-protocol IUnifyWithSet
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
-    (if (= (count u) (count v))
-      (loop [u u v v s s lvars #{}]
-        (let [us (seq u)
-              vs (seq v)]
-          (cond
-           (nil? us) (cond
-                      (nil? vs) s
-                      (and (seq lvars)
-                           (= (count v)
-                              (count lvars))) (unify-terms
-                                               (seq lvars) (seq v) s)
-                     :else false)
-           (seq v) (let [uf (first u)]
-                     (if (contains? v uf)
-                       (recur (disj u uf) (disj v uf) s lvars)
-                       (recur (disj u uf) v s (conj lvars uf))))
-           :else false)))
-      false)))
+    (loop [u u v v ulvars [] umissing []]
+      (if (seq u)
+        (if (seq v)
+          (let [uf (first u)]
+            (if (lvar? uf)
+              (recur (disj u uf) v (conj ulvars uf) umissing)
+              (if (contains? v uf)
+                (recur (disj u uf) (disj v uf) ulvars umissing)
+                (recur (disj u uf) v ulvars (conj umissing uf)))))
+          false)
+        (if (seq v)
+          (if (seq ulvars)
+            (loop [v v vlvars [] vmissing []]
+              (if (seq v)
+                (let [vf (first v)]
+                  (if (lvar? vf)
+                    (recur (disj v vf) (conj vlvars vf) vmissing)
+                    (recur (disj v vf) vlvars (conj vmissing vf))))
+                (unify-terms (concat ulvars umissing)
+                             (concat vmissing vlvars) s)))
+            false)
+          s)))))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
