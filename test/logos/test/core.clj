@@ -133,15 +133,90 @@
         os (ext-no-check empty-s x l)]
     (is (= (unify empty-s l x) os))))
 
-;; unify-lcons-lcons-1
+(deftest unify-lcons-lcons-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc1 (lcons 1 x)
+        lc2 (lcons 1 y)
+        os (ext-no-check empty-s x y)]
+    (is (= (unify empty-s lc1 lc2) os))))
 
-;; unify-lcons-lcons-2, var in middle
+(deftest unify-lcons-lcons-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        lc1 (lcons 1 (lcons 2 x))
+        lc2 (lcons 1 (lcons z y))
+        os (-> empty-s
+            (ext-no-check x y)
+            (ext-no-check z 2))]
+    (is (= (unify empty-s lc1 lc2) os))))
 
-;; unify-lcons-seq-1, unify end of seq
+(deftest unify-lcons-lcons-3
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc1 (lcons 1 (lcons 2 x))
+        lc2 (lcons 1 (lcons 2 (lcons 3 y)))
+        os (ext-no-check empty-s x (lcons 3 y))]
+    (is (= (unify empty-s lc1 lc2) os))))
 
-;; unify-lcons-seq-2, var in middle
+(deftest unify-lcons-lcons-4
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc1 (lcons 1 (lcons 2 x))
+        lc2 (lcons 1 (lcons 3 (lcons 4 y)))]
+    (is (= (unify empty-s lc1 lc2) false))))
 
-;; unify-lcons-seq-3, seq of same length, fill in '()
+(deftest unify-lcons-lcons-5
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc2 (lcons 1 (lcons 2 x))
+        lc1 (lcons 1 (lcons 3 (lcons 4 y)))]
+    (is (= (unify empty-s lc1 lc2) false))))
+
+(deftest unify-lcons-lcons-6
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc2 (lcons 1 (lcons 2 x))
+        lc1 (lcons 1 (lcons 2 y))
+        os (ext-no-check empty-s x y)]
+    (is (= (unify empty-s lc1 lc2) os))))
+
+(deftest unify-lcons-seq-1
+  (let [x (lvar 'x)
+        lc1 (lcons 1 (lcons 2 x))
+        l1 '(1 2 3 4)
+        os (ext-no-check empty-s x '(3 4))]
+    (is (= (unify empty-s lc1 l1) os))))
+
+(deftest unify-lcons-seq-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        lc1 (lcons 1 (lcons y (lcons 3 x)))
+        l1 '(1 2 3 4)
+        os (-> empty-s
+               (ext-no-check x '(4))
+               (ext-no-check y 2))]
+    (is (= (unify empty-s lc1 l1) os))))
+
+(deftest unify-lcons-seq-3
+  (let [x (lvar 'x)
+        lc1 (lcons 1 (lcons 2 (lcons 3 x)))
+        l1 '(1 2 3)
+        os (ext-no-check empty-s x '())]
+    (is (= (unify empty-s lc1 l1) os))))
+
+(deftest unify-lcons-seq-4
+  (let [x (lvar 'x)
+        lc1 (lcons 1 (lcons 3 x))
+        l1 '(1 2 3 4)]
+    (is (= (unify empty-s lc1 l1) false))))
+
+(deftest unify-lcons-seq-5
+  (let [x (lvar 'x)
+        lc1 (lcons 1 (lcons 2 x))
+        l1 '(1 3 4 5)]
+    (is (= (unify empty-s lc1 l1) false))))
 
 (deftest unify-lcons-map-1
   (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) false)))

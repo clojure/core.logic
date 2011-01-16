@@ -345,27 +345,27 @@
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
-      (cond
-       (lvar? u) (and (lvar? v) (unify-terms u v s))
-       :else (let [uf (lfirst u)
-                   vf (lfirst v)]
-               (if-let [s (unify-terms uf vf s)]
-                 (recur (lnext u) (lnext v) s)
-                 false))))))
+      (if (lvar? u)
+        (ext s u v)
+        (if (lvar? v)
+          (ext s v u)
+          (if-let [s (unify-terms (lfirst u) (lfirst v) s)]
+            (recur (lnext u) (lnext v) s)
+            false))))))
 
 (extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
-      (cond
-       (lvar? u) (if (nil? v)
-                   (ext s u '()))
-       (nil? v) false
-       :else (let [uf (lfirst u)
-                   vf (lfirst v)]
-               (if-let [s (unify-terms uf vf s)]
-                 (recur (lnext u) (lnext v) s)
-                 false))))))
+      (if (seq v)
+        (if (lvar? u)
+          (ext s u v)
+          (if-let [s (unify-terms (lfirst u) (first v) s)]
+            (recur (lnext u) (next v) s)
+            false))
+        (if (lvar? u)
+          (ext-no-check s u '())
+          false)))))
 
 (extend-protocol IUnifyWithLSeq
   clojure.lang.IPersistentMap
