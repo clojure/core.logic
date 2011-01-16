@@ -40,19 +40,23 @@
 (deftest unify-object-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
-    (= (unify empty-s 1 x) os)))
+    (is (= (unify empty-s 1 x) os))))
+
+(deftest unify-object-lcons-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s 1 (lcons 1 'x)) false))))
 
 (deftest unify-object-seq-1
-  (= (unify empty-s 1 '()) false))
+  (is (= (unify empty-s 1 '()) false)))
 
 (deftest unify-object-seq-2
-  (= (unify empty-s 1 '[]) false))
+  (is (= (unify empty-s 1 '[]) false)))
 
 (deftest unify-object-map-1
-  (= (unify empty-s 1 {}) false))
+  (is (= (unify empty-s 1 {}) false)))
 
 (deftest unify-object-set-1
-  (= (unify empty-s 1 #{}) false))
+  (is (= (unify empty-s 1 #{}) false)))
 
 ;; -----------------------------------------------------------------------------
 ;; lvar
@@ -60,124 +64,161 @@
 (deftest unify-lvar-object-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
-    (= (unify empty-s x 1) os)))
+    (is (= (unify empty-s x 1) os))))
 
 (deftest unify-lvar-lvar-1
   (let [x (lvar 'x)
         y (lvar 'y)
         os (ext-no-check empty-s x y)]
-    (= (unify empty-s x y) os)))
+    (is (= (unify empty-s x y) os))))
+
+(deftest unify-lvar-lcons-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        l (lcons 1 y)
+        os (ext-no-check empty-s x l)]
+    (is (= (unify empty-s x l) os))))
 
 (deftest unify-lvar-seq-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x [])]
-    (= (unify empty-s x []) os)))
+    (is (= (unify empty-s x []) os))))
 
 (deftest unify-lvar-seq-2
   (let [x (lvar 'x)
         os (ext-no-check empty-s x [1 2 3])]
-    (= (unify empty-s x [1 2 3]) os)))
+    (is (= (unify empty-s x [1 2 3]) os))))
 
 (deftest unify-lvar-seq-3
   (let [x (lvar 'x)
         os (ext-no-check empty-s x '())]
-    (= (unify empty-s x '()) os)))
+    (is (= (unify empty-s x '()) os))))
 
 (deftest unify-lvar-seq-4
   (let [x (lvar 'x)
         os (ext-no-check empty-s x '(1 2 3))]
-    (= (unify empty-s x '(1 2 3)) os)))
+    (is (= (unify empty-s x '(1 2 3)) os))))
 
 (deftest unify-lvar-map-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x {})]
-    (= (unify empty-s x {}) os)))
+    (is (= (unify empty-s x {}) os))))
 
 (deftest unify-lvar-map-2
   (let [x (lvar 'x)
         os (ext-no-check empty-s x {1 2 3 4})]
-    (= (unify empty-s x {1 2 3 4}) os)))
+    (is (= (unify empty-s x {1 2 3 4}) os))))
 
 (deftest unify-lvar-set-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{})]
-    (= (unify empty-s x #{}) os)))
+    (is (= (unify empty-s x #{}) os))))
 
 (deftest unify-lvar-set-2
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{1 2 3})]
-    (= (unify empty-s x #{1 2 3}) os)))
+    (is (= (unify empty-s x #{1 2 3}) os))))
+
+;; -----------------------------------------------------------------------------
+;; lcons
+
+(deftest unify-lcons-object-1
+  (let [x (lvar 'x)]
+    (is (= (unify empty-s (lcons 1 x) 1) false))))
+
+(deftest unify-lcons-lvar-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        l (lcons 1 y)
+        os (ext-no-check empty-s x l)]
+    (is (= (unify empty-s l x) os))))
+
+;; unify-lcons-seq-1
+
+(deftest unify-lcons-map-1
+  (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) false)))
 
 ;; -----------------------------------------------------------------------------
 ;; seq
 
 (deftest unify-seq-object-1
-  (= (unify empty-s '() 1) false))
+  (is (= (unify empty-s '() 1) false)))
 
 (deftest unify-seq-object-2
-  (= (unify empty-s [] 1) false))
+  (is (= (unify empty-s [] 1) false)))
 
 (deftest unify-seq-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x [])]
-    (= (unify empty-s [] x) os)))
+    (is (= (unify empty-s [] x) os))))
+
+;; unify-seq-lcons-1
 
 (deftest unify-seq-seq-1
-  (= (unify empty-s [1 2 3] [1 2 3]) empty-s))
+  (is (= (unify empty-s [1 2 3] [1 2 3]) empty-s)))
 
 (deftest unify-seq-seq-2
-  (= (unify empty-s '(1 2 3) [1 2 3]) empty-s))
+  (is (= (unify empty-s '(1 2 3) [1 2 3]) empty-s)))
 
 (deftest unify-seq-seq-3
-  (= (unify empty-s '(1 2 3) '(1 2 3)) empty-s))
+  (is (= (unify empty-s '(1 2 3) '(1 2 3)) empty-s)))
 
 (deftest unify-seq-seq-4
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 2)]
-   (= (unify empty-s `(1 ~x 3) `(1 2 3)) os)))
+    (is (= (unify empty-s `(1 ~x 3) `(1 2 3)) os))))
 
 (deftest unify-seq-seq-5
-  (= (unify empty-s [1 2] [1 2 3]) false))
+  (is (= (unify empty-s [1 2] [1 2 3]) false)))
 
 (deftest unify-seq-seq-6
-  (= (unify empty-s '(1 2) [1 2 3]) false))
+  (is (= (unify empty-s '(1 2) [1 2 3]) false)))
 
 (deftest unify-seq-seq-7
-  (= (unify empty-s [1 2 3] [3 2 1]) false))
+  (is (= (unify empty-s [1 2 3] [3 2 1]) false)))
+
+(deftest unify-seq-seq-8
+  (is (= (unify empty-s '() '()) empty-s)))
+
+(deftest unify-seq-seq-9
+  (is (= (unify empty-s '() '(1)) false)))
+
+(deftest unify-seq-seq-10
+  (is (= (unify empty-s '(1) '()) false)))
 
 (deftest unify-seq-map-1
-  (= (unify empty-s [] {}) false))
+  (is (= (unify empty-s [] {}) false)))
 
 (deftest unify-seq-map-2
-  (= (unify empty-s '() {}) false))
+  (is (= (unify empty-s '() {}) false)))
 
 (deftest unify-seq-set-1
-  (= (unify empty-s [] #{}) false))
+  (is (= (unify empty-s [] #{}) false)))
 
 (deftest unify-seq-set-2
-  (= (unify empty-s '() #{}) false))
+  (is (= (unify empty-s '() #{}) false)))
 
 ;; -----------------------------------------------------------------------------
 ;; map
 
 (deftest unify-map-object-1
-  (= (unify empty-s {} 1) false))
+  (is (= (unify empty-s {} 1) false)))
 
 (deftest unify-map-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x {})]
-    (= (unify empty-s {} x) os)))
+    (is (= (unify empty-s {} x) os))))
 
 ;; -----------------------------------------------------------------------------
 ;; set
 
 (deftest unify-set-object-1
-  (= (unify empty-s #{} 1) false))
+  (is (= (unify empty-s #{} 1) false)))
 
 (deftest unify-set-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{})]
-    (= (unify empty-s #{} x) os)))
+    (is (= (unify empty-s #{} x) os))))
 
 ;; =============================================================================
 ;; walk

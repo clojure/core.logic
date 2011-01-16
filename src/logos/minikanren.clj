@@ -278,7 +278,7 @@
 (extend-type LVar
   IUnifyWithObject
   (unify-with-object [v u s]
-    (ext s u v)))
+    (ext s v u)))
 
 (extend-type LCons
   IUnifyWithObject
