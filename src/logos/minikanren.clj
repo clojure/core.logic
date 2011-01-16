@@ -408,7 +408,8 @@
         (if (seq v)
           (if-let [s (unify-terms (first u) (first v) s)]
             (recur (next u) (next v) s)
-            false))
+            false)
+          false)
         (if (seq v) false s)))))
 
 ;; -----------------------------------------------------------------------------
