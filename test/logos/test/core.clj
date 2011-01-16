@@ -133,10 +133,21 @@
         os (ext-no-check empty-s x l)]
     (is (= (unify empty-s l x) os))))
 
-;; unify-lcons-seq-1
+;; unify-lcons-lcons-1
+
+;; unify-lcons-lcons-2, var in middle
+
+;; unify-lcons-seq-1, unify end of seq
+
+;; unify-lcons-seq-2, var in middle
+
+;; unify-lcons-seq-3, seq of same length, fill in '()
 
 (deftest unify-lcons-map-1
   (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) false)))
+
+(deftest unify-lcons-set-1
+  (is (= (unify empty-s (lcons 1 (lvar 'x)) #{}) false)))
 
 ;; -----------------------------------------------------------------------------
 ;; seq
@@ -152,7 +163,7 @@
         os (ext-no-check empty-s x [])]
     (is (= (unify empty-s [] x) os))))
 
-;; unify-seq-lcons-1
+;; unify-seq-lcons-1, same as unify-lcons-seq
 
 (deftest unify-seq-seq-1
   (is (= (unify empty-s [1 2 3] [1 2 3]) empty-s)))
@@ -209,6 +220,24 @@
         os (ext-no-check empty-s x {})]
     (is (= (unify empty-s {} x) os))))
 
+(deftest unify-map-lcons-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s {} (lcons 1 x)) false))))
+
+(deftest unify-map-seq-1
+  (is (= (unify empty-s {} '()) false)))
+
+;; unify-map-map-1
+
+;; unify-map-map-2, lvar in key
+
+;; unify-map-map-3, lvar in val
+
+;; unify-map-map-4, lvar in key and val
+
+(deftest unify-map-set-1
+  (is (= (unify empty-s {} #{}) false)))
+
 ;; -----------------------------------------------------------------------------
 ;; set
 
@@ -219,6 +248,24 @@
   (let [x (lvar 'x)
         os (ext-no-check empty-s x #{})]
     (is (= (unify empty-s #{} x) os))))
+
+(deftest unify-set-lcons-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s #{} (lcons 1 x)) false))))
+
+(deftest unify-set-seq-1
+  (is (= (unify empty-s #{} '()) false)))
+
+(deftest unify-set-map-1
+  (is (= (unify empty-s #{} {}) false)))
+
+;; unify-set-set-1
+
+;; unify-set-set-2, with 1 lvar
+
+;; unify-set-set-3, with 2 lvars
+
+;; unify-set-set-4, with 3 lvars
 
 ;; =============================================================================
 ;; walk
