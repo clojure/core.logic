@@ -1,6 +1,10 @@
 * Logos Todos
-** Immediate [/]
-   - [ ] Fix Unification - IN PROGRESS
+** Immediate [1/6]
+   - [ ] Fix bug with the way that unification works
+         It seems to me like unification isn't failing fast enough
+         On the zebra problem we're getting exponential explosion of possiblities
+         in the fix-unification branch. In the master branch we're not seeing
+         this at all.
    - [ ] Disequality Constraints
    - [ ] Basic Type Inferencer
    - [ ] Read up on Prolog implementation in CL
