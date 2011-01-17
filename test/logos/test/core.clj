@@ -339,13 +339,49 @@
 (deftest unify-set-map-1
   (is (= (unify empty-s #{} {}) false)))
 
-;; unify-set-set-1
+(deftest unify-set-set-1
+  (is (= (unify empty-s #{} #{}) empty-s)))
 
-;; unify-set-set-2, with 1 lvar
+(deftest unify-set-set-2
+  (is (= (unify empty-s #{} #{1}) false)))
 
-;; unify-set-set-3, with 2 lvars
+(deftest unify-set-set-3
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x 1)]
+   (is (= (unify empty-s #{x} #{1}) os))))
 
-;; unify-set-set-4, with 3 lvars
+(deftest unify-set-set-4
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        os (-> empty-s
+               (ext-no-check x 2)
+               (ext-no-check y 1))]
+   (is (= (unify empty-s #{1 x} #{2 y}) os))))
+
+(deftest unify-set-set-5
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        os (-> empty-s
+               (ext-no-check x 2)
+               (ext-no-check y 1))]
+   (is (= (unify empty-s #{x 1} #{2 y}) os))))
+
+(deftest unify-set-set-6
+  (let [a (lvar 'a)
+        b (lvar 'b)
+        c (lvar 'c)
+        d (lvar 'd)
+        s (.s (unify empty-s #{a b 3 4 5} #{1 2 3 c d}))]
+    (is (and (= (count s) 4)
+             (= (set (keys s)) #{a b c d})
+             (= (set (vals s)) #{1 2 4 5})))))
+
+(deftest unify-set-set-7
+  (let [a (lvar 'a)
+        b (lvar 'b)
+        c (lvar 'c)
+        d (lvar 'd)]
+    (is (= (unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false))))
 
 ;; =============================================================================
 ;; walk

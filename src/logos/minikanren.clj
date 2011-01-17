@@ -470,6 +470,19 @@
   clojure.lang.IPersistentMap
   (unify-with-set [v u s] false))
 
+;; TODO : improve speed, takes 890ms
+;; 
+;; (let [a (lvar 'a)
+;;       b (lvar 'b)
+;;       c (lvar 'c)
+;;       d (lvar 'd)
+;;       s1 #{a b 3 4 5}
+;;       s2 #{1 2 3 c d}]
+;;     (dotimes [_ 10]
+;;       (time
+;;        (dotimes [_ 1e5]
+;;          (.s (unify empty-s s1 s2))))))
+
 (extend-protocol IUnifyWithSet
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
