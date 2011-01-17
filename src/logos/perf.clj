@@ -243,10 +243,7 @@
          (run* [q]
                (rest-o [1 2] q)))))))
 
-  ;; 4s Scheme is 5.5s
-  ;; wow removing vectors make hardly any difference
-  ;; should consider using vectors
-  ;; or even lists
+  ;; 3.3s Racket is 5.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
@@ -254,7 +251,7 @@
         (run* [x]
               (flatten-o '[[a b] c] x))))))
 
-  ;; down to 3.1-2
+  ;; down to < 3.1-2
   (binding [*occurs-check* false]
    (dotimes [_ 10]
      (time
@@ -278,7 +275,7 @@
         (run-nc* [x]
                  (flatten-o '[[a b] c] x))))))
 
-  ;; 3.1-2 if we don't reify result
+  ;; ~3s if we don't reify result
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
@@ -287,7 +284,7 @@
               (exist [y]
                      (flatten-o '[[a b] c] y)))))))
 
-  ;; down to 2.6-7 if we don't reify
+  ;; down to < 2.6s if we don't reify
   ;; reification is significant chunk of time
   ;; 1s, or 1/6th of all the time
   (binding [*occurs-check* false]
@@ -307,7 +304,7 @@
                   (exist [y]
                          (flatten-o '[[a b] c] y)))))))
 
-  ;; ~270ms
+  ;; ~500ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e8]
