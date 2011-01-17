@@ -47,6 +47,19 @@
     (member-o [_ _ 'coffee _ 'green] hs)
     (member-o ['ukrainian _ 'tea _ _] hs))))
 
+(defn zebra [hs]
+  (macro/symbol-macrolet [_ (lvar)]
+   (all
+    (== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (first-o hs ['norwegian _ _ _ _])
+    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs))))
+
+(defn zebra [hs]
+  (macro/symbol-macrolet [_ (lvar)]
+   (all
+    (== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (first-o hs ['norwegian _ _ _ _]))))
+
 ;; slow ordering
 ;; (defn zebra [hs]
 ;;   (macro/symbol-macrolet [_ (lvar)]
