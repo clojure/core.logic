@@ -432,15 +432,22 @@
   clojure.lang.Sequential
   (unify-with-map [v u s] false))
 
-;; disallow maps with logic vars as keys
-;; throw exception
-;; remove the k-v pairs that actually match
-;; unifying lvars in the value position is easy
-
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
-    ))
+    (let [ks (keys u)]
+      (loop [ks ks u u v v s s]
+        (if (seq ks)
+          (let [kf (first ks)
+                vf (get v kf ::not-found)]
+            (if (= vf ::not-found)
+              false
+              (if-let [s (unify-terms (get u kf) vf s)]
+                (recur (next ks) (dissoc u kf) (dissoc v kf) s)
+                false)))
+          (if (seq v)
+            false
+            s))))))
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentSet
@@ -470,7 +477,7 @@
   clojure.lang.IPersistentMap
   (unify-with-set [v u s] false))
 
-;; TODO : improve speed, takes 890ms
+;; TODO : improve speed, the following takes 890ms
 ;; 
 ;; (let [a (lvar 'a)
 ;;       b (lvar 'b)

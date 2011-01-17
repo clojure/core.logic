@@ -1,5 +1,6 @@
 (ns logos.perf
   (:refer-clojure :exclude [reify inc == take])
+  (:require [clojure.set :as set])
   (:use logos.minikanren
         logos.logic
         logos.unify))
@@ -291,9 +292,41 @@
                   (exist [y]
                          (flatten-o '[[a b] c] y)))))))
 
+  ;; ~270ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e8]
+       (unify empty-s 1 1))))
+
+  ;; ~250ms
+  (dotimes [_ 10]
+    (let [x (lvar 'x)]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s x true)))))
+
+  ;; 400ms
+  (dotimes [_ 10]
+    (let [x (lvar 'x)
+          v1 [1 2 3]
+          v2 [1 2 3]]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s v1 v2)))))
+
+  ;; ~450ms
+  (dotimes [_ 10]
+    (let [x (lvar 'x)
+          v1 [1 2 3]
+          v2 [1 2 3]]
+     (time
+      (dotimes [_ 1e7]
+        (unify empty-s v1 false)))))
+
   ;; with new unification the following are nearly twice as
   ;; fast as under 0.2
-  
+
+  ;; 750ms
   (dotimes [_ 10]
     (let [x (lvar 'x)
           v1 `[1 ~x 3]
@@ -302,6 +335,7 @@
       (dotimes [_ 1e6]
         (unify empty-s v1 v2)))))
 
+  ;; 770ms
   (dotimes [_ 10]
     (let [x (lvar 'x)
           l1 `(1 ~x 3)
@@ -309,4 +343,73 @@
      (time
       (dotimes [_ 1e6]
         (unify empty-s l1 l2)))))
+
+  ;; 950ms
+  (let [a (lvar 'a)
+      b (lvar 'b)
+      c (lvar 'c)
+      d (lvar 'd)
+      s1 #{a b 3 4 5}
+      s2 #{1 2 3 c d}]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (.s (unify empty-s s1 s2))))))
+
+  ;; 300ms
+  ;; this is ten times slower than vectors
+  (let [s1 #{}
+        s2 #{}]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (.s (unify empty-s s1 s2))))))
+
+  ;; 500ms
+  (dotimes [_ 10]
+    (let [m1 {1 2 3 4}
+          m2 {1 2 3 4}]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s m1 m2)))))
+
+  ;; -----------------------------------------------------------------------------
+  ;; notes on sets and maps
+  
+  ;; 100ms
+  (dotimes [_ 10]
+    (let [s #{1 2 3}]
+     (time
+      (dotimes [_ 1e6]
+        (disj s 3)))))
+
+  ;; 600ms
+  (dotimes [_ 10]
+    (let [s1 #{1 2 3}
+          s2 #{3 4 5}]
+     (time
+      (dotimes [_ 1e6]
+        (set/difference s1 s2)))))
+
+  ;; 700ms
+  (dotimes [_ 10]
+    (let [s1 #{1 2 3}
+          s2 #{3 4 5}]
+     (time
+      (dotimes [_ 1e6]
+        (set/intersection s1 s2)))))
+
+  ;; 200ms
+  (dotimes [_ 10]
+    (let [m {1 2 3 4 5 6 7 8 9 0}]
+     (time
+      (dotimes [_ 1e7]
+        (keys m)))))
+
+  ;; 1.1s
+  (dotimes [_ 10]
+    (let [m {1 2 3 4 5 6 7 8 9 0}]
+     (time
+      (dotimes [_ 1e7]
+        (assoc m 10 11)))))
   )

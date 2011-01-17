@@ -307,13 +307,27 @@
 (deftest unify-map-seq-1
   (is (= (unify empty-s {} '()) false)))
 
-;; unify-map-map-1
+(deftest unify-map-map-1
+  (is (= (unify empty-s {} {}) empty-s)))
 
-;; unify-map-map-2, lvar in key
+(deftest unify-map-map-2
+  (is (= (unify empty-s {1 2 3 4} {1 2 3 4}) empty-s)))
 
-;; unify-map-map-3, lvar in val
+(deftest unify-map-map-3
+  (is (= (unify empty-s {1 2} {1 2 3 4}) false)))
 
-;; unify-map-map-4, lvar in key and val
+(deftest unify-map-map-4
+  (let [x (lvar 'x)
+        m1 {1 2 3 4}
+        m2 {1 2 3 x}
+        os (ext-no-check empty-s x 4)]
+   (is (= (unify empty-s m1 m2) os))))
+
+(deftest unify-map-map-5
+  (let [x (lvar 'x)
+        m1 {1 2 3 4}
+        m2 {1 4 3 x}]
+   (is (= (unify empty-s m1 m2) false))))
 
 (deftest unify-map-set-1
   (is (= (unify empty-s {} #{}) false)))
