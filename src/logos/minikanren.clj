@@ -219,6 +219,9 @@
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
 
+(defprotocol IUnifyWithNil
+  (unify-with-nil [v u s]))
+
 (defprotocol IUnifyWithObject
   (unify-with-object [v u s]))
 
@@ -236,6 +239,11 @@
 
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
+
+(extend-protocol IUnifyWithNil
+  nil
+  (unify-terms [u v s]
+    (and (nil? v) s)))
 
 (extend-type Object
   IUnifyTerms
@@ -270,6 +278,10 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
+(extend-protocol IUnifyWithObject
+  nil
+  (unify-with-object [v u s] false))
+
 (extend-type Object
   IUnifyWithObject
   (unify-with-object [v u s]
@@ -298,6 +310,10 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
+
+(extend-protocol IUnifyWithLVar
+  nil
+  (unify-with-lvar [v u s] (ext-no-check s u v)))
 
 (extend-type Object
   IUnifyWithLVar
@@ -331,6 +347,10 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
+
+(extend-protocol IUnifyWithLSeq
+  nil
+  (unify-with-lseq [v u s] false))
 
 (extend-type Object
   IUnifyWithLSeq
@@ -378,6 +398,10 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
+(extend-protocol IUnifyWithSequential
+  nil
+  (unify-with-seq [v u s] false))
+
 (extend-type Object
   IUnifyWithSequential
   (unify-with-seq [v u s] false))
@@ -414,6 +438,10 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
+
+(extend-protocol IUnifyWithMap
+  nil
+  (unify-with-map [v u s] false))
 
 (extend-type Object
   IUnifyWithMap
@@ -455,6 +483,10 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentSet with X
+
+(extend-protocol IUnifyWithSet
+  nil
+  (unify-with-set [v u s] false))
 
 (extend-type Object
   IUnifyWithSet
