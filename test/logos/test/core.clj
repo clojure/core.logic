@@ -11,7 +11,24 @@
 ;; nil
 
 (deftest unify-nil-object-1
-  (is (= (unify empty-s nil 1))))
+  (is (= (unify empty-s nil 1) false)))
+
+(deftest unify-nil-lvar-1
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x nil)]
+   (is (= (unify empty-s nil x) os))))
+
+(deftest unify-nil-lseq-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s nil (lcons 1 x)) false))))
+
+(deftest unify-nil-map-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s nil {}) false))))
+
+(deftest unify-nil-set-1
+  (let [x (lvar 'x)]
+   (is (= (unify empty-s nil #{}) false))))
 
 ;; -----------------------------------------------------------------------------
 ;; object
@@ -285,6 +302,22 @@
 
 (deftest unify-seq-seq-10
   (is (= (unify empty-s '(1) '()) false)))
+
+(deftest unify-seq-seq-11
+  (is (= (unify empty-s [[1 2]] [[1 2]]) empty-s)))
+
+(deftest unify-seq-seq-12
+  (is (= (unify empty-s [[1 2]] [[2 1]]) false)))
+
+(deftest unify-seq-seq-13
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x 1)]
+   (is (= (unify empty-s [[x 2]] [[1 2]]) os))))
+
+(deftest unify-seq-seq-14
+  (let [x (lvar 'x)
+        os (ext-no-check empty-s x [1 2])]
+   (is (= (unify empty-s [x] [[1 2]]) os))))
 
 (deftest unify-seq-map-1
   (is (= (unify empty-s [] {}) false)))

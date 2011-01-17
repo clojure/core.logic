@@ -51,14 +51,15 @@
   (macro/symbol-macrolet [_ (lvar)]
    (all
     (== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (first-o hs ['norwegian _ _ _ _])
-    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs))))
+    (first-o hs ['norwegian _ _ _ _]))))
 
 (defn zebra [hs]
   (macro/symbol-macrolet [_ (lvar)]
    (all
     (== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (first-o hs ['norwegian _ _ _ _]))))
+    (first-o hs ['norwegian _ _ _ _])
+    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (trace-s))))
 
 ;; slow ordering
 ;; (defn zebra [hs]

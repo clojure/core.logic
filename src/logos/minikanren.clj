@@ -36,8 +36,6 @@
 
 (declare lcons?)
 
-;; TODO: LCons is Sequential
-
 (deftype LCons [a d cache]
   LConsSeq
   (lfirst [_] a)
@@ -243,7 +241,7 @@
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
-    (and (nil? v) s)))
+    (unify-with-nil v u s)))
 
 (extend-type Object
   IUnifyTerms
@@ -274,6 +272,38 @@
   clojure.lang.IPersistentSet
   (unify-terms [u v s]
     (unify-with-set v u s)))
+
+;; -----------------------------------------------------------------------------
+;; Unify nil with X
+
+(extend-protocol IUnifyWithNil
+  nil
+  (unify-with-nil [v u s] s))
+
+(extend-type Object
+  IUnifyWithNil
+  (unify-with-nil [v u s] false))
+
+(extend-type LVar
+  IUnifyWithNil
+  (unify-with-nil [v u s]
+    (ext-no-check s v u)))
+
+(extend-type LCons
+  IUnifyWithNil
+  (unify-with-nil [v u s] false))
+
+(extend-protocol IUnifyWithNil
+  clojure.lang.Sequential
+  (unify-with-nil [v u s] false))
+
+(extend-protocol IUnifyWithNil
+  clojure.lang.IPersistentMap
+  (unify-with-nil [v u s] false))
+
+(extend-protocol IUnifyWithNil
+  clojure.lang.IPersistentSet
+  (unify-with-nil [v u s] false))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
@@ -411,10 +441,12 @@
   (unify-with-seq [v u s]
     (ext s v u)))
 
+;; BUG ?
+
 (extend-type LCons
   IUnifyWithSequential
   (unify-with-seq [v u s]
-    (unify-with-lseq v u s)))
+    (unify-with-lseq u v s)))
 
 (extend-protocol IUnifyWithSequential
   clojure.lang.IPersistentMap
