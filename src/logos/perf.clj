@@ -66,6 +66,13 @@
         (run* [q]
               (== true q))))))
 
+  ;; 250ms, a lot of overhead for the above
+  (dotimes [_ 10]
+    (let [q (lvar 'q)]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s true q)))))
+
   ;; hardly any effect in this case
   (binding [*occurs-check* false]
    (dotimes [_ 10]
@@ -255,6 +262,14 @@
         (doall
          (run* [x]
                (flatten-o '[[a b] c] x)))))))
+
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e4]
+        (doall
+         (run* [x]
+               (flatten-o '((a b) c) x)))))))
 
   (dotimes [_ 10]
     (time
