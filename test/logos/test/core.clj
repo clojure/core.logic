@@ -8,7 +8,16 @@
 ;; unify
 
 ;; -----------------------------------------------------------------------------
+;; nil
+
+(deftest unify-nil-object-1
+  (is (= (unify empty-s nil 1))))
+
+;; -----------------------------------------------------------------------------
 ;; object
+
+(deftest unify-object-nil-1
+  (is (= (unify empty-s 1 nil))))
 
 (deftest unify-object-object-1
   (is (= (unify empty-s 1 1) empty-s)))
@@ -412,7 +421,6 @@
 ;; =============================================================================
 ;; rest-o
 
-(comment
  (defn teacup-o [x]
    (cond-e
     ((== 'tea x) s*)
@@ -580,7 +588,7 @@
      (is (= (run* [q]
                   (cons-o a d q))
             [(lcons a d)]))))
- )
+ 
 
 (comment
   ;; time to implement equality

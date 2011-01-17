@@ -240,7 +240,7 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
-(extend-protocol IUnifyWithNil
+(extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
     (and (nil? v) s)))
