@@ -756,6 +756,9 @@
 
 (def ^:dynamic *debug* (atom []))
 
+(defn reset-debug! []
+  (reset! *debug* []))
+
 (defmacro trace [a & lm]
   `(binding [*debug* (or ~a *debug*)]
      ~@lm))
