@@ -85,14 +85,31 @@
         (zebra q)))
 
 (comment
+  ;; hmm we see 8 *substitutions*, seems weird for all
   (count (zebra-o))
 
   (binding [*occurs-check* false]
     (zebra-o))
 
+  (run* [q]
+        (macro/symbol-macrolet
+         [_ (lvar)]
+         (all
+          (== q [_ [_ 'woz] [_ 'coz]])
+          (first-o q ['foo 'bar])
+          (next-to-o ['foo 'bar] ['baz _] q))))
+
+  ;; hmm, this doesn't look right
+  (run* [q]
+        (macro/symbol-macrolet
+         [_ (lvar)]
+         (all
+          (== q [_ _])
+          (member-o ['foo _] q)
+          (member-o [_ 'bar] q))))
   ;; WOW
   ;; worst case ordering is now only 230ms
-  ;; down to 10 ms on a fast ordering !
+  ;; down to 10 ms on a fast ordering !y
   (dotimes [_ 10]
     (time
      (let  [a (zebra-o)]
