@@ -16,11 +16,15 @@
         ((exist []
                 ~@goals) ~a)))))
 
+;; TODO: test
+
 (defmacro cond-a [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (first
         (mplus* ~@(bind-cond-e-clauses a clauses))))))
+
+;; TODO: test
 
 (defmacro cond-u [& clauses]
   (let [a (gensym "a")]
