@@ -1,37 +1,21 @@
 * Logos Todos
 ** Immediate [1/6]
    - [ ] making a much smaller scenario than zebra, say 2
-   - [ ] Fix bug with the way that unification works
-         It seems to me like unification isn't failing fast enough
-         On the zebra problem we're getting exponential explosion of possiblities
-         in the fix-unification branch. In the master branch we're not seeing
-         this at all.
 
-         SAMPLE OUTPUT master vs. fix-unification
+         Under master:
 
-         ([[norwegian _.0 _.1 _.2 _.3] [_.4 _.5 _.6 _.7 blue] [_.8 _.9 milk _.10 _.11] _.12 _.13]
-         [[_.0 _.1 _.2 _.3 blue] [norwegian _.4 _.5 _.6 _.7] [_.8 _.9 milk _.10 _.11] _.12 _.13]
-         [[norwegian _.0 _.1 _.2 _.3] [_.4 _.5 _.6 _.7 blue] [norwegian _.8 milk _.9 _.10] _.11 _.12]
-         [[norwegian _.0 _.1 _.2 _.3] [norwegian _.4 _.5 _.6 _.7] [_.8 _.9 milk _.10 blue] _.11 _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [norwegian _.5 milk _.6 _.7] [_.8 _.9 _.10 _.11 blue] _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 blue] [norwegian _.8 _.9 _.10 _.11] _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 _.8] [_.9 _.10 _.11 _.12 blue] [norwegian _.13 _.14 _.15 _.16]]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 _.8] [norwegian _.9 _.10 _.11 _.12] [_.13 _.14 _.15 _.16 blue]])
+         ([[foo bar] _.0]
+          [[_.0 bar] [foo _.1]]
+          [_.0 [foo bar]]
+          [[foo _.0] [_.1 bar]])
 
-         ([[norwegian _.0 _.1 _.2 _.3] [_.4 _.5 _.6 _.7 blue] [_.8 _.9 milk _.10 _.11] _.12 _.13]
-         [[norwegian _.0 _.1 _.2 blue] [norwegian _.3 _.4 _.5 _.6] [_.7 _.8 milk _.9 _.10] _.11 _.12]
-         [[norwegian _.0 _.1 _.2 _.3] [_.4 _.5 _.6 _.7 blue] [norwegian _.8 milk _.9 _.10] _.11 _.12]
-         [[norwegian _.0 _.1 _.2 _.3] [norwegian _.4 _.5 _.6 _.7] [_.8 _.9 milk _.10 blue] _.11 _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [norwegian _.5 milk _.6 _.7] [_.8 _.9 _.10 _.11 blue] _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 blue] [norwegian _.8 _.9 _.10 _.11] _.12]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 _.8] [_.9 _.10 _.11 _.12 blue] [norwegian _.13 _.14 _.15 _.16]]
-         [[norwegian _.0 _.1 _.2 _.3] _.4 [_.5 _.6 milk _.7 _.8] [norwegian _.9 _.10 _.11 _.12] [_.13 _.14 _.15 _.16 blue]])
+         Under fix-unification
 
-         LEAD : weird behavior between Sequential and LCons protocols, particularly
-         confusing because Collections are extended to LConsSeq, whoa
+         ([[_.0 bar] _.1]
+          [[_.0 bar] [foo _.1]]
+          [_.0 [_.1 bar]]
+          [[foo _.0] [_.1 bar]])         
 
-         the on-right-o unifiction is not merging the norwegian and blue, tho it seems to work for all
-         others?
    - [ ] Disequality Constraints
    - [ ] Basic Type Inferencer
    - [ ] Read up on Prolog implementation in CL
