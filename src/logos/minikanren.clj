@@ -97,7 +97,9 @@
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
-;; TODO: convert to macro
+;; REMOVE : once the last few cond dispatches are converted into protocols
+;; we just get rid of this check entirely. We can also stop extending
+;; LConsSeq to clojure.lang.IPersistentCollection
 
 (defn lcoll? [x]
   (or (lcons? x)
@@ -440,8 +442,6 @@
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (ext s v u)))
-
-;; BUG ?
 
 (extend-type LCons
   IUnifyWithSequential
