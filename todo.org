@@ -1,5 +1,6 @@
 * Logos Todos
 ** Immediate [1/6]
+   - [ ] making a much smaller scenario than zebra, say 2
    - [ ] Fix bug with the way that unification works
          It seems to me like unification isn't failing fast enough
          On the zebra problem we're getting exponential explosion of possiblities
