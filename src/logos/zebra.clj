@@ -34,23 +34,23 @@
     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          ;; kools are smoked in the house next to the horse
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)))) ;; the man who smokes chesterfields is next to the the man who owns a fox
 
-;; (defn zebra [hs]
-;;   (macro/symbol-macrolet [_ (lvar)]
-;;    (all
-;;     (== [_ _ [_ _ 'milk _ _] _ _] hs)
-;;     (first-o hs ['norwegian _ _ _ _])
-;;     (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
-;;     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
-;;     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
-;;     (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
-;;     (member-o ['englishman _ _ _ 'red] hs)
-;;     (member-o [_ 'kools _ _ 'yellow] hs)
-;;     (member-o [_ _ 'coffee _ 'green] hs)
-;;     (member-o [_ 'oldgolds _ 'snails _] hs)
-;;     (member-o ['spaniard _ _ 'dog _] hs)
-;;     (member-o ['ukrainian _ 'tea _ _] hs)
-;;     (member-o [_ 'lucky-strikes 'oj _ _] hs)
-;;     (member-o ['japanese 'parliaments _ _ _] hs))))
+(defn zebra [hs]
+  (macro/symbol-macrolet [_ (lvar)]
+   (all
+    (== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (first-o hs ['norwegian _ _ _ _])
+    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
+    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)
+    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
+    (member-o ['englishman _ _ _ 'red] hs)
+    (member-o [_ 'kools _ _ 'yellow] hs)
+    (member-o [_ _ 'coffee _ 'green] hs)
+    (member-o [_ 'oldgolds _ 'snails _] hs)
+    (member-o ['spaniard _ _ 'dog _] hs)
+    (member-o ['ukrainian _ 'tea _ _] hs)
+    (member-o [_ 'lucky-strikes 'oj _ _] hs)
+    (member-o ['japanese 'parliaments _ _ _] hs))))
 
 (defn zebra-o []
   (run* [q]
@@ -63,9 +63,7 @@
   (binding [*occurs-check* false]
     (zebra-o))
 
-  ;; WOW
-  ;; worst case ordering is now only 230ms
-  ;; down to 10 ms on a fast ordering !y
+  ;; 180ms
   (dotimes [_ 10]
     (time
      (let  [a (zebra-o)]
@@ -79,7 +77,7 @@
         (dotimes [_ 1]
           (doall a))))))
 
-  ;; 7s-8s
+  ;; < 5.5s
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time
