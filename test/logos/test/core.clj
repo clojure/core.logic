@@ -328,18 +328,6 @@
                (ext-no-check y 'a))]
    (is (= (unify empty-s ['a x] [y 'b]) os))))
 
-(deftest unify-seq-seq-16
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        z (lvar 'z)
-        os (-> empty-s
-               (ext-no-check x [y z])
-               (ext-no-check y 'foo)
-               (ext-no-check z 'bar))]
-   (is (= (-> empty-s
-              (unify [x] [['foo y]])
-              (unify [x] [[z 'bar]])) os))))
-
 (deftest unify-seq-map-1
   (is (= (unify empty-s [] {}) false)))
 

@@ -34,34 +34,6 @@
     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          ;; kools are smoked in the house next to the horse
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs)))) ;; the man who smokes chesterfields is next to the the man who owns a fox
 
-(defn zebra [hs]
-  (macro/symbol-macrolet [_ (lvar)]
-   (all
-    (== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (first-o hs ['norwegian _ _ _ _])
-    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
-    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
-    (member-o ['englishman _ _ _ 'red] hs)
-    (member-o [_ 'kools _ _ 'yellow] hs)
-    (member-o ['spaniard _ _ 'dog _] hs)
-    (member-o [_ _ 'coffee _ 'green] hs)
-    (member-o ['ukrainian _ 'tea _ _] hs))))
-
-(defn zebra [hs]
-  (macro/symbol-macrolet [_ (lvar)]
-   (all
-    (== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (first-o hs ['norwegian _ _ _ _]))))
-
-(defn zebra [hs]
-  (macro/symbol-macrolet [_ (lvar)]
-   (all
-    (== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (first-o hs ['norwegian _ _ _ _])
-    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
-    (trace-s))))
-
-;; slow ordering
 ;; (defn zebra [hs]
 ;;   (macro/symbol-macrolet [_ (lvar)]
 ;;    (all
@@ -91,38 +63,6 @@
   (binding [*occurs-check* false]
     (zebra-o))
 
-  (run* [q]
-        (macro/symbol-macrolet
-         [_ (lvar)]
-         (all
-          (== q [_ [_ 'woz] [_ 'coz]])
-          (first-o q ['foo 'bar])
-          (next-to-o ['foo 'bar] ['baz _] q))))
-
-  ;; hmm, this doesn't look right
-  (run* [q]
-        (macro/symbol-macrolet
-         [_ (lvar)]
-         (all
-          (== q [_ _])
-          (member-o ['foo _] q)
-          (member-o [_ 'bar] q))))
-
-  ;; simpler and still wrong
-  (run* [q]
-        (macro/symbol-macrolet
-         [_ (lvar)]
-         (all
-          (== q [_])
-          (member-o ['foo _] q)
-          (member-o [_ 'bar] q))))
-
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        z (lvar 'z)]
-    (.s (-> empty-s
-            (unify [x] [['foo y]])
-            (unify [x] [[z 'bar]]))))
   ;; WOW
   ;; worst case ordering is now only 230ms
   ;; down to 10 ms on a fast ordering !y

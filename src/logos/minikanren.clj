@@ -399,7 +399,7 @@
         (ext s u v)
         (if (lvar? v)
           (ext s v u)
-          (if-let [s (unify-terms (lfirst u) (lfirst v) s)]
+          (if-let [s (unify s (lfirst u) (lfirst v))]
             (recur (lnext u) (lnext v) s)
             false))))))
 
@@ -410,7 +410,7 @@
       (if (seq v)
         (if (lvar? u)
           (ext s u v)
-          (if-let [s (unify-terms (lfirst u) (first v) s)]
+          (if-let [s (unify s (lfirst u) (first v))]
             (recur (lnext u) (next v) s)
             false))
         (if (lvar? u)
@@ -462,7 +462,7 @@
     (loop [u u v v s s]
       (if (seq u)
         (if (seq v)
-          (if-let [s (unify-terms (first u) (first v) s)]
+          (if-let [s (unify s (first u) (first v))]
             (recur (next u) (next v) s)
             false)
           false)
@@ -502,7 +502,7 @@
                 vf (get v kf ::not-found)]
             (if (= vf ::not-found)
               false
-              (if-let [s (unify-terms (get u kf) vf s)]
+              (if-let [s (unify s (get u kf) vf)]
                 (recur (next ks) (dissoc u kf) (dissoc v kf) s)
                 false)))
           (if (seq v)
@@ -575,8 +575,8 @@
                   (if (lvar? vf)
                     (recur (disj v vf) (conj vlvars vf) vmissing)
                     (recur (disj v vf) vlvars (conj vmissing vf))))
-                (unify-terms (concat ulvars umissing)
-                             (concat vmissing vlvars) s)))
+                (unify s (concat ulvars umissing)
+                         (concat vmissing vlvars))))
             false)
           s)))))
 

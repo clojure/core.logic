@@ -1,44 +1,18 @@
 * Logos Todos
-** Immediate [1/6]
-   - [ ] making a much smaller scenario than zebra, say 2
-
-         Under master:
-
-         ([[foo bar] _.0]
-          [[_.0 bar] [foo _.1]]
-          [_.0 [foo bar]]
-          [[foo _.0] [_.1 bar]])
-
-         Under fix-unification
-
-         ([[_.0 bar] _.1]
-          [[_.0 bar] [foo _.1]]
-          [_.0 [_.1 bar]]
-          [[foo _.0] [_.1 bar]])         
-
-          (let [x (lvar 'x)
-                y (lvar 'y)
-                z (lvar 'z)]
-            (.s (-> empty-s
-                    (unify [x] [['foo y]])
-                    (unify [x] [[z 'bar]]))))
-
-          ;; a correct looking substitution
-          {<lvar:y> bar, <lvar:z> foo, <lvar:x> [foo <lvar:y>]}
-
+** Immediate [0/5]
    - [ ] Disequality Constraints
    - [ ] Basic Type Inferencer
    - [ ] Read up on Prolog implementation in CL
    - [ ] Read up on compiled Prolog implementation in CL
    - [ ] Investigate - Skew Random Binary Access Lists (Okasaki) 
-** Future [/]
+** Future [0/5]
    - [ ] Investigate forward-chaining
    - [ ] Investigate partial evaluation
    - [ ] Tabling
    - [ ] Consider parallel syntax
    - [ ] Datalog
-** Alternate Strategies [/]
+** Alternate Strategies [0/1]
    - [ ] Compile into "normal" Clojure programs (forward chaining,
      partial evaluation)
-** Backlog [/]
+** Backlog [0/1]
    - [ ] Fix rest lvars for logos.unify/unifier and logos.unify/unifier'
