@@ -16,6 +16,16 @@
           [_.0 [_.1 bar]]
           [[foo _.0] [_.1 bar]])         
 
+          (let [x (lvar 'x)
+                y (lvar 'y)
+                z (lvar 'z)]
+            (.s (-> empty-s
+                    (unify [x] [['foo y]])
+                    (unify [x] [[z 'bar]]))))
+
+          ;; a correct looking substitution
+          {<lvar:y> bar, <lvar:z> foo, <lvar:x> [foo <lvar:y>]}
+
    - [ ] Disequality Constraints
    - [ ] Basic Type Inferencer
    - [ ] Read up on Prolog implementation in CL
