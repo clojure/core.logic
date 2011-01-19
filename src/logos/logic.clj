@@ -50,7 +50,22 @@
            (rest-o l r)
            (member-o x r)))))
 
+(defn rember-o [x l out]
+  (cond-e
+   ((== '() l) (== '() out))
+   ((exist [a d]
+      (cons-o a d l)
+      (== x a)
+      (== d out)))
+   ((exist [a d res]
+      (cons-o a d l)
+      (cons-o a res out)
+      (rember-o x d res)))))
+
 (comment
+  (run 1 [q]
+        (rember-o 'b '(a b c b d) q))
+
   ;; just shows all the members
   (run* [q]
         (member-o q '(hummus with pita)))
