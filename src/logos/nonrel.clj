@@ -2,13 +2,6 @@
   (:refer-clojure :exclude [reify ==])
   (:use logos.minikanren))
 
-;; from jduey
-(defmacro cond-a [& clauses]
- (let [a (gensym "a")]
-   `(fn [~a]
-      (first
-       (mplus* ~@(bind-cond-e-clauses a clauses))))))
-
 (defn project-binding [s]
   (fn [var]
    `(~var (walk ~s ~var))))
@@ -22,3 +15,16 @@
       (let [~@(project-bindings vars a)]
         ((exist []
                 ~@goals) ~a)))))
+
+(defmacro cond-a [& clauses]
+  (let [a (gensym "a")]
+    `(fn [~a]
+       (first
+        (mplus* ~@(bind-cond-e-clauses a clauses))))))
+
+(defmacro cond-u [& clauses]
+  (let [a (gensym "a")]
+    `(fn [~a]
+       (first
+        (first
+         (mplus* ~@(bind-cond-e-clauses a clauses)))))))
