@@ -107,6 +107,22 @@
           (== q [_ _])
           (member-o ['foo _] q)
           (member-o [_ 'bar] q))))
+
+  ;; simpler and still wrong
+  (run* [q]
+        (macro/symbol-macrolet
+         [_ (lvar)]
+         (all
+          (== q [_])
+          (member-o ['foo _] q)
+          (member-o [_ 'bar] q))))
+
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)]
+    (.s (-> empty-s
+            (unify [x] [['foo y]])
+            (unify [x] [[z 'bar]]))))
   ;; WOW
   ;; worst case ordering is now only 230ms
   ;; down to 10 ms on a fast ordering !y

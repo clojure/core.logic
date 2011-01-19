@@ -328,6 +328,18 @@
                (ext-no-check y 'a))]
    (is (= (unify empty-s ['a x] [y 'b]) os))))
 
+(deftest unify-seq-seq-16
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        os (-> empty-s
+               (ext-no-check x [y z])
+               (ext-no-check y 'foo)
+               (ext-no-check z 'bar))]
+   (is (= (-> empty-s
+              (unify [x] [['foo y]])
+              (unify [x] [[z 'bar]])) os))))
+
 (deftest unify-seq-map-1
   (is (= (unify empty-s [] {}) false)))
 
@@ -639,6 +651,16 @@
            [(lcons a d)]))))
 
 (deftest member-o-1
+  (is (= (run* [q]
+               (macro/symbol-macrolet
+                [_ (lvar)]
+                (all
+                 (== q [_])
+                 (member-o ['foo _] q)
+                 (member-o [_ 'bar] q))))
+         '([[foo bar]]))))
+
+(deftest member-o-2
   (is (= (run* [q]
                (macro/symbol-macrolet
                 [_ (lvar)]
