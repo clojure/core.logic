@@ -133,9 +133,6 @@
   ISubstitutions
   (length [this] (count s))
 
-  ;; TODO : revisit recur here, will need to be an internal loop/recur
-  ;; OPTIMIZATION : we can dispatch on a protocol here
-
   (occurs-check [this x v]
                 (cond
                  (lvar? v) (= (walk this v) x)
@@ -588,23 +585,32 @@
 ;; Reification
 
 (defprotocol IReifyTerm
-  (reify-term [v s]
-    ))
+  (reify-term [v s]))
 
 (extend-type Object
   IReifyTerm
+  (reify-term [v s] s))
+
+(extend-type LVar
+  IReifyTerm
   (reify-term [v s]
-              s))
+    (ext s v (reify-lvar-name s))))
 
 (extend-type LCons
   IReifyTerm
   (reify-term [v s]
-              ))
+    (loop [v v s s]
+      (if (lvar? v)
+        (-reify s v)
+        (recur (lnext v) (-reify s (lfirst v)))))))
 
 (extend-protocol IReifyTerm
   clojure.lang.IPersistentCollection
   (reify-term [v s]
-              ))
+    (loop [v v s s]
+      (if (seq v)
+        (recur (next v) (-reify s (first v)))
+        s))))
 
 ;; =============================================================================
 ;; Walk Term
