@@ -201,6 +201,10 @@
              (lcoll? v) (-reify (-reify this (lfirst v)) (lnext v))
              :else this)))
 
+  ;; (-reify [this v]
+  ;;         (let [v (walk this v)]
+  ;;           (reify-term v this)))
+
   (reify [this v]
          (let [v (walk* this v)]
            (walk* (-reify empty-s v) v))))
