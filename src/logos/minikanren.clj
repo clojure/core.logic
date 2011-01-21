@@ -178,6 +178,10 @@
                            :else r))
             :else v')))
 
+  ;; (walk* [this v]
+  ;;        (let [v (walk this v)]
+  ;;          (walk-term v this)))
+
   (unify [this u v]
          (if (identical? u v)
            this
@@ -189,10 +193,6 @@
 
   (reify-lvar-name [this]
                    (symbol (str "_." (count s))))
-
-  ;; TODO : unnecessarily stack consuming, will need to be an internal
-  ;; loop/recur
-  ;; OPTIMIZATION : we can dispatch on a protocol here
 
   (-reify [this v]
           (let [v (walk this v)]
@@ -631,7 +631,7 @@
 
 (extend-type LVar
   IWalkTerm
-  (walk-term [v s]))
+  (walk-term [v s] v))
 
 (extend-type LCons
   IWalkTerm
@@ -639,15 +639,27 @@
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
-  (walk-term [v s]))
+  (walk-term [v s]
+    (loop [v (reduce concat v) s s r (transient {})]
+      (if (seq v)
+        (recur (next v) s (conj! (walk* s (first v)) r))
+        (persistent! r)))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentVector
-  (walk-term [v s]))
+  (walk-term [v s]
+    (loop [v v s s r (transient [])]
+      (if (seq v)
+        (recur (next v) s (conj! (walk* s (first v)) r))
+        (persistent! r)))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
-  (walk-term [v s]))
+  (walk-term [v s]
+    (loop [v v s s r {}]
+      (if (seq v)
+        (recur (next v) s (conj (walk* s (first v)) r))
+        r))))
 
 ;; =============================================================================
 ;; Occurs Check Term
