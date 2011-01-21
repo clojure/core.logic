@@ -585,7 +585,7 @@
 
 (defprotocol IReifyTerm
   (reify-term [v s]
-         ))
+    ))
 
 (extend-type Object
   IReifyTerm
@@ -639,8 +639,7 @@
 ;; Occurs Check Term
 
 (defprotocol IOccursCheckTerm
-  (occurs-check-term [v x s]
-         ))
+  (occurs-check-term [v x s]))
 
 (extend-type Object
   IOccursCheckTerm
@@ -650,15 +649,23 @@
   IOccursCheckTerm
   (occurs-check-term [v x s] (= (walk s v) x)))
 
-;; TODO: loop/recur
-
 (extend-type LCons
   IOccursCheckTerm
-  (occurs-check-term [v x s]))
+  (occurs-check-term [v x s]
+    (loop [v v x x s s]
+      (if (lvar? v)
+        (occurs-check s x v)
+        (or (occurs-check s x (lfirst v))
+            (recur (lnext v) x s))))))
 
 (extend-protocol IOccursCheckTerm
   clojure.lang.IPersistentCollection
-  (occurs-check-term [v x s]))
+  (occurs-check-term [v x s]
+    (loop [v v x x s s]
+      (if (seq v)
+        (or (occurs-check s x (first v))
+            (recur (next v) x s))
+        false))))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
