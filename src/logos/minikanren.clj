@@ -136,20 +136,20 @@
   ;; TODO : revisit recur here, will need to be an internal loop/recur
   ;; OPTIMIZATION : we can dispatch on a protocol here
 
-  (occurs-check [this u v]
+  (occurs-check [this x v]
                 (cond
-                 (lvar? v) (= (walk this v) v)
-                 (lcoll? v) (or (occurs-check this u (lfirst v))
-                                (occurs-check this u (lnext v))))
+                 (lvar? v) (= (walk this v) x)
+                 (lcoll? v) (or (occurs-check this x (lfirst v))
+                                (occurs-check this x (lnext v))))
                 :else false)
   
-  (ext [this u v]
-       (if (and *occurs-check* (occurs-check this u v))
+  (ext [this x v]
+       (if (and *occurs-check* (occurs-check this x v))
          this
-         (ext-no-check this u v)))
+         (ext-no-check this x v)))
 
-  (ext-no-check [this u v]
-                (Substitutions. (assoc s u v)))
+  (ext-no-check [this x v]
+                (Substitutions. (assoc s x v)))
 
   (walk [this v]
         (loop [v' v lv nil]
@@ -579,6 +579,27 @@
                          (concat vmissing vlvars))))
             false)
           s)))))
+
+;; =============================================================================
+;; Reification
+
+(defprotocol IReifyTerm
+  (reify-term [v s]
+         ))
+
+;; =============================================================================
+;; Walk Term
+
+(defprotocol IWalkTerm
+  (walk-term [v s]
+         ))
+
+;; =============================================================================
+;; Occurs Check Term
+
+(defprotocol IOccursCheckTerm
+  (occurs-check-term [v x s]
+         ))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
