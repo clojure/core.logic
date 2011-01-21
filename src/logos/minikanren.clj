@@ -587,6 +587,21 @@
   (reify-term [v s]
          ))
 
+(extend-type Object
+  IReifyTerm
+  (reify-term [v s]
+              s))
+
+(extend-type LCons
+  IReifyTerm
+  (reify-term [v s]
+              ))
+
+(extend-protocol IReifyTerm
+  clojure.lang.IPersistentCollection
+  (reify-term [v s]
+              ))
+
 ;; =============================================================================
 ;; Walk Term
 
@@ -594,12 +609,56 @@
   (walk-term [v s]
          ))
 
+;; TODO: catch other IPersistentCollection here?
+
+(extend-type Object
+  IWalkTerm
+  (walk-term [v s] s))
+
+(extend-type LVar
+  IWalkTerm
+  (walk-term [v s]))
+
+(extend-type LCons
+  IWalkTerm
+  (walk-term [v s]))
+
+(extend-protocol IWalkTerm
+  clojure.lang.IPersistentMap
+  (walk-term [v s]))
+
+(extend-protocol IWalkTerm
+  clojure.lang.IPersistentVector
+  (walk-term [v s]))
+
+(extend-protocol IWalkTerm
+  clojure.lang.IPersistentSet
+  (walk-term [v s]))
+
 ;; =============================================================================
 ;; Occurs Check Term
 
 (defprotocol IOccursCheckTerm
   (occurs-check-term [v x s]
          ))
+
+(extend-type Object
+  IOccursCheckTerm
+  (occurs-check-term [v x s] false))
+
+(extend-type LVar
+  IOccursCheckTerm
+  (occurs-check-term [v x s] (= (walk s v) x)))
+
+;; TODO: loop/recur
+
+(extend-type LCons
+  IOccursCheckTerm
+  (occurs-check-term [v x s]))
+
+(extend-protocol IOccursCheckTerm
+  clojure.lang.IPersistentCollection
+  (occurs-check-term [v x s]))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
