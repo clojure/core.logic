@@ -142,6 +142,10 @@
                  (lcoll? v) (or (occurs-check this x (lfirst v))
                                 (occurs-check this x (lnext v))))
                 :else false)
+
+  ;; (occurs-check [this x v]
+  ;;               (let [v (walk this v)]
+  ;;                 (occur-check-term v x s)))
   
   (ext [this x v]
        (if (and *occurs-check* (occurs-check this x v))
