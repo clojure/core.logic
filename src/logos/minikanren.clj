@@ -124,6 +124,7 @@
 (declare unify-terms)
 (declare occurs-check-term)
 (declare reify-term)
+(declare walk-term)
 
 (deftype Substitutions [s]
   Object
@@ -155,23 +156,8 @@
            :else (recur (get s v' ::not-found) v'))))
 
   (walk* [this v]
-         (let [v' (walk this v)]
-           (cond
-            (lvar? v') v'
-            (lcoll? v') (let [vseq (if (map? v') (reduce concat v') v')
-                              vf (walk* this (lfirst vseq))
-                              vn (walk* this (lnext vseq))
-                              r (lcons vf vn)]
-                          (cond
-                           (vector? v') (vec r)
-                           (map? v') (apply hash-map r)
-                           (set? v') (set r)
-                           :else r))
-            :else v')))
-
-  ;; (walk* [this v]
-  ;;        (let [v (walk this v)]
-  ;;          (walk-term v this)))
+         (let [v (walk this v)]
+           (walk-term v this)))
 
   (unify [this u v]
          (if (identical? u v)
@@ -614,17 +600,13 @@
   IWalkTerm
   (walk-term [v s] v))
 
+;; TODO: no way to make this non-stack consuming w/o a lot more thinking
+
 (extend-type LCons
   IWalkTerm
   (walk-term [v s]
-    (loop [v v r (transient [])]
-      (if (lvar? v)
-        (let [t (walk* s v)
-              r (persistent! r)]
-          (if (seq? t)
-            (concat r t)
-            (concat r [t])))
-        (recur (lnext v) (conj! r (walk* s (lfirst v))))))))
+    (lcons (walk* s (lfirst v))
+           (walk* s (lnext v)))))
 
 (extend-protocol IWalkTerm
   clojure.lang.ISeq

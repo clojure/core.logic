@@ -77,7 +77,8 @@
         (dotimes [_ 1]
           (doall a))))))
 
-  ;; < 5.5s
+  ;; < 5s
+  ;; tho it does seem like we run into some GC weirdness
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time
