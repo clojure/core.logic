@@ -122,6 +122,7 @@
 
 (declare empty-s)
 (declare unify-terms)
+(declare occurs-check-term)
 
 (deftype Substitutions [s]
   Object
@@ -134,15 +135,8 @@
   (length [this] (count s))
 
   (occurs-check [this x v]
-                (cond
-                 (lvar? v) (= (walk this v) x)
-                 (lcoll? v) (or (occurs-check this x (lfirst v))
-                                (occurs-check this x (lnext v))))
-                :else false)
-
-  ;; (occurs-check [this x v]
-  ;;               (let [v (walk this v)]
-  ;;                 (occur-check-term v x s)))
+                (let [v (walk this v)]
+                  (occurs-check-term v x this)))
   
   (ext [this x v]
        (if (and *occurs-check* (occurs-check this x v))
