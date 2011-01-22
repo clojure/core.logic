@@ -34,8 +34,6 @@
 (defprotocol LConsPrint
   (toShortString [this]))
 
-(declare lcons?)
-
 (deftype LCons [a d cache]
   LConsSeq
   (lfirst [_] a)
@@ -51,7 +49,7 @@
                     :else (str "(" a " . " d ")")))
   (equals [this o]
           (or (identical? this o)
-              (and (lcons? o)
+              (and (instance? LCons o)
                    (loop [me this
                           you o]
                      (cond
@@ -85,25 +83,9 @@
     (cons a (seq d))
     (LCons. a d (atom nil))))
 
-(defn lcons? [x]
-  (instance? LCons x))
-
-(extend-protocol LConsSeq
-  clojure.lang.IPersistentCollection
-  (lfirst [this] (clojure.core/first this))
-  (lnext [this] (clojure.core/next this)))
-
 (defmacro llist
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
-
-;; REMOVE : once the last few cond dispatches are converted into protocols
-;; we just get rid of this check entirely. We can also stop extending
-;; LConsSeq to clojure.lang.IPersistentCollection
-
-(defn lcoll? [x]
-  (or (lcons? x)
-      (and (coll? x) (seq x))))
 
 ;; =============================================================================
 ;; Substitutions
