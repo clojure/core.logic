@@ -619,7 +619,11 @@
   (walk-term [v s]
     (loop [v v r (transient [])]
       (if (lvar? v)
-        (reverse (persistent! (conj! r (walk* s v))))
+        (let [t (walk* s v)
+              r (persistent! r)]
+          (if (seq? t)
+            (concat r t)
+            (concat r [t])))
         (recur (lnext v) (conj! r (walk* s (lfirst v))))))))
 
 (extend-protocol IWalkTerm
