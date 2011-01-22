@@ -123,6 +123,7 @@
 (declare empty-s)
 (declare unify-terms)
 (declare occurs-check-term)
+(declare reify-term)
 
 (deftype Substitutions [s]
   Object
@@ -152,10 +153,6 @@
            (identical? v' ::not-found) lv
            (not (lvar? v')) v'
            :else (recur (get s v' ::not-found) v'))))
-
-  ;; TODO : revisit recur here. Main issue was how to reconstruct
-  ;; types ? will need to be an internal loop/recur
-  ;; OPTIMIZATION : we can dispatch on a protocol here
 
   (walk* [this v]
          (let [v' (walk this v)]
@@ -190,14 +187,7 @@
 
   (-reify [this v]
           (let [v (walk this v)]
-            (cond
-             (lvar? v) (ext this v (reify-lvar-name this))
-             (lcoll? v) (-reify (-reify this (lfirst v)) (lnext v))
-             :else this)))
-
-  ;; (-reify [this v]
-  ;;         (let [v (walk this v)]
-  ;;           (reify-term v this)))
+            (reify-term v this)))
 
   (reify [this v]
          (let [v (walk* this v)]
