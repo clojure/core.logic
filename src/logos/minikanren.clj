@@ -622,8 +622,6 @@
 (defprotocol IWalkTerm
   (walk-term [v s]))
 
-;; TODO: catch other IPersistentCollection here?
-
 (extend-type Object
   IWalkTerm
   (walk-term [v s] s))
