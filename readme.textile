@@ -1,6 +1,6 @@
 h1. Logos
 
-A Logic Programming library for Clojure. At its heart is an implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663.
+A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663. However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 h2. About
 
@@ -19,7 +19,7 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 
 h2. Notes
 
-I stayed pretty true to the structure of the original implementation. However there's some originality to the substitutions implementation and most of the non-trivial core functions have been significantly changed to deal with the fact that Clojure uses a variety of data structures (instead of just lists) to represent source. Also Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. All iterable Clojure data structures are extended to this protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
+I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. All iterable Clojure data structures are extended to this protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
 
 <pre>
 (lcons 'a (lvar 'b)) ; (a . <lvar:b>)
@@ -27,17 +27,15 @@ I stayed pretty true to the structure of the original implementation. However th
 
 Logic variables are instances of <code>lvarT</code> not vectors as they are in Scheme.
 
-The goal and goal constructor portion has been written from scratch on top of the protocols <code>IBind</code> and <code>IMPlus</code>. These are extended to the relevant types (<code>nil (mzero)</code>, <code>Substitution (unit)</code>, <code>clojure.lang.Cons (stream)</code>, <code>clojure.lang.PersistentList (stream)</code>, <code>clojure.lang.LazySeq (stream)</code>). <code>take</code> is used to get the sequence of results.
+The goal and goal constructor portion has been written from scratch on top of the protocols and makes liberal use of lazy sequences to prevent stack overflow.
 
-Currently the <code>Substitutions</code> defrecord uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions. I'll be investigating Skew Binary Random Access Lists as well as Finger Trees (Okasaki).
+Currently the <code>Substitutions</code> deftype uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions.
 
 h2. Goals
 
 * Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
-* Performance. I've made sure that this version is competitive with miniKanren running under Racket. A long term goal is to have Logos perform well enough that a predicate dispatch system could be built on top of it. 
+* Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
 * Emphasis on pure relational programming.
-* Parallel logic programming.
-* Original implementation. This will take some time as I acquire a deeper understanding of miniKanren and dive into the vast literature on logic programming.
 
 h2. Contributing
 
