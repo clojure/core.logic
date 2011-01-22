@@ -608,7 +608,7 @@
 
 (extend-type Object
   IWalkTerm
-  (walk-term [v s] s))
+  (walk-term [v s] v))
 
 (extend-type LVar
   IWalkTerm
