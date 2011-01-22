@@ -616,22 +616,23 @@
 
 (extend-type LCons
   IWalkTerm
-  (walk-term [v s]))
+  (walk-term [v s]
+    (loop [v v s s r (transient [])]
+      (if (lvar? v)
+        (reverse (persistent! (conj! r (walk* s v))))
+        (recur (next v) s (conj! r (walk* s (first v))))))))
 
 (extend-protocol IWalkTerm
   clojure.lang.ISeq
   (walk-term [v s]
-    (loop [v v s s r (empty v)]
-      (if (seq v)
-        (recur (next v) s (conj (walk* s (first v)) r))
-        r)) ))
+    (map #(walk* s %) v)))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
   (walk-term [v s]
     (loop [v (reduce concat v) s s r (transient {})]
       (if (seq v)
-        (recur (next v) s (conj! (walk* s (first v)) r))
+        (recur (next v) s (conj! r (walk* s (first v))))
         (persistent! r)))))
 
 (extend-protocol IWalkTerm
@@ -639,7 +640,7 @@
   (walk-term [v s]
     (loop [v v s s r (transient [])]
       (if (seq v)
-        (recur (next v) s (conj! (walk* s (first v)) r))
+        (recur (next v) s (conj! r (walk* s (first v))))
         (persistent! r)))))
 
 (extend-protocol IWalkTerm
@@ -647,7 +648,7 @@
   (walk-term [v s]
     (loop [v v s s r {}]
       (if (seq v)
-        (recur (next v) s (conj (walk* s (first v)) r))
+        (recur (next v) s (conj r (walk* s (first v))))
         r))))
 
 ;; =============================================================================
