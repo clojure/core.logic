@@ -620,7 +620,7 @@
     (loop [v v r (transient [])]
       (if (lvar? v)
         (reverse (persistent! (conj! r (walk* s v))))
-        (recur (next v) (conj! r (walk* s (first v))))))))
+        (recur (lnext v) (conj! r (walk* s (lfirst v))))))))
 
 (extend-protocol IWalkTerm
   clojure.lang.ISeq
