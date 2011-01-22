@@ -620,8 +620,7 @@
 ;; Walk Term
 
 (defprotocol IWalkTerm
-  (walk-term [v s]
-         ))
+  (walk-term [v s]))
 
 ;; TODO: catch other IPersistentCollection here?
 
@@ -636,6 +635,14 @@
 (extend-type LCons
   IWalkTerm
   (walk-term [v s]))
+
+(extend-protocol IWalkTerm
+  clojure.lang.ISeq
+  (walk-term [v s]
+    (loop [v v s s r (empty v)]
+      (if (seq v)
+        (recur (next v) s (conj (walk* s (first v)) r))
+        r)) ))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
