@@ -60,7 +60,7 @@
                                   youf (lfirst you)]
                               (and (or (= mef youf)
                                        (lvar? mef)
-                                       (lvar? youf))
+                                        (lvar? youf))
                                    (recur (lnext me) (lnext you)))))))))
 
   (hashCode [this]
@@ -131,11 +131,11 @@
                 (Substitutions. (assoc s x v)))
 
   (walk [this v]
-        (loop [v' v lv nil]
+        (loop [v v lv nil]
           (cond
-           (identical? v' ::not-found) lv
-           (not (lvar? v')) v'
-           :else (recur (get s v' ::not-found) v'))))
+           (identical? v ::not-found) lv
+           (not (lvar? v)) v
+           :else (recur (get s v ::not-found) v))))
 
   (walk* [this v]
          (let [v (walk this v)]
@@ -758,8 +758,8 @@
 
 (defmacro == [u v]
   `(fn [a#]
-     (if-let [a'# (unify a# ~u ~v)]
-       a'#
+     (if-let [b# (unify a# ~u ~v)]
+       b#
        nil)))
 
 (defn bind-cond-e-clause [a]

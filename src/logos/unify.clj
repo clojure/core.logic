@@ -13,6 +13,7 @@
    (lvarq-sym? expr) (mk/lvar (rem-? expr))
    :else expr))
 
+;; TODO: replace postwalk with something much faster ?
 (defn prep [expr]
   (postwalk replace-lvar expr))
 
@@ -34,14 +35,13 @@
     (unifier' '(?x ?y) '(1 2))
     (unifier' '(?x ?y 3) '(1 2 ?z))
     (unifier' '[?x ?y] [1 2])
-    (unifier' '{?x ?y} {1 2})
-    (unifier' '#{?x ?y} '#{1 2})
+    (unifier' '{x ?y a 2} '{x 1 a ?b})
     
     ;; FIXME: sets do not have an order nor hashmap
     ;; we need a special unify case for them
     (unifier' '#{?x ?y 3} '#{1 2 ?z})
     
-    ;; Not supported at the moment while I iron some
+    ;; NOTE: Not supported at the moment while I iron some
     ;; other things out
     (unifier' '(?x ?y ?z ?&r) '(1 2 3 4 5 6 7 8 9 0))
     (unifier' '(?x ?y [?&a] ?&b) '(1 2 [3 4 5 6 7] 8 9 0))

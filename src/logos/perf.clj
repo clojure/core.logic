@@ -157,19 +157,18 @@
              (exist [x y z]
                     (== [1 2 {x 5}] q))))))
 
-  ;; this is going to be very, very slow
-  ;; postwalk is not cheap
-  ;; 45 seconds
+  ;; 2 orders of magnitude slower than below
+  ;; 370ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
-       (unifier '{?x ?y} {1 2}))))
+       (unifier' '{x ?y} '{x 1}))))
 
-  ;; much faster
+  ;; 450ms
   (dotimes [_ 10]
     (let [[u w] (map prep ['{?x ?y} {1 2}])]
      (time
-      (dotimes [_ 1e5]
+      (dotimes [_ 1e6]
         (unifier u w)))))
 
   (defn rest-o [l d]
