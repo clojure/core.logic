@@ -19,7 +19,7 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 
 h2. Notes
 
-I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. All iterable Clojure data structures are extended to this protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
+I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
 
 <pre>
 (lcons 'a (lvar 'b)) ; (a . <lvar:b>)
