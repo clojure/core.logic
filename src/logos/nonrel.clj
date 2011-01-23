@@ -16,7 +16,7 @@
         ((exist []
                 ~@goals) ~a)))))
 
-;; TODO: test
+;; TODO: tests
 
 (defmacro cond-a [& clauses]
   (let [a (gensym "a")]
@@ -32,3 +32,11 @@
        (first
         (first
          (mplus* ~@(bind-cond-e-clauses a clauses)))))))
+
+(comment
+  (run* [x]
+    (cond-a
+      ((== olive x) s*)
+      ((== olive x) s*)
+      (else u*)))
+  )

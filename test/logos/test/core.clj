@@ -537,14 +537,14 @@
 
 (defn teacup-o [x]
   (cond-e
-   ((== 'tea x) s*)
-   ((== 'cup x) s*)))
+   ((== 'tea x) s#)
+   ((== 'cup x) s#)))
 
 (deftest test-basic-conde-e-3
   (is (= (run* [r]
                (exist [x y]
                       (cond-e
-                       ((teacup-o x) (== true y) s*)
+                       ((teacup-o x) (== true y) s#)
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
          '((cup true) (tea true) (false true)))))

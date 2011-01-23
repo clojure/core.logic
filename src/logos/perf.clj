@@ -7,8 +7,8 @@
 
 (defn teacup-o [x]
   (cond-e
-   ((== 'tea x) s*)
-   ((== 'cup x) s*)))
+   ((== 'tea x) s#)
+   ((== 'cup x) s#)))
 
 (comment
   ;; ==================================================
@@ -123,7 +123,7 @@
        (run* [r]
              (exist [x y]
                     (cond-e
-                     ((teacup-o x) (== true y) s*)
+                     ((teacup-o x) (== true y) s#)
                      ((== false x) (== true y)))
                     (== (cons x (cons y ())) r)))))))
 

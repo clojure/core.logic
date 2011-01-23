@@ -752,9 +752,9 @@
 
 (defn fail [a] nil)
 
-(def s* succeed)
+(def s# succeed)
 
-(def u* fail)
+(def u# fail)
 
 (defmacro == [u v]
   `(fn [a#]
@@ -820,7 +820,7 @@
   `(lvar '~sym))
 
 (defmacro all
-  ([] `s*)
+  ([] `logos.minikanren/s#)
   ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
 
 ;; =============================================================================
