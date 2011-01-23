@@ -25,7 +25,7 @@ I stayed pretty true to the ideas of the original implementation. There are howe
 (lcons 'a (lvar 'b)) ; (a . <lvar:b>)
 </pre>
 
-Logic variables are instances of <code>lvarT</code> not vectors as they are in Scheme.
+Logic variables are instances of <code>LVar</code> not vectors as they are in Scheme.
 
 The goal and goal constructor portion has been written from scratch on top of the protocols and makes liberal use of lazy sequences to prevent stack overflow.
 
