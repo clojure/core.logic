@@ -16,15 +16,11 @@
         ((exist []
                 ~@goals) ~a)))))
 
-;; TODO: tests
-
 (defmacro cond-a [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (first
         (mplus* ~@(bind-cond-e-clauses a clauses))))))
-
-;; TODO: test
 
 (defmacro cond-u [& clauses]
   (let [a (gensym "a")]
@@ -34,9 +30,33 @@
          (mplus* ~@(bind-cond-e-clauses a clauses)))))))
 
 (comment
+  ;; ('olive)
   (run* [x]
     (cond-a
-      ((== olive x) s*)
-      ((== olive x) s*)
-      (else u*)))
+      ((== 'olive x) s#)
+      ((== 'oil x) s#)
+      (u#)))
+
+  ;; '()
+  ;; FIXME
+  (run* [x]
+    (cond-a
+      ((== 'virgin x) u#)
+      ((== 'olive x) s#)
+      ((== 'oil x) s#)
+      (u#)))
+
+
+  ;; (true)
+  ;; FIXME
+  (run* [x]
+    (exist (x y)
+      (== 'split x)
+      (== 'pea y)
+      (cond-a
+        ((== 'split x) (== x y))
+        (s#)))
+    (== true x))
+
+  ;; cond-u
   )
