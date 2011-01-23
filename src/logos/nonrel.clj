@@ -30,30 +30,32 @@
   (if-u [b gs c]))
 
 (defmacro if-a*
-  ([] nil)
-  ([g & grest]
-     `(if-a ~(first g) [~@(rest g)]
-            (lazy-seq (if-a* ~@grest)))))
+  ([])
+  ([[e & gs] & grest]
+     `(if-a ~e [~@gs]
+            ~(if (seq grest)
+               `(delay (if-a* ~@grest))
+               nil))))
 
 (defmacro if-u*
-  ([] nil)
-  ([g & grest]
-     `(if-u ~(first g) [~@(rest g)]
-            (lazy-seq (if-u* ~@grest)))))
+  ([])
+  ([[e & gs] & grest]
+     `(if-u ~e [~@gs]
+            ~(if (seq grest)
+               `(delay (if-u* ~@grest))
+               nil))))
 
 (extend-protocol IIfA
   nil
   (if-a [b gs c]
-        (if (seq c)
-          (if-a (first c) gs (next c))
-          nil)))
+        (when c
+          (force c))))
 
 (extend-protocol IIfU
   nil
   (if-u [b gs c]
-        (if (seq c)
-          (if-u (first c) gs (next c))
-          nil)))
+        (when c
+          (force c))))
 
 (extend-type Substitutions
   IIfA
@@ -62,7 +64,8 @@
           (if g0
             (when-let [b (g0 b)]
               (recur b gr))
-            (list b)))))
+            (when b
+              (list b))))))
 
 (extend-type Substitutions
   IIfU
@@ -71,7 +74,8 @@
           (if g0
             (when-let [b (g0 b)]
               (recur b gr))
-            (list b)))))
+            (when b
+              (list b))))))
 
 (extend-protocol IIfA
   clojure.lang.ISeq
@@ -148,5 +152,32 @@
         (s#)))
     (== true x))
 
+  (defn not-pasta-o [x]
+    (cond-a
+     ((== 'pasta x) u#)
+     (s#)))
+
+  ;; (spaghetti)
+  ;; FIXME
+  (run* [x]
+    (cond-a
+     ((not-pasta-o x) u#)
+     ((== 'spaghetti x))))
+
   ;; cond-u
+
+  (defn teacup-o [x]
+    (cond-e
+     ((== 'tea x) s#)
+     ((== 'cup x) s#)))
+
+  ;; error
+  ;; FIXME
+  (defn once-o [g]
+    (cond-u
+     (g s#)
+     (u#)))
+
+  (run* [x]
+     (once-o (teacup-o x)))
   )
