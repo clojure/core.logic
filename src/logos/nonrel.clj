@@ -32,13 +32,13 @@
 (defmacro if-a*
   ([] nil)
   ([g & grest]
-     `(if-a ~(first g) ~(rest g)
+     `(if-a ~(first g) [~@(rest g)]
             (lazy-seq (if-a* ~@grest)))))
 
 (defmacro if-u*
   ([] nil)
   ([g & grest]
-     `(if-u ~(first g) ~(rest g)
+     `(if-u ~(first g) [~@(rest g)]
             (lazy-seq (if-u* ~@grest)))))
 
 (extend-protocol IIfA
@@ -111,14 +111,12 @@
       (u#)))
 
   ;; '()
-  ;; FIXME
   (run* [x]
     (cond-a
       ((== 'virgin x) u#)
       ((== 'olive x) s#)
       ((== 'oil x) s#)
       (u#)))
-
 
   ;; (true)
   ;; FIXME
