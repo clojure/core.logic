@@ -58,12 +58,20 @@
 (extend-type Substitutions
   IIfA
   (if-a [b gs c]
-        (list (reduce bind b gs))))
+        (loop [b b [g0 & gr] gs]
+          (if g0
+            (when-let [b (g0 b)]
+              (recur b gr))
+            (list b)))))
 
 (extend-type Substitutions
   IIfU
   (if-u [b gs c]
-        (list (reduce bind b gs))))
+        (loop [b b [g0 & gr] gs]
+          (if g0
+            (when-let [b (g0 b)]
+              (recur b gr))
+            (list b)))))
 
 (extend-protocol IIfA
   clojure.lang.ISeq
@@ -103,14 +111,16 @@
 ;; Examples
 
 (comment
-  ;; ('olive)
+  (if-a empty-s [s#] nil)
+
+  ;; (olive)
   (run* [x]
     (cond-a
       ((== 'olive x) s#)
       ((== 'oil x) s#)
       (u#)))
 
-  ;; '()
+  ;; ()
   (run* [x]
     (cond-a
       ((== 'virgin x) u#)
@@ -118,14 +128,23 @@
       ((== 'oil x) s#)
       (u#)))
 
-  ;; (true)
-  ;; FIXME
+  ;; ()
   (run* [x]
     (exist (x y)
       (== 'split x)
       (== 'pea y)
       (cond-a
         ((== 'split x) (== x y))
+        (s#)))
+    (== true x))
+
+  ;; (true)
+  (run* [x]
+    (exist (x y)
+      (== 'split x)
+      (== 'pea y)
+      (cond-a
+        ((== x y) (== 'split x))
         (s#)))
     (== true x))
 
