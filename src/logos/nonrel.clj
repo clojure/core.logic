@@ -58,12 +58,12 @@
 (extend-type Substitutions
   IIfA
   (if-a [b gs c]
-        (reduce bind b gs)))
+        (list (reduce bind b gs))))
 
 (extend-type Substitutions
   IIfU
   (if-u [b gs c]
-        (reduce bind b gs)))
+        (list (reduce bind b gs))))
 
 (extend-protocol IIfA
   clojure.lang.ISeq
