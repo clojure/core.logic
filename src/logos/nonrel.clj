@@ -2,6 +2,9 @@
   (:refer-clojure :exclude [reify ==])
   (:use logos.minikanren))
 
+;; =============================================================================
+;; Project
+
 (defn project-binding [s]
   (fn [var]
    `(~var (walk ~s ~var))))
@@ -16,18 +19,66 @@
         ((exist []
                 ~@goals) ~a)))))
 
-(defmacro cond-a [& clauses]
+;; =============================================================================
+;; cond-a, cond-u
+
+(defprotocol IIfA
+  (if-a [b]))
+
+(defprotocol IIfU
+  (if-u [b]))
+
+(defmacro if-a*
+  ([] nil)
+  ([[e & goals] & rest]
+     ))
+
+(defmacro if-u*
+  ([] nil)
+  ([[e & goals] & rest]
+     ))
+
+(extend-protocol IIfA
+  nil
+  (if-a [b & [f r]] (if-u f )))
+
+(extend-type Substitution
+  IIfA
+  (if-a [b]))
+
+(extend-type Substitution
+  IIfU
+  (if-u [b]))
+
+(extend-protocol IIfA
+  clojure.lang.ISeq
+  (if-a [b]))
+
+(extend-type IIfU
+  clojure.lang.ISeq)
+
+(defn cond-clauses [a]
+  (fn [goals]
+    `((~(first goals) ~a) ~@(rest goals))))
+
+(defmacro cond-a
+  [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (first
-        (mplus* ~@(bind-cond-e-clauses a clauses))))))
+       (lazy-seq
+        (if-a* ~@(map (cond-clauses a) clauses))))))
 
 (defmacro cond-u [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (first
-        (first
-         (mplus* ~@(bind-cond-e-clauses a clauses)))))))
+       (lazy-seq
+        (if-u* ~@(map (cond-clauses a) clauses))))))
+
+;; =============================================================================
+;; copy-term
+
+;; =============================================================================
+;; Examples
 
 (comment
   ;; ('olive)
