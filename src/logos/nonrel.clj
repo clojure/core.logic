@@ -1,6 +1,7 @@
 (ns logos.nonrel
   (:refer-clojure :exclude [reify ==])
-  (:use logos.minikanren))
+  (:use logos.minikanren)
+  (:import [logos.minikanren Substitutions]))
 
 ;; =============================================================================
 ;; Project
@@ -23,39 +24,56 @@
 ;; cond-a, cond-u
 
 (defprotocol IIfA
-  (if-a [b]))
+  (if-a [b gs c]))
 
 (defprotocol IIfU
-  (if-u [b]))
+  (if-u [b gs c]))
 
 (defmacro if-a*
   ([] nil)
-  ([[e & goals] & rest]
-     ))
+  ([g & grest]
+     `(if-a ~(first g) ~(rest g)
+            (lazy-seq (if-a* ~@grest)))))
 
 (defmacro if-u*
   ([] nil)
-  ([[e & goals] & rest]
-     ))
+  ([g & grest]
+     `(if-u ~(first g) ~(rest g)
+            (lazy-seq (if-u* ~@grest)))))
 
 (extend-protocol IIfA
   nil
-  (if-a [b & [f r]] (if-u f )))
+  (if-a [b gs c]
+        (if (seq c)
+          (if-a (first c) gs (next c))
+          nil)))
 
-(extend-type Substitution
+(extend-protocol IIfU
+  nil
+  (if-u [b gs c]
+        (if (seq c)
+          (if-u (first c) gs (next c))
+          nil)))
+
+(extend-type Substitutions
   IIfA
-  (if-a [b]))
+  (if-a [b gs c]
+        (reduce bind b gs)))
 
-(extend-type Substitution
+(extend-type Substitutions
   IIfU
-  (if-u [b]))
+  (if-u [b gs c]
+        (reduce bind b gs)))
 
 (extend-protocol IIfA
   clojure.lang.ISeq
-  (if-a [b]))
+  (if-a [b gs c]
+        (reduce bind b gs)))
 
-(extend-type IIfU
-  clojure.lang.ISeq)
+(extend-protocol IIfU
+  clojure.lang.ISeq
+  (if-u [b gs c]
+        (reduce bind (first b) gs)))
 
 (defn cond-clauses [a]
   (fn [goals]
@@ -76,6 +94,10 @@
 
 ;; =============================================================================
 ;; copy-term
+
+(defn copy-term [u v]
+  (project [u]
+    (== (walk* (build empty-s u) u) v)))
 
 ;; =============================================================================
 ;; Examples

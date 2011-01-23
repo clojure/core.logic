@@ -100,7 +100,8 @@
   (unify [this u v])
   (reify-lvar-name [_])
   (-reify [this v])
-  (reify [this v]))
+  (reify [this v])
+  (build [this u]))
 
 (declare empty-s)
 (declare unify-terms)
@@ -159,7 +160,9 @@
 
   (reify [this v]
          (let [v (walk* this v)]
-           (walk* (-reify empty-s v) v))))
+           (walk* (-reify empty-s v) v)))
+
+  (build [this u]))
 
 (def empty-s (Substitutions. {}))
 
