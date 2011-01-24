@@ -4,7 +4,11 @@
   (:import [logos.minikanren Substitutions]))
 
 (comment
-  (defm append [x y z]
+  (defn-e append [x y z]
     ([() _ y])
     ([[?a & ?d] _ [?a & ?r]] (append d y r)))
+
+  (match-e x
+    ([()] ...)
+    ([?a & ?d] ...))
   )

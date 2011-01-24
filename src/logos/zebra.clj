@@ -16,6 +16,12 @@
    ((on-right-o x y l))
    ((on-right-o y x l))))
 
+(comment
+  (defne on-right-o [x y l]
+    ([l r [l r & _]])
+    ([l r [_ & ?rest]] (on-right_o ?rest)))
+  )
+
 (defn zebra [hs]
   (macro/symbol-macrolet [_ (lvar)]
    (all
@@ -84,6 +90,11 @@
     (time
      (dotimes [_ 1e3]
        (doall (zebra-o))))))
+
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e3]
+       (doall (zebra-o)))))
 
   (dotimes [_ 5]
     (time
