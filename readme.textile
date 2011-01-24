@@ -103,6 +103,61 @@ h2. Interesting Questions
 * Compilation to byte-code ?
 * Fork/join ?
 
+h2. Syntax
+
+The design of miniKanren currently suffer from the closed principle. Relations are primarily defined through functions and so they are at the moment hard to extend. It would be preferable for the syntax to be more "open". Consider the following Prolog snippet:
+
+<pre>
+parent(pam, bob).
+parent(tom, bob).
+parent(tom, liz).
+parent(bob, ann).
+parent(bob, pat).
+parent(pat, jim).
+
+female(pam).
+female(liz).
+female(pat).
+female(ann).
+
+male(tom).
+male(bob).
+male(jim).
+
+offspring(Y,X) :- parent(X, Y).
+
+mother(X,Y) :- parent(X,Y), female(X).
+</pre>
+
+Currently this is very verbose in logos.minikanren. We'd prefer something more along the lines of:
+
+<pre>
+(rel parent
+     '[pam bob]
+     '[tom bob]
+     '[tom liz])
+
+(extend-rel parent
+     '[bob ann]
+     '[bob pat]
+     '[pat jim])
+
+(rel female
+     'pam 'liz 'pat 'ann)
+
+(rel male
+     'tom 'bob 'jim)
+
+(rel offspring
+     (parent ?x ?y))
+
+(rel mother
+     (parent ?x ?y)
+     (female ?y))
+</pre>
+
+Note that this syntax would not suffer from the "closed" property.
+
 h2. Issues
 
 h2. Resources
