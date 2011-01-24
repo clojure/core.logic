@@ -108,6 +108,7 @@
 (declare occurs-check-term)
 (declare reify-term)
 (declare walk-term)
+(declare build-term)
 
 (deftype Substitutions [s]
   Object
@@ -162,7 +163,8 @@
          (let [v (walk* this v)]
            (walk* (-reify empty-s v) v)))
 
-  (build [this u]))
+  (build [this u]
+         (build-term u this)))
 
 (def empty-s (Substitutions. {}))
 
@@ -654,6 +656,41 @@
         (or (occurs-check s x (first v))
             (recur (next v) x s))
         false))))
+
+;; =============================================================================
+;; Build Term
+
+(defprotocol IBuildTerm
+  (build-term [u s]))
+
+(extend-protocol IBuildTerm
+  nil
+  (build-term [u s] s))
+
+(extend-type Object
+  IBuildTerm
+  (build-term [u s] s))
+
+(extend-type LVar
+  IBuildTerm
+  (build-term [u s]
+   (let [m (.s ^Substitutions s)]
+     (if (contains? m u)
+       s
+       (Substitutions. (assoc m u (lvar 'ignore)))))))
+
+(extend-type LCons
+  IBuildTerm
+  (build-term [u s]
+     (loop [u u s s]
+       (if (lvar? u)
+         (build s u)
+         (recur (lnext u) (build s (lfirst u)))))))
+
+(extend-protocol IBuildTerm
+  clojure.lang.ISeq
+  (build-term [u s]
+    (reduce build s u)))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors

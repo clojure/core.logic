@@ -85,7 +85,8 @@
 (extend-protocol IIfU
   clojure.lang.ISeq
   (if-u [b gs c]
-        (reduce bind (first b) gs)))
+        (let [b (reduce bind (first b) gs)]
+          (if (subst? b) (list b) b))))
 
 (defn cond-clauses [a]
   (fn [goals]
@@ -95,14 +96,12 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (lazy-seq
-        (if-a* ~@(map (cond-clauses a) clauses))))))
+       (if-a* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro cond-u [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (lazy-seq
-        (if-u* ~@(map (cond-clauses a) clauses))))))
+       (if-u* ~@(map (cond-clauses a) clauses)))))
 
 ;; =============================================================================
 ;; copy-term
@@ -158,10 +157,9 @@
      (s#)))
 
   ;; (spaghetti)
-  ;; FIXME
   (run* [x]
     (cond-a
-     ((not-pasta-o x) u#)
+     ((not-pasta-o x))
      ((== 'spaghetti x))))
 
   ;; cond-u
@@ -171,13 +169,24 @@
      ((== 'tea x) s#)
      ((== 'cup x) s#)))
 
-  ;; error
-  ;; FIXME
+  (run* [x]
+    (teacup-o x))
+
+  ;; (tea)
   (defn once-o [g]
     (cond-u
-     (g s#)
-     (u#)))
+     (g s#)))
 
   (run* [x]
      (once-o (teacup-o x)))
+
+  (run* [r]
+    (cond-e
+     ((teacup-o r) s#)
+     ((== false r) s#)))
+
+  (run* [r]
+    (cond-a
+     ((teacup-o r) s#)
+     ((== false r) s#)))
   )
