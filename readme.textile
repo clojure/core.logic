@@ -97,9 +97,13 @@ The above is quite slow since we have to walk the data structure and replace the
   (unifier u w))
 </pre>
 
+h2. Interesting Questions
+
+* Compilation to pure optimized Clojure ?
+* Compilation to byte-code ?
+* Fork/join ?
+
 h2. Issues
-
-
 
 h2. Resources
 
