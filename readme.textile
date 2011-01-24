@@ -2,7 +2,7 @@ h1. Logos
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663. However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
-Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. As of v0.4 it can solve the classic Zebra puzzle in about the same amount of time as SWI-Prolog. It would be interesting to see if we can approach the speed of Aquarius or Mercury.
+Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. As of v0.4 it can solve the classic Zebra puzzle in about the same amount of time as SWI-Prolog. It would be interesting to see if we can approach the speed of Aquarius or Mercury on standard Prolog benchmarks.
 
 h2. About
 
