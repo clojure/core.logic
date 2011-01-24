@@ -105,7 +105,7 @@ h2. Interesting Questions
 
 h2. Syntax
 
-The design of miniKanren currently suffer from the closed principle. Relations are primarily defined through functions and so they are at the moment hard to extend. It would be preferable for the syntax to be more "open". Consider the following Prolog snippet:
+The design of miniKanren currently suffers from the closed principle. Relations are primarily defined through functions and so they are hard to extend. It would be preferable for the syntax to be more "open". Consider the following Prolog snippet:
 
 <pre>
 parent(pam, bob).
