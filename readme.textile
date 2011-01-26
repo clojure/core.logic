@@ -99,6 +99,7 @@ The above is quite slow since we have to walk the data structure and replace the
 
 h2. Interesting Questions
 
+* Avoid unification at all costs, analyze miniKanren programs for ground terms. Instead use map/filter when possible which are 200X faster.
 * Compilation to pure optimized Clojure ?
 * Compilation to byte-code ?
 * Fork/join ?
