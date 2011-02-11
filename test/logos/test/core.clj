@@ -680,7 +680,7 @@
 ;; -----------------------------------------------------------------------------
 ;; cond-e even
 
-;; when conde has an even number of clauses and it is called twice we get
+;; when cond-e has an even number of clauses and it is called twice we get
 ;; a very odd error
 
 (defn digit [x]
