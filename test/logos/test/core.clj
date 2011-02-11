@@ -676,3 +676,32 @@
   (is (= (run 1 [q]
               (rember-o 'b '(a b c b d) q))
          '((a c b d)))))
+
+;; -----------------------------------------------------------------------------
+;; cond-e even
+
+;; when conde has an even number of clauses and it is called twice we get
+;; a very odd error
+
+(defn digit [x]
+  (cond-e
+   ((== 0 x))
+   ((== 1 x))
+   ((== 2 x))
+   ((== 3 x))
+   ((== 4 x))
+   ((== 5 x))
+   ((== 6 x))
+   ((== 7 x))
+   ((== 8 x))
+   ((== 9 x))))
+
+;; 10, 8, 6, 4, 1 - don't work
+
+(deftest conde-even
+  (is (= (run* [q]
+               (exist [x y]
+                      (digit x)
+                      (digit y)
+                      (== q [x y])))
+         '([0 0] [1 1] [0 1] [1 0]))))
