@@ -678,30 +678,35 @@
          '((a c b d)))))
 
 ;; -----------------------------------------------------------------------------
-;; cond-e even
+;; cond-e clause count
 
-;; when cond-e has an even number of clauses and it is called twice we get
-;; a very odd error
+(defn digit-1 [x]
+  (cond-e
+   ((== 0 x))))
 
-(defn digit [x]
+(defn digit-4 [x]
   (cond-e
    ((== 0 x))
    ((== 1 x))
    ((== 2 x))
-   ((== 3 x))
-   ((== 4 x))
-   ((== 5 x))
-   ((== 6 x))
-   ((== 7 x))
-   ((== 8 x))
-   ((== 9 x))))
+   ((== 3 x))))
 
 ;; 10, 8, 6, 4, 1 - don't work
 
-(deftest cond-e-even
+;; Don't know how to create ISeq from: logos.minikanren.Substitutions
+(deftest test-cond-e-1-clause
   (is (= (run* [q]
                (exist [x y]
-                      (digit x)
-                      (digit y)
+                      (digit-1 x)
+                      (digit-1 y)
                       (== q [x y])))
-         '([0 0] [1 1] [0 1] [1 0]))))
+         '([0 0]))))
+
+;; No implementation of method: :unify of protocol: #'logos.minikanren/ISubstitutions found for class: nil
+(deftest test-cond-e-4-clauses
+  (is (= (run* [q]
+               (exist [x y]
+                      (digit-4 x)
+                      (digit-4 y)
+                      (== q [x y])))
+         '([0 0]))))
