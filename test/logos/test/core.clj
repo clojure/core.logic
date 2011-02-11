@@ -698,7 +698,7 @@
 
 ;; 10, 8, 6, 4, 1 - don't work
 
-(deftest conde-even
+(deftest cond-e-even
   (is (= (run* [q]
                (exist [x y]
                       (digit x)
