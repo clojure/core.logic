@@ -60,7 +60,7 @@
                                   youf (lfirst you)]
                               (and (or (= mef youf)
                                        (lvar? mef)
-                                        (lvar? youf))
+                                       (lvar? youf))
                                    (recur (lnext me) (lnext you)))))))))
 
   (hashCode [this]
