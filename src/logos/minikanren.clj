@@ -813,7 +813,10 @@
   (let [a (gensym "a")]
     `(fn [~a]
        (lazy-seq
-        (mplus* ~@(bind-cond-e-clauses a clauses))))))
+        (let [s# (mplus* ~@(bind-cond-e-clauses a clauses))]
+          (or (and (subst? s#)
+                   (list s#))
+              s#))))))
 
 (defn lvar-bind [sym]
   ((juxt identity
