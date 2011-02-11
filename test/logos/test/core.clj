@@ -691,9 +691,6 @@
    ((== 2 x))
    ((== 3 x))))
 
-;; 10, 8, 6, 4, 1 - don't work
-
-;; Don't know how to create ISeq from: logos.minikanren.Substitutions
 (deftest test-cond-e-1-clause
   (is (= (run* [q]
                (exist [x y]
@@ -702,7 +699,9 @@
                       (== q [x y])))
          '([0 0]))))
 
-;; No implementation of method: :unify of protocol: #'logos.minikanren/ISubstitutions found for class: nil
+;; 10, 8, 6, 4 - don't work
+;; IllegalArgumentException No implementation of method: :unify of protocol: #'logos.minikanren/ISubstitutions found for class: nil
+
 (deftest test-cond-e-4-clauses
   (is (= (run* [q]
                (exist [x y]
@@ -710,3 +709,21 @@
                       (digit-4 y)
                       (== q [x y])))
          '([0 0]))))
+
+(comment
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              ((digit-4 x))
+              ((digit-4 y)))]
+    (map #(.s %) s))
+  
+  ;; there is nothing wrong with the substitutions
+  ;; perhaps something odd about exist ?
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              ((digit-4 x))
+              ((digit-4 y)))]
+    (map #(.s %) (map #(unify % (lvar 'q) [x y]) s)))
+  )
