@@ -111,7 +111,7 @@
 
 ;; from CTM
 
-(defn digit [x]
+(defn digit-o [x]
   (cond-e
    ((== 0 x))
    ((== 1 x))
@@ -124,21 +124,6 @@
    ((== 8 x))
    ((== 9 x))))
 
-(defn alpha [x]
-  (cond-e
-   ((== 'a x))
-   ((== 'b x))
-   ((== 'c x))
-   ((== 'd x))
-   ((== 'e x))
-   ((== 'f x))
-   ((== 'g x))
-   ((== 'h x))
-   ((== 'i x))
-   ((== 'j x))
-   ((== 'k x))
-   #_((== 'l x))))
-
 (comment
   ;; of course this is better
   (defrel digit #{0 1 2 3 4 5 6 7 8 9})
@@ -147,27 +132,48 @@
 ;; it is nice that in Mozart you don't need to use project
 ;; for the following
 
-;; should compare this to the performance of a list
-;; comprehension
-
-(defn palindrome [x]
+(defn palindrome-o [x]
   (exist [a b c d]
-    (digit a) (digit b) (digit c) (digit d)
+    (digit-o a) (digit-o b) (digit-o c) (digit-o d)
     (nonrel/project [a b c d]
      (== x (* (+ (* 10 a) b)
               (+ (* 10 c) d)))
      (nonrel/project [x]
       (== (> x 0) true)
       (== (>= x 100) true)
-      (== (mod (/ x 1000) 10) (mod (/ x 1) 10))
-      (== (mod (/ x 100)) (mod (/ x 10) 10))))))
+      (== (mod (int (/ x 1000)) 10)
+          (mod (int (/ x 1)) 10))
+      (== (mod (int (/ x 100)) 10)
+          (mod (int (/ x 10)) 10))))))
 
 (comment
-  (let [r (run* [q]
-            (exist [a b c d]
-               (digit a) (digit b) (digit c) (digit d)
-               (nonrel/project [a b c d]
-                  (== q (* (+ (* 10 a) b)
-                           (+ (* 10 c) d))))))]
-    (count r))
+  (run* [q] (palindrome-o q))
+
+  ;; 40ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (run* [q] (palindrome-o q)))))
+
+  ;; compare with
+  (defn palindrome []
+    (let [r (range 9)]
+      (for [a r b r
+            c r d r
+            :let  [x (* (+ (* 10 a) b)
+                        (+ (* 10 c) d))]
+            :when (and (> x 0)
+                       (>= x 100)
+                       (= (mod (int (/ x 1000)) 10)
+                          (mod (int (/ x 1)) 10))
+                       (= (mod (int (/ x 100)) 10)
+                          (mod (int (/ x 10)) 10)))]
+        x)))
+
+  ;; ~4ms, so about 10X faster, not as dramatic a difference
+  ;; as I would have imagined!
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (doall (palindrome)))))
   )
