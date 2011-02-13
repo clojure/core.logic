@@ -781,9 +781,12 @@
 (extend-protocol IMPlusStream
   clojure.lang.ISeq
   (mplus-s [this a]
-           (cons (first a)
-                 (cons (first this)
-                       (mplus* (next this) (next a))))))
+           (if (seq this)
+             (if (seq a)
+               (cons (first a)
+                     (cons (first this)
+                           (mplus* (next this) (next a)))))
+             (if (seq a) a '()))))
 
 ;; =============================================================================
 ;; Syntax

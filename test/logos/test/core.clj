@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [reify ==])
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
-  (:use [clojure.test])
+  (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
 ;; =============================================================================
@@ -699,31 +699,21 @@
                       (== q [x y])))
          '([0 0]))))
 
-;; 10, 8, 6, 4 - don't work
-;; IllegalArgumentException No implementation of method: :unify of protocol: #'logos.minikanren/ISubstitutions found for class: nil
-
 (deftest test-cond-e-4-clauses
   (is (= (run* [q]
                (exist [x y]
                       (digit-4 x)
                       (digit-4 y)
                       (== q [x y])))
-         '([0 0]))))
+         '([0 3] [1 3]
+           [1 2] [0 2]
+           [0 1] [2 3]
+           [2 2] [1 1]
+           [1 0] [3 3]
+           [3 2] [2 1]
+           [2 0] [3 1]
+           [0 0] [3 0]))))
 
-(comment
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              ((digit-4 x))
-              ((digit-4 y)))]
-    (map #(.s %) s))
-  
-  ;; there is nothing wrong with the substitutions
-  ;; perhaps something odd about exist ?
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              ((digit-4 x))
-              ((digit-4 y)))]
-    (map #(.s %) (map #(unify % (lvar 'q) [x y]) s)))
-  )
+(deftest test-mplus-e
+  (is (= (reduce mplus-s '((0 1) (2)))
+         '(2 0 1))))
