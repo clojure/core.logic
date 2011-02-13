@@ -159,8 +159,6 @@ Currently this is very verbose in logos.minikanren. We'd prefer something more a
 
 Note that this syntax would not suffer from the "closed" property.
 
-h2. Issues
-
 h2. Resources
 
 * "Concepts, Technqiues, and Models of Computer Programming":http://www.info.ucl.ac.be/~pvr/book.html, Chapters 9 and 12
