@@ -147,6 +147,9 @@
 ;; it is nice that in Mozart you don't need to use project
 ;; for the following
 
+;; should compare this to the performance of a list
+;; comprehension
+
 (defn palindrome [x]
   (exist [a b c d]
     (digit a) (digit b) (digit c) (digit d)
@@ -160,7 +163,6 @@
       (== (mod (/ x 100)) (mod (/ x 10) 10))))))
 
 (comment
-
   (let [r (run* [q]
             (exist [a b c d]
                (digit a) (digit b) (digit c) (digit d)
@@ -168,79 +170,4 @@
                   (== q (* (+ (* 10 a) b)
                            (+ (* 10 c) d))))))]
     (count r))
-
-
-  ;; NOTE: this ordering works
-  (run* [q]
-        (exist [a b]
-               (== q a)
-               (digit a)
-               (digit b)))
-
-  ;; works
-  (run* [q]
-        (exist [a b]
-               (digit a)
-               (== q a)
-               (digit b)))
-
-  ;; FIXME: this ordering does not
-  ;; there is a bug related to unifying with zero - David
-  (run* [q]
-        (exist [a b]
-               (digit a)
-               (digit b)
-               (== q a)))
-
-  ;; SMOKING GUN
-  ;; our mplus implementation is suspect, we have an EVEN/ODD problem
-  ;; if two cond-e expressions follow one another and there are an even
-  ;; number of cond-e clauses - it fails, (with trying to  walk nil error)
-  ;; if the number of cond-e clauses is odd, everything works fine
-  (run* [q]
-        (exist [a b c d]
-               (alpha a)
-               (alpha b)
-               (== q a)))
-
-  ;; ugh
-  ;; fail for some reason
-  (run* [q]
-        (exist [a b]
-               (digit a)
-               (digit b)
-               (== q [a])))
-
-  ;; works
-  (run* [q]
-        (exist [a b]
-               (digit a)
-               (== q [a])))
-  
-  ;; (5)
-  ;; as expected
-  (run* [q]
-    (exist [a b c]
-     (== 1 a)
-     (== 2 b)
-     (== 3 c)
-     (nonrel/project [a b c]
-       (== q (+ (* a b) c)))))
-
   )
-
-(comment
-  (defmulti multi-test type)
-  (defmethod multi-test ::a [x])
-  (defmethod multi-test ::b [x])
-
-  ;; multimethods are almost twice as fast
-  ;; can we get very close to that?
-  ;; perhaps via tabling
-  (dotimes [_ 10]
-    (let [x (with-meta {} {:type ::a})]
-     (time
-      (dotimes [_ 8e6]
-        (multi-test x)))))
-  )
->
