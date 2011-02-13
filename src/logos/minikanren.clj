@@ -785,7 +785,8 @@
              (if (seq a)
                (cons (first a)
                      (cons (first this)
-                           (mplus* (next this) (next a)))))
+                           (mplus* (next this) (next a))))
+               this)
              (if (seq a) a '()))))
 
 ;; =============================================================================

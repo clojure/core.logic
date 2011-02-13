@@ -1,7 +1,8 @@
 (ns logos.examples
   (:refer-clojure :exclude [reify ==])
   (:use logos.minikanren)
-  (:require [logos.nonrel :as nonrel]))
+  (:require [logos.nonrel :as nonrel]
+            [clojure.contrib.monads :as m]))
 
 (defn likes
   [x y]
@@ -146,7 +147,39 @@
       (== (mod (int (/ x 100)) 10)
           (mod (int (/ x 10)) 10))))))
 
+(defn palindrome []
+  (let [r (range 9)]
+    (for [a r b r
+          c r d r
+          :let  [x (* (+ (* 10 a) b)
+                      (+ (* 10 c) d))]
+          :when (and (> x 0)
+                     (>= x 100)
+                     (= (mod (int (/ x 1000)) 10)
+                        (mod (int (/ x 1)) 10))
+                     (= (mod (int (/ x 100)) 10)
+                        (mod (int (/ x 10)) 10)))]
+      x)))
+
+(defn palindrome-m []
+  (let [r (range 9)]
+   (m/with-monad m/sequence-m
+     (m/domonad
+      [a r b r
+       c r d r
+       :let  [x (* (+ (* 10 a) b)
+                   (+ (* 10 c) d))]
+       :when (and (> x 0)
+                  (>= x 100)
+                  (= (mod (int (/ x 1000)) 10)
+                     (mod (int (/ x 1)) 10))
+                  (= (mod (int (/ x 100)) 10)
+                     (mod (int (/ x 10)) 10)))]
+      x))))
+
 (comment
+  (palindrome)
+  (palindrome-m)
   (run* [q] (palindrome-o q))
 
   ;; 40ms
@@ -155,25 +188,16 @@
      (dotimes [_ 1]
        (run* [q] (palindrome-o q)))))
 
-  ;; compare with
-  (defn palindrome []
-    (let [r (range 9)]
-      (for [a r b r
-            c r d r
-            :let  [x (* (+ (* 10 a) b)
-                        (+ (* 10 c) d))]
-            :when (and (> x 0)
-                       (>= x 100)
-                       (= (mod (int (/ x 1000)) 10)
-                          (mod (int (/ x 1)) 10))
-                       (= (mod (int (/ x 100)) 10)
-                          (mod (int (/ x 10)) 10)))]
-        x)))
-
   ;; ~4ms, so about 10X faster, not as dramatic a difference
   ;; as I would have imagined!
   (dotimes [_ 10]
     (time
      (dotimes [_ 1]
        (doall (palindrome)))))
+
+  ;; interesting only a hair slower than standard list comprehension
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (doall (palindrome-m)))))
   )
