@@ -15,7 +15,16 @@
    ((== x 'john))
    ((== x 'bob))))
 
+(defn any-o [q]
+  (cond-e
+   (q s#)
+   ((any-o q))))
+
 (comment
+  ;; hmm this might be a real bug
+  (run 1 [q]
+       (any-o s#)
+       (== true q))
 
   (run* [q]
         (likes q 'mary)
