@@ -588,6 +588,7 @@
   (walk-term [v s] v))
 
 ;; TODO: no way to make this non-stack consuming w/o a lot more thinking
+;; we could use continuation passing style and trampoline
 
 (extend-type LCons
   IWalkTerm
