@@ -717,3 +717,13 @@
 (deftest test-mplus-e
   (is (= (reduce mplus-s '((0 1) (2)))
          '(2 0 1))))
+
+;; -----------------------------------------------------------------------------
+;; any-o
+
+(defn any-o [q]
+  (cond-e
+   (q s#)
+   ((any-o q))))
+
+(deftest test-any-o)
