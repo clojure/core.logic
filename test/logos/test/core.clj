@@ -547,7 +547,7 @@
                        ((teacup-o x) (== true y) s#)
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
-         '((cup true) (tea true) (false true)))))
+         '((tea true) (false true) (cup true)))))
 
 ;; =============================================================================
 ;; cons-o
@@ -629,19 +629,7 @@
 (deftest test-flatten-o
   (is (= (run* [x]
                (flatten-o '[[a b] c] x))
-         '((a b c)
-           ([[a b] c])
-           ([a b] c ())
-           (a b c ())
-           (a b (c))
-           (a b () c ())
-           ([a b] (c))
-           ([a b] c)
-           (a (b) c ())
-           (a b () (c))
-           (a b () c)
-           (a (b) (c))
-           (a (b) c)))))
+         '((a b c) ([[a b] c]) ([a b] c) (a b (c)) (a (b) c) (a b c ()) ([a b] (c)) (a b () c) ([a b] c ()) (a (b) (c)) (a b () (c)) (a (b) c ()) (a b () c ())))))
 
 ;; =============================================================================
 ;; member-o
@@ -664,10 +652,7 @@
                  (== q [_ _])
                  (member-o ['foo _] q)
                  (member-o [_ 'bar] q))))
-         '([[foo bar] _.0]
-            [[_.0 bar] [foo _.1]]
-            [_.0 [foo bar]]
-            [[foo _.0] [_.1 bar]]))))
+         '([[foo bar] _.0] [[_.0 bar] [foo _.1]] [[foo _.0] [_.1 bar]] [_.0 [foo bar]]))))
 
 ;; -----------------------------------------------------------------------------
 ;; rember-o
@@ -705,14 +690,7 @@
                       (digit-4 x)
                       (digit-4 y)
                       (== q [x y])))
-         '([0 3] [1 3]
-           [1 2] [0 2]
-           [0 1] [2 3]
-           [2 2] [1 1]
-           [1 0] [3 3]
-           [3 2] [2 1]
-           [2 0] [3 1]
-           [0 0] [3 0]))))
+         '([0 0] [1 0] [0 1] [2 0] [0 2] [1 1] [0 3] [3 0] [1 2] [2 1] [1 3] [3 1] [2 2] [3 2] [2 3] [3 3]))))
 
 (deftest test-mplus-e
   (is (= (reduce mplus-s '((0 1) (2)))
@@ -726,4 +704,14 @@
    (q s#)
    ((any-o q))))
 
-(deftest test-any-o)
+(deftest test-any-o-1
+  (is (= (run 1 [q]
+              (any-o s#)
+              (== true q))
+         (list true))))
+
+(deftest test-any-o-2
+  (is (= (run 5 [q]
+              (any-o s#)
+              (== true q))
+         (list true true true true true))))

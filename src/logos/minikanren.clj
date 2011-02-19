@@ -757,11 +757,17 @@
 ;; -----------------------------------------------------------------------------
 ;; Stream
 
+(defn mplus-concat [[f & r]]
+  (if r
+    (lazy-seq
+     (mplus f (mplus-concat r)))
+    f))
+
 (extend-protocol IBind
   clojure.lang.ISeq
   (bind [this g]
         (if-let [r (seq (map g this))]
-          (reduce mplus r))))
+          (mplus-concat r))))
 
 (defprotocol IMPlusStream
   (mplus-s [this a]))
