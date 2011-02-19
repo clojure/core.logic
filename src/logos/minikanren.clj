@@ -843,14 +843,14 @@
   (cond
    (nil? x) '()
    (seq? x) x
-   :else (list x)))
+   :else    (list x)))
 
 (defmacro run [& [n [x] & g-rest]]
   `(let [r# (let [~x (lvar '~x)]
               (->> (to-seq ((fn [a#] (bind* a# ~@g-rest)) empty-s))
                    (remove nil?)
                    (map (reifier ~x))))]
-    (if ~n (take ~n r#) r#)))
+     (if ~n (take ~n r#) r#)))
 
 (defmacro run* [& body]
   `(run false ~@body))
