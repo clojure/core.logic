@@ -3,17 +3,106 @@
   (:require [clojure.set :as set])
   (:use logos.minikanren))
 
-;; of course faster if we index the child
+(defn apply-cont [k v]
+  (k v))
 
-(def parent
+(defn snoc-cps [ls x k]
+  (apply-cont k (concat ls (list x))))
+
+(defn reverse*-cps [x k]
+  (cond
+   (nil? (seq x)) (apply-cont k '())
+   (seq? (first x)) (reverse*-cps (rest x)
+                      (fn [new-tail]
+                        (reverse*-cps (first x)
+                          (fn [new-head]
+                            (snoc-cps new-tail new-head k)))))
+   :else (reverse*-cps (rest x)
+           (fn [new-tail]
+             (snoc-cps new-tail (first x) k)))))
+
+(comment
+  (defn reverse*-cps [x k]
+    (cond
+     (nil? (seq x)) (trampoline #(apply-cont k '[]))
+     (seq? (first x)) (recur (rest x)
+                        (fn [new-tail]
+                          #(reverse*-cps (first x) ; <-- HERE
+                            (fn [new-head]
+                              (snoc-cps new-tail new-head k)))))
+     :else (recur (rest x)
+             (fn [new-tail]
+               (snoc-cps new-tail (first x) k)))))
+  )
+
+;; using trampoline
+
+(defn apply-cont [k v]
+  (k v))
+
+(defn snoc-cps [v x k]
+  #(apply-cont k (conj v x)))
+
+(defn reverse*-cps [x k]
+  (cond
+   (nil? (seq x)) (trampoline #(apply-cont k []))
+   (seq? (first x)) (recur (rest x)
+                      (fn [new-tail]
+                        #(reverse*-cps (first x)
+                           (fn [new-head]
+                             (snoc-cps new-tail new-head k)))))
+   :else (recur (rest x)
+           (fn [new-tail]
+             (snoc-cps new-tail (first x) k)))))
+
+(comment
+  ;; works
+  (reverse*-cps '((a b) c) identity)
+
+  ;; stack overflow, of course
+  (def x (reverse*-cps (range 5e4) identity))
+
+  ;; 100ms
+  ;; 3 orders of magnitude slower
+  ;; however Racket isn't any faster here
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (reverse*-cps (range 1e3) identity))))
+
+  ;; if we wisely use vectors, we get an order of magnitude better perf
+  ;; 700ms so about 7X slower
+  (dotimes [_ 10]
+    (let [r (range 1e6)]
+     (time
+      (dotimes [_ 1]
+        (reverse*-cps r identity)))))
+
+  (def y (doall (reverse (range 5e4))))
+
+  ;; ~100ms
+  (dotimes [_ 10]
+    (let [r (range 1e6)]
+     (time
+      (dotimes [_ 1]
+        (doall (reverse r))))))
+
+  ;; even with trampoline we have stack overflow
+  ;; because of the initial decent
+  )
+
+;; -----------------------------------------------------------------------------
+;; Comparing to minikanren ops to map/filter
+
+(comment
+  ;; of course faster if we index the child
+  (def parent
      #{['pam 'bob]
        ['tom 'bob]
        ['tom 'liz]
        ['bob 'ann]
        ['bob 'pat]
        ['pat 'jim]})
-
-(comment
 
  (def parent
       #{{:name 'pam :parent 'bob :age 9}
@@ -32,53 +121,53 @@
 
  ;; but this is essentially tabling, no ?
  ;; each part is an index
+ (defn parent-o [x y]
+   (fn [a]
+     (remove nil?
+             (map (fn [p]
+                    ((== p [x y]) a))
+                  parent))))
+
+ (defn parent-o [x y]
+   (fn [a]
+     (remove nil?
+             (map (fn [p]
+                    ((== p [x y]) a))
+                  parent))))
+
  )
 
-(defn parent-o [x y]
-  (fn [a]
-    (remove nil?
-            (map (fn [p]
-                   ((== p [x y]) a))
-                 parent))))
-
-(defn parent-o [x y]
-  (fn [a]
-    (remove nil?
-            (map (fn [p]
-                   ((== p [x y]) a))
-                 parent))))
-
-(run* [q]
-      (exist [x y]
-             (parent-o 'bob y)
-             (== [x y] q)))
-
-;; 1.5s for 100000 runs if db has 6 things in it
-;; 300ms if only one entry
-;; so linear with the size of the set
-(dotimes [_ 10]
-  (time
-   (dotimes [_ 1e5]
-     (run* [q]
-       (exist [x y]
-         (parent-o x y)
-         (== [x y] q))))))
-
-;; we could make the above much more efficient
-;; relation of the above nature can know to
-;; use map/filter
-
-;; 900ms
-(dotimes [_ 10]
-  (time
-   (dotimes [_ 1e5]
-     (run* [q]
-       (exist [x y]
-         (== x 'bob)
-         (parent-o x y)
-         (== [x y] q))))))
-
 (comment
+  (run* [q]
+        (exist [x y]
+               (parent-o 'bob y)
+               (== [x y] q)))
+
+  ;; 1.5s for 100000 runs if db has 6 things in it
+  ;; 300ms if only one entry
+  ;; so linear with the size of the set
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (exist [x y]
+                    (parent-o x y)
+                    (== [x y] q))))))
+
+  ;; we could make the above much more efficient
+  ;; relation of the above nature can know to
+  ;; use map/filter
+
+  ;; 900ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+             (exist [x y]
+                    (== x 'bob)
+                    (parent-o x y)
+                    (== [x y] q))))))
+
   ;; we know y is ground
   ;; we can just ext-no-check the bindings for y
   (parent-o 'bob y)
@@ -98,7 +187,6 @@
      (dotimes [_ 1e6]
        (doall (filter (fn [[x y]] (= x 'bob)) parent)))))
  )
-
 
 (comment
   ;; smart parent-o
@@ -125,7 +213,4 @@
     (time
      (dotimes [_ 1e6]
        (doall ((parent-o 'bob (lvar 'x)) empty-s)))))
-  )
-
-(comment
   )
