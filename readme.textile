@@ -159,6 +159,10 @@ Currently this is very verbose in logos.minikanren. We'd prefer something more a
 
 Note that this syntax would not suffer from the "closed" property.
 
+h2. Issues
+
+* Dynamic binding - the lazy nature of logos.minikanren means that you can't really use dynamic binding with your logic programs. This is unfortunate. See "this":http://dev.clojure.org/display/design/Improve+Binding and "this":http://dev.clojure.org/display/design/Resource+Scopes for an overview of the issues. Hopefully we can find a solution to this.
+
 h2. Resources
 
 * "Concepts, Technqiues, and Models of Computer Programming":http://www.info.ucl.ac.be/~pvr/book.html, Chapters 9 and 12
