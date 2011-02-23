@@ -161,7 +161,7 @@ Note that this syntax would not suffer from the "closed" property.
 
 h2. Issues
 
-* Dynamic binding - the lazy nature of logos.minikanren means that you can't really use dynamic binding with your logic programs. This is unfortunate. See "this":http://dev.clojure.org/display/design/Improve+Binding and "this":http://dev.clojure.org/display/design/Resource+Scopes for an overview of the issues. Hopefully we can find a solution to this.
+* Dynamic binding - the lazy nature of logos.minikanren means that you have to be careful with the use of dynamic binding with your logic programs. See "this":http://dev.clojure.org/display/design/Improve+Binding and "this":http://dev.clojure.org/display/design/Resource+Scopes for an overview of the issues. It's important to use <code>solve</code> or <code>solve*</code> instead of <code>run</code> or <code>run*</code> if you would like dynamic bindings to affect your logic program.
 
 h2. Resources
 
