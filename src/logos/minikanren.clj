@@ -861,7 +861,7 @@
 (defmacro run* [& body]
   `(run false ~@body))
 
-;; TODO : fix when we get scopes
+;; TODO : fix if possible, thought scopes could help, but now unsure
 
 (defmacro run-nc [& [n [x] & g-rest]]
   `(binding [*occurs-check* false]
@@ -869,6 +869,24 @@
 
 (defmacro run-nc* [& body]
   `(run-nc false ~@body))
+
+;; solve is like run except it promises to compute the result immediately
+;; that run-nc needs to compute it's results immediately is because bindings
+;; and laziness don't mix at the moment.
+
+(defmacro solve [& [n [x] & g-rest]]
+  `(doall (run ~n [~x] ~@g-rest)))
+
+(defmacro solve* [& body]
+  `(solve false ~@body))
+
+;; NOTE : solve-nc relies on run-nc, subject to change
+
+(defmacro solve-nc [& body]
+  `(run-nc ~@body))
+
+(defmacro solve-nc* [& body]
+  `(solve-nc false ~@body))
 
 (defn sym->lvar [sym]
   `(lvar '~sym))

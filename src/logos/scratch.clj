@@ -3,6 +3,27 @@
   (:require [clojure.set :as set])
   (:use logos.minikanren))
 
+;; lazy-seq return immediately, that's just how they work. You can 'put' them in a thread
+;; because they return immediately.
+
+;; take is also lazy, you need to force a doall even w/ take
+
+(comment
+  (do
+    (println "id:" (.getId (Thread/currentThread)))
+    (future
+     (println "id:" (.getId (Thread/currentThread)))))
+
+  (let [t (future (repeatedly #(.getId (Thread/currentThread))))]
+    (println "id:" (.getId (Thread/currentThread)))
+    (println (take 1 @t)))
+
+  ;; this works as expected
+  (let [t (future (repeatedly #(.getId (Thread/currentThread))))]
+    (println "id:" (.getId (Thread/currentThread)))
+    (future (println (take 1 @t))))
+  )
+
 (defn apply-cont [k v]
   (k v))
 
