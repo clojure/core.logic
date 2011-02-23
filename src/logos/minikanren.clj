@@ -871,7 +871,7 @@
   `(run-nc false ~@body))
 
 ;; solve is like run except it promises to compute the result immediately
-;; that run-nc needs to compute it's results immediately is because bindings
+;; run-nc needs to compute its results immediately only because bindings
 ;; and laziness don't mix at the moment.
 
 (defmacro solve [& [n [x] & g-rest]]
