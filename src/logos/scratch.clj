@@ -19,9 +19,9 @@
     (println (take 1 @t)))
 
   ;; this works as expected
-  (let [t (future (repeatedly #(.getId (Thread/currentThread))))]
+  (let [t (repeatedly #(.getId (Thread/currentThread)))]
     (println "id:" (.getId (Thread/currentThread)))
-    (future (println (take 1 @t))))
+    (future (println "id:" (first t))))
   )
 
 (defn apply-cont [k v]
