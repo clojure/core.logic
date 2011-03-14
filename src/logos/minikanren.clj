@@ -703,7 +703,7 @@
   (mplus [a f]))
 
 (defprotocol ITake
-  (take* [n a]))
+  (take* [a]))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -716,11 +716,11 @@
      `(mplus ~e (fn [] (mplus* ~@e-rest)))))
 
 (defmacro inc [& rest]
-  `(fn [] ~@rest))
+  `(fn inc [] ~@rest))
 
 (extend-type Object
   ITake
-  (take* [this n] this))
+  (take* [this] this))
 
 (deftype Choice [a f]
   IBind
@@ -730,11 +730,8 @@
   (mplus [this fp]
          (Choice. a (fn [] (mplus (fp) f))))
   ITake
-  (take* [this n]
-         (if (and n (zero? n))
-           '()
-           (lazy-seq (cons (first a)
-                           (take* f (and n (dec n))))))))
+  (take* [this]
+         (lazy-seq (cons (first a) (take* f)))))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -749,7 +746,7 @@
 
 (extend-protocol ITake
   nil
-  (take* [_ n] nil))
+  (take* [_] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Unit
@@ -762,7 +759,7 @@
   (mplus [this f]
          (Choice. this f))
   ITake
-  (take* [this n] this))
+  (take* [this] this))
 
 (extend-type Object
   IMPlus
@@ -780,7 +777,7 @@
   (mplus [this f]
          (inc (mplus (f) this)))
   ITake
-  (take* [this n] (take* (this) n)))
+  (take* [this] (take* (this))))
 
 ;; =============================================================================
 ;; Syntax
@@ -829,8 +826,7 @@
                      ((exist [~x] ~@g-rest
                              (fn [a#]
                                (cons (reify a# ~x) '())))
-                      empty-s))
-                   ~n)]
+                      empty-s)))]
      (if ~n
        (take ~n xs#)
        xs#)))
