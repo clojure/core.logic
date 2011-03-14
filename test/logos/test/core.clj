@@ -1,5 +1,5 @@
 (ns logos.test.core
-  (:refer-clojure :exclude [reify ==])
+  (:refer-clojure :exclude [reify == inc])
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
   (:use clojure.test clojure.pprint)
