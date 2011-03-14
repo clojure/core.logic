@@ -1,5 +1,5 @@
 (ns logos.zebra
-  (:refer-clojure :exclude [reify inc == take])
+  (:refer-clojure :exclude [reify inc ==])
   (:use logos.minikanren
         logos.logic)
   (:require [clojure.contrib.macro-utils :as macro]))

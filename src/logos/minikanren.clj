@@ -731,7 +731,7 @@
          (Choice. a (fn [] (mplus (fp) f))))
   ITake
   (take* [this]
-         (lazy-seq (cons (first a) (take* f)))))
+         (lazy-seq (cons (first a) (lazy-seq (take* f))))))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -746,7 +746,7 @@
 
 (extend-protocol ITake
   nil
-  (take* [_] nil))
+  (take* [_] '()))
 
 ;; -----------------------------------------------------------------------------
 ;; Unit
