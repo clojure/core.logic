@@ -37,6 +37,15 @@
    (odd? n)
      (cons 1 (build-num (/ (- n 1) 2)))))
 
+(defn num->int
+  ([num] (num->int num 0 0))
+  ([num i acc]
+     (if (seq num)
+      (recur (rest num)
+             (clojure.core/inc i)
+             (+ acc (* (first num) (Math/pow 2 i))))
+      (int acc))))
+
 (defn pos-o [n]
   (exist [a d]
     (== (lcons a d) n)))
@@ -74,56 +83,84 @@
 (defn plus-o [n m k]
   (adder-o 0 n m k))
 
+(def +o plus-o)
+
+(defn minus-o [n m k]
+  (plus-o m k n))
+
+(def -o minus-o)
+
 (comment
-  ;; ()
-  (run* [q]
-    (exist [n]
-      (pos-o '())
-        (== q true)))
+  
+ ;; ()
+ (run* [q]
+       (exist [n]
+              (pos-o '())
+              (== q true)))
 
-  ;; ((_.0 . _.1))
-  (run* [q]
-    (pos-o q))
+ ;; ((_.0 . _.1))
+ (run* [q]
+       (pos-o q))
 
-  ;; (true)
-  (run* [q]
-    (>1-o '(0 1))
-    (== true q))
+ ;; (true)
+ (run* [q]
+       (>1-o '(0 1))
+       (== true q))
 
-  ;; ()
-  (run* [q]
-    (>1-o '(1))
-    (== true q))
+ ;; ()
+ (run* [q]
+       (>1-o '(1))
+       (== true q))
 
-  ;; ((_.0 _.1 . _.2))
-  (run* [q]
-    (>1-o q))
+ ;; ((_.0 _.1 . _.2))
+ (run* [q]
+       (>1-o q))
 
-  ;; ((0 1 0 1))
-  (run* [s]
-    (gen-adder-o 1 '(0 1 1) '(1 1) s))
+ ;; ((0 1 0 1))
+ (run* [s]
+       (gen-adder-o 1 '(0 1 1) '(1 1) s))
 
-  (pprint
-   (run 9 [q]
-        (exist [x y r]
-               (plus-o x y r)
-               (== [x y r] q))))
+ (pprint
+  (run 9 [q]
+       (exist [x y r]
+              (plus-o x y r)
+              (== [x y r] q))))
 
-  ;; 100ms
-  (dotimes [_ 5]
-    (time
-     (dotimes [_ 1]
-       (doall
-        (run 500 [q]
-             (exist [x y r]
-                    (plus-o x y r)
-                    (== [x y r] q)))))))
+ ;; 100ms
+ (dotimes [_ 5]
+   (time
+    (dotimes [_ 1]
+      (doall
+       (run 500 [q]
+            (exist [x y r]
+                   (plus-o x y r)
+                   (== [x y r] q)))))))
 
-  ;; we do see duplicate results if n is > 7
-  ;; however it's not clear to me if this is because
-  ;; the implementation of mK is different from TRS
-  (run 6 [s]
-        (exist [x y]
-               (adder-o 0 x y '(1 0 1))
-               (== `(~x ~y) s)))
-  )
+ ;; we do see duplicate results if n is > 7
+ ;; however it's not clear to me if this is because
+ ;; the implementation of mK is different from TRS
+ (run 6 [s]
+      (exist [x y]
+             (adder-o 0 x y '(1 0 1))
+             (== `(~x ~y) s)))
+
+ ;; FIXME
+ ;; something weird going on here
+ (run 1 [q]
+      (exist [a b]
+             (-o (build-num 440)
+                 (build-num 241) a)
+             (+o a a b)
+             (== [a b] q)))
+
+ ;; 199
+ (num->int
+  (first (run 1 [q] (-o (build-num 440) (build-num 241) q))))
+
+ ;; 398
+ (num->int
+  (first (run 1 [q]
+              (exist [a]
+                     (== a (build-num 199))
+                     (+o a a q)))))
+ )
