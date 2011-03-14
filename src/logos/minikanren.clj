@@ -34,6 +34,18 @@
 (defprotocol LConsPrint
   (toShortString [this]))
 
+(defprotocol IPair
+  (lhs [this])
+  (rhs [this]))
+
+(deftype Pair [lhs rhs]
+  IPair
+  (lhs [this] lhs)
+  (rhs [this] rhs)
+  Object
+  (toString [this]
+            (str "(" lhs " . " rhs ")")))
+
 (deftype LCons [a d cache]
   LConsSeq
   (lfirst [_] a)
@@ -110,7 +122,7 @@
 (declare walk-term)
 (declare build-term)
 
-(deftype Substitutions [s]
+(deftype Substitutions [s l]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -130,7 +142,7 @@
          (ext-no-check this x v)))
 
   (ext-no-check [this x v]
-                (Substitutions. (assoc s x v)))
+                (Substitutions. (assoc s x v) (cons (Pair. x v) l)))
 
   (walk [this v]
         (loop [v v lv nil]
@@ -166,14 +178,15 @@
   (build [this u]
          (build-term u this)))
 
-(def empty-s (Substitutions. {}))
+(def empty-s (Substitutions. {} '()))
 
 (defn subst? [x]
   (instance? Substitutions x))
 
 (defn to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)]
-    (Substitutions. s)))
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
+        l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
+    (Substitutions. s l)))
 
 ;; =============================================================================
 ;; Unification
@@ -675,10 +688,13 @@
 (extend-type LVar
   IBuildTerm
   (build-term [u s]
-   (let [m (.s ^Substitutions s)]
+   (let [m (.s ^Substitutions s)
+         l (.l ^Substitutions s)
+         lv (lvar 'ignore) ]
      (if (contains? m u)
        s
-       (Substitutions. (assoc m u (lvar 'ignore)))))))
+       (Substitutions. (assoc m u lv)
+                       (cons (Pair. u lv) l))))))
 
 (extend-type LCons
   IBuildTerm
