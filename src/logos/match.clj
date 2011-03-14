@@ -23,41 +23,49 @@
    (lcons-p? t) `(llist ~@(map unifier-term (remove #(= % '.) t)))
    :else `[~@(map unifier-term t)]))
 
-(defn unify-p [p a]
-  (cond (= p '_) nil
-        (and (coll? p)
-             (seq p)) `(exist [~@(extract-vars p)]
-                           (== ~(unifier-term p) ~a))
-        :else `(== ~p ~a)))
+(defn lvar-sym? [s]
+  (= (first (str s)) \?))
+
+;; TODO: cleanup
+
+(defn exist-expr? [[f & r]]
+  (= f `exist))
+
+(defn unify-p [[fp & rp :as p] [fa & ra :as a] exprs]
+  (if (not (nil? (seq p)))
+    (let [ex (cond
+              (= fp '_) nil
+              (and (coll? fp)
+                   (seq fp)) `(exist [~@(extract-vars fp)]
+                                                (== ~(unifier-term fp) ~fa))
+              (lvar-sym? fp) `(exist [~fp]
+                                     (== ~fp ~fa))
+              :else          `(exist []
+                                     (== ~fp ~fa)))
+          r (unify-p rp ra exprs)]
+      (if r
+        (if ex
+          (let [r (if (exist-expr? r)
+                    (list r)
+                    r)]
+           (concat ex r))
+          r)
+        ex))
+    exprs))
 
 (defn handle-clause [a*]
   (fn [[p & ex :as c]]
-    (concat (remove nil? (map unify-p p a*)) ex)))
+    (unify-p p a* ex)))
 
 (defn handle-clauses [as cs]
   `(cond-e
-    ~@(map (handle-clause as) cs)))
+    ~@(map list (map (handle-clause as) cs))))
 
 (comment
   (defn-e append-o [x y z]
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 
-  (defn-e append-o [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
-
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[~a & ~d] _ [~a & ~r]] (append d y r)))
-
-  ;; hmm caps plus the pipe operator?
-  ;; so much to think about
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[A|D] _ [A|R]] (append D y R)))
-
-  (match-e x
-    ([()] ...)
-    ([?a & ?d] ...))
+  (run* [q]
+      (append-o '(1 2) '(3 4) q))
   )
