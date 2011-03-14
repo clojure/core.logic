@@ -725,16 +725,16 @@
 (deftype Choice [a f]
   IBind
   (bind [this g]
-        (mplus (g (:a this)) (inc (bind (:f this) g))))
+        (mplus (g a) (inc (bind f g))))
   IMPlus
-  (mplus [this f]
-         (Choice. (:a this) (fn [] (mplus (f) (:f this)))))
+  (mplus [this fp]
+         (Choice. a (fn [] (mplus (fp) f))))
   ITake
   (take* [this n]
          (if (and n (zero? n))
            '()
-           (lazy-seq (cons (:a this)
-                           (take* (:f this) (and n (dec n))))))))
+           (lazy-seq (cons a
+                           (take* f (and n (dec n))))))))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
