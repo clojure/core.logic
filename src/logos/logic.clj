@@ -1,5 +1,5 @@
 (ns logos.logic
-  (:refer-clojure :exclude [reify ==])
+  (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren))
 
 (defn null-o [a]

@@ -1,5 +1,5 @@
 (ns logos.scratch
-  (:refer-clojure :exclude [reify ==])
+  (:refer-clojure :exclude [reify == inc])
   (:require [clojure.set :as set])
   (:use logos.minikanren))
 

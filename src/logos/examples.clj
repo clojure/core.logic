@@ -1,5 +1,5 @@
 (ns logos.examples
-  (:refer-clojure :exclude [reify ==])
+  (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
   (:require [logos.nonrel :as nonrel]
             [clojure.contrib.monads :as m]))

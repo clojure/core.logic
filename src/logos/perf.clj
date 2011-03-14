@@ -1,5 +1,5 @@
 (ns logos.perf
-  (:refer-clojure :exclude [reify inc == take])
+  (:refer-clojure :exclude [reify inc ==])
   (:require [clojure.set :as set])
   (:use logos.minikanren
         logos.logic

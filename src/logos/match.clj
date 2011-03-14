@@ -1,5 +1,5 @@
 (ns logos.match
-  (:refer-clojure :exclude [reify ==])
+  (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
   (:import [logos.minikanren Substitutions]))
 
