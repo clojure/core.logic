@@ -733,7 +733,7 @@
   (take* [this n]
          (if (and n (zero? n))
            '()
-           (lazy-seq (cons a
+           (lazy-seq (cons (first a)
                            (take* f (and n (dec n))))))))
 
 ;; -----------------------------------------------------------------------------
@@ -763,6 +763,11 @@
          (Choice. this f))
   ITake
   (take* [this n] this))
+
+(extend-type Object
+  IMPlus
+  (mplus [this f]
+         (Choice. this f)))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
