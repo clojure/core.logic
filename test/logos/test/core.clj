@@ -714,3 +714,31 @@
 
 ;; -----------------------------------------------------------------------------
 ;; divergence
+
+(def f1 (exist [] f1))
+
+(deftest test-divergence-1
+  (is (= (run 1 [q]
+            (cond-e
+             (f1)
+             ((== false false))))
+         '(_.0))))
+
+(deftest test-divergence-2
+  (is (= (run 1 [q]
+            (cond-e
+             (f1 (== false false))
+             ((== false false))))
+         '(_.0))))
+
+(def f2
+     (exist []
+            (cond-e
+             (f2 (cond-e
+                  (f2) 
+                  ((== false false))))
+             ((== false false)))))
+
+(deftest test-divergence-3
+  (is (= (run 5 [q] f2)
+         '(_.0 _.0 _.0 _.0 _.0))))
