@@ -103,11 +103,25 @@
   (run* [s]
     (gen-adder-o 1 '(0 1 1) '(1 1) s))
 
-  (run 9 [q]
-       (exist [x y r]
-              (plus-o x y r)
-              (== [x y r] q)))
+  (pprint
+   (run 9 [q]
+        (exist [x y r]
+               (plus-o x y r)
+               (== [x y r] q))))
 
+  ;; 100ms
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1]
+       (doall
+        (run 500 [q]
+             (exist [x y r]
+                    (plus-o x y r)
+                    (== [x y r] q)))))))
+
+  ;; we do see duplicate results if n is > 7
+  ;; however it's not clear to me if this is because
+  ;; the implementation of mK is different from TRS
   (run 6 [s]
         (exist [x y]
                (adder-o 0 x y '(1 0 1))
