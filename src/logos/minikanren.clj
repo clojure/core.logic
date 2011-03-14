@@ -793,7 +793,7 @@
   (mplus [this f]
          (inc (mplus (f) this)))
   ITake
-  (take* [this] (take* (this))))
+  (take* [this] (lazy-seq (take* (this)))))
 
 ;; =============================================================================
 ;; Syntax
