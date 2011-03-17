@@ -45,6 +45,8 @@ I will only take contributions from people who have submitted Clojure CAs.
 
 h2. Examples
 
+A classic AI program:
+
 <pre>
 (ns bratko-logos.monkey-banana
   (:require [logos.minikanren :as mk]
@@ -73,6 +75,23 @@ h2. Examples
 (mk/run 1 [q]
       (canget-o [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
 </pre>
+
+A classic Prolog program:
+
+<pre>
+append ([] ,Y,Y).
+append([A|D],Y2,[A|R]) :− append(D,Y2,R).
+</pre>
+
+The Logos version is almost equally succinct:
+
+<pre>
+(defn-e append-o [x y z]
+    ([() _ y])
+    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+</pre>
+
+Logos comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
 
 <pre>
 (unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
