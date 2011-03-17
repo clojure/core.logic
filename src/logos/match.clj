@@ -1,35 +1,69 @@
 (ns logos.match
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
+  (:require [logos.logic :as logic]
+            [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
-(defmacro defn-e [args & c*]
-  ~(fn [~@args] (handle-clauses [~@args] ~@c*)))
+(defn lcons-p? [p]
+  (and (coll? p)
+       (not (nil? (some #{'.} p)))))
 
-(defmacro match-e [e & c*]
-  `(let [t e]
-     (handle-clauses t ~@c*)))
+(defn p->term [p]
+  (cond
+   (= p '_) '(lvar)
+   (lcons-p? p) `(llist
+                  ~@(map p->term
+                         (remove #(contains? '#{.} %) p)))
+   (coll? p) `[~@(map p->term p)]
+   :else p))
 
-(comment
-  (defn-e append-o [x y z]
-    ([() _ y])
-    ([[?a & ?d] _ [?a & ?r]] (append-o ?d y ?r)))
+(defn lvar-sym? [s]
+  (= (first (str s)) \?))
 
-  (defn-e append-o [x y z]
-    ([() _ y])
-    ([[A & D] _ [A & R]] (append-o A y R)))
+(defn extract-vars
+  ([p]
+     (cond
+      (lvar-sym? p) #{p}
+      (coll? p) (set (filter lvar-sym? (flatten p)))
+      :else #{}))
+  ([p seen]
+     (set/difference (extract-vars p) (set seen))))
 
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[~a & ~d] _ [~a & ~r]] (append d y r)))
+(defn ex
+  ([vs t a]
+     `(exist [~@vs]
+             (== ~t ~a)))
+  ([vs t a expr]
+     `(exist [~@vs]
+             (== ~t ~a)
+             ~expr)))
 
-  ;; hmm caps plus the pipe operator?
-  ;; so much to think about
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[A|D] _ [A|R]] (append D y R)))
+(defn ex* [[[p a :as pa] & par] expr seen]
+  (let [t    (p->term p)
+        vs   (extract-vars p seen)
+        seen (reduce conj seen vs)]
+    (cond
+     (nil? pa) expr
+     (= p '_) (ex* par expr seen)
+     (empty? par) (if expr
+                    (ex vs t a expr)
+                    (ex vs t a))
+     :else (ex vs t a
+               (ex* par expr seen)))))
 
-  (match-e x
-    ([()] ...)
-    ([?a & ?d] ...))
-  )
+(defn handle-clause [as]
+  (fn [[p & expr]]
+    (let [pas (partition 2 (interleave p as))]
+      (ex* pas (first expr) #{}))))
+
+(defn handle-clauses [as cs]
+  `(cond-e
+    ~@(map list (map (handle-clause as) cs))))
+
+(defmacro defn-e [n as & cs]
+  `(defn ~n [~@as]
+     ~(handle-clauses as cs)))
+
+(defmacro match-e [xs & cs]
+  (handle-clauses xs cs))
