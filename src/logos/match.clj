@@ -10,7 +10,7 @@
 
 (defn p->term [p]
   (cond
-   (= p '_) '_
+   (= p '_) '(lvar)
    (symbol? p) p
    (lcons-p? p) `(llist
                   ~@(map p->term
@@ -38,12 +38,13 @@
              (== ~t ~a)
              ~expr)))
 
-(defn ex* [[[p a] & par] expr seen]
+(defn ex* [[[p a :as pa] & par] expr seen]
   (let [t    (p->term p)
         vs   (extract-vars p seen)
         seen (reduce conj seen vs)]
     (cond
-     (= t '_) (ex* par expr seen)
+     (nil? pa) expr
+     (= p '_) (ex* par expr seen)
      (empty? par) (if expr
                     (ex vs t a expr)
                     (ex vs t a))
