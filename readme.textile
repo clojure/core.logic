@@ -4,53 +4,6 @@ A Logic Programming library for Clojure. At its heart is an original implementat
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> around 9 seconds.
 
-h2. About
-
-This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
-
-This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. His work on that got me interested in logic programming in the first place.
-
-h2. Roadmap
-
-The core Prolog aspect of Logos is nearing completion. The following are tentative future directions:
-
-* Tabling - gives us some of the benefits of Datalog
-* Negation - Stratified Negation as provided by XSB ?
-* Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
-
-h2. YourKit
-
-YourKit has has given me a free license for their profiler, greatly simplifying the profiling of Logos performance. 
-
-YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
-
-* <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
-* <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
-
-h2. Notes
-
-I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
-
-<pre>
-(lcons 'a (lvar 'b)) ; (a . <lvar:b>)
-</pre>
-
-Logic variables are instances of <code>LVar</code> not vectors as they are in Scheme.
-
-The goal and goal constructor portion has been written from scratch on top of the protocols and makes liberal use of lazy sequences to prevent stack overflow.
-
-Currently the <code>Substitutions</code> deftype uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions.
-
-h2. Goals
-
-* Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
-* Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
-* Emphasis on pure relational programming.
-
-h2. Contributing
-
-I will only take contributions from people who have submitted Clojure CAs.
-
 h2. Examples
 
 A classic AI program:
@@ -111,6 +64,53 @@ The above is quite slow since we have to walk the data structure and replace the
 (let [[u w] (map prep ['(?x ?y) (1 2)])]
   (unifier u w))
 </pre>
+
+h2. About
+
+This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
+
+This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. His work on that got me interested in logic programming in the first place.
+
+h2. Roadmap
+
+The core Prolog aspect of Logos is nearing completion. The following are tentative future directions:
+
+* Tabling - gives us some of the benefits of Datalog
+* Negation - Stratified Negation as provided by XSB ?
+* Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
+
+h2. YourKit
+
+YourKit has has given me a free license for their profiler, greatly simplifying the profiling of Logos performance. 
+
+YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
+
+* <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
+* <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
+
+h2. Notes
+
+I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
+
+<pre>
+(lcons 'a (lvar 'b)) ; (a . <lvar:b>)
+</pre>
+
+Logic variables are instances of <code>LVar</code> not vectors as they are in Scheme.
+
+The goal and goal constructor portion has been written from scratch on top of the protocols and makes liberal use of lazy sequences to prevent stack overflow.
+
+Currently the <code>Substitutions</code> deftype uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions.
+
+h2. Goals
+
+* Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
+* Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
+* Emphasis on pure relational programming.
+
+h2. Contributing
+
+I will only take contributions from people who have submitted Clojure CAs.
 
 h2. Interesting Questions
 
