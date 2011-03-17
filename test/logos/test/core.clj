@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [reify == inc])
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
+  (:use [logos.match] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
@@ -629,7 +630,9 @@
 (deftest test-flatten-o
   (is (= (run* [x]
                (flatten-o '[[a b] c] x))
-         '(([[a b] c]) ([a b] (c)) ([a b] c) (a (b) (c)) ([a b] c ()) (a (b) c) (a (b) c ()) (a b (c)) (a b c) (a b () (c)) (a b c ()) (a b () c) (a b () c ())))))
+         '(([[a b] c]) ([a b] (c)) ([a b] c) (a (b) (c)) ([a b] c ()) (a (b) c)
+           (a (b) c ()) (a b (c)) (a b c) (a b () (c)) (a b c ()) (a b () c)
+           (a b () c ())))))
 
 ;; =============================================================================
 ;; member-o
@@ -652,7 +655,8 @@
                  (== q [_ _])
                  (member-o ['foo _] q)
                  (member-o [_ 'bar] q))))
-         '([[foo bar] _.0] [[foo _.0] [_.1 bar]] [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
+         '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
+             [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
 
 ;; -----------------------------------------------------------------------------
 ;; rember-o
@@ -690,7 +694,8 @@
                       (digit-4 x)
                       (digit-4 y)
                       (== q [x y])))
-         '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0] [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
+         '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
+           [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
 
 ;; -----------------------------------------------------------------------------
 ;; any-o
@@ -742,3 +747,56 @@
 (deftest test-divergence-3
   (is (= (run 5 [q] f2)
          '(_.0 _.0 _.0 _.0 _.0))))
+
+;; -----------------------------------------------------------------------------
+;; match
+
+(deftest test-ex*-1
+  (is (= (ex* '[[?a x] [?b y] ] '(foo) #{})
+         '(logos.minikanren/exist
+           [?a]
+           (logos.minikanren/== ?a x)
+           (logos.minikanren/exist [?b] (logos.minikanren/== ?b y) (foo))))))
+
+(deftest test-ex*-2
+  (is (= (ex* '[[[?a ?b] x] [?c y] ] '(foo) #{})
+         '(logos.minikanren/exist
+           [?b ?a]
+           (logos.minikanren/== [?a ?b] x)
+           (logos.minikanren/exist [?c] (logos.minikanren/== ?c y) (foo))))))
+
+;; skipping
+(deftest test-ex*-3
+  (is (= (ex* '[[?a x] [_ y] [?b z]] '(foo) #{})
+         '(logos.minikanren/exist
+           [?a]
+           (logos.minikanren/== ?a x)
+           (logos.minikanren/exist [?b] (logos.minikanren/== ?b z) (foo))))))
+
+;; llist
+(deftest test-ex*-4
+  (is (= (ex* '[[[?a . ?b] x]] '(foo) #{})
+         '(logos.minikanren/exist [?b ?a]
+            (logos.minikanren/== (logos.minikanren/llist ?a ?b) x)
+            (foo)))))
+
+(deftest test-ex*-5
+  (is (= (ex* '[[[?a ?b] x]] '(foo) #{})
+         '(logos.minikanren/exist [?b ?a] (logos.minikanren/== [?a ?b] x) (foo)))))
+
+;; don't create vars for ones we've seen
+(deftest test-ex*-6
+  (is (= (ex* '[[?a x] [_ y] [?a z]] '(foo) #{})
+         '(logos.minikanren/exist [?a]
+            (logos.minikanren/== ?a x)
+            (logos.minikanren/exist []
+              (logos.minikanren/== ?a z) (foo))))))
+
+;; don't create vars for args
+(deftest test-ex*-7
+  (is (= (ex* '[[y x] [x y] [y z]] '(foo) #{})
+         '(logos.minikanren/exist []
+           (logos.minikanren/== y x)
+           (logos.minikanren/exist []
+            (logos.minikanren/== x y)
+            (logos.minikanren/exist [] (logos.minikanren/== y z) (foo)))))))

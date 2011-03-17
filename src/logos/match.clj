@@ -5,68 +5,72 @@
             [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
-(defmacro defn-e [n as & cs]
-  `(defn ~n [~@as] ~(handle-clauses as cs)))
-
-(defmacro match-e [e & cs]
-  `(let [t e]
-     (handle-clauses t ~@cs)))
-
-(defn extract-vars [s]
-  (set (remove #(= '. %) (flatten s))))
-
 (defn lcons-p? [p]
   (not (nil? (some #{'.} p))))
 
-(defn unifier-term [t]
+(defn p->term [p]
   (cond
-   (symbol? t) t
-   (lcons-p? t) `(llist ~@(map unifier-term (remove #(= % '.) t)))
-   :else `[~@(map unifier-term t)]))
+   (= p '_) '_
+   (symbol? p) p
+   (lcons-p? p) `(llist
+                  ~@(map p->term
+                         (remove #(contains? '#{.} %) p)))
+   :else `[~@(map p->term p)]))
 
 (defn lvar-sym? [s]
   (= (first (str s)) \?))
 
-(defn exist-expr? [[f & r]]
-  (= f `exist))
+(defn extract-vars
+  ([p]
+     (cond
+      (lvar-sym? p) #{p}
+      (coll? p) (set (filter lvar-sym? (flatten p)))
+      :else #{}))
+  ([p seen]
+     (set/difference (extract-vars p) (set seen))))
 
-;; TODO: redesign
+(defn ex
+  ([vs t a]
+     `(exist [~@vs]
+             (== ~t ~a)))
+  ([vs t a expr]
+     `(exist [~@vs]
+             (== ~t ~a)
+             ~expr)))
 
-(defn unify-p [[fp & rp :as p] [fa & ra :as a] seen exprs]
-  (if (not (nil? (seq p)))
-    (let [[ex new-vars] (cond
-                         (= fp '_) nil
-                         (and (coll? fp)
-                              (seq fp)) (let [vs (set/difference (extract-vars fp) seen)]
-                                          [`(exist [~@vs]
-                                                   (== ~(unifier-term fp) ~fa)) vs])
-                              (and (lvar-sym? fp)
-                                   (not (contains? seen fp)))
-                                         [`(exist [~fp]
-                                                 (== ~fp ~fa))
-                                          [fp]]
-                              :else      [`(exist []
-                                                  (== ~fp ~fa)) []])
-          r (unify-p rp ra (reduce conj seen new-vars) exprs)]
-      (if r
-        (if ex
-          (let [r (if (exist-expr? r)
-                    (list r)
-                    r)]
-            (concat ex r))
-          r)
-        ex))
-    exprs))
+(defn ex* [[[p a] & par] expr seen]
+  (let [t    (p->term p)
+        vs   (extract-vars p seen)
+        seen (reduce conj seen vs)]
+    (cond
+     (= t '_) (ex* par expr seen)
+     (empty? par) (if expr
+                    (ex vs t a expr)
+                    (ex vs t a))
+     :else (ex vs t a
+               (ex* par expr seen)))))
 
-(defn handle-clause [a*]
-  (fn [[p & ex :as c]]
-    (unify-p p a* #{} ex)))
+(defn handle-clause [as]
+  (fn [[p & expr]]
+    (let [pas (partition 2 (interleave p as))]
+      (ex* pas expr #{}))))
 
 (defn handle-clauses [as cs]
   `(cond-e
     ~@(map list (map (handle-clause as) cs))))
 
+(defmacro defn-e [n as & cs]
+  `(defn ~n [~@as]
+     ~(handle-clauses as cs)))
+
+(defmacro match-e [xs & cs]
+  (handle-clauses xs cs))
+
 (comment
+  ;; _ is deal with one of two way
+  ;; 1) top-level, just skip
+  ;; 2) in pattern, unify-lcons
+
   (defn-e append-o [x y z]
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
