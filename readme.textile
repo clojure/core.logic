@@ -126,3 +126,7 @@ h2. Resources
 * "Using Datalog with Binary Decision Diagrams for Program Analysis":http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf
 * "Memoing for Logic Programs":http://portal.acm.org/citation.cfm?id=131299
 * "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":http://portal.acm.org/citation.cfm?id=692605
+
+Copyright (C) 2010 David Nolen
+
+Distributed under the Eclipse Public License, the same as Clojure.

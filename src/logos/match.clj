@@ -11,7 +11,7 @@
 
 (defn p->term [p]
   (cond
-   (= p '_) '(lvar)
+   (= p '_) `(lvar)
    (lcons-p? p) `(llist
                   ~@(map p->term
                          (remove #(contains? '#{.} %) p)))
@@ -77,6 +77,9 @@
 
   (defn-e test-o [x y]
     ([() _]))
+
+  (defn-e test-2-o [x y]
+    ([[_ _ ?a] _]))
 
   (defn test-o [x y]
     (match-e [x y]
