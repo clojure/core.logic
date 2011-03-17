@@ -111,10 +111,6 @@ h2. Interesting Questions
 * Compilation to byte-code ?
 * Fork/join ?
 
-h2. Issues
-
-* Dynamic binding - the lazy nature of logos.minikanren means that you have to be careful with the use of dynamic binding with your logic programs. See "this":http://dev.clojure.org/display/design/Improve+Binding and "this":http://dev.clojure.org/display/design/Resource+Scopes for an overview of the issues. It's important to use <code>solve</code> or <code>solve*</code> instead of <code>run</code> or <code>run*</code> if you would like dynamic bindings to affect your logic program.
-
 h2. Resources
 
 * "Constraint Handling Rules":http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html
