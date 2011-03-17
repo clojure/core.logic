@@ -46,44 +46,32 @@ I will only take contributions from people who have submitted Clojure CAs.
 h2. Examples
 
 <pre>
-(run* [q]
-  (rest-o q [1 2])) ; [(_.0 1 2)]
-</pre>
+(ns bratko-logos.monkey-banana
+  (:require [logos.minikanren :as mk]
+            [logos.match :as m]))
 
-<pre>
-(run 5 [x]
-  (exist [y]
-    (append-o (llist 'cake y) '(d t) x)))
+(m/defn-e move-o [before action after]
+  ([[:middle :onbox :middle :hasnot]
+    :grasp
+    [:middle :onbox :middle :has]])
+  ([[?pos :onfloor ?pos ?has]
+    :climb
+    [?pos :onbox ?pos ?has]])
+  ([[?pos1 :onfloor ?pos1 ?has]
+    :push
+    [?pos2 :onfloor ?pos2 ?has]])
+  ([[?pos1 :onfloor ?box ?has]
+    :walk
+    [?pos2 :onfloor ?box ?has]]))
 
-;; [(cake _.0 d t)
-;;  (cake _.0 _.1 d t)
-;;  (cake _.0 _.1 _.2 d t)
-;;  (cake _.0 _.1 _.2 _.3 d t)
-;;  (cake _.0 _.1 _.2 _.3 _.4 d t)]
-</pre>
+(m/defn-e canget-o [state out]
+  ([[_ _ _ :has] true])
+  ([_ _] (mk/exist [action next]
+                   (move-o state action next)
+                   (canget-o next out))))
 
-<pre>
-(defn likes [x y]
-  (cond-e
-   ((== x 'john) (== y 'mary))
-   ((== x 'mary) (== y 'john))))
-
-(defn musician [x]
-  (cond-e
-   ((== x 'john))
-   ((== x 'bob))))
-
-(run* [q]
-  (likes q 'mary)
-  (musician q)) ;; [john]
-
-(run* [q]
-  (musician q)) ;; [john bob]
-
-(run* [q]
-  (exist [x y]
-    (likes x y)
-    (== [x y] q))) ;; [[john mary] [mary john]]
+(mk/run 1 [q]
+      (canget-o [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
 </pre>
 
 <pre>
