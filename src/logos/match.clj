@@ -6,16 +6,17 @@
   (:import [logos.minikanren Substitutions]))
 
 (defn lcons-p? [p]
-  (not (nil? (some #{'.} p))))
+  (and (coll? p)
+       (not (nil? (some #{'.} p)))))
 
 (defn p->term [p]
   (cond
    (= p '_) '(lvar)
-   (symbol? p) p
    (lcons-p? p) `(llist
                   ~@(map p->term
                          (remove #(contains? '#{.} %) p)))
-   :else `[~@(map p->term p)]))
+   (coll? p) `[~@(map p->term p)]
+   :else p))
 
 (defn lvar-sym? [s]
   (= (first (str s)) \?))
@@ -54,7 +55,7 @@
 (defn handle-clause [as]
   (fn [[p & expr]]
     (let [pas (partition 2 (interleave p as))]
-      (ex* pas expr #{}))))
+      (ex* pas (first expr) #{}))))
 
 (defn handle-clauses [as cs]
   `(cond-e
@@ -66,16 +67,3 @@
 
 (defmacro match-e [xs & cs]
   (handle-clauses xs cs))
-
-(comment
-  ;; _ is deal with one of two way
-  ;; 1) top-level, just skip
-  ;; 2) in pattern, unify-lcons
-
-  (defn-e append-o [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
-
-  (run* [q]
-      (append-o '(1 2) '(3 4) q))
-  )

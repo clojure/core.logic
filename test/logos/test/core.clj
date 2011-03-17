@@ -800,3 +800,15 @@
            (logos.minikanren/exist []
             (logos.minikanren/== x y)
             (logos.minikanren/exist [] (logos.minikanren/== y z) (foo)))))))
+
+;; empty test case
+(deftest test-ex*-8
+  (is (= (ex* '[[_ x]] '(foo) #{})
+         '(foo))))
+
+;; _ support
+(deftest test-ex*-9
+  (is (= (ex* '[[[_ _ _ ?a] x]] '(foo) #{})
+         '(logos.minikanren/exist [?a]
+            (logos.minikanren/== [(lvar) (lvar) (lvar) ?a] x)
+            (foo)))))
