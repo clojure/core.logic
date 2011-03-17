@@ -99,65 +99,10 @@ The above is quite slow since we have to walk the data structure and replace the
 
 h2. Interesting Questions
 
-* Avoid unification at all costs, analyze miniKanren programs for ground terms. Instead use map/filter when possible which are 10X faster.
+* Can we avoid unification? Instead use map/filter when possible which are 10X faster?
 * Compilation to pure optimized Clojure ?
 * Compilation to byte-code ?
 * Fork/join ?
-
-h2. Syntax
-
-The design of miniKanren currently suffers from the closed principle. Relations are primarily defined through functions and so they are hard to extend. It would be preferable for the syntax to be more "open". Consider the following Prolog snippet:
-
-<pre>
-parent(pam, bob).
-parent(tom, bob).
-parent(tom, liz).
-parent(bob, ann).
-parent(bob, pat).
-parent(pat, jim).
-
-female(pam).
-female(liz).
-female(pat).
-female(ann).
-
-male(tom).
-male(bob).
-male(jim).
-
-offspring(Y,X) :- parent(X, Y).
-
-mother(X,Y) :- parent(X,Y), female(X).
-</pre>
-
-Currently this is very verbose in logos.minikanren. We'd prefer something more along the lines of:
-
-<pre>
-(rel parent
-     '[pam bob]
-     '[tom bob]
-     '[tom liz])
-
-(extend-rel parent
-     '[bob ann]
-     '[bob pat]
-     '[pat jim])
-
-(rel female
-     'pam 'liz 'pat 'ann)
-
-(rel male
-     'tom 'bob 'jim)
-
-(rel offspring
-     (parent ?x ?y))
-
-(rel mother
-     (parent ?x ?y)
-     (female ?y))
-</pre>
-
-Note that this syntax would not suffer from the "closed" property.
 
 h2. Issues
 
@@ -165,6 +110,8 @@ h2. Issues
 
 h2. Resources
 
+* "Constraint Handling Rules":"http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html"
+* "The XSB System Version 3.2 - Volume 1: Programmer's Manual":http://xsb.sourceforge.net/manual1/manual1.pdf
 * "Concepts, Technqiues, and Models of Computer Programming":http://www.info.ucl.ac.be/~pvr/book.html, Chapters 9 and 12
 * "Art of the Propagator":http://dspace.mit.edu/handle/1721.1/44215
 * "Constraint Propagation - Models, Techniques, Implementation":http://people.cs.kuleuven.be/~guido.tack/dissertation.php
@@ -178,4 +125,4 @@ h2. Resources
 * "Purely Functional Data Strucutres":http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.3080&rep=rep1&type=pdf
 * "Using Datalog with Binary Decision Diagrams for Program Analysis":http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf
 * "Memoing for Logic Programs":http://portal.acm.org/citation.cfm?id=131299
-* "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":www.labri.fr/perso/lepine/Rapports_internes/RR-34493.ps.Z
+* "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":http://portal.acm.org/citation.cfm?id=692605
