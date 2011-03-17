@@ -49,8 +49,10 @@
      (empty? par) (if expr
                     (ex vs t a expr)
                     (ex vs t a))
-     :else (ex vs t a
-               (ex* par expr seen)))))
+     :else (let [r (ex* par expr seen)]
+             (if r
+               (ex vs t a r)
+               (ex vs t a))))))
 
 (defn handle-clause [as]
   (fn [[p & expr]]
@@ -67,3 +69,17 @@
 
 (defmacro match-e [xs & cs]
   (handle-clauses xs cs))
+
+(comment
+  (defn-e append-o [x y z]
+    ([() _ y])
+    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+
+  (defn-e test-o [x y]
+    ([() _]))
+
+  (defn test-o [x y]
+    (match-e [x y]
+       ([() _])
+       ([[?a . ?b] [?c ?d]] (test-o ?a ?d))))
+  )
