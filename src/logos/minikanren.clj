@@ -7,14 +7,17 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name s]
+(deftype LVar [name s meta]
   Object
-  (toString [this] (str "<lvar:" name ">")))
+  (toString [this] (str "<lvar:" name ">"))
+  clojure.lang.IObj
+  (meta [this] meta)
+  (withMeta [this new-meta] (LVar. name s new-meta)))
 
 (defn ^LVar lvar
-  ([] (LVar. (gensym) nil))
-  ([name] (LVar. name nil))
-  ([name s] (LVar. name s)))
+  ([] (LVar. (gensym) nil nil))
+  ([name] (LVar. name nil nil))
+  ([name s] (LVar. name s nil)))
 
 (defmethod print-method LVar [x writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
