@@ -5,16 +5,21 @@
             [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
+(declare p->term)
+
 (defn lcons-p? [p]
   (and (coll? p)
        (not (nil? (some #{'.} p)))))
 
+(defn p->llist [p]
+  `(llist
+    ~@(map p->term
+           (remove #(contains? '#{.} %) p))))
+
 (defn p->term [p]
   (cond
    (= p '_) `(lvar)
-   (lcons-p? p) `(llist
-                  ~@(map p->term
-                         (remove #(contains? '#{.} %) p)))
+   (lcons-p? p) (p->llist p)
    (coll? p) `[~@(map p->term p)]
    :else p))
 
@@ -23,10 +28,11 @@
 
 (defn extract-vars
   ([p]
-     (cond
-      (lvar-sym? p) #{p}
-      (coll? p) (set (filter lvar-sym? (flatten p)))
-      :else #{}))
+     (set
+      (cond
+       (lvar-sym? p) [p]
+       (coll? p) (filter lvar-sym? (flatten p))
+       :else nil)))
   ([p seen]
      (set/difference (extract-vars p) (set seen))))
 
