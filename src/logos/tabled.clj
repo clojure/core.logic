@@ -33,7 +33,7 @@
 
 (defn waiting-stream [v]
   (let [v (if (vector? v) v (into [] v))]
-   (Waiting-Stream. v)))
+   (WaitingStream. v)))
 
 (defn w? [x]
   (instance? WaitingStream x))
@@ -60,18 +60,33 @@
        (fn [a#]
          (let [key# (reify a# argv#)
                cache# (get @table# key#)]
-           (if (nil? cache#) ; new master call
-             (let [cache# (atom #{})]
+           (if (nil? cache#)
+             (let [cache# (atom {})]
                (swap! assoc table# key# cache#)
                ((exist []
                    ~@body
-                   (fn [b#]
-                     (if (contains? @cache# key#)
-                       nil
-                       (do
-                         (swap! conj cache# key#)
-                         b#)))) a#))
-             )))))) 
+                   (master argv# cache#)) a#))
+             (reuse a# argv# cache#)))))))
+
+(defn master [argv cache]
+  (fn [a]
+    (if (contains? @cache argv)
+      nil
+      (do
+        (swap! conj cache argv)
+        a))))
+
+(defprotocol ITabled
+  (alpha-equiv? [this x y])
+  (reuse [this argv cache])
+  (subunify [this arg ans]))
+
+(extend-type logos.minikanren.Substitutions
+  ITabled
+  (alpha-equiv [this x y]
+    (= (reify this x) (reify this y)))
+  (reuse [this argv cache])
+  (subunify [this arg ans]))
 
 (comment
   (let [x (lvar 'x)
