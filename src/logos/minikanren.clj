@@ -738,6 +738,8 @@
   ITake
   (take* [this] this))
 
+;; TODO: Choice always holds a as a list, can we just remove that?
+
 (deftype Choice [a f]
   IBind
   (bind [this g]
@@ -841,7 +843,7 @@
   `(let [xs# (take* (fn []
                      ((exist [~x] ~@g-rest
                              (fn [a#]
-                               (cons (reify a# ~x) '())))
+                               (cons (reify a# ~x) '()))) ;; TODO: do we need this?
                       empty-s)))]
      (if ~n
        (take ~n xs#)

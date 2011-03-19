@@ -3,6 +3,7 @@
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
   (:use [logos.match] :reload)
+  (:use [logos.nonrel] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
@@ -810,5 +811,87 @@
 (deftest test-ex*-9
   (is (= (ex* '[[[_ _ _ ?a] x]] '(foo) #{})
          '(logos.minikanren/exist [?a]
-            (logos.minikanren/== [(lvar) (lvar) (lvar) ?a] x)
-            (foo)))))
+             (logos.minikanren/== [(logos.minikanren/lvar)
+                                   (logos.minikanren/lvar)
+                                   (logos.minikanren/lvar) ?a] x)
+             (foo)))))
+
+;; -----------------------------------------------------------------------------
+;; cond-a (soft-cut)
+
+(deftest test-cond-a-1
+  (is (= (run* [x]
+               (cond-a
+                ((== 'olive x) s#)
+                ((== 'oil x) s#)
+                (u#)))
+         '(olive))))
+
+(deftest test-cond-a-2
+  (is (= (run* [x]
+               (cond-a
+                ((== 'virgin x) u#)
+                ((== 'olive x) s#)
+                ((== 'oil x) s#)
+                (u#)))
+         '())))
+
+(deftest test-cond-a-3
+  (is (= (run* [x]
+               (exist (x y)
+                      (== 'split x)
+                      (== 'pea y)
+                      (cond-a
+                       ((== 'split x) (== x y))
+                       (s#)))
+               (== true x))
+         '())))
+
+(deftest test-cond-a-4
+  (is (= (run* [x]
+               (exist (x y)
+                      (== 'split x)
+                      (== 'pea y)
+                      (cond-a
+                       ((== x y) (== 'split x))
+                       (s#)))
+               (== true x))
+         '(true))))
+
+(defn not-pasta-o [x]
+    (cond-a
+     ((== 'pasta x) u#)
+     (s#)))
+
+(deftest test-cond-a-5
+  (is (= (run* [x]
+               (cond-a
+                ((not-pasta-o x))
+                ((== 'spaghetti x))))
+         '(spaghetti))))
+
+;; -----------------------------------------------------------------------------
+;; cond-u (committed-choice)
+
+(defn once-o [g]
+    (cond-u
+     (g s#)))
+
+(deftest test-cond-u-1
+  (is (= (run* [x]
+               (once-o (teacup-o x)))
+         '(tea))))
+
+(deftest test-cond-u-2
+  (is (= (run* [r]
+               (cond-e
+                ((teacup-o r) s#)
+                ((== false r) s#)))
+         '(false tea cup))))
+
+(deftest test-cond-u-3
+  (is (= (run* [r]
+               (cond-a
+                ((teacup-o r) s#)
+                ((== false r) s#)))
+         '(tea cup))))
