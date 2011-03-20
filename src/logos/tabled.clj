@@ -60,8 +60,8 @@
                 (let [v (walk* this v)]
                   (walk* (-reify-tabled empty-s v) v)))
 
-  (alpha-equiv [this x y]
-               (= (reify this x) (reify this y)))
+  (alpha-equiv? [this x y]
+                (= (reify this x) (reify this y)))
 
   (reuse [this argv cache start end]
          (let [start (or start @cache)
@@ -109,13 +109,11 @@
 
 (defn master [argv cache]
   (fn [a]
-    (and
-     (every? (fn [ansv]
-               (not (alpha-equiv? a argv ansv)))
-      @cache)
-     (do
-       (swap! cache conj (reify-tabled a argv))
-       a))))
+    (when (every? (fn [ansv]
+                    (not (alpha-equiv? a argv ansv)))
+                  @cache)
+     (do (swap! cache conj (reify-tabled a argv))
+         a))))
 
 ;; TODO: consider the concurrency implications much more closely
 
