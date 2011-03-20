@@ -128,7 +128,7 @@
                cache# (get @table# key#)]
            (if (nil? cache#)
              (let [cache# (atom [])]
-               (swap! assoc table# key# cache#)
+               (swap! table# assoc key# cache#)
                ((exist []
                    ~@body
                    (master argv# cache#)) a#))
@@ -147,4 +147,6 @@
        ((exist [z]
           (arc-o x z)
           (path-o z y))))))
+
+  (run* [q] (path-o :a q))
   )
