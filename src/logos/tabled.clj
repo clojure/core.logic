@@ -1,6 +1,7 @@
 (ns logos.tabled
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren))
+  (:use logos.minikanren)
+  (:import [logos.minikanren Choice]))
 
 (defprotocol ISuspendedStream
   (ready? [this]))
@@ -51,23 +52,63 @@
 
 (defn master [argv cache]
   (fn [a]
-    (if (contains? @cache argv)
-      nil
-      (do
-        (swap! conj cache argv)
-        a))))
+    (and
+     (every? (fn [ansv]
+               (not (alpha-equiv? a argv ansv)))
+      @cache)
+     (do
+       (swap! cache conj @cache)
+       a))))
 
 (defprotocol ITabled
+  (-reify-tabled [this v])
+  (reify-tabled [this v])
   (alpha-equiv? [this x y])
-  (reuse [this argv cache])
+  (master [this argv cache])
+  (reuse [this argv cache start end])
   (subunify [this arg ans]))
+
+;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to them
 
 (extend-type logos.minikanren.Substitutions
   ITabled
+
+  (-reify-tabled [this v]
+             (let [v (walk this v)]
+               (cond
+                (lvar? v) (ext-no-check this v (lvar (count (.s this))))
+                (coll? v) (-reify-tabled
+                           (-reify-tabled this (first v))
+                           (next v))
+                :else this)))
+
+  (reify-tabled [this v]
+                (let [v (walk* this v)]
+                  (walk* (-reify-tabled empty-s v) v)))
+
   (alpha-equiv [this x y]
-    (= (reify this x) (reify this y)))
-  (reuse [this argv cache])
-  (subunify [this arg ans]))
+               (= (reify this x) (reify this y)))
+
+  (reuse [this argv cache start end]
+         (let [start (or start @cache)
+               end   (or end [])]
+           (letfn [(reuse-loop [ansv*]
+                     (if (= ansv* end)
+                       [(SuspendedStream. cache start
+                          (fn [] (reuse this argv cache @cache start)))]
+                       (Choice. (subunify this argv (reify-tabled this (first ansv*)))
+                                (fn [] (reuse-loop (rest ansv*))))))]
+             (reuse-loop start))))
+
+  (subunify [this arg ans]
+            (let [arg (walk this arg)]
+              (cond
+               (= arg ans) this
+               (lvar? arg) (ext-no-check this arg ans)
+               (coll? arg) (subunify
+                            (subunify this (rest arg) (rest ans))
+                            (first arg) (first ans))
+               :else this))))
 
 (extend-type clojure.lang.IPersistentVector
   IBind
