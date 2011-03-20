@@ -23,16 +23,16 @@
 (defn w-check [w sk fk]
   (loop [w w a []]
     (cond
-     (empty? w) (fk)
+     (nil? w) (fk)
      (ready? (first w)) (sk
                          (fn []
                            (let [^SuspendedStream ss (first w)
                                  f (.f ss)
-                                 w (to-w (concat a (rest w)))]
+                                 w (to-w (concat a (next w)))]
                              (if (empty? w)
                                (f)
                                (mplus (f) (fn [] w)))))))
-    :else (recur (rest w) (conj a (first w)))))
+    :else (recur (next w) (conj a (first w)))))
 
 (defprotocol ITabled
   (-reify-tabled [this v])
@@ -80,7 +80,7 @@
                (= arg ans) this
                (lvar? arg) (ext-no-check this arg ans)
                (coll? arg) (subunify
-                            (subunify this (rest arg) (rest ans))
+                            (subunify this (next arg) (next ans))
                             (first arg) (first ans))
                :else this))))
 
