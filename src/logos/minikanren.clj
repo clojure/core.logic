@@ -7,14 +7,17 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name s]
+(deftype LVar [name s meta]
   Object
-  (toString [this] (str "<lvar:" name ">")))
+  (toString [this] (str "<lvar:" name ">"))
+  clojure.lang.IObj
+  (meta [this] meta)
+  (withMeta [this new-meta] (LVar. name s new-meta)))
 
 (defn ^LVar lvar
-  ([] (LVar. (gensym) nil))
-  ([name] (LVar. name nil))
-  ([name s] (LVar. name s)))
+  ([] (LVar. (gensym) nil nil))
+  ([name] (LVar. name nil nil))
+  ([name s] (LVar. name s nil)))
 
 (defmethod print-method LVar [x writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
@@ -738,6 +741,8 @@
   ITake
   (take* [this] this))
 
+;; TODO: Choice always holds a as a list, can we just remove that?
+
 (deftype Choice [a f]
   IBind
   (bind [this g]
@@ -841,7 +846,7 @@
   `(let [xs# (take* (fn []
                      ((exist [~x] ~@g-rest
                              (fn [a#]
-                               (cons (reify a# ~x) '())))
+                               (cons (reify a# ~x) '()))) ;; TODO: do we need this?
                       empty-s)))]
      (if ~n
        (take ~n xs#)

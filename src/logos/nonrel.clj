@@ -1,10 +1,10 @@
 (ns logos.nonrel
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
-  (:import [logos.minikanren Substitutions]))
+  (:import [logos.minikanren Substitutions Choice]))
 
 ;; =============================================================================
-;; Project
+;; project
 
 (defn project-binding [s]
   (fn [var]
@@ -21,7 +21,7 @@
                 ~@goals) ~a)))))
 
 ;; =============================================================================
-;; cond-a, cond-u
+;; cond-a (soft-cut), cond-u (committed-choice)
 
 (defprotocol IIfA
   (if-a [b gs c]))
@@ -64,8 +64,7 @@
           (if g0
             (when-let [b (g0 b)]
               (recur b gr))
-            (when b
-              (list b))))))
+            b))))
 
 (extend-type Substitutions
   IIfU
@@ -74,19 +73,28 @@
           (if g0
             (when-let [b (g0 b)]
               (recur b gr))
-            (when b
-              (list b))))))
+            b))))
+
+(extend-type clojure.lang.Fn
+  IIfA
+  (if-a [b gs c]
+        (inc (if-a (b) gs c))))
+
+(extend-type clojure.lang.Fn
+  IIfU
+  (if-u [b gs c]
+        (inc (if-u (b) gs c))))
 
 (extend-protocol IIfA
-  clojure.lang.ISeq
+  Choice
   (if-a [b gs c]
         (reduce bind b gs)))
 
+;; TODO: Choice always holds a as a list, can we just remove that?
 (extend-protocol IIfU
-  clojure.lang.ISeq
+  Choice
   (if-u [b gs c]
-        (let [b (reduce bind (first b) gs)]
-          (if (subst? b) (list b) b))))
+        (reduce bind (.a ^Choice b) gs)))
 
 (defn cond-clauses [a]
   (fn [goals]
@@ -109,84 +117,3 @@
 (defn copy-term [u v]
   (project [u]
     (== (walk* (build empty-s u) u) v)))
-
-;; =============================================================================
-;; Examples
-
-(comment
-  (if-a empty-s [s#] nil)
-
-  ;; (olive)
-  (run* [x]
-    (cond-a
-      ((== 'olive x) s#)
-      ((== 'oil x) s#)
-      (u#)))
-
-  ;; ()
-  (run* [x]
-    (cond-a
-      ((== 'virgin x) u#)
-      ((== 'olive x) s#)
-      ((== 'oil x) s#)
-      (u#)))
-
-  ;; ()
-  (run* [x]
-    (exist (x y)
-      (== 'split x)
-      (== 'pea y)
-      (cond-a
-        ((== 'split x) (== x y))
-        (s#)))
-    (== true x))
-
-  ;; (true)
-  (run* [x]
-    (exist (x y)
-      (== 'split x)
-      (== 'pea y)
-      (cond-a
-        ((== x y) (== 'split x))
-        (s#)))
-    (== true x))
-
-  (defn not-pasta-o [x]
-    (cond-a
-     ((== 'pasta x) u#)
-     (s#)))
-
-  ;; (spaghetti)
-  (run* [x]
-    (cond-a
-     ((not-pasta-o x))
-     ((== 'spaghetti x))))
-
-  ;; cond-u
-
-  (defn teacup-o [x]
-    (cond-e
-     ((== 'tea x) s#)
-     ((== 'cup x) s#)))
-
-  (run* [x]
-    (teacup-o x))
-
-  ;; (tea)
-  (defn once-o [g]
-    (cond-u
-     (g s#)))
-
-  (run* [x]
-     (once-o (teacup-o x)))
-
-  (run* [r]
-    (cond-e
-     ((teacup-o r) s#)
-     ((== false r) s#)))
-
-  (run* [r]
-    (cond-a
-     ((teacup-o r) s#)
-     ((== false r) s#)))
-  )

@@ -1,6 +1,7 @@
 (ns logos.arithmetic
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren)
+  (:use logos.minikanren
+        logos.nonrel)
   (:use [clojure.pprint :only [pprint]]))
 
 (defn bit-xor-o [x y r]
@@ -144,14 +145,16 @@
              (adder-o 0 x y '(1 0 1))
              (== `(~x ~y) s)))
 
- ;; FIXME
- ;; something weird going on here
+
+ ;; NOTE
+ ;; double check behavior in Scheme miniKanren
  (run 1 [q]
       (exist [a b]
              (-o (build-num 440)
                  (build-num 241) a)
-             (+o a a b)
-             (== [a b] q)))
+             (project [a]
+                      (+o a a b)
+                      (== [a b] q))))
 
  ;; 199
  (num->int

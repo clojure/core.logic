@@ -1,35 +1,94 @@
 (ns logos.match
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
+  (:require [logos.logic :as logic]
+            [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
-(defmacro defn-e [args & c*]
-  ~(fn [~@args] (handle-clauses [~@args] ~@c*)))
+(declare p->term)
 
-(defmacro match-e [e & c*]
-  `(let [t e]
-     (handle-clauses t ~@c*)))
+(defn lcons-p? [p]
+  (and (coll? p)
+       (not (nil? (some #{'.} p)))))
+
+(defn p->llist [p]
+  `(llist
+    ~@(map p->term
+           (remove #(contains? '#{.} %) p))))
+
+(defn p->term [p]
+  (cond
+   (= p '_) `(lvar)
+   (lcons-p? p) (p->llist p)
+   (coll? p) `[~@(map p->term p)]
+   :else p))
+
+(defn lvar-sym? [s]
+  (= (first (str s)) \?))
+
+(defn extract-vars
+  ([p]
+     (set
+      (cond
+       (lvar-sym? p) [p]
+       (coll? p) (filter lvar-sym? (flatten p))
+       :else nil)))
+  ([p seen]
+     (set/difference (extract-vars p) (set seen))))
+
+(defn ex
+  ([vs t a]
+     `(exist [~@vs]
+             (== ~t ~a)))
+  ([vs t a expr]
+     `(exist [~@vs]
+             (== ~t ~a)
+             ~expr)))
+
+(defn ex* [[[p a :as pa] & par] expr seen]
+  (let [t    (p->term p)
+        vs   (extract-vars p seen)
+        seen (reduce conj seen vs)]
+    (cond
+     (nil? pa) expr
+     (= p '_) (ex* par expr seen)
+     (empty? par) (if expr
+                    (ex vs t a expr)
+                    (ex vs t a))
+     :else (let [r (ex* par expr seen)]
+             (if r
+               (ex vs t a r)
+               (ex vs t a))))))
+
+(defn handle-clause [as]
+  (fn [[p & expr]]
+    (let [pas (partition 2 (interleave p as))]
+      (ex* pas (first expr) #{}))))
+
+(defn handle-clauses [as cs]
+  `(cond-e
+    ~@(map list (map (handle-clause as) cs))))
+
+(defmacro defn-e [n as & cs]
+  `(defn ~n [~@as]
+     ~(handle-clauses as cs)))
+
+(defmacro match-e [xs & cs]
+  (handle-clauses xs cs))
 
 (comment
   (defn-e append-o [x y z]
     ([() _ y])
-    ([[?a & ?d] _ [?a & ?r]] (append-o ?d y ?r)))
+    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 
-  (defn-e append-o [x y z]
-    ([() _ y])
-    ([[A & D] _ [A & R]] (append-o A y R)))
+  (defn-e test-o [x y]
+    ([() _]))
 
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[~a & ~d] _ [~a & ~r]] (append d y r)))
+  (defn-e test-2-o [x y]
+    ([[_ _ ?a] _]))
 
-  ;; hmm caps plus the pipe operator?
-  ;; so much to think about
-  (defn-e append [x y z]
-    ([() _ y])
-    ([[A|D] _ [A|R]] (append D y R)))
-
-  (match-e x
-    ([()] ...)
-    ([?a & ?d] ...))
+  (defn test-o [x y]
+    (match-e [x y]
+       ([() _])
+       ([[?a . ?b] [?c ?d]] (test-o ?a ?d))))
   )
