@@ -18,6 +18,7 @@
 
 ;; for disjunction of suspended streams
 ;; TODO: Sequential is the correct interface to use now I think
+;; can probably just extend IBind IMPlus to PersistentVector
 (deftype WaitingStream [^clojure.lang.ISeq streams]
   clojure.lang.ISeq
   (first [this] (.first streams))
