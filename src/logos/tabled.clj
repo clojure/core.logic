@@ -1,6 +1,6 @@
 (ns logos.tabled
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren)
+  (:use [logos minikanren match])
   (:import [logos.minikanren Choice]))
 
 (defprotocol ISuspendedStream
@@ -33,33 +33,6 @@
                                (f)
                                (mplus (f) (fn [] w)))))))
     :else (recur (rest w) (conj a (first w)))))
-
-;; TODO: consider the concurrency implications much more closely
-
-(defmacro tabled [args & body]
-  `(fn [~@args]
-     (let [table# (atom {})
-           argv# ~args]
-       (fn [a#]
-         (let [key# (reify a# argv#)
-               cache# (get @table# key#)]
-           (if (nil? cache#)
-             (let [cache# (atom [])]
-               (swap! assoc table# key# cache#)
-               ((exist []
-                   ~@body
-                   (master argv# cache#)) a#))
-             (reuse a# argv# cache#)))))))
-
-(defn master [argv cache]
-  (fn [a]
-    (and
-     (every? (fn [ansv]
-               (not (alpha-equiv? a argv ansv)))
-      @cache)
-     (do
-       (swap! cache conj @cache)
-       a))))
 
 (defprotocol ITabled
   (-reify-tabled [this v])
@@ -133,3 +106,45 @@
   (take* [this] (w-check this
                          (fn [f] (take f))
                          (fn [] ()))))
+
+(defn master [argv cache]
+  (fn [a]
+    (and
+     (every? (fn [ansv]
+               (not (alpha-equiv? a argv ansv)))
+      @cache)
+     (do
+       (swap! cache conj @cache)
+       a))))
+
+;; TODO: consider the concurrency implications much more closely
+
+(defmacro tabled [args & body]
+  `(fn [~@args]
+     (let [table# (atom {})
+           argv# ~args]
+       (fn [a#]
+         (let [key# (reify a# argv#)
+               cache# (get @table# key#)]
+           (if (nil? cache#)
+             (let [cache# (atom [])]
+               (swap! assoc table# key# cache#)
+               ((exist []
+                   ~@body
+                   (master argv# cache#)) a#))
+             (reuse a# argv# cache#)))))))
+
+(comment
+  (defn-e arc-o [x y]
+    ([:a :b])
+    ([:b :a])
+    ([:b :d]))
+
+  (def path-o
+    (tabled [x y]
+      (cond-e
+       ((arc-o x y))
+       ((exist [z]
+          (arc-o x z)
+          (path-o z y))))))
+  )
