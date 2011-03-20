@@ -2,42 +2,22 @@
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren))
 
-;; hmm caches should just be atoms?
-(deftype Cache [ansv*])
-
 (defprotocol ISuspendedStream
   (ready? [this]))
 
-(deftype SuspendedStream [^Cache cache ansv* f]
+(deftype SuspendedStream [cache ansv* f]
   ISuspendedStream
   (ready? [this]
-          (not (= (.ansv* cache) ansv*))))
+          (not (= @cache ansv*))))
 
 (defn ss? [x]
   (instance? SuspendedStream x))
 
-;; for disjunction of suspended streams
-;; TODO: Sequential is the correct interface to use now I think
-;; can probably just extend PersistentVector to IBind IMPlus
-(deftype WaitingStream [^clojure.lang.ISeq streams]
-  clojure.lang.ISeq
-  (first [this] (.first streams))
-  (next [this] (let [sn (.next streams)]
-                 (and sn (WaitingStream. sn))))
-  (more [this] (WaitingStream. (.more streams)))
-  (cons [this o] (WaitingStream. (.cons streams o)))
-  (count [this] (.count streams))
-  (empty [this] (.empty streams))
-  (equiv [this o] (.equiv streams o))
-  (seq [this] (let [s (.seq streams)]
-                (and s (WaitingStream. s)))))
-
-(defn waiting-stream [v]
-  (let [v (if (vector? v) v (into [] v))]
-   (WaitingStream. v)))
+(defn to-w [s]
+  (into [] s))
 
 (defn w? [x]
-  (instance? WaitingStream x))
+  (vector? x))
 
 (defn w-check [w sk fk]
   (loop [w w a []]
@@ -46,7 +26,7 @@
      (ready? (first w)) (sk (fn []
                               (let [^SuspendedStream ss (first w)
                                     f (.f ss)
-                                    w (waiting-stream (concat a (rest w)))]
+                                    w (to-w (concat a (rest w)))]
                                 (if (empty? w)
                                   (f)
                                   (mplus (f) (fn [] w)))))))
@@ -88,6 +68,22 @@
     (= (reify this x) (reify this y)))
   (reuse [this argv cache])
   (subunify [this arg ans]))
+
+(extend-type clojure.lang.IPersistentVector
+  IBind
+  (bind [this g]
+        (map (fn [^SuspendedStream ss]
+               (SuspendedStream. (.cache ss) (.ansv* ss)
+                                 (fn [] (bind ((.f ss)) g))))
+             this))
+  IMPlus
+  (mplus [this f]
+         (let [a-inf (f)]
+           (if (w? a-inf)
+             (to-w (concat a-inf this))
+             (mplus a-inf (fn [] this)))))
+  ITake
+  (take* [a] ()))
 
 (comment
   (let [x (lvar 'x)
