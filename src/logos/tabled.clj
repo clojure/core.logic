@@ -24,14 +24,15 @@
   (loop [w w a []]
     (cond
      (empty? w) (fk)
-     (ready? (first w)) (sk (fn [] ;; function branch
-                              (let [^SuspendedStream ss (first w)
-                                    f (.f ss)
-                                    w (to-w (concat a (rest w)))]
-                                (if (empty? w)
-                                  (f)
-                                  (mplus (f) (fn [] w)))))))
-    :else (recur (rest w) (conj a (first w))))) ;; waiting stream branch
+     (ready? (first w)) (sk
+                         (fn []
+                           (let [^SuspendedStream ss (first w)
+                                 f (.f ss)
+                                 w (to-w (concat a (rest w)))]
+                             (if (empty? w)
+                               (f)
+                               (mplus (f) (fn [] w)))))))
+    :else (recur (rest w) (conj a (first w)))))
 
 ;; TODO: consider the concurrency implications much more closely
 
