@@ -24,16 +24,16 @@
   (loop [w w a []]
     (cond
      (empty? w) (fk)
-     (ready? (first w)) (sk (fn []
+     (ready? (first w)) (sk (fn [] ;; function branch
                               (let [^SuspendedStream ss (first w)
                                     f (.f ss)
                                     w (to-w (concat a (rest w)))]
                                 (if (empty? w)
                                   (f)
                                   (mplus (f) (fn [] w)))))))
-    :else (recur (rest w) (conj a (first w)))))
+    :else (recur (rest w) (conj a (first w))))) ;; waiting stream branch
 
-;; TODO: consider the concurrency implications here more closely
+;; TODO: consider the concurrency implications much more closely
 
 (defmacro tabled [args & body]
   `(fn [~@args]
@@ -43,7 +43,7 @@
          (let [key# (reify a# argv#)
                cache# (get @table# key#)]
            (if (nil? cache#)
-             (let [cache# (atom {})]
+             (let [cache# (atom [])]
                (swap! assoc table# key# cache#)
                ((exist []
                    ~@body
@@ -113,22 +113,22 @@
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
-        (map (fn [^SuspendedStream ss]
-               (SuspendedStream. (.cache ss) (.ansv* ss)
-                                 (fn [] (bind ((.f ss)) g))))
-             this))
+        (w-check this
+                 (fn [f] (bind f g))
+                 (fn [] (map (fn [^SuspendedStream ss]
+                               (SuspendedStream. (.cache ss) (.ansv* ss)
+                                                 (fn [] (bind ((.f ss)) g))))
+                             this))))
   IMPlus
   (mplus [this f]
-         (let [a-inf (f)]
-           (if (w? a-inf)
-             (to-w (concat a-inf this))
-             (mplus a-inf (fn [] this)))))
+         (w-check this
+                  (fn [fp] (mplus fp f))
+                  (fn []
+                    (let [a-inf (f)]
+                      (if (w? a-inf)
+                        (to-w (concat a-inf this))
+                        (mplus a-inf (fn [] this)))))))
   ITake
-  (take* [a] ()))
-
-(comment
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (to-s [[x 1] [y 2]])]
-    (reify s [x y]))
-  )
+  (take* [this] (w-check this
+                         (fn [f] (take f))
+                         (fn [] ()))))
