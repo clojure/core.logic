@@ -114,7 +114,7 @@
                (not (alpha-equiv? a argv ansv)))
       @cache)
      (do
-       (swap! cache conj @cache)
+       (swap! cache conj (reify-tabled a argv))
        a))))
 
 ;; TODO: consider the concurrency implications much more closely
@@ -132,7 +132,7 @@
                ((exist []
                    ~@body
                    (master argv# cache#)) a#))
-             (reuse a# argv# cache#)))))))
+             (reuse a# argv# cache# nil nil)))))))
 
 (comment
   (defn-e arc-o [x y]
