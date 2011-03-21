@@ -2,6 +2,8 @@
   (:refer-clojure :exclude [reify == inc])
   (:use [clojure.pprint :only [pprint]]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:dynamic *occurs-check* true)
 
 ;; =============================================================================
@@ -125,7 +127,7 @@
 (declare walk-term)
 (declare build-term)
 
-(deftype Substitutions [s l]
+(deftype Substitutions [s l verify]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -145,7 +147,9 @@
          (ext-no-check this x v)))
 
   (ext-no-check [this x v]
-                (Substitutions. (assoc s x v) (cons (Pair. x v) l)))
+                (if (verify x v)
+                  (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify)
+                  nil))
 
   (walk [this v]
         (loop [v v lv nil]
@@ -181,7 +185,14 @@
   (build [this u]
          (build-term u this)))
 
-(def empty-s (Substitutions. {} '()))
+(defn pass [x y]
+  true)
+
+(defn ^Substitutions make-s
+  ([m l] (Substitutions. m l pass))
+  ([m l f] (Substitutions. m l f)))
+
+(def empty-s (make-s {} '()))
 
 (defn subst? [x]
   (instance? Substitutions x))
@@ -189,7 +200,7 @@
 (defn to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
-    (Substitutions. s l)))
+    (make-s s l)))
 
 ;; =============================================================================
 ;; Unification
@@ -696,8 +707,8 @@
          lv (lvar 'ignore) ]
      (if (contains? m u)
        s
-       (Substitutions. (assoc m u lv)
-                       (cons (Pair. u lv) l))))))
+       (make-s (assoc m u lv)
+               (cons (Pair. u lv) l))))))
 
 (extend-type LCons
   IBuildTerm

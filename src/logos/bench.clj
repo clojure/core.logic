@@ -68,7 +68,7 @@
 
 (comment
   ;; SWI-Prolog 8.5s
-  ;; 10-11s
+  ;; < 4s (make-s ?)
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time

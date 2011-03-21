@@ -3,6 +3,8 @@
   (:use [logos minikanren match])
   (:import [logos.minikanren Choice]))
 
+(set! *warn-on-reflection* true)
+
 ;; =============================================================================
 ;; Data Structures
 ;; (atom []) is cache, waiting stream are PersistentVectors
