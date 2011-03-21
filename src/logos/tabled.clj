@@ -38,7 +38,7 @@
                              (if (empty? w)
                                (f)
                                (mplus (f) (fn [] w))))))
-     :else (recur (next w) (conj a (first w))))))o
+     :else (recur (next w) (conj a (first w))))))
 
 (defprotocol ITabled
   (-reify-tabled [this v])
@@ -101,7 +101,6 @@
                               this)))))
   IMPlus
   (mplus [this f]
-         (throw (Exception. "mplus vector"))
          (w-check this
                   (fn [fp] (mplus fp f))
                   (fn []
@@ -117,7 +116,6 @@
 
 (defn master [argv cache]
   (fn [a]
-    (println "master call")
     (when (every? (fn [ansv]
                     (not (alpha-equiv? a argv ansv)))
                   @cache)
@@ -133,73 +131,28 @@
         (fn [a#]
           (let [key# (reify a# argv#)
                 cache# (get @table# key#)]
-            (println "table pre:" table#)
             (if (nil? cache#)
               (let [cache# (atom [])]
                 (swap! table# assoc key# cache#)
-                (println "table post:" table#)
                 ((exist []
                         ~@grest
                         (master argv# cache#)) a#))
               (reuse a# argv# cache# nil nil))))))))
 
 (comment
-  (do
-    (defn-e arc-o [x y]
-      ([:a :b])
-      ([:b :a])
-      ([:b :d]))
+  (defn-e arc-o [x y]
+    ([:a :b])
+    ([:b :a])
+    ([:b :d]))
 
-    (defn path-bad-o [x y]
+  (def path-o
+    (tabled [x y]
       (cond-e
        ((arc-o x y))
        ((exist [z]
-               (arc-o x z)
-               (path-bad-o z y)))))
+          (arc-o x z)
+          (path-o z y))))))
 
-    (def path-o
-         (tabled [x y]
-                 (cond-e
-                  ((arc-o x y))
-                  ((exist [z]
-                          (arc-o x z)
-                          (path-o z y))))))
-    )
-
-  ;; we see the infinite search here
-  (run 10 [q]
-       (path-bad-o :a q))
-
-  ;; takes a while to get to Choice
-  (let [q (lvar 'q)]
-    (((((((((((((path-bad-o :a q) empty-s)))))))))))))
-
-
-  ;; FIXME: infinite loop
+  ;; (:b :a :d)
   (run* [q] (path-o :a q))
-
-  ;; 4th answer we tank
-  (run 4 [q] (path-o :a q))
-
-  (let [q (lvar 'q)]
-    ((path-o :a q) empty-s))
-
-  ;; we have a choice here as well
-  (let [q (lvar 'q)]
-    ((((((((((((((path-o :a q) empty-s))))))))))))))
-
-  (let [q (lvar 'q)]
-    (-> ((path-o :a q) empty-s)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke)
-        (.invoke))) ;; master call
   )
