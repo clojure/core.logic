@@ -52,6 +52,30 @@ The Logos version is almost equally succinct:
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 </pre>
 
+h3. Tabling
+
+Logos as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in Logos if you create a tabled goal.
+
+<pre>
+(defn-e arc-o [x y]
+  ([:a :b])
+  ([:b :a])
+  ([:b :d]))
+
+(def path-o
+  (tabled [x y]
+    (cond-e
+     ((arc-o x y))
+     ((exist [z]
+        (arc-o x z)
+        (path-o z y))))))
+
+;; (:b :a :d)
+(run* [q] (path-o :a q))
+</pre>
+
+h3. Unification
+
 Logos comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
 
 <pre>
@@ -75,7 +99,6 @@ h2. Roadmap
 
 The core Prolog aspect of Logos is nearing completion. The following are tentative future directions:
 
-* Tabling - gives us some of the benefits of Datalog
 * Negation - Stratified Negation as provided by XSB ?
 * Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
