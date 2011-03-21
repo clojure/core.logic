@@ -192,12 +192,12 @@
   ([m l] (Substitutions. m l pass))
   ([m l f] (Substitutions. m l f)))
 
-(def empty-s (make-s {} '()))
+(def ^Substitutions empty-s (make-s {} '()))
 
 (defn subst? [x]
   (instance? Substitutions x))
 
-(defn to-s [v]
+(defn ^Substitutions to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l)))
