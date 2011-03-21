@@ -3,6 +3,10 @@
   (:use [logos minikanren match])
   (:import [logos.minikanren Choice]))
 
+;; =============================================================================
+;; Data Structures
+;; (atom []) is cache, waiting stream are PersistentVectors
+
 (defprotocol ISuspendedStream
   (ready? [this]))
 
@@ -11,7 +15,7 @@
   (ready? [this]
           (not (= @cache ansv*))))
 
-(defn make-ss [cache ansv* f]
+(defn ^SuspendedStream make-ss [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
          (vector? ansv*)
          (fn? f)]}
@@ -39,6 +43,9 @@
                                (f)
                                (mplus (f) (fn [] w))))))
      :else (recur (next w) (conj a (first w))))))
+
+;; -----------------------------------------------------------------------------
+;; Extend Substitutions to support tabling
 
 (defprotocol ITabled
   (-reify-tabled [this v])
@@ -89,6 +96,9 @@
                             (first arg) (first ans))
                :else this))))
 
+;; -----------------------------------------------------------------------------
+;; Waiting Stream
+
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
@@ -121,6 +131,9 @@
                   @cache)
      (do (swap! cache conj (reify-tabled a argv))
          a))))
+
+;; -----------------------------------------------------------------------------
+;; Syntax
 
 ;; TODO: consider the concurrency implications much more closely
 
