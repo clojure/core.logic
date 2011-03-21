@@ -86,6 +86,7 @@
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
+        (println "bind vector")
         (w-check this
                  (fn [f] (bind f g))
                  (fn [] (map (fn [^SuspendedStream ss]
@@ -94,6 +95,7 @@
                              this))))
   IMPlus
   (mplus [this f]
+         (println "mplus vector")
          (w-check this
                   (fn [fp] (mplus fp f))
                   (fn []
@@ -102,9 +104,11 @@
                         (to-w (concat a-inf this))
                         (mplus a-inf (fn [] this)))))))
   ITake
-  (take* [this] (w-check this
-                         (fn [f] (take* f))
-                         (fn [] ()))))
+  (take* [this]
+         (println "take* vector")
+         (w-check this
+                  (fn [f] (take* f))
+                  (fn [] ()))))
 
 (defn master [argv cache]
   (fn [a]
@@ -117,7 +121,7 @@
 
 ;; TODO: consider the concurrency implications much more closely
 
-(defmacro tabled [args & body]
+(defmacro tabled [args & grest]
   `(fn [~@args]
      (let [table# (atom {})
            argv# ~args]
@@ -128,7 +132,7 @@
              (let [cache# (atom [])]
                (swap! table# assoc key# cache#)
                ((exist []
-                   ~@body
+                   ~@grest
                    (master argv# cache#)) a#))
              (reuse a# argv# cache# nil nil)))))))
 
@@ -148,6 +152,9 @@
   (run 10 [q]
        (path-bad-o :a q))
 
+  (let [q (lvar 'q)]
+    (((((((((((((path-bad-o :a q) empty-s)))))))))))))
+
   (def path-o
     (tabled [x y]
       (cond-e
@@ -162,7 +169,10 @@
   (let [q (lvar 'q)]
     ((path-o :a q) empty-s))
 
-  ;; we just get a bunch of incs
+  ;; we have a choice here
+  (let [q (lvar 'q)]
+    ((((((((((((((path-o :a q) empty-s))))))))))))))
+
   (let [q (lvar 'q)]
     (-> ((path-o :a q) empty-s)
         (.invoke)
@@ -170,5 +180,11 @@
         (.invoke)
         (.invoke)
         (.invoke)
-        (.invoke)))
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke))) ;; master call
   )
