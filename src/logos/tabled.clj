@@ -105,7 +105,6 @@
                         (mplus a-inf (fn [] this)))))))
   ITake
   (take* [this]
-         (println "take* vector")
          (w-check this
                   (fn [f] (take* f))
                   (fn [] ()))))
@@ -122,54 +121,64 @@
 ;; TODO: consider the concurrency implications much more closely
 
 (defmacro tabled [args & grest]
-  `(fn [~@args]
-     (let [table# (atom {})
-           argv# ~args]
-       (fn [a#]
-         (let [key# (reify a# argv#)
-               cache# (get @table# key#)]
-           (if (nil? cache#)
-             (let [cache# (atom [])]
-               (swap! table# assoc key# cache#)
-               ((exist []
-                   ~@grest
-                   (master argv# cache#)) a#))
-             (reuse a# argv# cache# nil nil)))))))
+  `(let [table# (atom {})]
+    (fn [~@args]
+      (let [argv# ~args]
+        (fn [a#]
+          (let [key# (reify a# argv#)
+                cache# (get @table# key#)]
+            (println "table pre:" table#)
+            (if (nil? cache#)
+              (let [cache# (atom [])]
+                (swap! table# assoc key# cache#)
+                (println "table post:" table#)
+                ((exist []
+                        ~@grest
+                        (master argv# cache#)) a#))
+              (reuse a# argv# cache# nil nil))))))))
 
 (comment
-  (defn-e arc-o [x y]
-    ([:a :b])
-    ([:b :a])
-    ([:b :d]))
+  (do
+    (defn-e arc-o [x y]
+      ([:a :b])
+      ([:b :a])
+      ([:b :d]))
 
-  (defn path-bad-o [x y]
-    (cond-e
-     ((arc-o x y))
-     ((exist [z]
-        (arc-o x z)
-        (path-bad-o z y)))))
-
-  (run 10 [q]
-       (path-bad-o :a q))
-
-  (let [q (lvar 'q)]
-    (((((((((((((path-bad-o :a q) empty-s)))))))))))))
-
-  (def path-o
-    (tabled [x y]
+    (defn path-bad-o [x y]
       (cond-e
        ((arc-o x y))
        ((exist [z]
-          (arc-o x z)
-          (path-o z y))))))
+               (arc-o x z)
+               (path-bad-o z y)))))
+
+    (def path-o
+         (tabled [x y]
+                 (cond-e
+                  ((arc-o x y))
+                  ((exist [z]
+                          (arc-o x z)
+                          (path-o z y))))))
+    )
+
+  ;; we see the infinite search here
+  (run 10 [q]
+       (path-bad-o :a q))
+
+  ;; takes a while to get to Choice
+  (let [q (lvar 'q)]
+    (((((((((((((path-bad-o :a q) empty-s)))))))))))))
+
 
   ;; FIXME: infinite loop
   (run* [q] (path-o :a q))
 
+  ;; 4th answer we tank
+  (run 4 [q] (path-o :a q))
+
   (let [q (lvar 'q)]
     ((path-o :a q) empty-s))
 
-  ;; we have a choice here
+  ;; we have a choice here as well
   (let [q (lvar 'q)]
     ((((((((((((((path-o :a q) empty-s))))))))))))))
 
