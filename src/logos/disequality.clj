@@ -12,6 +12,9 @@
 ;; 
 ;; (verify u v) => false, ext-no-check returns nil
 ;; (verify u v) => true, ext-no-check returns the current substitution
+;; constraint could just be a function
+;; we need to support dependant constraints
+;; (!= (x 1) (y 2))
 
 ;; all-different ?
 

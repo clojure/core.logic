@@ -67,12 +67,18 @@
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
 
 (comment
-  ;; SWI-Prolog 8.5s
+  ;; SWI-Prolog 6-8.5s
   ;; < 4s (make-s ?)
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
        (doall (run 1 [q] (zebra-o q)))))))
+
+  ;; even w/ occurs-check < 6s
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e3]
+       (doall (run 1 [q] (zebra-o q))))))
   )
   

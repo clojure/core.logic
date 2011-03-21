@@ -7,7 +7,7 @@
 
 ;; =============================================================================
 ;; Data Structures
-;; (atom []) is cache, waiting stream are PersistentVectors
+;; (atom []) is cache, waiting streams are PersistentVectors
 
 (defprotocol ISuspendedStream
   (ready? [this]))
