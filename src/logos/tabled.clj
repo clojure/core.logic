@@ -38,7 +38,6 @@
   (-reify-tabled [this v])
   (reify-tabled [this v])
   (alpha-equiv? [this x y])
-  (master [this argv cache])
   (reuse [this argv cache start end])
   (subunify [this arg ans]))
 
