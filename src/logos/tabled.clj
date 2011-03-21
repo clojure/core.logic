@@ -11,6 +11,12 @@
   (ready? [this]
           (not (= @cache ansv*))))
 
+(defn make-ss [cache ansv* f]
+  {:pre [(instance? clojure.lang.Atom cache)
+         (vector? ansv*)
+         (fn? f)]}
+  (SuspendedStream. cache ansv* f))
+
 (defn ss? [x]
   (instance? SuspendedStream x))
 
@@ -31,8 +37,8 @@
                                  w (to-w (concat a (next w)))]
                              (if (empty? w)
                                (f)
-                               (mplus (f) (fn [] w)))))))
-    :else (recur (next w) (conj a (first w)))))
+                               (mplus (f) (fn [] w))))))
+     :else (recur (next w) (conj a (first w))))))o
 
 (defprotocol ITabled
   (-reify-tabled [this v])
@@ -67,7 +73,7 @@
                end   (or end [])]
            (letfn [(reuse-loop [ansv*]
                      (if (= ansv* end)
-                       [(SuspendedStream. cache start
+                       [(make-ss cache start
                           (fn [] (reuse this argv cache @cache start)))]
                        (Choice. (subunify this argv (reify-tabled this (first ansv*)))
                                 (fn [] (reuse-loop (rest ansv*))))))]
@@ -90,8 +96,8 @@
                  (fn [f] (bind f g))
                  (fn [] (to-w
                          (map (fn [^SuspendedStream ss]
-                                (SuspendedStream. (.cache ss) (.ansv* ss)
-                                                  (fn [] (bind ((.f ss)) g))))
+                                (make-ss (.cache ss) (.ansv* ss)
+                                         (fn [] (bind ((.f ss)) g))))
                               this)))))
   IMPlus
   (mplus [this f]
