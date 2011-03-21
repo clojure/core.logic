@@ -99,7 +99,6 @@ h2. Roadmap
 
 The core Prolog aspect of Logos is nearing completion. The following are tentative future directions:
 
-* Tabling - gives us some of the benefits of Datalog
 * Negation - Stratified Negation as provided by XSB ?
 * Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
