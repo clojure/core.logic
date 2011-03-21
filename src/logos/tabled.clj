@@ -86,16 +86,16 @@
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
-        (println "bind vector")
         (w-check this
                  (fn [f] (bind f g))
-                 (fn [] (map (fn [^SuspendedStream ss]
-                               (SuspendedStream. (.cache ss) (.ansv* ss)
-                                                 (fn [] (bind ((.f ss)) g))))
-                             this))))
+                 (fn [] (to-w
+                         (map (fn [^SuspendedStream ss]
+                                (SuspendedStream. (.cache ss) (.ansv* ss)
+                                                  (fn [] (bind ((.f ss)) g))))
+                              this)))))
   IMPlus
   (mplus [this f]
-         (println "mplus vector")
+         (throw (Exception. "mplus vector"))
          (w-check this
                   (fn [fp] (mplus fp f))
                   (fn []
