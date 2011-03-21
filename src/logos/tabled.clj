@@ -155,4 +155,10 @@
 
   ;; (:b :a :d)
   (run* [q] (path-o :a q))
+
+  ;; 1.5s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (doall (run* [q] (path-o :a q))))))
   )
