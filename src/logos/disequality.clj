@@ -4,6 +4,17 @@
         logos.match)
   (:import [logos.minikanren Substitutions]))
 
+;; we probably should update reify if we're going to show what constraints there are
+;; challenge, how to add disequality constraint without changing things up too much
+
+;; IUnifyWithLVar, all the fns call ext/ext-no-check
+;; we could add a verify field to Substitutions, which defaults
+;; 
+;; (verify u v) => false, ext-no-check returns nil
+;; (verify u v) => true, ext-no-check returns the current substitution
+
+;; all-different ?
+
 (defmacro != [u v]
   `(fn [a#]
      (!=-verify a# (unify a# u v))))
