@@ -104,11 +104,12 @@
                         (mplus a-inf (fn [] this)))))))
   ITake
   (take* [this] (w-check this
-                         (fn [f] (take f))
+                         (fn [f] (take* f))
                          (fn [] ()))))
 
 (defn master [argv cache]
   (fn [a]
+    (println "master call")
     (when (every? (fn [ansv]
                     (not (alpha-equiv? a argv ansv)))
                   @cache)
@@ -138,6 +139,16 @@
     ([:b :a])
     ([:b :d]))
 
+  (defn path-bad-o [x y]
+    (cond-e
+     ((arc-o x y))
+     ((exist [z]
+        (arc-o x z)
+        (path-bad-o z y)))))
+
+  (run 10 [q]
+       (path-bad-o :a q))
+
   (def path-o
     (tabled [x y]
       (cond-e
@@ -146,5 +157,19 @@
           (arc-o x z)
           (path-o z y))))))
 
+  ;; FIXME: infinite loop
   (run* [q] (path-o :a q))
+
+  (let [q (lvar 'q)]
+    ((path-o :a q) empty-s))
+
+  ;; we just get a bunch of incs
+  (let [q (lvar 'q)]
+    (-> ((path-o :a q) empty-s)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)
+        (.invoke)))
   )
