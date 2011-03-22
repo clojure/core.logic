@@ -15,7 +15,7 @@
 (deftype SuspendedStream [cache ansv* f]
   ISuspendedStream
   (ready? [this]
-          (not (= @cache ansv*))))
+          (not= @cache ansv*)))
 
 (defn ^SuspendedStream make-ss [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
