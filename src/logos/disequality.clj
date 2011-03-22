@@ -30,7 +30,9 @@
     true))
 
 (defn merge-constraints [c1 c2]
-  )
+  (-> c1
+      (update-in [:simple] #(reduce conj % (:simple c2)))
+      (update-in [:complex] #(reduce conj % (:complex c2)))))
 
 (defn prefix [s <s]
   (if (= s <s)
@@ -80,4 +82,17 @@
                     (ext-no-check y 2))
              s2 (ext-no-check s1 z 3)]
          (prefix (.l ^Substitutions s2) (.l ^Substitutions s1))))))
+
+  (merge-constraints
+   {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
+   {:simple #{:d :e} :complex [{:d 3 :e 4}]})
+
+  ;; 1.6s
+  ;; pretty fast considering
+  (dotimes [_ 10]
+    (let [c1 {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
+          c2 {:simple #{:d :e} :complex [{:d 3 :e 4}]}]
+     (time
+      (dotimes [_ 1e6]
+        (merge-constraints c1 c2)))))
   )
