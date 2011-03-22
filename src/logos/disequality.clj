@@ -18,15 +18,24 @@
 (defn verify-simple [s v c]
   (not (contains? c v)))
 
-(defn verify-complex [s v c*]
+(defn simplify [s complex]
   )
+
+(defn verify-complex [s u v c*]
+  (if (seq c*)
+   (if (some #(= (% u) v) c*)
+     [false c*])
+   [true c*]))
 
 ;; by this point, unification succeeded
 (defn constraint [s u v]
   (if-let [meta (meta u)]
     (let [{:keys [simple complex]} meta]
-      nil)
-    true))
+      (let [[valid new-complex] (verify-complex s u v complex)]
+        (if (not valid)
+          nil
+          s)))
+    s))
 
 (defn merge-constraints [c1 c2]
   (-> c1
