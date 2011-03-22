@@ -1,20 +1,9 @@
 (ns logos.disequality
   (:refer-clojure :exclude [reify == inc])
   (:use [logos.minikanren :exclude [==]]
+        [clojure.set :only [rename-keys]]
         logos.match)
   (:import [logos.minikanren Substitutions]))
-
-;; we probably should update reify if we're going to show what constraints there are
-;; challenge, how to add disequality constraint without changing things up too much
-
-;; IUnifyWithLVar, all the fns call ext/ext-no-check
-;; we could add a verify field to Substitutions, which defaults
-;; 
-;; (verify u v) => false, ext-no-check returns nil
-;; (verify u v) => true, ext-no-check returns the current substitution
-;; constraint could just be a function
-;; we need to support dependant constraints
-;; (!= (x 1) (y 2))
 
 ;; all-different ?
 
@@ -31,6 +20,16 @@
   (==-verify [this u v])
   (prefix [this <s]))
 
+(defn verify-simple [])
+
+(defn verify-complex [])
+
+(defn constraint [s u v]
+  (if-let [meta (meta u)]
+    (let [{:keys [simple complex]} meta]
+      nil)
+    true))
+
 (extend-type Substitutions
   IDisequality
 
@@ -38,31 +37,20 @@
               (cond
                (not sp) this
                (= this sp) nil
-               :else (let [c (prefix sp this)]
-                       ;; add constraint metadata to all the vars in c
-                       (Substitutions. {} (.l this)))))
+               :else (let [[[k v] & r :as c] (into {} (prefix sp this))
+                           meta (if (= (count c) 1)
+                                  {:simple #{v} :complex []}
+                                  {:simple #{} :complex [c]})
+                           ks (keys c)
+                           nks (zipmap ks (map #(with-meta % meta) ks))
+                           os (.s this)]
+                       (Substitutions. (rename-keys os nks)
+                                       (.l this) constraint))))
   
-  (prefix [this ^Substitutions <s]
-          (let [tl (.l this)
+  (prefix [this <s]
+          (let [^Substitutions <s <s
+                tl (.l this)
                 ol (.l <s)]
-            (if (= tl ol)
+            (if (identical? tl ol)
               ()
-              (to-s (cons (first tl) (prefix (rest tl) ol)))))))
-
-(defprotocol IUnifyTermVerify
-  (unify-term-verify [u v]))
-
-(extend-type logos.minikanren.LVar
-  IUnifyTermVerify
-  (unify-term-verify [u v a]
-    (let [s (unify-term u v a)]
-      (if (not= a s)
-        (let [m (meta u)]
-          (if m
-            nil ;; some-stuff
-            s))
-        s))))
-
-(extend-type Object
-  IUnifyTermVerify
-  )
+              (cons (first tl) (prefix (rest tl) ol))))))
