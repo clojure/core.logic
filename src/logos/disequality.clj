@@ -17,8 +17,7 @@
 
 (defprotocol IDisequality
   (!=-verify [this sp])
-  (==-verify [this u v])
-  (prefix [this <s]))
+  (==-verify [this u v]))
 
 (defn verify-simple [])
 
@@ -30,14 +29,23 @@
       nil)
     true))
 
+(defn merge-contraints [c1 c2]
+  )
+
+(defn prefix [s <s]
+  (if (= s <s)
+    ()
+    (cons (first s) (prefix (rest s) <s))))
+
 (extend-type Substitutions
   IDisequality
 
   (!=-verify [this sp]
+             (let [^Substitutions sp sp]
               (cond
                (not sp) this
                (= this sp) nil
-               :else (let [[[k v] & r :as c] (into {} (prefix sp this))
+               :else (let [[[k v] & r :as c] (into {} (prefix (.l sp) (.l this)))
                            meta (if (= (count c) 1)
                                   {:simple #{v} :complex []}
                                   {:simple #{} :complex [c]})
@@ -45,12 +53,15 @@
                            nks (zipmap ks (map #(with-meta % meta) ks))
                            os (.s this)]
                        (Substitutions. (rename-keys os nks)
-                                       (.l this) constraint))))
-  
-  (prefix [this <s]
-          (let [^Substitutions <s <s
-                tl (.l this)
-                ol (.l <s)]
-            (if (identical? tl ol)
-              ()
-              (cons (first tl) (prefix (rest tl) ol))))))
+                                       (.l this) constraint))))))
+
+(comment
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s1 (-> empty-s
+                (ext-no-check x 1)
+                (ext-no-check y 2))
+        s2 (ext-no-check s1 z 3)]
+    (prefix (.l s2) (.l s1)))
+  )
