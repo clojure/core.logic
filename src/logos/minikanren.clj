@@ -147,7 +147,7 @@
          (ext-no-check this x v)))
 
   (ext-no-check [this x v]
-                (if (verify x v)
+                (if (verify s x v)
                   (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify)
                   nil))
 
@@ -185,7 +185,7 @@
   (build [this u]
          (build-term u this)))
 
-(defn pass [x y]
+(defn pass [s x y]
   true)
 
 (defn ^Substitutions make-s
