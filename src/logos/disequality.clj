@@ -15,14 +15,13 @@
   `(fn [a#]
      (!=-verify (unify a# u v) a#)))
 
-(defprotocol IDisequality
-  (!=-verify [this sp])
-  (==-verify [this u v]))
+(defn verify-simple [s v c]
+  (not (contains? c v)))
 
-(defn verify-simple [])
+(defn verify-complex [s v c*]
+  )
 
-(defn verify-complex [])
-
+;; by this point, unification succeeded
 (defn constraint [s u v]
   (if-let [meta (meta u)]
     (let [{:keys [simple complex]} meta]
@@ -38,6 +37,10 @@
   (if (= s <s)
     ()
     (cons (first s) (prefix (rest s) <s))))
+
+(defprotocol IDisequality
+  (!=-verify [this sp])
+  (==-verify [this u v]))
 
 (extend-type Substitutions
   IDisequality
@@ -95,4 +98,12 @@
      (time
       (dotimes [_ 1e6]
         (merge-constraints c1 c2)))))
+
+  ;; about the same amount of time
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (merge-constraints
+        {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
+        {:simple #{:d :e} :complex [{:d 3 :e 4}]}))))
   )
