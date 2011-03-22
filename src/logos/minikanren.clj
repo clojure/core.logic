@@ -44,11 +44,22 @@
   (rhs [this]))
 
 (deftype Pair [lhs rhs]
+  clojure.lang.Counted
+  (count [_] 2)
+  clojure.lang.Indexed
+  (nth [_ i] (case i
+                   0 lhs
+                   1 rhs
+                   (throw (IndexOutOfBoundsException.))))
+  (nth [_ i not-found] (case i
+                             0 lhs
+                             1 rhs
+                             not-found))
   IPair
-  (lhs [this] lhs)
-  (rhs [this] rhs)
+  (lhs [_] lhs)
+  (rhs [_] rhs)
   Object
-  (toString [this]
+  (toString [_]
             (str "(" lhs " . " rhs ")")))
 
 (deftype LCons [a d cache]
