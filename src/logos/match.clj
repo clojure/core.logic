@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
   (:require [logos.logic :as logic]
+            [logos.tabled :as tabled]
             [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
@@ -70,8 +71,12 @@
     ~@(map list (map (handle-clause as) cs))))
 
 (defn defn-m [t n as & cs]
-  `(defn ~n [~@as]
-     ~(handle-clauses t as cs)))
+  (if-let [tabled? (-> n meta :tabled)]
+    `(def ~n
+       (logos.tabled/tabled [~@as]
+        ~(handle-clauses t as cs)))
+    `(defn ~n [~@as]
+       ~(handle-clauses t as cs))))
 
 (defmacro defn-e [& rest]
   (apply defn-m `cond-e rest))
@@ -84,7 +89,38 @@
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 
+  (defn-e ^:tabled append-o-tabled [x y z]
+    ([() _ y])
+    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+
   (run 1 [q] (append-o [1 2] [3 4] q))
+
+  ;; 1.5s
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e5]
+       (doall (run 1 [q] (append-o [1 2] [3 4] q))))))
+
+  ;; 1.6s actually a bit slower for this relation
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e5]
+       (doall (run 1 [q] (append-o-tabled [1 2] [3 4] q))))))
+
+  (defn-e arc-o [x y]
+    ([:a :b])
+    ([:b :a])
+    ([:b :d]))
+
+  (defn-e ^:tabled path-o [x y]
+    ([x y] (cond-e
+            ((arc-o x y))
+            ((exist [z]
+               (arc-o x z)
+               (path-o z y))))))
+
+  ;; (:b :a :d)
+  (run* [q] (path-o :a q))
 
   (defn-e test-o [x y]
     ([() _]))
