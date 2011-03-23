@@ -11,10 +11,6 @@
   `(fn [a#]
      (!=-verify a# (unify a# u v))))
 
-(defmacro == [u v]
-  `(fn [a#]
-     (!=-verify (unify a# u v) a#)))
-
 (defn verify-simple [s v c]
   (not (contains? c v)))
 

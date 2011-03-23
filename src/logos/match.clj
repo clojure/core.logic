@@ -84,6 +84,9 @@
 (defmacro match-e [xs & cs]
   (handle-clauses `cond-e xs cs))
 
+;; -----------------------------------------------------------------------------
+;; quick tests
+
 (comment
   (defn-e append-o [x y z]
     ([() _ y])
