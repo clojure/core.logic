@@ -65,21 +65,26 @@
     (let [pas (partition 2 (interleave p as))]
       (ex* pas (first expr) #{}))))
 
-(defn handle-clauses [as cs]
-  `(cond-e
+(defn handle-clauses [t as cs]
+  `(~t
     ~@(map list (map (handle-clause as) cs))))
 
-(defmacro defn-e [n as & cs]
+(defn defn-m [t n as & cs]
   `(defn ~n [~@as]
-     ~(handle-clauses as cs)))
+     ~(handle-clauses t as cs)))
+
+(defmacro defn-e [& rest]
+  (apply defn-m `cond-e rest))
 
 (defmacro match-e [xs & cs]
-  (handle-clauses xs cs))
+  (handle-clauses `cond-e xs cs))
 
 (comment
   (defn-e append-o [x y z]
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+
+  (run 1 [q] (append-o [1 2] [3 4] q))
 
   (defn-e test-o [x y]
     ([() _]))

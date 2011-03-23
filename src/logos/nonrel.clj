@@ -1,6 +1,6 @@
 (ns logos.nonrel
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren)
+  (:use [logos minikanren match])
   (:import [logos.minikanren Substitutions Choice]))
 
 ;; =============================================================================
@@ -110,6 +110,21 @@
   (let [a (gensym "a")]
     `(fn [~a]
        (if-u* ~@(map (cond-clauses a) clauses)))))
+
+;; =============================================================================
+;; defn-u, defn-a, match-a, match-u
+
+(defmacro defn-a [& rest]
+  (apply defn-m `cond-a rest))
+
+(defmacro defn-u [& rest]
+  (apply defn-m `cond-u rest))
+
+(defmacro match-a [xs & cs]
+  (handle-clauses `cond-a xs cs))
+
+(defmacro match-u [xs & cs]
+  (handle-clauses `cond-u xs cs))
 
 ;; =============================================================================
 ;; copy-term
