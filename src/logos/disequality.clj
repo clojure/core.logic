@@ -68,8 +68,8 @@
                                                   (merge-constraints (meta %) nc))
                                                ks))
                            os (.s this)]
-                       (Substitutions. (rename-keys os nks)
-                                       (.l this) constraint))))))
+                       (make-s (rename-keys os nks)
+                               (.l this) constraint))))))
 
 (comment
   (let [x (lvar 'x)
