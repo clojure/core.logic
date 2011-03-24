@@ -24,7 +24,7 @@
   (run 1 [q] (nrev-o q (range 30)))
 
   ;; SWI-Prolog 0.06-0.08s
-  ;; ~5s
+  ;; ~4.7s
   (let [data (into [] (range 30))]
    (dotimes [_ 5]
      (time
@@ -68,14 +68,14 @@
 
 (comment
   ;; SWI-Prolog 6-8.5s
-  ;; < 4s (make-s ?)
+  ;; ~2.1s
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
        (doall (run 1 [q] (zebra-o q)))))))
 
-  ;; even w/ occurs-check < 6s
+  ;; < 3s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
