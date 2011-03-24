@@ -167,6 +167,15 @@
                   (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify)
                   nil))
 
+  ;; (ext-no-check [this x v]
+  ;;               (let [r (verify s x v)]
+  ;;                 (cond
+  ;;                  (= r ::violated) nil
+  ;;                  (nil? r) (Substitutions. (assoc s x v)
+  ;;                                           (cons (Pair. x v) l) verify)
+  ;;                  :else (Substitutions. (assoc s (with-meta x r) v)
+  ;;                                        (cons (Pair. x v) l) verify))))
+  
   (walk [this v]
         (loop [v v lv nil]
           (cond

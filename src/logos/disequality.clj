@@ -14,15 +14,16 @@
 (defn verify-simple [s v c]
   (not (contains? c v)))
 
-(defn simplify [s complex]
-  )
-
-(declare prefix)
+(defn prefix [s <s]
+  (if (= s <s)
+    ()
+    (cons (first s) (prefix (rest s) <s))))
 
 (defn seive [c*]
-  (group-by (fn [x] (if (vector? x)
-                      :complex
-                      :simple))
+  (group-by (fn [x]
+              (if (vector? x)
+                :complex
+                :simple))
             c*))
 
 (defn unify* [^Substitutions s c]
@@ -34,52 +35,41 @@
        (not s') (recur cr (conj nc b))
        :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
 
-(comment
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        z (lvar 'z)
-        s (-> empty-s
-              (ext-no-check x 1)
-              (ext-no-check z 3))]
-    (unify* s [(Pair. y 2) (Pair. x 1)]))
-  )
-
-(declare merge-contraints)
-
-(defn verify-complex [s u c*]
-  (loop [[c & cr :as c*] c*]
-    (let [nc (unify* s c*)]
-      (cond
-       (nil? cr) (merge-contraints (meta u) (seive c*))
-       :else nil))))
-
-;; by this point, unification succeeded
-;; we need to return substitution, because we want to return
-;; the substitution w/ updated constraints
-;; some complexity since (Pair. u v) isn't already in the substitution
-(defn constraint [s u v]
-  (if-let [meta (meta u)]
-    (let [{:keys [simple complex]} meta]
-      (let [[valid new-complex] (verify-complex s u v complex)]
-        (if (not valid)
-          nil
-          (if (verify-simple s v simple)
-            s))))
-    s))
-
 (defn merge-constraints [c1 c2]
   (-> c1
       (update-in [:simple] #(reduce conj % (:simple c2)))
       (update-in [:complex] #(reduce conj % (:complex c2)))))
 
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
+(defn verify-complex [s u c*]
+  (loop [[c & cr :as c*] c* s* #{} nc* #{}]
+    (let [nc (unify* s c*)
+          j (count nc)]
+      (cond
+       (nil? cr) (merge-constraints (meta u) {:simple s* :complex nc*})
+       (zero? j) false
+       (= j 1) (let [[u' v :as p] nc]
+                 (if (= u' u)
+                  (recur cr (conj s* p) nc*)
+                  (recur cr s* nc*)))
+       :else (recur cr s* (conj nc* nc))))))
+
+;; nil, new constraint, ::violated
+;; we would prefer to return one kind of value
+(defn constraint [s u v]
+  (if-let [meta (meta u)]
+    (let [{:keys [simple complex]} meta]
+      (if (verify-simple s v simple)
+        (if (seq complex)
+         (if-let [nc* (verify-complex u complex)]
+           {:simple (reduce conj simple (:simple nc*))
+            :complex (:complex nc*)}
+           ::violated)
+         (if (lvar? v)
+           meta))
+        ::violated))))
 
 (defprotocol IDisequality
-  (!=-verify [this sp])
-  (==-verify [this u v]))
+  (!=-verify [this sp]))
 
 (extend-type Substitutions
   IDisequality
@@ -89,10 +79,10 @@
               (cond
                (not sp) this
                (= this sp) nil
-               :else (let [[[k v] & r :as c] (into {} (prefix (.l sp) (.l this)))
+               :else (let [[[k v] :as c] (into {} (prefix (.l sp) (.l this)))
                            nc (if (= (count c) 1)
-                                {:simple #{v} :complex []}
-                                {:simple #{} :complex [c]})
+                                {:simple #{v} :complex #{}}
+                                {:simple #{} :complex #{c}})
                            ks (keys c)
                            nks (zipmap ks (map #(with-meta %
                                                   (merge-constraints (meta %) nc))
