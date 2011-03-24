@@ -19,30 +19,22 @@
     ()
     (cons (first s) (prefix (rest s) <s))))
 
-(defn seive [c*]
-  (group-by (fn [x]
-              (if (vector? x)
-                :complex
-                :simple))
-            c*))
-
-(defn unify* [^Substitutions s c]
-  (loop [[[u v :as b] & cr] c nc []]
-    (let [^Substitutions s' (unify s u v)]
-      (cond
-       (nil? b) (if (seq nc) nc false)
-       (identical? s s') (recur cr nc)
-       (not s') (recur cr (conj nc b))
-       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
-
 (defn merge-constraints [c1 c2]
   (-> c1
       (update-in [:simple] #(reduce conj % (:simple c2)))
       (update-in [:complex] #(reduce conj % (:complex c2)))))
 
+(defn unify* [^Substitutions s c]
+  (loop [[[u v :as b] & cr] c nc #{}]
+    (let [^Substitutions s' (unify s u v)]
+      (cond
+       (nil? b) (if (seq nc) nc false) ;; are we done?
+       (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
+       :else (recur cr (conj nc (prefix (.l s') (.l s)))))))) ;; 
+
 (defn verify-complex [s u c*]
   (loop [[c & cr :as c*] c* s* #{} nc* #{}]
-    (let [nc (unify* s c*)
+    (let [nc (unify* s c)
           j (count nc)]
       (cond
        (nil? cr) (merge-constraints (meta u) {:simple s* :complex nc*})
@@ -91,6 +83,18 @@
                        (make-s (rename-keys os nks)
                                (.l this) constraint))))))
 
+;; hmm that's why they use a constraint store
+;; to track variables that aren't in the substitution yet
+;; it might make sense to introduce the concept of
+;; ::unbound variables
+(defn all-different [& xs]
+  (let [xs (set xs)]
+   (fn [a]
+     (loop [[x & xr] xs a a]
+       (cond
+        (nil? x) a
+        :else (recur xr (unify a)))))))
+
 (comment
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -116,14 +120,14 @@
          (prefix (.l ^Substitutions s2) (.l ^Substitutions s1))))))
 
   (merge-constraints
-   {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
-   {:simple #{:d :e} :complex [{:d 3 :e 4}]})
+   {:simple #{:a :b :c} :complex #{{:a 1 :b 2}}}
+   {:simple #{:d :e} :complex #{{:d 3 :e 4}}})
 
   ;; 1.6s
   ;; pretty fast considering
   (dotimes [_ 10]
-    (let [c1 {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
-          c2 {:simple #{:d :e} :complex [{:d 3 :e 4}]}]
+    (let [c1 {:simple #{:a :b :c} :complex #{{:a 1 :b 2}}}
+          c2 {:simple #{:d :e} :complex #{{:d 3 :e 4}}}]
      (time
       (dotimes [_ 1e6]
         (merge-constraints c1 c2)))))
@@ -133,6 +137,14 @@
     (time
      (dotimes [_ 1e6]
        (merge-constraints
-        {:simple #{:a :b :c} :complex [{:a 1 :b 2}]}
-        {:simple #{:d :e} :complex [{:d 3 :e 4}]}))))
+        {:simple #{:a :b :c} :complex #{{:a 1 :b 2}}}
+        {:simple #{:d :e} :complex #{{:d 3 :e 4}}}))))
+
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)]
+    (-> empty-s
+        (unify x [y z])
+        (unify y 1)
+        .s))
   )
