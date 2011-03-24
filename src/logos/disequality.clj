@@ -3,7 +3,7 @@
   (:use [logos.minikanren :exclude [==]]
         [clojure.set :only [rename-keys]]
         logos.match)
-  (:import [logos.minikanren Substitutions]))
+  (:import [logos.minikanren Substitutions Pair]))
 
 ;; all-different ?
 
@@ -17,20 +17,54 @@
 (defn simplify [s complex]
   )
 
-(defn verify-complex [s u v c*]
-  (if (seq c*)
-   (if (some #(= (% u) v) c*)
-     [false c*])
-   [true c*]))
+(declare prefix)
+
+(defn seive [c*]
+  (group-by (fn [x] (if (vector? x)
+                      :complex
+                      :simple))
+            c*))
+
+(defn unify* [^Substitutions s c]
+  (loop [[[u v :as b] & cr] c nc []]
+    (let [^Substitutions s' (unify s u v)]
+      (cond
+       (nil? b) (if (seq nc) nc false)
+       (identical? s s') (recur cr nc)
+       (not s') (recur cr (conj nc b))
+       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
+
+(comment
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (ext-no-check x 1)
+              (ext-no-check z 3))]
+    (unify* s [(Pair. y 2) (Pair. x 1)]))
+  )
+
+(declare merge-contraints)
+
+(defn verify-complex [s u c*]
+  (loop [[c & cr :as c*] c*]
+    (let [nc (unify* s c*)]
+      (cond
+       (nil? cr) (merge-contraints (meta u) (seive c*))
+       :else nil))))
 
 ;; by this point, unification succeeded
+;; we need to return substitution, because we want to return
+;; the substitution w/ updated constraints
+;; some complexity since (Pair. u v) isn't already in the substitution
 (defn constraint [s u v]
   (if-let [meta (meta u)]
     (let [{:keys [simple complex]} meta]
       (let [[valid new-complex] (verify-complex s u v complex)]
         (if (not valid)
           nil
-          s)))
+          (if (verify-simple s v simple)
+            s))))
     s))
 
 (defn merge-constraints [c1 c2]
