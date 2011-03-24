@@ -12,7 +12,6 @@
 (deftype LVar [name hash meta]
   Object
   (toString [_] (str "<lvar:" name ">"))
-  (equals [this o] (identical? this o))
   (hashCode [_] hash)
   clojure.lang.IObj
   (meta [_] meta)
