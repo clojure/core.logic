@@ -133,6 +133,7 @@
   (occurs-check [this u v])
   (ext [this x v])
   (ext-no-check [this x v])
+  (swap [this cu])
   (walk [this v])
   (walk-unbound [this v])
   (walk* [this v])
@@ -181,6 +182,11 @@
   ;;                                           (cons (Pair. x v) l) verify)
   ;;                  :else (Substitutions. (assoc s (with-meta x r) v)
   ;;                                        (cons (Pair. x v) l) verify))))
+
+  (swap [this cu]
+        (if (contains? s cu)
+          (Substitutions. (assoc s cu (s cu)) l verify)
+          (Substitutions. (assoc s cu unbound) l verify)))
   
   (walk [this v]
         (loop [v v lv nil]
