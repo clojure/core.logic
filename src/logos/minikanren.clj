@@ -9,6 +9,9 @@
 ;; =============================================================================
 ;; Logic Variables
 
+(deftype Unbound [])
+(def ^Unbound unbound (Unbound.))
+
 (deftype LVar [name hash meta]
   Object
   (toString [_] (str "<lvar:" name ">"))
@@ -179,6 +182,7 @@
         (loop [v v lv nil]
           (cond
            (identical? v ::not-found) lv
+           (identical? v unbound) lv
            (not (lvar? v)) v
            :else (recur (get s v ::not-found) v))))
 
