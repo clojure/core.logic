@@ -1,5 +1,5 @@
 (ns logos.test.core
-  (:refer-clojure :exclude [reify == inc])
+  (:refer-clojure :exclude [reify == inc intern])
   (:use [logos.minikanren] :reload)
   (:use [logos.logic] :reload)
   (:use [logos.match] :reload)
@@ -895,3 +895,33 @@
                 ((teacup-o r) s#)
                 ((== false r) s#)))
          '(tea cup))))
+
+;; -----------------------------------------------------------------------------
+;; unbound
+
+(def intern (var-get #'logos.minikanren/intern))
+
+(deftest test-unbound-1
+  (is (= (run* [q]
+               (exist [x]
+                      (intern x)
+                      (== x 5)
+                      (== x q)))
+         '(5))))
+
+(deftest test-unbound-2
+  (is (= (run* [q]
+               (exist [x]
+                      (== x 5)
+                      (intern x)
+                      (== x q)))
+         '(5))))
+
+(deftest test-unbound-3
+  (is (= (run* [q]
+               (exist [x y]
+                      (== x y)
+                      (== y 5)
+                      (intern y)
+                      (== x q)))
+         '(5))))

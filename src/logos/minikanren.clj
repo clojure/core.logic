@@ -1,5 +1,5 @@
 (ns logos.minikanren
-  (:refer-clojure :exclude [reify == inc])
+  (:refer-clojure :exclude [reify == inc intern])
   (:use [clojure.pprint :only [pprint]]))
 
 (set! *warn-on-reflection* true)
@@ -131,6 +131,7 @@
   (ext [this x v])
   (ext-no-check [this x v])
   (walk [this v])
+  (walk-unbound [this v])
   (walk* [this v])
   (unify [this u v])
   (reify-lvar-name [_])
@@ -186,6 +187,13 @@
            (not (lvar? v)) v
            :else (recur (get s v ::not-found) v))))
 
+  (walk-unbound [this v]
+                (loop [v v lv nil]
+                  (cond
+                   (identical? v ::not-found) lv
+                   (not (lvar? v)) v
+                   :else (recur (get s v ::not-found) v))))
+  
   (walk* [this v]
          (let [v (walk this v)]
            (walk-term v this)))
@@ -212,6 +220,15 @@
 
   (build [this u]
          (build-term u this)))
+
+(defn unbound1 [s u]
+  (let [u' (walk-unbound s u)]
+    (cond
+     (identical? u' u) (ext-no-check s u unbound)
+     :else s)))
+
+(defn unbound* [s & vars]
+  (reduce unbound1 s vars))
 
 (defn pass [s x y]
   true)
@@ -849,6 +866,11 @@
 (def s# succeed)
 
 (def u# fail)
+
+(defn ^:private intern
+  ([& vars]
+     (fn [a]
+       (apply unbound* a vars))))
 
 (defmacro == [u v]
   `(fn [a#]
