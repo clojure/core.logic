@@ -5,15 +5,6 @@
         logos.match)
   (:import [logos.minikanren Substitutions Pair]))
 
-;; all-different ?
-
-(defmacro != [u v]
-  `(fn [a#]
-     (!=-verify a# (unify a# u v))))
-
-(defn verify-simple [s v c]
-  (not (contains? c v)))
-
 (defn prefix [s <s]
   (if (= s <s)
     ()
@@ -30,7 +21,10 @@
       (cond
        (nil? b) (if (seq nc) nc false) ;; are we done?
        (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
-       :else (recur cr (conj nc (prefix (.l s') (.l s)))))))) ;; 
+       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
+
+(defn verify-simple [s v c]
+  (not (contains? c v)))
 
 (defn verify-complex [s u c*]
   (loop [[c & cr :as c*] c* s* #{} nc* #{}]
@@ -82,6 +76,10 @@
                            os (.s this)]
                        (make-s (rename-keys os nks)
                                (.l this) constraint))))))
+
+(defmacro != [u v]
+  `(fn [a#]
+     (!=-verify a# (unify a# u v))))
 
 (defn all-different [& lvars]
   (let [c (set lvars)]
