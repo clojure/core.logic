@@ -5,6 +5,9 @@
         logos.match)
   (:import [logos.minikanren Substitutions Pair]))
 
+;; we should really consider putting complex constraints into the Substitution
+;; when a var gets unified with a var it should copy over the simple constraints
+
 (defn prefix [s <s]
   (if (= s <s)
     ()
@@ -81,6 +84,15 @@
   `(fn [a#]
      (!=-verify a# (unify a# u v))))
 
+;; ah we need to check we didn't violate anything
+(comment
+ (defn constrain [s u c]
+   (let [u' (walk u)]
+     (if (lvar? u')
+       (let [c (merge-constraints (meta u') c)]
+         (swap s (with-meta u' c)))
+       (if (contains?)))))) 
+
 (defn all-different [& lvars]
   (let [c (set lvars)]
     (fn [a]
@@ -92,6 +104,24 @@
         (apply unbound* a clvars)))))
 
 (comment
+  (let [[x y z] (map lvar '(x y z))]
+    (map meta
+         (-> empty-s
+             ((all-different x y z))
+             .s
+             keys)))
+
+  ;; 500ms
+  (dotimes [_ 5]
+    (let [[x y z] (map lvar '(x y z))]
+     (time
+      (dotimes [_ 1e5]
+        (map meta
+             (-> empty-s
+                 ((all-different x y z))
+                 .s
+                 keys))))))
+
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
