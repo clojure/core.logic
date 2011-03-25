@@ -145,6 +145,7 @@ h2. Interesting Questions
 h2. Resources
 
 * "Constraint Handling Rules":http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html
+* "The XSB System Version 3.2 - Volume 2: Libraries, Interfaces, and Packages":http://xsb.sourceforge.net/manual2/manual2.pdf, particularly the section on Attributed Variables
 * "The XSB System Version 3.2 - Volume 1: Programmer's Manual":http://xsb.sourceforge.net/manual1/manual1.pdf
 * "Concepts, Technqiues, and Models of Computer Programming":http://www.info.ucl.ac.be/~pvr/book.html, Chapters 9 and 12
 * "Art of the Propagator":http://dspace.mit.edu/handle/1721.1/44215
