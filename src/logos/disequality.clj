@@ -83,17 +83,15 @@
                        (make-s (rename-keys os nks)
                                (.l this) constraint))))))
 
-;; hmm that's why they use a constraint store
-;; to track variables that aren't in the substitution yet
-;; it might make sense to introduce the concept of
-;; ::unbound variables
-(defn all-different [& xs]
-  (let [xs (set xs)]
-   (fn [a]
-     (loop [[x & xr] xs a a]
-       (cond
-        (nil? x) a
-        :else (recur xr (unify a)))))))
+(defn all-different [& lvars]
+  (let [c (set lvars)]
+    (fn [a]
+      (let [clvars (map (fn [lvar]
+                          (with-meta lvar
+                            {:simple (disj c lvar)
+                             :complex #{}}))
+                        lvars)]
+        (apply unbound* a clvars)))))
 
 (comment
   (let [x (lvar 'x)
