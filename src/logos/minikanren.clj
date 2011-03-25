@@ -16,8 +16,9 @@
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
-          (let [^LVar o o]
-            (identical? name (.name o))))
+          (and (instance? LVar o)
+           (let [^LVar o o]
+             (identical? name (.name o)))))
   (hashCode [_] hash)
   clojure.lang.IObj
   (meta [_] meta)
