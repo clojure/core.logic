@@ -4,6 +4,7 @@
   (:use [logos.logic] :reload)
   (:use [logos.match] :reload)
   (:use [logos.nonrel] :reload)
+  (:use [logos.disequality] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
@@ -929,4 +930,13 @@
 ;; -----------------------------------------------------------------------------
 ;; disequality
 
-(deftest test-all-different-1)
+(deftest test-all-different-1
+  (is (let [[x y z] (map lvar '(x y z))]
+        (= (set (map meta
+                     (-> empty-s
+                         ((all-different x y z))
+                         .s
+                         keys)))
+          #{{:simple #{x y} :complex #{}}
+            {:simple #{x z} :complex #{}}
+            {:simple #{y z} :complex #{}}}))))
