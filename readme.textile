@@ -144,6 +144,9 @@ h2. Interesting Questions
 
 h2. Resources
 
+* "Operations Research Tools developed at Google":http://code.google.com/p/or-tools/
+* "logilab-constraint":http://hg.logilab.org/logilab/constraint
+* "Solving Every Sudoku Puzzle":http://norvig.com/sudoku.html
 * "Constraint Handling Rules":http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html
 * "The XSB System Version 3.2 - Volume 2: Libraries, Interfaces, and Packages":http://xsb.sourceforge.net/manual2/manual2.pdf, particularly the section on Attributed Variables
 * "The XSB System Version 3.2 - Volume 1: Programmer's Manual":http://xsb.sourceforge.net/manual1/manual1.pdf
