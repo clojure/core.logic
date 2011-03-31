@@ -63,7 +63,9 @@
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
-(deftype Constraint [name m])
+(deftype Constraint [name ^clojure.lang.IPersistentMap m]
+  Object
+  (toString [_] (.toString m)))
 
 (defn make-c [m]
   (Constraint. (gensym "constraint-") m))
@@ -73,6 +75,14 @@
 
 (defprotocol IConstraintStore
   (verify [this s u v]))
+
+;; add-constraint, takes c
+;; propagate, takes s u v, returns constraint store or nil
+;; get-simplified
+;; discard-simplified
+
+;; if constraint store, we can ask for the new simplified constraints
+;; which we merge into the s, we can discard the simplfied constraints
 
 (deftype ConstraintStore [vmap cmap]
   clojure.lang.Associative
@@ -85,11 +95,13 @@
   (containsKey [this key]
                (contains? vmap key))
   (entryAt [this key]
-           (let [val (cmap (vmap key))]
+           (let [val (vec (map #(cmap %) (vmap key)))]
              (clojure.core/reify
                 clojure.lang.IMapEntry
                 (key [_] key)
-                (val [_] val))))
+                (val [_] (vec (map #(cmap %) (vmap key))))
+                Object
+                (toString [_] (.toString [key val])))))
   clojure.lang.ILookup
   (valAt [this key]
          (cmap (vmap key))))
@@ -97,8 +109,13 @@
 (defn make-store []
   (ConstraintStore. {} {}))
 
-
 (comment
+  (let [[x y z] (map lvar '[x y z])
+        cs (-> (make-store)
+               (assoc x (make-c {1 2}))
+               (assoc x (make-c {2 3})))]
+    (.entryAt cs x))
+
   ;; looks good
   (let [[x y z] (map lvar '[x y z])]
     (-> ((!= x 1) empty-s)
