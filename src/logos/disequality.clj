@@ -86,7 +86,8 @@
                           ks (keys (.m c))]
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
 
-  (propagate [this s u v])
+  (propagate [this s u v]
+             )
 
   (get-simplified [this] simple)
 
@@ -105,17 +106,19 @@
                (contains? vmap key))
 
   (entryAt [this key]
-           (let [val (vec (map #(cmap %) (vmap key)))]
-             (clojure.core/reify
+           (when (contains? vmap key)
+             (let [val (vec (map #(cmap %) (vmap key)))]
+               (clojure.core/reify
                 clojure.lang.IMapEntry
                 (key [_] key)
-                (val [_] (vec (map #(cmap %) (vmap key))))
+                (val [_] val)
                 Object
-                (toString [_] (.toString [key val])))))
+                (toString [_] (.toString [key val]))))))
 
   clojure.lang.ILookup
   (valAt [this key]
-         (cmap (vmap key))))
+         (when (contains? vmap key)
+           (vec (map #(cmap %) (vmap key))))))
 
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
@@ -125,12 +128,18 @@
         cs (-> (make-store)
                (assoc x (make-c {1 2}))
                (assoc x (make-c {2 3})))]
+    (get cs x))
+
+  (let [[x y z] (map lvar '[x y z])
+        cs (-> (make-store)
+               (assoc x (make-c {1 2}))
+               (assoc x (make-c {2 3})))]
     (.entryAt cs x))
 
   (let [[x y z] (map lvar '[x y z])
         cs (-> (make-store)
                (merge-constraint (make-c {x 1 y 2})))]
-    [(.entryAt cs x) (.entryAt cs y)])
+    (get cs x))
 
   ;; 150ms
   (let [[x y z] (map lvar '[x y z])
