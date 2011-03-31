@@ -70,11 +70,57 @@
         keys
         first
         constraints))
-  
+
+  ;; substitution!
   (let [[x y z] (map lvar '[x y z])]
     (-> ((!= x 1) empty-s)
-        ((== x 1))
-        .s))
+        ((== x 2))))
+
+  (let [[x y z] (map lvar '[x y z])]
+    (-> ((== x 2) empty-s)
+        ((!= x 1))))
+  
+  ;; nil!
+  (let [[x y z] (map lvar '[x y z])]
+    (-> ((!= x 1) empty-s)
+        ((== x 1))))
+
+  ;; nil!
+  (let [[x y z] (map lvar '[x y z])]
+    (-> ((== x 1) empty-s)
+        ((!= x 1))))
+
+  ;; nice 400ms, no overhead for simplified constraints
+  (dotimes [_ 10]
+    (let [[x y z] (map lvar '[x y z])]
+     (time
+      (dotimes [_ 1e6]
+        (-> ((== x 1) empty-s)
+            ((!= x 1)))))))
+
+  (run* [q]
+        (exist [x]
+               (== x 1)
+               (!= x 1)
+               (== q x)))
+
+  (run* [q]
+        (exist [x]
+               (== x 1)
+               (!= x 2)
+               (== q x)))
+
+  (run* [q]
+        (exist [x]
+               (!= x 2)
+               (== x 1)
+               (== q x)))
+
+  (run* [q]
+        (exist [x]
+               (!= x 1)
+               (== x 1)
+               (== q x)))
   
   ;; NOTE: tri subst preserve never setting a var twice
 
@@ -113,7 +159,7 @@
 
   (exist [y]
          (!= y 1)
-         (foo y z) ;; we passing the y w/o 
+         (foo y z) ;; we passing the y w/o constraints, this is OK now!
          (== y 1))
 
   ;; looking for simplified constraints in the constraint store would be slower
@@ -138,5 +184,17 @@
         yc (add-constraint y 1)
         s {yc 1}]
     (constraints (first (find s y))))
+
+  (defn test-walk [m v]
+    (loop [lv v [v v'] (find m v)]
+      (println v v' lv)
+      (cond
+       (nil? v) lv
+       (identical? v' unbound) v
+       (not (lvar? v')) v'
+       :else (recur v' (find m v')))))
+
+  (let [[x y] (map lvar '[x y])]
+   (test-walk {x y y 1} 2))
  )
 

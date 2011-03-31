@@ -195,13 +195,24 @@
            (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
           (Substitutions. (assoc s cu unbound) l verify cs)))
   
+  ;; (walk [this v]
+  ;;       (loop [v v lv nil]
+  ;;         (cond
+  ;;          (identical? v ::not-found) lv
+  ;;          (identical? v unbound) lv
+  ;;          (not (lvar? v)) v
+  ;;          :else (recur (get s v ::not-found) v))))
+
+  ;; NOTE: a little bittle slower with find vs. get
+  ;; we do this for disequality constraints since the entry
+  ;; entry always has the constrained var
   (walk [this v]
-        (loop [v v lv nil]
-          (cond
-           (identical? v ::not-found) lv
-           (identical? v unbound) lv
-           (not (lvar? v)) v
-           :else (recur (get s v ::not-found) v))))
+      (loop [lv v [v v'] (find s v)]
+            (cond
+             (nil? v) lv
+             (identical? v' unbound) v
+             (not (lvar? v')) v'
+             :else (recur v' (find s v')))))
 
   (walk-unbound [this v]
                 (loop [v v lv nil]
