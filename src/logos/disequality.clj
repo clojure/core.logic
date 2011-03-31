@@ -55,9 +55,12 @@
 
 (defmacro != [u v]
   `(fn [a#]
-     (!=-verify a# (unify a# u v))))
+     (!=-verify a# (unify a# ~u ~v))))
 
 (comment
+  (let [[x y z] (map lvar '[x y z])]
+    ((!= x 1) empty-s))
+  
   ;; NOTE: tri subst preserve never setting a var twice
 
   ;; should fail
