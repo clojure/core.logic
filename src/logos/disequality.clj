@@ -31,7 +31,7 @@
       nil
       (let [u (remove-constraints u)
             v (if (lvar? v) (add-constraints v uc) v)]
-        (make-s (assoc s u v) (cons (pair u v) l) verify cs)))))
+        (make-s (-> s (dissoc u) (assoc u v)) (cons (pair u v) l) verify cs)))))
 
 (defprotocol IDisequality
   (!=-verify [this sp]))
@@ -53,10 +53,8 @@
                             (lvar? v) (let [uc (constraints u)
                                             u (remove-constraints u)
                                             v (add-constraints v uc)]
-                                        (-> this
-                                            (swap u)
-                                            (swap v)))
-                            :else this))))))))
+                                        (-> this (swap u) (swap v))) ;; WRONG
+                            :else this)))))))) ;; WRONG
 
 (defmacro != [u v]
   `(fn [a#]
@@ -76,8 +74,48 @@
         ns (constraint-verify {x y} y z (cons (pair x y) nil) constraint-verify nil)]
     (constraints ((.s ns) y)))
 
+  ;; nil
   (let [[x y z] (map lvar '[x y z])
-        x (add-constraint y 1)
+        y (add-constraint y 1)
         ns (constraint-verify {x y} y 2 (cons (pair x y) nil) constraint-verify nil)]
-    (.s ns))
+    (constraints (first (keys (.s ns)))))
+
+  (let [m {}
+        y (lvar 'y)
+        yc (add-constraint y 1)]
+    (-> m
+        (assoc y 2)
+        (assoc yc 3)
+        keys
+        first
+        constraints)) ;; keys are not replaced if already equal!
+
+  ;; big problem, lexical scoping, how can we add constraints w/o mutation?
+  ;; will refer to the var w/o constraints
+
+  (exist [y]
+         (!= y 1)
+         (foo y z) ;; we passing the y w/o 
+         (== y 1))
+
+  ;; we just set a flag on the var, the var is constrained
+  ;; looking for simplified constraints in the constraint will be much slower than
+  ;; accessing meta
+
+  ;; the order of constraints doesn't matter w/in an exist clause
+
+  ;; actually not true at all
+  (let [m {:foo 'bar 1 2 3 4 5 6 7 8 9 0 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30}]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6]
+         (m :foo)))))
+
+  (let [m {:foo 'bar}]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e8]
+         (:foo m)))))
+
+  ;; we can move the constraints into the declaration of the var!
  ) 
