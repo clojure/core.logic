@@ -23,7 +23,8 @@
 ;; if v is an lvar move u's constraints over to support tri subst
 ;; if v is not an lvar, we can discard the constraints
 ;; COMPLEX
-;; look up u in cs and see what we can do
+;; we lookup u in the constraint store
+;; each key points to multiple constraints
 (defn ^Substitutions constraint-verify [s u v l verify cs]
   (let [uc (constraints u)]
     (if (contains? uc v)
@@ -61,6 +62,41 @@
 (defmacro != [u v]
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
+
+(deftype Constraint [name m])
+
+(defn make-c [m]
+  (Constraint. (gensym "constraint-") m))
+
+(defn constraint? [x]
+  (instance? Constraint x))
+
+(defprotocol IConstraintStore
+  (verify [this s u v]))
+
+(deftype ConstraintStore [vmap cmap]
+  clojure.lang.Associative
+  (assoc [this k v]
+    (if (constraint? v)
+      (let [name (.name ^Constraint v)]
+        (ConstraintStore. (update-in vmap [k] (fnil #(conj % name) #{}))
+                          (assoc cmap name v)))
+      (throw (Exception. "Adding something which is not a constraint"))))
+  (containsKey [this key]
+               (contains? vmap key))
+  (entryAt [this key]
+           (let [val (cmap (vmap key))]
+             (clojure.core/reify
+                clojure.lang.IMapEntry
+                (key [_] key)
+                (val [_] val))))
+  clojure.lang.ILookup
+  (valAt [this key]
+         (cmap (vmap key))))
+
+(defn make-store []
+  (ConstraintStore. {} {}))
+
 
 (comment
   ;; looks good

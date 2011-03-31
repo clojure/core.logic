@@ -930,13 +930,15 @@
 ;; -----------------------------------------------------------------------------
 ;; disequality
 
-(deftest test-all-different-1
-  (is (let [[x y z] (map lvar '(x y z))]
-        (= (set (map meta
-                     (-> empty-s
-                         ((all-different x y z))
-                         .s
-                         keys)))
-          #{{:simple #{x y} :complex #{}}
-            {:simple #{x z} :complex #{}}
-            {:simple #{y z} :complex #{}}}))))
+(comment
+ (deftest test-all-different-1
+   (is (let [[x y z] (map lvar '(x y z))]
+         (= (set (map meta
+                      (-> empty-s
+                          ((all-different x y z))
+                          .s
+                          keys)))
+            #{{:simple #{x y} :complex #{}}
+              {:simple #{x z} :complex #{}}
+              {:simple #{y z} :complex #{}}}))))
+ )
