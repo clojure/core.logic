@@ -68,7 +68,8 @@
 
 (comment
   ;; SWI-Prolog 6-8.5s
-  ;; ~2.1s
+  ;; < 2.1s
+  ;; with metadata checks ~2.2
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time

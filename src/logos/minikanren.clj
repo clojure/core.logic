@@ -151,7 +151,7 @@
 (declare walk-term)
 (declare build-term)
 
-(deftype Substitutions [s l verify]
+(deftype Substitutions [s l verify cs]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -172,7 +172,7 @@
 
   (ext-no-check [this x v]
                 (if (verify s x v)
-                  (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify)
+                  (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify nil)
                   nil))
 
   ;; (ext-no-check [this x v]
@@ -186,8 +186,8 @@
 
   (swap [this cu]
         (if (contains? s cu)
-          (Substitutions. (assoc s cu (s cu)) l verify)
-          (Substitutions. (assoc s cu unbound) l verify)))
+          (Substitutions. (assoc s cu (s cu)) l verify nil)
+          (Substitutions. (assoc s cu unbound) l verify nil)))
   
   (walk [this v]
         (loop [v v lv nil]
@@ -241,11 +241,13 @@
   (reduce unbound1 s vars))
 
 (defn pass [s x y]
+  (meta x)
+  (meta y)
   true)
 
 (defn ^Substitutions make-s
-  ([m l] (Substitutions. m l pass))
-  ([m l f] (Substitutions. m l f)))
+  ([m l] (Substitutions. m l pass nil))
+  ([m l f] (Substitutions. m l f nil)))
 
 (def ^Substitutions empty-s (make-s {} '()))
 
