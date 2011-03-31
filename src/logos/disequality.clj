@@ -1,7 +1,6 @@
 (ns logos.disequality
   (:refer-clojure :exclude [reify == inc])
-  (:use [logos.minikanren :exclude [==]]
-        [clojure.set :only [rename-keys]]
+  (:use logos.minikanren
         logos.match)
   (:import [logos.minikanren Substitutions Pair]))
 
@@ -50,16 +49,32 @@
                                 v (walk this v)]
                             (if (= u v)
                               nil
-                              (let [u (add-constraint u v)]
-                                (-> this (swap u)))))))))))
+                              (let [s (.s this)
+                                    u (add-constraint u v)]
+                                (if (contains? s u)
+                                  (let [v' (s u)]
+                                    (make-s (-> s (dissoc u) (assoc u v'))
+                                            (.l this) constraint-verify (.cs this)))
+                                  (make-s (assoc s u unbound)
+                                          (.l this) constraint-verify (.cs this))))))))))))
 
 (defmacro != [u v]
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
 (comment
+  ;; looks good
   (let [[x y z] (map lvar '[x y z])]
-    ((!= x 1) empty-s))
+    (-> ((!= x 1) empty-s)
+        .s
+        keys
+        first
+        constraints))
+  
+  (let [[x y z] (map lvar '[x y z])]
+    (-> ((!= x 1) empty-s)
+        ((== x 1))
+        .s))
   
   ;; NOTE: tri subst preserve never setting a var twice
 
