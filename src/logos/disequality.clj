@@ -89,6 +89,9 @@
 ;; =============================================================================
 ;; Constraint Store
 
+;; when loop, we should probably just operate through the store, not reaching
+;; inside, think about it tomorrow
+
 (defprotocol IConstraintStore
   (merge-constraint [this c])
   (propagate [this s u v])
@@ -113,7 +116,7 @@
   (propagate [this s u v]
              (when (contains? vmap u)
                (let [cs (get this u)]
-                 (loop [[^Constraint c & cr] cs ncs [] simple #{}]
+                 (loop [[c & cr] cs ncs [] simple #{}]
                    (let [[u' v'] (find c u)
                          v' (walk s v')] ;; u' should be fully walked, but maybe not v'
                      (cond
@@ -248,6 +251,18 @@
         (exist [x]
                (!= x 1)
                (== x 1)
+               (== q x)))
+
+  (run* [q]
+        (exist [x y]
+               (== x 1)
+               (!= x y)
+               (== q x)))
+
+  (run* [q]
+        (exist [x y]
+               (== x y)
+               (!= x y)
                (== q x)))
   
   ;; NOTE: tri subst preserve never setting a var twice
