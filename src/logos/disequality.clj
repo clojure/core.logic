@@ -60,6 +60,7 @@
 ;; =============================================================================
 ;; Constraint
 
+;; need hashCode and equals for propagation bit
 (deftype Constraint [^String name m okeys]
   clojure.lang.Associative
   (containsKey [this key]
@@ -91,6 +92,10 @@
 
 ;; when loop, we should probably just operate through the store, not reaching
 ;; inside, think about it tomorrow
+
+;; seems the simplest approach otherwise a lot of bookkeeping in the loop. We do
+;; pay for ConstraintStore creation, but that's small compared to updating a
+;; constraint - (removing it from vmap) (removing it from cmap).
 
 (defprotocol IConstraintStore
   (merge-constraint [this c])
