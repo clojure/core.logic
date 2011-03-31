@@ -67,30 +67,34 @@
   Object
   (toString [_] (.toString m)))
 
-(defn make-c [m]
+(defn ^Constraint make-c [m]
   (Constraint. (gensym "constraint-") m))
 
 (defn constraint? [x]
   (instance? Constraint x))
 
 (defprotocol IConstraintStore
-  (verify [this s u v]))
+  (merge-constraint [this c]) ;; add-constraint, takes c
+  (propagate [this s u v]) ;; propagate, takes s u v, returns constraint store or nil
+  (get-simplified [this]) ;; get-simplified, return the simplified constraints
+  (discard-simplified [this])) ;; garbage collect the simplified constraints
 
-;; add-constraint, takes c
-;; propagate, takes s u v, returns constraint store or nil
-;; get-simplified
-;; discard-simplified
-
-;; if constraint store, we can ask for the new simplified constraints
-;; which we merge into the s, we can discard the simplfied constraints
-
-(deftype ConstraintStore [vmap cmap]
+(deftype ConstraintStore [vmap cmap simple]
+  IConstraintStore
+  (merge-constraint [this c]
+                    (let [^Constraint c c
+                          ks (keys (.m c))]
+                      (reduce (fn [cs k] (assoc cs k c)) this ks)))
+  (propagate [this s u v])
+  (get-simplified [this] simple)
+  (discard-simplified [this] (ConstraintStore. vmap cmap nil))
   clojure.lang.Associative
   (assoc [this k v]
     (if (constraint? v)
       (let [name (.name ^Constraint v)]
         (ConstraintStore. (update-in vmap [k] (fnil #(conj % name) #{}))
-                          (assoc cmap name v)))
+                          (assoc cmap name v)
+                          nil))
       (throw (Exception. "Adding something which is not a constraint"))))
   (containsKey [this key]
                (contains? vmap key))
@@ -106,8 +110,8 @@
   (valAt [this key]
          (cmap (vmap key))))
 
-(defn make-store []
-  (ConstraintStore. {} {}))
+(defn ^ConstraintStore make-store []
+  (ConstraintStore. {} {} nil))
 
 (comment
   (let [[x y z] (map lvar '[x y z])
@@ -115,6 +119,20 @@
                (assoc x (make-c {1 2}))
                (assoc x (make-c {2 3})))]
     (.entryAt cs x))
+
+  (let [[x y z] (map lvar '[x y z])
+        cs (-> (make-store)
+               (merge-constraint (make-c {x 1 y 2})))]
+    [(.entryAt cs x) (.entryAt cs y)])
+
+  ;; 150ms
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2})]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (merge-constraint cs c)))))
 
   ;; looks good
   (let [[x y z] (map lvar '[x y z])]
