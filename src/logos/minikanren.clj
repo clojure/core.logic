@@ -234,7 +234,8 @@
 
 (defn ^Substitutions make-s
   ([m l] (Substitutions. m l pass nil))
-  ([m l f] (Substitutions. m l f nil)))
+  ([m l f] (Substitutions. m l f nil))
+  ([m l f cs] (Substitutions. m l f cs)))
 
 (def ^Substitutions empty-s (make-s {} '()))
 
