@@ -73,6 +73,9 @@
   clojure.lang.IPersistentMap
   (without [this key]
            (Constraint. name (dissoc m key)))
+  clojure.lang.ISeq
+  (seq [this]
+       (seq m))
   clojure.lang.ILookup
   (valAt [this key]
          (m key)))
