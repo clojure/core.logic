@@ -191,7 +191,8 @@
 
   (swap [this cu]
         (if (contains? s cu)
-          (Substitutions. (assoc s cu (s cu)) l verify cs)
+          (let [v (s cu)]
+           (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
           (Substitutions. (assoc s cu unbound) l verify cs)))
   
   (walk [this v]

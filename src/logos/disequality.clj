@@ -40,21 +40,18 @@
   IDisequality
   (!=-verify [this sp]
              (let [^Substitutions sp sp]
-              (cond
-               (not sp) this
-               (= this sp) nil
-               :else (let [[[u v] :as c] (prefix (.l sp) (.l this))
-                           simple (= (count c) 1)]
-                       (if simple
-                         (let [u (walk this u)
-                               v (walk this v)]
-                           (cond
-                            (= u v) nil
-                            (lvar? v) (let [uc (constraints u)
-                                            u (remove-constraints u)
-                                            v (add-constraints v uc)]
-                                        (-> this (swap u) (swap v))) ;; WRONG
-                            :else this)))))))) ;; WRONG
+               (cond
+                (not sp) this
+                (= this sp) nil
+                :else (let [[[u v] :as c] (prefix (.l sp) (.l this))
+                            simple (= (count c) 1)]
+                        (if simple
+                          (let [u (walk this u)
+                                v (walk this v)]
+                            (if (= u v)
+                              nil
+                              (let [u (add-constraint u v)]
+                                (-> this (swap u)))))))))))
 
 (defmacro != [u v]
   `(fn [a#]
