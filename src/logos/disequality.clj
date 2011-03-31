@@ -60,27 +60,25 @@
 ;; =============================================================================
 ;; Constraint
 
-(deftype Constraint [^String name ^clojure.lang.IPersistentMap m]
+(deftype Constraint [^String name m okeys]
   clojure.lang.Associative
-  (assoc [this k v]
-    (Constraint. name (assoc m k v)))
   (containsKey [this key]
                (contains? m key))
   (entryAt [this key]
            (.entryAt m key))
   clojure.lang.IPersistentMap
   (without [this key]
-           (Constraint. name (dissoc m key)))
+           (Constraint. name (dissoc m key) okeys))
   clojure.lang.ISeq
   (seq [_] (seq m))
-  (count [_] (.count m))
+  (count [_] (count m))
   clojure.lang.ILookup
   (valAt [this key]
          (m key)))
 
 ;; NOTE: gensym is slow don't use it directly
 (defn ^Constraint make-c [m]
-  (Constraint. (str "constraint-" (. clojure.lang.RT (nextID))) m))
+  (Constraint. (str "constraint-" (. clojure.lang.RT (nextID))) m (keys m)))
 
 (defn constraint? [x]
   (instance? Constraint x))
@@ -92,10 +90,10 @@
 ;; Constraint Store
 
 (defprotocol IConstraintStore
-  (merge-constraint [this c]) ;; add-constraint, takes c
-  (propagate [this s u v]) ;; propagate, takes s u v, returns constraint store or nil
-  (get-simplified [this]) ;; get-simplified, return the simplified constraints
-  (discard-simplified [this])) ;; garbage collect the simplified constraints
+  (merge-constraint [this c])
+  (propagate [this s u v])
+  (get-simplified [this])
+  (discard-simplified [this]))
 
 (defn unify* [^Substitutions s c]
   (loop [[[u v :as b] & cr] c nc #{}]
