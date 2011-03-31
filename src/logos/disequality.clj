@@ -61,8 +61,6 @@
 ;; Constraint
 
 (deftype Constraint [^String name ^clojure.lang.IPersistentMap m]
-  clojure.lang.Counted
-  (count [_] (count m))
   clojure.lang.Associative
   (assoc [this k v]
     (Constraint. name (assoc m k v)))
@@ -74,14 +72,15 @@
   (without [this key]
            (Constraint. name (dissoc m key)))
   clojure.lang.ISeq
-  (seq [this]
-       (seq m))
+  (seq [_] (seq m))
+  (count [_] (.count m))
   clojure.lang.ILookup
   (valAt [this key]
          (m key)))
 
+;; NOTE: gensym is slow don't use it directly
 (defn ^Constraint make-c [m]
-  (Constraint. (gensym "constraint-") m))
+  (Constraint. (str "constraint-" (. clojure.lang.RT (nextID))) m))
 
 (defn constraint? [x]
   (instance? Constraint x))
@@ -117,10 +116,13 @@
              (when (contains? vmap u)
                (let [cs (get this u)]
                  (loop [[^Constraint c & cr] cs ncs [] simple #{}]
-                   (let [[u' v'] (find (.m c) u)
+                   (let [[u' v'] (find c u)
                          v' (walk s v')] ;; u' should be fully walked, but maybe not v'
                      (cond
-                      (= v v') (recur cr nil nil)
+                      (= v v') (let [[[k v :as kv] & r :as c] (dissoc c u)]
+                                 (if (seq r)
+                                   (recur cr (conj ncs c) simple)
+                                   (recur cr ncs (conj simple kv))))
                       :else nil))))))
 
   (get-simplified [this] simple)
