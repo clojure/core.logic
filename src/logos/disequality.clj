@@ -9,14 +9,6 @@
     ()
     (cons (first s) (prefix (rest s) <s))))
 
-(defn unify* [^Substitutions s c]
-  (loop [[[u v :as b] & cr] c nc #{}]
-    (let [^Substitutions s' (unify s u v)]
-      (cond
-       (nil? b) (if (seq nc) nc false) ;; are we done?
-       (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
-       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
-
 ;; SIMPLE
 ;; if u has no constraints just extend s
 ;; if u's constraints contain v, fail
@@ -63,7 +55,7 @@
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
-(deftype Constraint [name ^clojure.lang.IPersistentMap m]
+(deftype Constraint [^String name ^clojure.lang.IPersistentMap m]
   Object
   (toString [_] (.toString m)))
 
@@ -79,15 +71,27 @@
   (get-simplified [this]) ;; get-simplified, return the simplified constraints
   (discard-simplified [this])) ;; garbage collect the simplified constraints
 
+(defn unify* [^Substitutions s c]
+  (loop [[[u v :as b] & cr] c nc #{}]
+    (let [^Substitutions s' (unify s u v)]
+      (cond
+       (nil? b) (if (seq nc) nc false) ;; are we done?
+       (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
+       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
+
 (deftype ConstraintStore [vmap cmap simple]
   IConstraintStore
   (merge-constraint [this c]
                     (let [^Constraint c c
                           ks (keys (.m c))]
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
+
   (propagate [this s u v])
+
   (get-simplified [this] simple)
+
   (discard-simplified [this] (ConstraintStore. vmap cmap nil))
+
   clojure.lang.Associative
   (assoc [this k v]
     (if (constraint? v)
@@ -96,8 +100,10 @@
                           (assoc cmap name v)
                           nil))
       (throw (Exception. "Adding something which is not a constraint"))))
+
   (containsKey [this key]
                (contains? vmap key))
+
   (entryAt [this key]
            (let [val (vec (map #(cmap %) (vmap key)))]
              (clojure.core/reify
@@ -106,6 +112,7 @@
                 (val [_] (vec (map #(cmap %) (vmap key))))
                 Object
                 (toString [_] (.toString [key val])))))
+
   clojure.lang.ILookup
   (valAt [this key]
          (cmap (vmap key))))
