@@ -132,8 +132,8 @@
 (defprotocol ISubstitutions
   (length [this])
   (occurs-check [this u v])
-  (ext [this x v])
-  (ext-no-check [this x v])
+  (ext [this u v])
+  (ext-no-check [this u v])
   (swap [this cu])
   (walk [this v])
   (walk-unbound [this v])
@@ -161,28 +161,17 @@
   ISubstitutions
   (length [this] (count s))
 
-  (occurs-check [this x v]
+  (occurs-check [this u v]
                 (let [v (walk this v)]
-                  (occurs-check-term v x this)))
+                  (occurs-check-term v u this)))
   
-  (ext [this x v]
-       (if (and *occurs-check* (occurs-check this x v))
+  (ext [this u v]
+       (if (and *occurs-check* (occurs-check this u v))
          this
-         (ext-no-check this x v)))
+         (ext-no-check this u v)))
 
-  (ext-no-check [this x v]
-                (if (verify s x v)
-                  (Substitutions. (assoc s x v) (cons (Pair. x v) l) verify nil)
-                  nil))
-
-  ;; (ext-no-check [this x v]
-  ;;               (let [r (verify s x v)]
-  ;;                 (cond
-  ;;                  (= r ::violated) nil
-  ;;                  (nil? r) (Substitutions. (assoc s x v)
-  ;;                                           (cons (Pair. x v) l) verify)
-  ;;                  :else (Substitutions. (assoc s (with-meta x r) v)
-  ;;                                        (cons (Pair. x v) l) verify))))
+  (ext-no-check [this u v]
+                (verify s u v l verify cs))
 
   (swap [this cu]
         (if (contains? s cu)
@@ -240,10 +229,8 @@
 (defn unbound* [s & vars]
   (reduce unbound1 s vars))
 
-(defn pass [s x y]
-  (meta x)
-  (meta y)
-  true)
+(defn pass [s u v l verify cs]
+  (Substitutions. (assoc s u v) (cons (Pair. u v) l) verify cs))
 
 (defn ^Substitutions make-s
   ([m l] (Substitutions. m l pass nil))
