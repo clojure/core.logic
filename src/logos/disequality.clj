@@ -69,6 +69,7 @@
     (constraint-verify {x y} x 1 (cons (pair x y) nil) constraint-verify nil))
 
   ;; should move simple constraints
+  ;; #{1}
   (let [[x y z] (map lvar '[x y z])
         y (add-constraint y 1)
         ns (constraint-verify {x y} y z (cons (pair x y) nil) constraint-verify nil)]
@@ -80,15 +81,17 @@
         ns (constraint-verify {x y} y 2 (cons (pair x y) nil) constraint-verify nil)]
     (constraints (first (keys (.s ns)))))
 
+  ;; #{1}
   (let [m {}
         y (lvar 'y)
         yc (add-constraint y 1)]
     (-> m
         (assoc y 2)
+        (dissoc y)
         (assoc yc 3)
         keys
         first
-        constraints)) ;; keys are not replaced if already equal!
+        constraints))
 
   ;; big problem, lexical scoping, how can we add constraints w/o mutation?
   ;; will refer to the var w/o constraints
@@ -98,24 +101,27 @@
          (foo y z) ;; we passing the y w/o 
          (== y 1))
 
-  ;; we just set a flag on the var, the var is constrained
-  ;; looking for simplified constraints in the constraint will be much slower than
-  ;; accessing meta
+  ;; looking for simplified constraints in the constraint store would be slower
 
   ;; the order of constraints doesn't matter w/in an exist clause
 
-  ;; actually not true at all
-  (let [m {:foo 'bar 1 2 3 4 5 6 7 8 9 0 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30}]
-    (dotimes [_ 10]
-      (time
-       (dotimes [_ 1e6]
-         (m :foo)))))
-
-  (let [m {:foo 'bar}]
-    (dotimes [_ 10]
-      (time
-       (dotimes [_ 1e8]
-         (:foo m)))))
-
   ;; we can move the constraints into the declaration of the var!
- ) 
+
+  (exist [y]
+         (exist [z]
+                ()
+                (!= y 1)))
+
+  ;; so we can move them to the top
+
+  (exist [y]
+         (constrain [y (!= y 1)]
+                    ))
+
+  ;; this works
+  (let [y (lvar 'x)
+        yc (add-constraint y 1)
+        s {yc 1}]
+    (constraints (first (find s y))))
+ )
+
