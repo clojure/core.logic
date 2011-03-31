@@ -4,10 +4,16 @@
         logos.match)
   (:import [logos.minikanren Substitutions Pair]))
 
+;; =============================================================================
+;; Utilities
+
 (defn prefix [s <s]
   (if (= s <s)
     ()
     (cons (first s) (prefix (rest s) <s))))
+
+;; =============================================================================
+;; Verification
 
 ;; SIMPLE
 ;; if u has no constraints just extend s
@@ -51,19 +57,37 @@
                                   (make-s (assoc s u unbound)
                                           (.l this) constraint-verify (.cs this))))))))))))
 
-(defmacro != [u v]
-  `(fn [a#]
-     (!=-verify a# (unify a# ~u ~v))))
+;; =============================================================================
+;; Constraint
 
 (deftype Constraint [^String name ^clojure.lang.IPersistentMap m]
-  Object
-  (toString [_] (.toString m)))
+  clojure.lang.Counted
+  (count [_] (count m))
+  clojure.lang.Associative
+  (assoc [this k v]
+    (Constraint. name (assoc m k v)))
+  (containsKey [this key]
+               (contains? m key))
+  (entryAt [this key]
+           (.entryAt m key))
+  clojure.lang.IPersistentMap
+  (without [this key]
+           (Constraint. name (dissoc m key)))
+  clojure.lang.ILookup
+  (valAt [this key]
+         (m key)))
 
 (defn ^Constraint make-c [m]
   (Constraint. (gensym "constraint-") m))
 
 (defn constraint? [x]
   (instance? Constraint x))
+
+(defmethod print-method Constraint [x writer]
+  (.write writer (str "<constraint:" (.m ^Constraint x) ">")))
+
+;; =============================================================================
+;; Constraint Store
 
 (defprotocol IConstraintStore
   (merge-constraint [this c]) ;; add-constraint, takes c
@@ -87,7 +111,14 @@
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
 
   (propagate [this s u v]
-             )
+             (when (contains? vmap u)
+               (let [cs (get this u)]
+                 (loop [[^Constraint c & cr] cs ncs [] simple #{}]
+                   (let [[u' v'] (find (.m c) u)
+                         v' (walk s v')] ;; u' should be fully walked, but maybe not v'
+                     (cond
+                      (= v v') (recur cr nil nil)
+                      :else nil))))))
 
   (get-simplified [this] simple)
 
@@ -122,6 +153,13 @@
 
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
+
+;; =============================================================================
+;; Syntax
+
+(defmacro != [u v]
+  `(fn [a#]
+     (!=-verify a# (unify a# ~u ~v))))
 
 (comment
   (let [[x y z] (map lvar '[x y z])
