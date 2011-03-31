@@ -12,7 +12,14 @@
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
-(deftype LVar [name hash meta]
+(defprotocol ILVar
+  (constraints [this])
+  (add-constraint [this c])
+  (add-constraints [this ds])
+  (remove-constraint [this c])
+  (remove-constraints [this]))
+
+(deftype LVar [name hash cs]
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -20,9 +27,12 @@
            (let [^LVar o o]
              (identical? name (.name o)))))
   (hashCode [_] hash)
-  clojure.lang.IObj
-  (meta [_] meta)
-  (withMeta [_ new-meta] (LVar. name hash new-meta)))
+  ILVar
+  (constraints [_] cs)
+  (add-constraint [_ c] (LVar. name hash (conj cs c)))
+  (add-constraints [_ ds] (LVar. name hash (reduce conj cs ds)))
+  (remove-constraint [_ c] (LVar. name hash (disj cs c)))
+  (remove-constraints [_] (LVar. name hash nil)))
 
 (defn ^LVar lvar
   ([]
@@ -30,7 +40,10 @@
        (LVar. name (.hashCode name) nil)))
   ([name]
      (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil))))
+       (LVar. name (.hashCode name) nil)))
+  ([name cs]
+     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) cs))))
 
 (defmethod print-method LVar [x writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
@@ -72,6 +85,9 @@
   Object
   (toString [_]
             (str "(" lhs " . " rhs ")")))
+
+(defn pair [lhs rhs]
+  (Pair. lhs rhs))
 
 (deftype LCons [a d cache]
   LConsSeq
@@ -175,8 +191,8 @@
 
   (swap [this cu]
         (if (contains? s cu)
-          (Substitutions. (assoc s cu (s cu)) l verify nil)
-          (Substitutions. (assoc s cu unbound) l verify nil)))
+          (Substitutions. (assoc s cu (s cu)) l verify cs)
+          (Substitutions. (assoc s cu unbound) l verify cs)))
   
   (walk [this v]
         (loop [v v lv nil]
@@ -229,11 +245,11 @@
 (defn unbound* [s & vars]
   (reduce unbound1 s vars))
 
-(defn pass [s u v l verify cs]
+(defn pass-verify [s u v l verify cs]
   (Substitutions. (assoc s u v) (cons (Pair. u v) l) verify cs))
 
 (defn ^Substitutions make-s
-  ([m l] (Substitutions. m l pass nil))
+  ([m l] (Substitutions. m l pass-verify nil))
   ([m l f] (Substitutions. m l f nil))
   ([m l f cs] (Substitutions. m l f cs)))
 

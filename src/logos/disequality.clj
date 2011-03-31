@@ -13,11 +13,6 @@
     ()
     (cons (first s) (prefix (rest s) <s))))
 
-(defn merge-constraints [c1 c2]
-  (-> c1
-      (update-in [:simple] #(reduce conj % (:simple c2)))
-      (update-in [:complex] #(reduce conj % (:complex c2)))))
-
 (defn unify* [^Substitutions s c]
   (loop [[[u v :as b] & cr] c nc #{}]
     (let [^Substitutions s' (unify s u v)]
@@ -26,59 +21,47 @@
        (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
        :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
 
-(defn verify-simple [s v c]
-  (not (contains? c v)))
-
-(defn verify-complex [s u c*]
-  (loop [[c & cr :as c*] c* s* #{} nc* #{}]
-    (let [nc (unify* s c)
-          j (count nc)]
-      (cond
-       (nil? cr) (merge-constraints (meta u) {:simple s* :complex nc*})
-       (zero? j) false
-       (= j 1) (let [[u' v :as p] nc]
-                 (if (= u' u)
-                  (recur cr (conj s* p) nc*)
-                  (recur cr s* nc*)))
-       :else (recur cr s* (conj nc* nc))))))
-
-;; nil, new constraint, ::violated
-;; we would prefer to return one kind of value
-(defn constraint [s u v]
-  (if-let [meta (meta u)]
-    (let [{:keys [simple complex]} meta]
-      (if (verify-simple s v simple)
-        (if (seq complex)
-         (if-let [nc* (verify-complex u complex)]
-           {:simple (reduce conj simple (:simple nc*))
-            :complex (:complex nc*)}
-           ::violated)
-         (if (lvar? v)
-           meta))
-        ::violated))))
+;; SIMPLE
+;; if u has no constraints just extend s
+;; if u's constraints contain v, fail
+;; if v is an lvar move u's constraints over to support tri subst
+;; if v is not an lvar, we can discard the constraints
+;; COMPLEX
+(defn ^Substitutions constraint-verify [s u v l verify cs]
+  (if-let [uc (constraints u)]
+    (if (contains? uc v)
+      nil
+      (let [u (remove-constraints u)]
+        (if (lvar? v)
+          (let [v (add-constraints v uc)]
+            (make-s (assoc s u v) (cons (pair u v) l) verify cs))
+          (make-s (assoc s u v) (cons (pair u v) l) verify cs))))
+    (make-s (assoc s u v) (cons (pair u v) l) verify cs)))
 
 (defprotocol IDisequality
   (!=-verify [this sp]))
 
 (extend-type Substitutions
   IDisequality
-
   (!=-verify [this sp]
              (let [^Substitutions sp sp]
               (cond
                (not sp) this
                (= this sp) nil
-               :else (let [[[k v] :as c] (into {} (prefix (.l sp) (.l this)))
-                           nc (if (= (count c) 1)
-                                {:simple #{v} :complex #{}}
-                                {:simple #{} :complex #{c}})
-                           ks (keys c)
-                           nks (zipmap ks (map #(with-meta %
-                                                  (merge-constraints (meta %) nc))
-                                               ks))
-                           os (.s this)]
-                       (make-s (rename-keys os nks)
-                               (.l this) constraint))))))
+               :else (let [[[u v] :as c] (prefix (.l sp) (.l this))
+                           simple (= (count c) 1)]
+                       (if simple
+                         (let [u (walk this u)
+                               v (walk this v)]
+                           (cond
+                            (= u v) nil
+                            (lvar? v) (let [uc (constraints u)
+                                            u (remove-constraints u)
+                                            v (add-constraints v uc)]
+                                        (-> this
+                                            (swap u)
+                                            (swap v)))
+                            :else this))))))))
 
 (defmacro != [u v]
   `(fn [a#]
@@ -91,7 +74,8 @@
      (if (lvar? u')
        (let [c (merge-constraints (meta u') c)]
          (swap s (with-meta u' c)))
-       (if (contains?)))))) 
+       (if (contains?)))))
+ ) 
 
 (defn all-different [& lvars]
   (let [c (set lvars)]
