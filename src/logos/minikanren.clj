@@ -266,6 +266,8 @@
 ;; =============================================================================
 ;; Unification
 
+;; TODO : a lot of cascading ifs need to be converted to cond
+
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
 
