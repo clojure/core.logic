@@ -29,8 +29,8 @@
   (hashCode [_] hash)
   ILVar
   (constraints [_] cs)
-  (add-constraint [_ c] (LVar. name hash (conj cs c)))
-  (add-constraints [_ ds] (LVar. name hash (reduce conj cs ds)))
+  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c)))
+  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds)))
   (remove-constraint [_ c] (LVar. name hash (disj cs c)))
   (remove-constraints [_] (LVar. name hash nil)))
 
