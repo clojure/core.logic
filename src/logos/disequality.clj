@@ -21,26 +21,36 @@
 (declare make-c)
 (declare propagate)
 (declare get-simplified)
+(declare constraint-verify)
 
 ;; a) constraint:{x 1 y 1}
 ;; b) (== x y)
 ;; c) (== x 1)
 ;; d) constraint:{x 1}
 ;; e) we missed it
-(defn ^Substitutions constraint-verify [^Substitutions s u v l verify cs]
+
+(defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
   (let [uc (constraints u)]
-    (if (contains? uc v)
-      nil
-      (let [u (remove-constraints u)
-            v (if (lvar? v) (add-constraints v uc) v)
-            s (make-s (-> s (dissoc u) (assoc u v)) (cons (pair u v) l) verify cs)]
-        (if cs
-          (let [cs (propagate cs s u v)
-                s (reduce (fn [s [u v]]
-                                (constrain s u v))
-                              s (get-simplified cs))]
-            (make-s (.s s) (.l s) verify (discard-simplified cs)))
-          s)))))
+   (if (contains? uc v)
+     nil
+     (let [u (remove-constraints u)
+           v (if (lvar? v) (add-constraints v uc) v)]
+       (make-s (-> (.s s) (dissoc u) (assoc u v))
+               (cons (pair u v) (.l s))
+               constraint-verify
+               (.cs s))))))
+
+(defn ^Substitutions constraint-verify [^Substitutions s u v]
+  (when-let [s (constraint-verify-simple s u v)]
+    (if-let [cs (.cs s)]
+      (let [cs (propagate cs s u v)
+            s (reduce (fn [s [u c]]
+                        (constrain s u c))
+                      s (get-simplified cs))
+            s (make-s (.s s) (.l s)
+                      constraint-verify (discard-simplified cs))]
+        (constraint-verify-simple s (get-var s u) v))
+      s)))
 
 (defprotocol IDisequality
   (!=-verify [this sp]))
