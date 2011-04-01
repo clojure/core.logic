@@ -237,13 +237,25 @@
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
 
+(defn check-vars [s us]
+  (when s
+   (loop [[u & ur] (seq us)]
+     (if (nil? u)
+       (use-verify s constraint-verify)
+       (let [v (walk s u)
+             cs (constraints u)]
+         (if (and cs (cs v))
+           nil
+           (recur ur)))))))
+
 ;; NOTE: just trying to get this to work when it comes first
 (defmacro all-different [& vars]
   `(fn [a#]
      (let [vars# (set (map #(walk-var a# %) [~@vars]))]
-       (->> vars#
-            (map #(add-constraints % (disj vars# %)))
-            (reduce (fn [b# v#] (swap b# v#)) a#)))))
+       (check-vars (->> vars#
+                        (map #(add-constraints % (disj vars# %)))
+                        (reduce (fn [b# v#] (swap b# v#)) a#))
+                   vars#))))
 
 ;; =============================================================================
 ;; Syntax
@@ -258,8 +270,24 @@
         (exist [x y]
                (all-different x y)
                (== x 1)
-               (== y 1)
+               (== y 2)
                (== q x)))
+
+  ;; FIXME
+  (run* [q]
+        (exist [x y]
+               (== x 1)
+               (== y 1)
+               (all-different x y)
+               (== q x)))
+
+  ;; the contraints are there
+  ;; this is weird
+  (let [[x y] (map lvar '[x y])]
+    (-> empty-s
+        ((all-different x y))
+        ((== x y))
+        .s))
 
   ;; ()
   (run* [q]

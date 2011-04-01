@@ -157,6 +157,7 @@
   (swap [this cu])
   (constrain [this u c])
   (get-var [this v])
+  (use-verify [this f])
   (walk [this v])
   (walk-unbound [this v])
   (walk-var [this v])
@@ -196,6 +197,7 @@
   (ext-no-check [this u v]
                 (verify this u v))
 
+  ;; NOTE: perhaps cleaner?
   ;; (ext-no-check [this u v]
   ;;               (when-let [me (verify this u v)]
   ;;                 (Substitutions. (assoc (.s me) u v)
@@ -213,8 +215,12 @@
              (let [u (walk this u)]
                (swap this (add-constraint u c))))
 
+  ;; get the var (usually the one w/ constraints on it)
   (get-var [this v]
            (first (find s v)))
+
+  (use-verify [this f]
+              (Substitutions. s l f cs))
   
   ;; NOTE: a little bittle slower with find than get
   ;; we do this for disequality constraints since the entry
@@ -227,6 +233,7 @@
            (not (lvar? v')) v'
            :else (recur v' (find s v')))))
 
+  ;; TODO: remove, we can use walk-var
   (walk-unbound [this v]
                 (loop [v v lv nil]
                   (cond
@@ -234,6 +241,7 @@
                    (not (lvar? v)) v
                    :else (recur (get s v ::not-found) v))))
   
+  ;; when we just want to get the var
   (walk-var [this v]
             (loop [lv v [v v'] (find s v)]
               (cond
