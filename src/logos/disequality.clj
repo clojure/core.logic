@@ -15,11 +15,6 @@
 ;; =============================================================================
 ;; Verification
 
-;; SIMPLE
-;; if u has no constraints just extend s
-;; if u's constraints contain v, fail
-;; if v is an lvar move u's constraints over to support tri subst
-;; if v is not an lvar, we can discard the constraints
 ;; COMPLEX
 ;; we lookup u in the constraint store
 ;; each key points to multiple constraints
@@ -90,15 +85,6 @@
 ;; =============================================================================
 ;; Constraint Store
 
-;; when loop, we should probably just operate through the store, not reaching
-;; inside, think about it tomorrow
-
-;; seems the simplest approach otherwise a lot of bookkeeping in the loop. We do
-;; pay for ConstraintStore creation, but that's small compared to updating a
-;; constraint - (removing it from vmap) (removing it from cmap).
-
-;; update-constraint
-
 (defprotocol IConstraintStore
   (merge-constraint [this c])
   (refine-constraint [this u c])
@@ -106,9 +92,6 @@
   (propagate [this s u v])
   (get-simplified [this])
   (discard-simplified [this]))
-
-;; refine-constraint c k
-;; 
 
 (defn unify* [^Substitutions s c]
   (loop [[[u v :as b] & cr] c nc #{}]
@@ -126,7 +109,17 @@
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
 
   (refine-constraint [this u c]
-                     )
+                     (let [^Constraint c c
+                           c (dissoc c u)]
+                       (let [name (.name c)
+                             vmap (update-in vmap [u] #(disj % name))]
+                        (if (= (count c) 1)
+                          (let [cmap (dissoc cmap c)]
+                           (ConstraintStore. vmap cmap
+                                             (conj (or simple #{})
+                                                   (first (.m c)))))
+                          (let [cmap (assoc-in cmap [name] cmap)]
+                            (ConstraintStore. vmap cmap simple))))))
 
   (discard-constraint [this c]
                       (let [^Constraint c c
@@ -136,20 +129,20 @@
                             vmap (reduce (fn [m k]
                                            (update-in m [k] #(disj % name)))
                                          okeys)]
-                        (ConstraintStore. cmap vmap simple)))
+                        (ConstraintStore. vmap cmap simple)))
 
   (propagate [this s u v]
              (when (contains? vmap u)
                (let [cs (get this u)]
-                 (loop [[c & cr] cs ncs [] simple #{}]
-                   (let [[u' v'] (find c u)
-                         v' (walk s v')] ;; u' should be fully walked, but maybe not v'
-                     (cond
-                      (= v v') (let [[[k v :as kv] & r :as c] (dissoc c u)]
-                                 (if (seq r)
-                                   (recur cr (conj ncs c) simple)
-                                   (recur cr ncs (conj simple kv))))
-                      :else nil))))))
+                 (loop [[c & cr] cs me this]
+                   (if (nil? c)
+                     this
+                     (let [[u' v'] (find c u)
+                           v' (walk s v')] ;; u' should be fully walked, but maybe not v'
+                       (cond
+                        (= v v') (recur cr (refine-constraint this u c))
+                        (lvar? v') (recur cr this)
+                        :else (recur cr (discard-constraint this c)))))))))
 
   (get-simplified [this] simple)
 
