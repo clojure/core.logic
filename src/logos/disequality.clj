@@ -16,20 +16,32 @@
 ;; =============================================================================
 ;; Verification
 
-(defn ^Substitutions constraint-verify [s u v l verify cs]
+(declare make-store)
+(declare merge-constraint)
+(declare make-c)
+(declare propagate)
+(declare get-simplified)
+
+;; do simple constraints first
+;; a complex constraints afterwards
+;; can this be violated?
+(defn ^Substitutions constraint-verify [^Substitutions s u v l verify cs]
   (let [uc (constraints u)]
     (if (contains? uc v)
       nil
       (let [u (remove-constraints u)
-            v (if (lvar? v) (add-constraints v uc) v)]
-        (make-s (-> s (dissoc u) (assoc u v)) (cons (pair u v) l) verify cs)))))
+            v (if (lvar? v) (add-constraints v uc) v)
+            s (make-s (-> s (dissoc u) (assoc u v)) (cons (pair u v) l) verify cs)]
+        (if cs
+          (let [cs (propagate cs s u v)
+                s (reduce (fn [s [u v]]
+                                (constrain s u v))
+                              s (get-simplified cs))]
+            (make-s (.s s) (.l s) verify (discard-simplified cs)))
+          s)))))
 
 (defprotocol IDisequality
   (!=-verify [this sp]))
-
-(declare make-store)
-(declare merge-constraint)
-(declare make-c)
 
 (defn unify* [^Substitutions s m]
   (loop [[[u v :as p] & r] (seq m) result {}]
@@ -144,7 +156,7 @@
                                             vmap okeys)] ;; NOTE: hmm not all these keys exist
                                ;; TODO: clear out empty vars like below
                            (ConstraintStore. vmap cmap
-                                             (conj (or simple #{})
+                                             (conj (or simple [])
                                                    (first c))))
                          (let [cmap (assoc cmap name c)]
                            (ConstraintStore. vmap cmap simple)))))
