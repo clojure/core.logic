@@ -237,14 +237,13 @@
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
 
-;; NOTE: won't work for unbound vars
+;; NOTE: just trying to get this to work when it comes first
 (defmacro all-different [& vars]
   `(fn [a#]
-     (!=-verify a#
-      (let [vars# (set (map #(walk-var a# %) [~@vars]))]
-        (->> vars#
-             (map #(add-constraints % (disj vars# %)))
-             (reduce (fn [b# v#] (swap b# v#)) a#))))))
+     (let [vars# (set (map #(walk-var a# %) [~@vars]))]
+       (->> vars#
+            (map #(add-constraints % (disj vars# %)))
+            (reduce (fn [b# v#] (swap b# v#)) a#)))))
 
 ;; =============================================================================
 ;; Syntax
@@ -258,15 +257,52 @@
   (run* [q]
         (exist [x y]
                (all-different x y)
+               (== x 1)
+               (== y 1)
                (== q x)))
 
-  ;; works!
+  ;; ()
+  (run* [q]
+        (exist [x y z]
+               (!= x y)
+               (== y z)
+               (== x z)
+               (== q x)))
+
+  ;; ([1 3]) works!
   (run* [q]
         (exist [x y]
                (== x 1)
                (!= [x 2] [1 y])
                (== y 3)
                (== q [x y])))
+
+  ;; 500ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (!= [x 2] [1 y])
+                     (== x 1)
+                     (== y 3)
+                     (== q [x y])))))))
+
+  ;; interesting complex constraints are fastest when last
+  ;; 68ms
+  ;; ~740ms for 1e5
+  ;; ~400ms for 1e5 if violated
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (== x 1)
+                     (== y 2)
+                     (!= [x 2] [1 y])
+                     (== q [x y])))))))
 
   ;; 271ms
   (dotimes [_ 10]

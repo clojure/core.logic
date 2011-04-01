@@ -1022,3 +1022,30 @@
                       (!= [x 2] [1 y])
                       (== q [x y])))
          ())))
+
+(deftest test-disequality-12
+  (is (= (run* [q]
+               (exist [x y z]
+                      (!= x y)
+                      (== y z)
+                      (== x z)
+                      (== q x)))
+         ())))
+
+(deftest test-disequality-13
+  (is (= (run* [q]
+               (exist [x y z]
+                      (== y z)
+                      (== x z)
+                      (!= x y)
+                      (== q x)))
+         ())))
+
+(deftest test-disequality-14
+  (is (= (run* [q]
+               (exist [x y z]
+                      (== z y)
+                      (== x z)
+                      (!= x y)
+                      (== q x)))
+         ())))
