@@ -155,6 +155,7 @@
   (ext [this u v])
   (ext-no-check [this u v])
   (swap [this cu])
+  (constrain [this u c])
   (walk [this v])
   (walk-unbound [this v])
   (walk* [this v])
@@ -198,16 +199,12 @@
           (let [v (s cu)]
            (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
           (Substitutions. (assoc s cu unbound) l verify cs)))
-  
-  ;; (walk [this v]
-  ;;       (loop [v v lv nil]
-  ;;         (cond
-  ;;          (identical? v ::not-found) lv
-  ;;          (identical? v unbound) lv
-  ;;          (not (lvar? v)) v
-  ;;          :else (recur (get s v ::not-found) v))))
 
-  ;; NOTE: a little bittle slower with find vs. get
+  (constrain [this u c]
+             (let [u (walk this u)]
+               (swap this (add-constraint u c))))
+
+  ;; NOTE: a little bittle slower with find than get
   ;; we do this for disequality constraints since the entry
   ;; entry always has the constrained var
   (walk [this v]
