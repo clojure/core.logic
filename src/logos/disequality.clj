@@ -21,13 +21,8 @@
 (declare make-c)
 (declare propagate)
 (declare get-simplified)
+(declare discard-simplified)
 (declare constraint-verify)
-
-;; a) constraint:{x 1 y 1}
-;; b) (== x y)
-;; c) (== x 1)
-;; d) constraint:{x 1}
-;; e) we missed it
 
 (defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
   (let [uc (constraints u)]
@@ -238,6 +233,13 @@
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
 
+(defn all-different [& vars]
+  (fn [a]
+    (let [vars (set (map #(walk-var a %) vars))]
+     (->> vars
+          (map #(add-constraints % (disj vars %)))
+          (reduce (fn [a v] (swap a v)) a)))))
+
 ;; =============================================================================
 ;; Syntax
 
@@ -246,11 +248,44 @@
      (!=-verify a# (unify a# ~u ~v))))
 
 (comment
+  ;; all-different
+  (run* [q]
+        (exist [x y]
+               (== x y)
+               (all-different x y)
+               (== q x)))
+
+  ;; works!
   (run* [q]
         (exist [x y]
          (!= [x 2] [1 y])
          (== x 1)
-         (== q x)))
+         (== y 3)
+         (== q [x y])))
+
+  ;; 271ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (!= x 1)
+                     (!= y 2)
+                     (== x 1)
+                     (== y 2)
+                     (== q [x y])))))))
+
+  ;; 60ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (== x 1)
+                     (== y 2)
+                     (== q [x y])))))))
 
   ;; with pairs
   (let [[x y z a] (map lvar '(x y z a))

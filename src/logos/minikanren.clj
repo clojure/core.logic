@@ -159,6 +159,7 @@
   (get-var [this v])
   (walk [this v])
   (walk-unbound [this v])
+  (walk-var [this v])
   (walk* [this v])
   (unify [this u v])
   (reify-lvar-name [_])
@@ -219,12 +220,12 @@
   ;; we do this for disequality constraints since the entry
   ;; entry always has the constrained var
   (walk [this v]
-      (loop [lv v [v v'] (find s v)]
-            (cond
-             (nil? v) lv
-             (identical? v' unbound) v
-             (not (lvar? v')) v'
-             :else (recur v' (find s v')))))
+        (loop [lv v [v v'] (find s v)]
+          (cond
+           (nil? v) lv
+           (identical? v' unbound) v
+           (not (lvar? v')) v'
+           :else (recur v' (find s v')))))
 
   (walk-unbound [this v]
                 (loop [v v lv nil]
@@ -232,6 +233,14 @@
                    (identical? v ::not-found) lv
                    (not (lvar? v)) v
                    :else (recur (get s v ::not-found) v))))
+  
+  (walk-var [this v]
+            (loop [lv v [v v'] (find s v)]
+              (cond
+               (nil? v) lv
+               (identical? v' unbound) v
+               (not (lvar? v')) v
+               :else (recur v' (find s v')))))
   
   (walk* [this v]
          (let [v (walk this v)]
