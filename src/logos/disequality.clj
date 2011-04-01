@@ -7,6 +7,7 @@
 ;; =============================================================================
 ;; Utilities
 
+;; TODO: change to lazy-seq
 (defn prefix [s <s]
   (if (= s <s)
     ()
@@ -30,10 +31,6 @@
 (declare merge-constraint)
 (declare make-c)
 
-;; returns
-;; new constraint map, consumer need to check if empty, if empty unified,
-;;   and we need to fail
-;; nil constraint was discarded cannot be violated
 (defn unify* [^Substitutions s m]
   (loop [[[u v :as p] & r] (seq m) result {}]
     (let [^Substitutions s' (unify s u v)]
@@ -43,8 +40,7 @@
        (identical? s s') (recur r result)
        :else (recur r
                     (conj result
-                          (->map-entry
-                           (first (prefix (.l s') (.l s))))))))))
+                          (first (prefix (.l s') (.l s)))))))))
 
 (extend-type Substitutions
   IDisequality
@@ -68,13 +64,14 @@
                                             (.l this) constraint-verify (.cs this)))
                                   (make-s (assoc s u unbound)
                                           (.l this) constraint-verify (.cs this))))))
-                          (let [v (get c u)] ;; complex constraints is why we needed unify*
-                            (if (= u v)
-                              nil
-                              (let [cs (or (.cs this)
-                                           (-> (make-c {} {} nil)
-                                               (merge-constraint c)))]
-                                )))))))))
+                          (let [r (unify* this c)]
+                            (cond
+                             (nil? r) this
+                             (empty? r) nil
+                             :else (make-s (.s this) (.l this) constraint-verify
+                                           (-> (or (.cs this) (make-store))
+                                               (merge-constraint
+                                                (make-c r))))))))))))
 
 ;; =============================================================================
 ;; Constraint
@@ -225,6 +222,13 @@
      (!=-verify a# (unify a# ~u ~v))))
 
 (comment
+  ;; with pairs
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))]
+    (unify* s [(pair x 1) (pair y z)]))
+  
   ;; was violated
   (let [[x y z a] (map lvar '(x y z a))
         s (-> empty-s
@@ -238,6 +242,36 @@
               (unify x 1)
               (unify y z))]
     (unify* s {x 1 y a}))
+
+  ;; with pairs
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))]
+    (unify* s [(pair x 1) (pair y a)]))
+
+  ;; 200ms
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))
+        p1 (pair x 1)
+        p2 (pair y 2)
+        c [p1 p2]]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (unify* s c)))))
+
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))
+        c {x 1 y 2}]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (unify* s c)))))
 
   ;; nil can't be violated
   (let [[x y z a] (map lvar '(x y z a))
