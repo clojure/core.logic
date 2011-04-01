@@ -233,12 +233,14 @@
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
 
-(defn all-different [& vars]
-  (fn [a]
-    (let [vars (set (map #(walk-var a %) vars))]
-     (->> vars
-          (map #(add-constraints % (disj vars %)))
-          (reduce (fn [a v] (swap a v)) a)))))
+;; NOTE: won't work for unbound vars
+(defmacro all-different [& vars]
+  `(fn [a#]
+     (!=-verify a#
+      (let [vars# (set (map #(walk-var a# %) [~@vars]))]
+        (->> vars#
+             (map #(add-constraints % (disj vars# %)))
+             (reduce (fn [b# v#] (swap b# v#)) a#))))))
 
 ;; =============================================================================
 ;; Syntax
@@ -255,13 +257,25 @@
                (all-different x y)
                (== q x)))
 
+  (let [[x y z] (map lvar '[x y z])]
+    (-> ((all-different x y z) empty-s)
+        .s))
+
   ;; works!
   (run* [q]
         (exist [x y]
-         (!= [x 2] [1 y])
-         (== x 1)
-         (== y 3)
-         (== q [x y])))
+               (== x 1)
+               (!= [x 2] [1 y])
+               (== y 3)
+               (== q [x y])))
+
+  ;; we don't catch this case
+  (run* [q]
+        (exist [x y]
+               (!= x y)
+               (== x 1)
+               (== y 1)
+               (== q [x y])))
 
   ;; 271ms
   (dotimes [_ 10]
