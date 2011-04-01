@@ -28,6 +28,7 @@
 
 (declare make-store)
 
+;; FIX
 (defn unify* [^Substitutions s c]
   (loop [[[u v :as b] & cr] c nc {}]
     (let [^Substitutions s' (unify s u v)]
@@ -109,7 +110,7 @@
 
 (defprotocol IConstraintStore
   (merge-constraint [this c])
-  (refine-constraint [this u c])
+  (refine-constraint [this c u])
   (discard-constraint [this c])
   (propagate [this s u v])
   (get-simplified [this])
@@ -119,19 +120,26 @@
   IConstraintStore
   (merge-constraint [this c]
                     (let [ks (keys c)]
-                      (reduce (fn [cs k] (assoc cs k c)) this ks)))
+                      (reduce (fn [cs k] (assoc cs k c)) this ks))) ;; NOTE: switch to loop/recur?
 
-  (refine-constraint [this u c]
+  (refine-constraint [this c u]
                      (let [^Constraint c c
+                           c (get cmap (.name c))
                            c (dissoc c u)]
                        (let [name (.name c)
-                             vmap (update-in vmap [u] #(disj % name))]
+                             vmap (update-in vmap [u] #(disj % name))
+                             vmap (if (empty? (vmap u))
+                                    (dissoc vmap u)
+                                    vmap)]
                         (if (= (count c) 1)
-                          (let [cmap (dissoc cmap name)]
+                          (let [okeys (.okeys c)
+                                cmap (dissoc cmap name)
+                                vmap (reduce (fn [m v] (update-in m [v] #(disj % name)))
+                                             vmap okeys)] ;; NOTE: hmm not all these keys exist
                            (ConstraintStore. vmap cmap
                                              (conj (or simple #{})
                                                    (first c))))
-                          (let [cmap (assoc cmap name cmap)]
+                          (let [cmap (assoc cmap name c)]
                             (ConstraintStore. vmap cmap simple))))))
 
   (discard-constraint [this c]
@@ -163,12 +171,11 @@
   (discard-simplified [this] (ConstraintStore. vmap cmap nil))
 
   clojure.lang.Associative
-  (assoc [this k v]
-    (if (constraint? v)
-      (let [name (.name ^Constraint v)]
-        (ConstraintStore. (update-in vmap [k] (fnil #(conj % name) #{}))
-                          (assoc cmap name v)
-                          nil))
+  (assoc [this u c]
+    (if (constraint? c)
+      (let [name (.name ^Constraint c)]
+        (ConstraintStore. (update-in vmap [u] (fnil #(conj % name) #{}))
+                          (assoc cmap name c) simple))
       (throw (Exception. "Adding something which is not a constraint"))))
 
   (containsKey [this key]
@@ -176,7 +183,8 @@
 
   (entryAt [this key]
            (when (contains? vmap key)
-             (let [val (vec (map #(cmap %) (vmap key)))]
+             (let [val (when-let [s (seq (map #(cmap %) (vmap key)))]
+                         (vec s))]
                (clojure.core/reify
                 clojure.lang.IMapEntry
                 (key [_] key)
@@ -187,7 +195,8 @@
   clojure.lang.ILookup
   (valAt [this key]
          (when (contains? vmap key)
-           (vec (map #(cmap %) (vmap key))))))
+           (when-let [s (seq (map #(cmap %) (vmap key)))]
+             (vec s)))))
 
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
@@ -201,6 +210,33 @@
 
 
 (comment
+  (let [cs (make-store)
+        cs (merge-constraint cs (make-c '{x 1 y 2 z 3}))]
+    [(get cs 'x) (get cs 'y)])
+
+  (let [[x y z] (map lvar '[x y z])
+        c  (make-c {x 1 y 2 z 3})]
+    (dissoc c y))
+  
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)
+        cs (refine-constraint cs c y)]
+    [(get cs x) (get cs y)])
+
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)
+        cs (refine-constraint cs c y)
+        cs (refine-constraint cs c z)]
+    [(get cs x) (.simple cs)])
+
+  (let [cs (make-store)
+        cs (assoc cs 'x (make-c '{x 1}))]
+    (get cs 'x))
+
   (let [[x y z] (map lvar '[x y z])
         cs (-> (make-store)
                (assoc x (make-c {1 2}))
@@ -218,14 +254,50 @@
                (merge-constraint (make-c {x 1 y 2})))]
     (get cs x))
 
+  ;; 1.1s, we'll need to track how this affects
+  ;; actual logic programs, constraints allow us
+  ;; to fail many dead ends quickly.
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (-> cs
+             (refine-constraint c z)
+             (refine-constraint c y))))))
+
+  ;; 350ms
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (refine-constraint cs c y)))))
+
   ;; 150ms
   (let [[x y z] (map lvar '[x y z])
         cs (make-store)
-        c  (make-c {x 1 y 2})]
+        c  (make-c {x 1 y 2 z 3})]
     (dotimes [_ 10]
       (time
        (dotimes [_ 1e5]
          (merge-constraint cs c)))))
+
+  ;; a little bit faster
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (-> cs
+             (assoc x c)
+             (assoc y c)
+             (assoc z c))))))
 
   ;; nice ~300ms, little overhead for simplified constraints
   (dotimes [_ 10]
