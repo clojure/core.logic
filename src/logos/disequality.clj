@@ -22,9 +22,11 @@
 (declare propagate)
 (declare get-simplified)
 
-;; do simple constraints first
-;; a complex constraints afterwards
-;; can this be violated?
+;; a) constraint:{x 1 y 1}
+;; b) (== x y)
+;; c) (== x 1)
+;; d) constraint:{x 1}
+;; e) we missed it
 (defn ^Substitutions constraint-verify [^Substitutions s u v l verify cs]
   (let [uc (constraints u)]
     (if (contains? uc v)
