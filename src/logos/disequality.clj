@@ -93,14 +93,6 @@
   (get-simplified [this])
   (discard-simplified [this]))
 
-(defn unify* [^Substitutions s c]
-  (loop [[[u v :as b] & cr] c nc #{}]
-    (let [^Substitutions s' (unify s u v)]
-      (cond
-       (nil? b) (if (seq nc) nc false) ;; are we done?
-       (or (identical? s s') (not s')) (recur cr nc) ;; violated sub-constraint or a discard
-       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
-
 (deftype ConstraintStore [vmap cmap simple]
   IConstraintStore
   (merge-constraint [this c]
