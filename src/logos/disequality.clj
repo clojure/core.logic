@@ -15,9 +15,6 @@
 ;; =============================================================================
 ;; Verification
 
-;; COMPLEX
-;; we lookup u in the constraint store
-;; each key points to multiple constraints
 (defn ^Substitutions constraint-verify [s u v l verify cs]
   (let [uc (constraints u)]
     (if (contains? uc v)
@@ -56,7 +53,13 @@
 ;; Constraint
 
 ;; need hashCode and equals for propagation bit
-(deftype Constraint [^String name m okeys]
+(deftype Constraint [^String name m okeys hash]
+  Object
+  (equals [this o]
+          (and (instance? Constraint o)
+               (let [^Constraint o o]
+                 (identical? name (.name o)))))
+  (hashCode [_] hash)
   clojure.lang.Associative
   (containsKey [this key]
                (contains? m key))
@@ -64,8 +67,9 @@
            (.entryAt m key))
   clojure.lang.IPersistentMap
   (without [this key]
-           (Constraint. name (dissoc m key) okeys))
+           (Constraint. name (dissoc m key) okeys hash))
   clojure.lang.ISeq
+  (first [_] (first m))
   (seq [_] (seq m))
   (count [_] (count m))
   clojure.lang.ILookup
@@ -74,7 +78,8 @@
 
 ;; NOTE: gensym is slow don't use it directly
 (defn ^Constraint make-c [m]
-  (Constraint. (str "constraint-" (. clojure.lang.RT (nextID))) m (keys m)))
+  (let [name (str "constraint-" (. clojure.lang.RT (nextID)))]
+   (Constraint. name m (keys m) (.hashCode name))))
 
 (defn constraint? [x]
   (instance? Constraint x))
@@ -96,8 +101,7 @@
 (deftype ConstraintStore [vmap cmap simple]
   IConstraintStore
   (merge-constraint [this c]
-                    (let [^Constraint c c
-                          ks (keys (.m c))]
+                    (let [ks (keys c)]
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
 
   (refine-constraint [this u c]
@@ -109,7 +113,7 @@
                           (let [cmap (dissoc cmap c)]
                            (ConstraintStore. vmap cmap
                                              (conj (or simple #{})
-                                                   (first (.m c)))))
+                                                   (first c))))
                           (let [cmap (assoc-in cmap [name] cmap)]
                             (ConstraintStore. vmap cmap simple))))))
 
