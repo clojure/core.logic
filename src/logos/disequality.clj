@@ -27,15 +27,24 @@
   (!=-verify [this sp]))
 
 (declare make-store)
+(declare merge-constraint)
+(declare make-c)
 
-;; FIX
-(defn unify* [^Substitutions s c]
-  (loop [[[u v :as b] & cr] c nc {}]
+;; returns
+;; new constraint map, consumer need to check if empty, if empty unified,
+;;   and we need to fail
+;; nil constraint was discarded cannot be violated
+(defn unify* [^Substitutions s m]
+  (loop [[[u v :as p] & r] (seq m) result {}]
     (let [^Substitutions s' (unify s u v)]
       (cond
-       (nil? b) (if (seq nc) nc false)
-       (or (identical? s s') (not s')) (recur cr nc)
-       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
+       (nil? p) result
+       (not s') nil
+       (identical? s s') (recur r result)
+       :else (recur r
+                    (conj result
+                          (->map-entry
+                           (first (prefix (.l s') (.l s))))))))))
 
 (extend-type Substitutions
   IDisequality
@@ -124,31 +133,38 @@
 
   (refine-constraint [this c u]
                      (let [^Constraint c c
-                           c (get cmap (.name c))
-                           c (dissoc c u)]
-                       (let [name (.name c)
-                             vmap (update-in vmap [u] #(disj % name))
-                             vmap (if (empty? (vmap u))
+                           name (.name c)
+                           c (dissoc (get cmap name) u)
+                           vmap (update-in vmap [u] #(disj % name))
+                           vmap (if (empty? (vmap u))
                                     (dissoc vmap u)
                                     vmap)]
-                        (if (= (count c) 1)
-                          (let [okeys (.okeys c)
-                                cmap (dissoc cmap name)
-                                vmap (reduce (fn [m v] (update-in m [v] #(disj % name)))
-                                             vmap okeys)] ;; NOTE: hmm not all these keys exist
+                       (if (= (count c) 1)
+                         (let [okeys (.okeys c)
+                               cmap (dissoc cmap name)
+                               vmap (reduce (fn [m v]
+                                              (update-in m [v] #(disj % name)))
+                                            vmap okeys)] ;; NOTE: hmm not all these keys exist
+                               ;; TODO: clear out empty vars like below
                            (ConstraintStore. vmap cmap
                                              (conj (or simple #{})
                                                    (first c))))
-                          (let [cmap (assoc cmap name c)]
-                            (ConstraintStore. vmap cmap simple))))))
+                         (let [cmap (assoc cmap name c)]
+                           (ConstraintStore. vmap cmap simple)))))
 
   (discard-constraint [this c]
                       (let [^Constraint c c
                             name (.name c)
+                            c (get cmap name)
                             okeys (.okeys c)
                             cmap (dissoc cmap name)
-                            vmap (reduce (fn [m k]
-                                           (update-in m [k] #(disj % name)))
+                            vmap (reduce (fn [m v] ;; TODO: combine
+                                           (update-in m [v] #(disj % name)))
+                                         vmap okeys)
+                            vmap (reduce (fn [m v]
+                                           (if (empty? (m v))
+                                             (dissoc m v)
+                                             m))
                                          vmap okeys)]
                         (ConstraintStore. vmap cmap simple)))
 
@@ -208,8 +224,28 @@
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
-
 (comment
+  ;; was violated
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))]
+    (unify* s {x 1 y z}))
+  
+  ;; might be violated
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))]
+    (unify* s {x 1 y a}))
+
+  ;; nil can't be violated
+  (let [[x y z a] (map lvar '(x y z a))
+        s (-> empty-s
+              (unify x 1)
+              (unify y z))]
+    (unify* s {x 2 y a}))
+
   (let [cs (make-store)
         cs (merge-constraint cs (make-c '{x 1 y 2 z 3}))]
     [(get cs 'x) (get cs 'y)])
@@ -232,6 +268,13 @@
         cs (refine-constraint cs c y)
         cs (refine-constraint cs c z)]
     [(get cs x) (.simple cs)])
+  
+  (let [[x y z] (map lvar '[x y z])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)
+        cs (discard-constraint cs c)]
+    (.vmap cs))
 
   (let [cs (make-store)
         cs (assoc cs 'x (make-c '{x 1}))]
@@ -267,6 +310,19 @@
          (-> cs
              (refine-constraint c z)
              (refine-constraint c y))))))
+
+  ;; 500ms
+  ;; linear in the number of vars, 5 takes ~850ms
+  (let [[x y z a b] (map lvar '[x y z a b])
+        cs (make-store)
+        c  (make-c {x 1 y 2 z 3})
+        cs (merge-constraint cs c)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (discard-constraint cs c)))))
+
+  
 
   ;; 350ms
   (let [[x y z] (map lvar '[x y z])
