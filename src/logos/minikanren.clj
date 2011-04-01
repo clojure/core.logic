@@ -65,7 +65,8 @@
 
 (defprotocol IPair
   (lhs [this])
-  (rhs [this]))
+  (rhs [this])
+  (->map-entry [this]))
 
 (deftype Pair [lhs rhs]
   clojure.lang.Counted
@@ -82,6 +83,11 @@
   IPair
   (lhs [_] lhs)
   (rhs [_] rhs)
+  (->map-entry [_]
+               (clojure.core/reify
+                  java.util.Map$Entry
+                  (getKey [_] lhs)
+                  (getValue [_] rhs)))
   Object
   (toString [_]
             (str "(" lhs " . " rhs ")")))
