@@ -97,11 +97,18 @@
 ;; pay for ConstraintStore creation, but that's small compared to updating a
 ;; constraint - (removing it from vmap) (removing it from cmap).
 
+;; update-constraint
+
 (defprotocol IConstraintStore
   (merge-constraint [this c])
+  (refine-constraint [this u c])
+  (discard-constraint [this c])
   (propagate [this s u v])
   (get-simplified [this])
   (discard-simplified [this]))
+
+;; refine-constraint c k
+;; 
 
 (defn unify* [^Substitutions s c]
   (loop [[[u v :as b] & cr] c nc #{}]
@@ -117,6 +124,19 @@
                     (let [^Constraint c c
                           ks (keys (.m c))]
                       (reduce (fn [cs k] (assoc cs k c)) this ks)))
+
+  (refine-constraint [this u c]
+                     )
+
+  (discard-constraint [this c]
+                      (let [^Constraint c c
+                            name (.name c)
+                            okeys (.okeys c)
+                            cmap (dissoc cmap name)
+                            vmap (reduce (fn [m k]
+                                           (update-in m [k] #(disj % name)))
+                                         okeys)]
+                        (ConstraintStore. cmap vmap simple)))
 
   (propagate [this s u v]
              (when (contains? vmap u)
