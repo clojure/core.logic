@@ -26,6 +26,16 @@
 (defprotocol IDisequality
   (!=-verify [this sp]))
 
+(declare make-store)
+
+(defn unify* [^Substitutions s c]
+  (loop [[[u v :as b] & cr] c nc {}]
+    (let [^Substitutions s' (unify s u v)]
+      (cond
+       (nil? b) (if (seq nc) nc false)
+       (or (identical? s s') (not s')) (recur cr nc)
+       :else (recur cr (conj nc (prefix (.l s') (.l s))))))))
+
 (extend-type Substitutions
   IDisequality
   (!=-verify [this sp]
@@ -47,7 +57,14 @@
                                     (make-s (-> s (dissoc u) (assoc u v'))
                                             (.l this) constraint-verify (.cs this)))
                                   (make-s (assoc s u unbound)
-                                          (.l this) constraint-verify (.cs this))))))))))))
+                                          (.l this) constraint-verify (.cs this))))))
+                          (let [v (get c u)] ;; complex constraints is why we needed unify*
+                            (if (= u v)
+                              nil
+                              (let [cs (or (.cs this)
+                                           (-> (make-c {} {} nil)
+                                               (merge-constraint c)))]
+                                )))))))))
 
 ;; =============================================================================
 ;; Constraint
@@ -110,11 +127,11 @@
                        (let [name (.name c)
                              vmap (update-in vmap [u] #(disj % name))]
                         (if (= (count c) 1)
-                          (let [cmap (dissoc cmap c)]
+                          (let [cmap (dissoc cmap name)]
                            (ConstraintStore. vmap cmap
                                              (conj (or simple #{})
                                                    (first c))))
-                          (let [cmap (assoc-in cmap [name] cmap)]
+                          (let [cmap (assoc cmap name cmap)]
                             (ConstraintStore. vmap cmap simple))))))
 
   (discard-constraint [this c]
@@ -124,21 +141,22 @@
                             cmap (dissoc cmap name)
                             vmap (reduce (fn [m k]
                                            (update-in m [k] #(disj % name)))
-                                         okeys)]
+                                         vmap okeys)]
                         (ConstraintStore. vmap cmap simple)))
 
   (propagate [this s u v]
-             (when (contains? vmap u)
+             (if (contains? vmap u)
                (let [cs (get this u)]
                  (loop [[c & cr] cs me this]
                    (if (nil? c)
                      this
-                     (let [[u' v'] (find c u)
-                           v' (walk s v')] ;; u' should be fully walked, but maybe not v'
+                     (let [v' (walk s (get c u))]
                        (cond
                         (= v v') (recur cr (refine-constraint this u c))
-                        (lvar? v') (recur cr this)
-                        :else (recur cr (discard-constraint this c)))))))))
+                        (or (lvar? v')
+                            (lvar? v)) (recur cr this)
+                        :else (recur cr (discard-constraint this c)))))))
+               this))
 
   (get-simplified [this] simple)
 
