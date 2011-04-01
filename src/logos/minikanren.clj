@@ -156,6 +156,7 @@
   (ext-no-check [this u v])
   (swap [this cu])
   (constrain [this u c])
+  (get-var [this v])
   (walk [this v])
   (walk-unbound [this v])
   (walk* [this v])
@@ -192,7 +193,14 @@
          (ext-no-check this u v)))
 
   (ext-no-check [this u v]
-                (verify s u v l verify cs))
+                (verify this u v))
+
+  ;; (ext-no-check [this u v]
+  ;;               (when-let [me (verify this u v)]
+  ;;                 (Substitutions. (assoc (.s me) u v)
+  ;;                                 (.l me)
+  ;;                                 (.verify me)
+  ;;                                 (.cs me))))
 
   (swap [this cu]
         (if (contains? s cu)
@@ -204,6 +212,9 @@
              (let [u (walk this u)]
                (swap this (add-constraint u c))))
 
+  (get-var [this v]
+           (first (find s v)))
+  
   ;; NOTE: a little bittle slower with find than get
   ;; we do this for disequality constraints since the entry
   ;; entry always has the constrained var
@@ -258,8 +269,11 @@
 (defn unbound* [s & vars]
   (reduce unbound1 s vars))
 
-(defn pass-verify [s u v l verify cs]
-  (Substitutions. (assoc s u v) (cons (Pair. u v) l) verify cs))
+(defn ^Substitutions pass-verify [^Substitutions s u v]
+  (Substitutions. (assoc (.s s) u v)
+                  (cons (pair u v) (.l s))
+                  (.verify s)
+                  (.cs s)))
 
 (defn ^Substitutions make-s
   ([m l] (Substitutions. m l pass-verify nil))
