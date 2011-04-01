@@ -25,7 +25,7 @@
 (declare constraint-verify)
 
 (defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
-  (let [uc (constraints u)]
+  (let [uc (set (map #(walk s %) (constraints u)))]
    (if (contains? uc v)
      nil
      (let [u (remove-constraints u)
@@ -76,13 +76,17 @@
                             (if (= u v)
                               nil
                               (let [s (.s this)
-                                    u (add-constraint u v)]
-                                (if (contains? s u)
-                                  (let [v' (s u)]
-                                    (make-s (-> s (dissoc u) (assoc u v'))
-                                            (.l this) constraint-verify (.cs this)))
-                                  (make-s (assoc s u unbound)
-                                          (.l this) constraint-verify (.cs this))))))
+                                    u (add-constraint u v)
+                                    s (if (contains? s u)
+                                        (let [uv (s u)]
+                                          (-> s (dissoc u) (assoc u uv)))
+                                        (assoc s u unbound))
+                                    v (if (lvar? v) (add-constraint v u) v)
+                                    s (if (contains? s v)
+                                        (let [vv (s v)]
+                                          (-> s (dissoc v) (assoc v vv)))
+                                        (assoc s v unbound))]
+                                (make-s s (.l this) constraint-verify (.cs this)))))
                           (let [r (unify* this c)]
                             (cond
                              (nil? r) this
@@ -272,10 +276,16 @@
   ;; we don't catch this case
   (run* [q]
         (exist [x y]
-               (!= x y)
                (== x 1)
                (== y 1)
+               (!= x y)
                (== q [x y])))
+
+  (let [[x y] (map lvar '[x y])]
+    (-> empty-s
+        ((!= x y))
+        (get-var x)
+        constraints))
 
   ;; 271ms
   (dotimes [_ 10]
