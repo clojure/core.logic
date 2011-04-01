@@ -194,13 +194,13 @@
                (let [cs (get this u)]
                  (loop [[c & cr] cs me this]
                    (if (nil? c)
-                     this
+                     me
                      (let [v' (walk s (get c u))]
                        (cond
-                        (= v v') (recur cr (refine-constraint this u c))
+                        (= v' v) (recur cr (refine-constraint me u c))
                         (or (lvar? v')
-                            (lvar? v)) (recur cr this)
-                        :else (recur cr (discard-constraint this c)))))))
+                            (lvar? v)) (recur cr me)
+                        :else (recur cr (discard-constraint me c)))))))
                this))
 
   (get-simplified [this] simple)
