@@ -197,7 +197,7 @@
                      me
                      (let [v' (walk s (get c u))]
                        (cond
-                        (= v' v) (recur cr (refine-constraint me u c))
+                        (= v' v) (recur cr (refine-constraint me c u))
                         (or (lvar? v')
                             (lvar? v)) (recur cr me)
                         :else (recur cr (discard-constraint me c)))))))
@@ -246,6 +246,12 @@
      (!=-verify a# (unify a# ~u ~v))))
 
 (comment
+  (run* [q]
+        (exist [x y]
+         (!= [x 2] [1 y])
+         (== x 1)
+         (== q x)))
+
   ;; with pairs
   (let [[x y z a] (map lvar '(x y z a))
         s (-> empty-s
