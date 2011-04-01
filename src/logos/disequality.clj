@@ -177,6 +177,7 @@
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
+
 (comment
   (let [[x y z] (map lvar '[x y z])
         cs (-> (make-store)
@@ -204,34 +205,7 @@
        (dotimes [_ 1e5]
          (merge-constraint cs c)))))
 
-  ;; looks good
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((!= x 1) empty-s)
-        .s
-        keys
-        first
-        constraints))
-
-  ;; substitution!
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((!= x 1) empty-s)
-        ((== x 2))))
-
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((== x 2) empty-s)
-        ((!= x 1))))
-  
-  ;; nil!
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((!= x 1) empty-s)
-        ((== x 1))))
-
-  ;; nil!
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((== x 1) empty-s)
-        ((!= x 1))))
-
-  ;; nice 400ms, no overhead for simplified constraints
+  ;; nice ~300ms, little overhead for simplified constraints
   (dotimes [_ 10]
     (let [[x y z] (map lvar '[x y z])]
      (time
@@ -307,47 +281,11 @@
         first
         constraints))
 
-  ;; big problem, lexical scoping, how can we add constraints w/o mutation?
-  ;; will refer to the var w/o constraints
-
-  (exist [y]
-         (!= y 1)
-         (foo y z) ;; we passing the y w/o constraints, this is OK now!
-         (== y 1))
-
-  ;; looking for simplified constraints in the constraint store would be slower
-
-  ;; the order of constraints doesn't matter w/in an exist clause
-
-  ;; we can move the constraints into the declaration of the var!
-
-  (exist [y]
-         (exist [z]
-                ()
-                (!= y 1)))
-
-  ;; so we can move them to the top
-
-  (exist [y]
-         (constrain [y (!= y 1)]
-                    ))
-
   ;; this works
+  ;; #{1}
   (let [y (lvar 'x)
         yc (add-constraint y 1)
         s {yc 1}]
     (constraints (first (find s y))))
-
-  (defn test-walk [m v]
-    (loop [lv v [v v'] (find m v)]
-      (println v v' lv)
-      (cond
-       (nil? v) lv
-       (identical? v' unbound) v
-       (not (lvar? v')) v'
-       :else (recur v' (find m v')))))
-
-  (let [[x y] (map lvar '[x y])]
-   (test-walk {x y y 1} 2))
  )
 
