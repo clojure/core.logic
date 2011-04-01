@@ -257,13 +257,8 @@
   ;; all-different
   (run* [q]
         (exist [x y]
-               (== x y)
                (all-different x y)
                (== q x)))
-
-  (let [[x y z] (map lvar '[x y z])]
-    (-> ((all-different x y z) empty-s)
-        .s))
 
   ;; works!
   (run* [q]
@@ -272,20 +267,6 @@
                (!= [x 2] [1 y])
                (== y 3)
                (== q [x y])))
-
-  ;; we don't catch this case
-  (run* [q]
-        (exist [x y]
-               (== x 1)
-               (== y 1)
-               (!= x y)
-               (== q [x y])))
-
-  (let [[x y] (map lvar '[x y])]
-    (-> empty-s
-        ((!= x y))
-        (get-var x)
-        constraints))
 
   ;; 271ms
   (dotimes [_ 10]
@@ -311,34 +292,6 @@
                      (== y 2)
                      (== q [x y])))))))
 
-  ;; with pairs
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))]
-    (unify* s [(pair x 1) (pair y z)]))
-  
-  ;; was violated
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))]
-    (unify* s {x 1 y z}))
-  
-  ;; might be violated
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))]
-    (unify* s {x 1 y a}))
-
-  ;; with pairs
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))]
-    (unify* s [(pair x 1) (pair y a)]))
-
   ;; 200ms
   (let [[x y z a] (map lvar '(x y z a))
         s (-> empty-s
@@ -351,74 +304,6 @@
       (time
        (dotimes [_ 1e5]
          (unify* s c)))))
-
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))
-        c {x 1 y 2}]
-    (dotimes [_ 10]
-      (time
-       (dotimes [_ 1e5]
-         (unify* s c)))))
-
-  ;; nil can't be violated
-  (let [[x y z a] (map lvar '(x y z a))
-        s (-> empty-s
-              (unify x 1)
-              (unify y z))]
-    (unify* s {x 2 y a}))
-
-  (let [cs (make-store)
-        cs (merge-constraint cs (make-c '{x 1 y 2 z 3}))]
-    [(get cs 'x) (get cs 'y)])
-
-  (let [[x y z] (map lvar '[x y z])
-        c  (make-c {x 1 y 2 z 3})]
-    (dissoc c y))
-  
-  (let [[x y z] (map lvar '[x y z])
-        cs (make-store)
-        c  (make-c {x 1 y 2 z 3})
-        cs (merge-constraint cs c)
-        cs (refine-constraint cs c y)]
-    [(get cs x) (get cs y)])
-
-  (let [[x y z] (map lvar '[x y z])
-        cs (make-store)
-        c  (make-c {x 1 y 2 z 3})
-        cs (merge-constraint cs c)
-        cs (refine-constraint cs c y)
-        cs (refine-constraint cs c z)]
-    [(get cs x) (.simple cs)])
-  
-  (let [[x y z] (map lvar '[x y z])
-        cs (make-store)
-        c  (make-c {x 1 y 2 z 3})
-        cs (merge-constraint cs c)
-        cs (discard-constraint cs c)]
-    (.vmap cs))
-
-  (let [cs (make-store)
-        cs (assoc cs 'x (make-c '{x 1}))]
-    (get cs 'x))
-
-  (let [[x y z] (map lvar '[x y z])
-        cs (-> (make-store)
-               (assoc x (make-c {1 2}))
-               (assoc x (make-c {2 3})))]
-    (get cs x))
-
-  (let [[x y z] (map lvar '[x y z])
-        cs (-> (make-store)
-               (assoc x (make-c {1 2}))
-               (assoc x (make-c {2 3})))]
-    (.entryAt cs x))
-
-  (let [[x y z] (map lvar '[x y z])
-        cs (-> (make-store)
-               (merge-constraint (make-c {x 1 y 2})))]
-    (get cs x))
 
   ;; 1.1s, we'll need to track how this affects
   ;; actual logic programs, constraints allow us
@@ -444,8 +329,6 @@
       (time
        (dotimes [_ 1e5]
          (discard-constraint cs c)))))
-
-  
 
   ;; 350ms
   (let [[x y z] (map lvar '[x y z])
@@ -477,88 +360,5 @@
              (assoc x c)
              (assoc y c)
              (assoc z c))))))
-
-  ;; nice ~300ms, little overhead for simplified constraints
-  (dotimes [_ 10]
-    (let [[x y z] (map lvar '[x y z])]
-     (time
-      (dotimes [_ 1e6]
-        (-> ((== x 1) empty-s)
-            ((!= x 1)))))))
-
-  (run* [q]
-        (exist [x]
-               (== x 1)
-               (!= x 1)
-               (== q x)))
-
-  (run* [q]
-        (exist [x]
-               (== x 1)
-               (!= x 2)
-               (== q x)))
-
-  (run* [q]
-        (exist [x]
-               (!= x 2)
-               (== x 1)
-               (== q x)))
-
-  (run* [q]
-        (exist [x]
-               (!= x 1)
-               (== x 1)
-               (== q x)))
-
-  (run* [q]
-        (exist [x y]
-               (== x 1)
-               (!= x y)
-               (== q x)))
-
-  (run* [q]
-        (exist [x y]
-               (== x y)
-               (!= x y)
-               (== q x)))
-  
-  ;; NOTE: tri subst preserve never setting a var twice
-
-  ;; should fail
-  (let [[x y] (map lvar '[x y z])
-        x (add-constraint x 1)]
-    (constraint-verify {x y} x 1 (cons (pair x y) nil) constraint-verify nil))
-
-  ;; should move simple constraints
-  ;; #{1}
-  (let [[x y z] (map lvar '[x y z])
-        y (add-constraint y 1)
-        ns (constraint-verify {x y} y z (cons (pair x y) nil) constraint-verify nil)]
-    (constraints ((.s ns) y)))
-
-  ;; nil
-  (let [[x y z] (map lvar '[x y z])
-        y (add-constraint y 1)
-        ns (constraint-verify {x y} y 2 (cons (pair x y) nil) constraint-verify nil)]
-    (constraints (first (keys (.s ns)))))
-
-  ;; #{1}
-  (let [m {}
-        y (lvar 'y)
-        yc (add-constraint y 1)]
-    (-> m
-        (assoc y 2)
-        (dissoc y)
-        (assoc yc 3)
-        keys
-        first
-        constraints))
-
-  ;; this works
-  ;; #{1}
-  (let [y (lvar 'x)
-        yc (add-constraint y 1)
-        s {yc 1}]
-    (constraints (first (find s y))))
  )
 
