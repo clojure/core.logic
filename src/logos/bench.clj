@@ -94,32 +94,29 @@
 
 (defn-e nqueens-o [l]
   ([()])
-  ([[[?x . ?y] . ?others]]
+  ([[[?x ?y] . ?others]]
      (nqueens-o ?others)
      (member-o ?y [1 2 3 4 5 6 7 8])
-     (noattack-o (lcons ?x ?y) ?others)))
+     (noattack-o [?x ?y] ?others)))
 
 ;; NOTE: / for lcons, // for llist ?
 
 (defn-e noattack-o [q others]
   ([_ ()])
-  ([[?x . ?y] [[?x1 . ?y1] . ?others]]
-     (nonrel/project [?y ?y1 ?x ?x1]
-                     (!= (- ?y1 ?y) (- ?x1 ?x))
-                     (!= (- ?y1 ?y) (- ?x ?x1)))
-     (!= ?y ?y1)
-     (noattack-o (lcons ?x ?y) ?others)))
+  ([[?x ?y] [[?x1 ?y1] . ?others]]
+     (exist []
+      (!= ?y ?y1)
+      (nonrel/project [?y ?y1 ?x ?x1]
+                      (!= (- ?y1 ?y) (- ?x1 ?x))
+                      (!= (- ?y1 ?y) (- ?x ?x1)))
+      (noattack-o [?x ?y] ?others))))
 
 (comment
+  ;; FIXME
   (run 1 [q]
        (exist [y1 y2 y3 y4 y5 y6 y7 y8]
               (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
               (nqueens-o q)))
-
-  ;; ah we don't support 1/X for, which is a real pair
-  ;; X is unwrapped in this case
-  (let [[x y z a b] (map lvar '(x y z a b))]
-    (.s ((== (llist (llist x y) z) [[1 2] 3]) empty-s)))
   )
 
 ;; Bratko pg 344, finite domain, can we get close to this? there is a LOT more
