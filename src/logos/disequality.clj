@@ -242,18 +242,23 @@
    (loop [[u & ur] (seq us)]
      (if (nil? u)
        (use-verify s constraint-verify)
-       (let [v (walk s u)
+       (let [u (walk-var s u)
+             v (walk s u)
              cs (constraints u)]
          (if (and cs (cs v))
            nil
            (recur ur)))))))
 
 ;; NOTE: just trying to get this to work when it comes first
+;; TODO: refactor to use helper fn
 (defmacro all-different [& vars]
   `(fn [a#]
      (let [vars# (set (map #(walk-var a# %) [~@vars]))]
        (check-vars (->> vars#
-                        (map #(add-constraints % (disj vars# %)))
+                        (map (fn [v#]
+                               (add-constraints
+                                v# (set (map #(walk a# %)
+                                             (disj vars# v#))))))
                         (reduce (fn [b# v#] (swap b# v#)) a#))
                    vars#))))
 
@@ -264,15 +269,47 @@
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
 
+
 (comment
   ;; all-different
   (run* [q]
         (exist [x y]
                (all-different x y)
                (== x 1)
-               (== y 2)
+               (== y 1)
                (== q x)))
 
+  ;; ~120ms, not bad
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (== x 1)
+                     (all-different x y)
+                     (== y 1)
+                     (== q x)))))))
+
+  ;; 70ms, very close tho, all-different has to do a bit of work
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (!= x y)
+                     (== x 1)
+                     (== y 1)
+                     (== q x)))))))
+
+  (run* [q]
+        (exist [x y]
+               (== x 1)
+               (all-different x y)
+               (== y 1)
+               (== q x)))
+  
   ;; FIXME
   (run* [q]
         (exist [x y]
@@ -285,9 +322,9 @@
   ;; this is weird
   (let [[x y] (map lvar '[x y])]
     (-> empty-s
-        ((all-different x y))
-        ((== x y))
-        .s))
+        ((== x 1))
+        ((== y 1))
+        ((all-different x y))))
 
   ;; ()
   (run* [q]

@@ -1049,3 +1049,60 @@
                       (!= x y)
                       (== q x)))
          ())))
+
+;; -----------------------------------------------------------------------------
+;; all-different
+
+(deftest test-all-different-1
+  (is (= (run* [q]
+               (exist [x y]
+                      (all-different x y)
+                      (== x 1)
+                      (== y 1)
+                      (== q x)))
+         ())))
+
+(deftest test-all-different-2
+  (is (= (run* [q]
+               (exist [x y]
+                      (all-different x y)
+                      (== x 1)
+                      (== y 2)
+                      (== q x)))
+         '(1))))
+
+(deftest test-all-different-3
+  (is (= (run* [q]
+               (exist [x y]
+                      (== x 1)
+                      (all-different x y)
+                      (== y 1)
+                      (== q x)))
+         ())))
+
+(deftest test-all-different-4
+  (is (= (run* [q]
+               (exist [x y]
+                      (== x 1)
+                      (all-different x y)
+                      (== y 2)
+                      (== q x)))
+         '(1))))
+
+(deftest test-all-different-5
+  (is (= (run* [q]
+               (exist [x y]
+                      (== x 1)
+                      (== y 1)
+                      (all-different x y)
+                      (== q x)))
+         '())))
+
+(deftest test-all-different-6
+  (is (= (run* [q]
+               (exist [x y]
+                      (== x 1)
+                      (== y 2)
+                      (all-different x y)
+                      (== q x)))
+         '(1))))
