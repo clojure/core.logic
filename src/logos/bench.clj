@@ -66,6 +66,34 @@
     (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          
     (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
 
+;; =============================================================================
+;; nqueens
+
+;; Bratko pg 103 on, nqueens variants
+
+;; first variant
+
+;; FIXME
+(defn-e nqueens-o [l]
+  ([()])
+  ([[?x . ?y] . ?others]
+     (nqueens-o ?others)
+     (member-o ?y [1 2 3 4 5 6 7 8])
+     (noattack-o (lcons ?x ?y) ?others)))
+
+;; / for lcons, // for llist
+
+(defn-e noattack-o
+  ([[?x . ?y] [[?x1 . ?y1] . ?others]]
+     (!= ?y ?y1)
+     (project [?y ?y1 ?x ?x1]
+              (!= (- ?y1 ?y) (- ?x1 ?x))
+              (!= (- ?y1 ?y) (- ?x ?x1)))
+     (noattack-o (lcons ?x ?y) ?others)))
+
+;; Bratko pg 344, finite domain, can we get close to this? there is a LOT more
+;; thinking to do. do we really want to go down this path?
+
 (comment
   ;; SWI-Prolog 6-8.5s
   ;; < 2.1s
