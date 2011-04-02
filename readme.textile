@@ -74,6 +74,33 @@ Logos as of version 0.5.4 supports tabling. Certain kinds of logic programs that
 (run* [q] (path-o :a q))
 </pre>
 
+h3. Disequality
+
+Logos supports disequality constraints.
+
+<pre>
+(run* [q]
+  (exist [x y]
+    (!= [x 2] [y 1])
+    (== x 1)
+    (== y 3)
+    (== q [x y]))) ; ([1 3])
+
+(run* [q]
+  (exist [x y]
+    (!= [x 2] [y 1])
+    (== x 1)
+    (== y 2)
+    (== q [x y]))) ; ()
+
+(run* [q]
+  (exist [x y]
+    (all-different x y)
+    (== x 1)
+    (== y 1)
+    (== q x))) ; ()
+</pre>
+
 h3. Unification
 
 Logos comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
