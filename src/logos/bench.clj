@@ -92,12 +92,15 @@
 
 ;; first variant
 
+;; TODO: implicit exist for defn-e
+
 (defn-e nqueens-o [l]
   ([()])
   ([[[?x ?y] . ?others]]
-     (nqueens-o ?others)
-     (member-o ?y [1 2 3 4 5 6 7 8])
-     (noattack-o [?x ?y] ?others)))
+     (exist []
+      (nqueens-o ?others)
+      (member-o ?y [1 2 3 4 5 6 7 8])
+      (noattack-o [?x ?y] ?others))))
 
 ;; NOTE: / for lcons, // for llist ?
 
@@ -117,6 +120,16 @@
        (exist [y1 y2 y3 y4 y5 y6 y7 y8]
               (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
               (nqueens-o q)))
+
+  ;; 4s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e2]
+       (doall
+        (run 1 [q]
+             (exist [y1 y2 y3 y4 y5 y6 y7 y8]
+                    (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
+                    (nqueens-o q)))))))
   )
 
 ;; Bratko pg 344, finite domain, can we get close to this? there is a LOT more
