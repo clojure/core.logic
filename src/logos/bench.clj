@@ -26,12 +26,13 @@
   (run 1 [q] (nrev-o q (range 30)))
 
   ;; SWI-Prolog 0.06-0.08s
-  ;; ~4.7s
+  ;; ~4.1s
   (let [data (into [] (range 30))]
-   (dotimes [_ 5]
-     (time
-      (dotimes [_ 1e3]
-        (doall (run 1 [q] (nrev-o data q)))))))
+    (binding [*occurs-check* false]
+     (dotimes [_ 5]
+       (time
+        (dotimes [_ 1e3]
+          (doall (run 1 [q] (nrev-o data q))))))))
 
   ;; the LIPS are ridiculously high for SWI-Prolog
   ;; clearly nrev is a case that SWI-Prolog can optimize away
@@ -99,20 +100,18 @@
 (defn-e nqueens-o [l]
   ([()])
   ([[[?x ?y] . ?others]]
-     (exist []
-            (nqueens-o ?others)
-            (member-o ?y [1 2 3 4 5 6 7 8])
-            (noattack-o [?x ?y] ?others))))
+     (nqueens-o ?others)
+     (member-o ?y [1 2 3 4 5 6 7 8])
+     (noattack-o [?x ?y] ?others)))
 
 (defn-e noattack-o [q others]
   ([_ ()])
   ([[?x ?y] [[?x1 ?y1] . ?others]]
-     (exist []
-            (!= ?y ?y1)
-            (nonrel/project [?y ?y1 ?x ?x1]
-                            (!= (- ?y1 ?y) (- ?x1 ?x))
-                            (!= (- ?y1 ?y) (- ?x ?x1)))
-            (noattack-o [?x ?y] ?others))))
+     (!= ?y ?y1)
+     (nonrel/project [?y ?y1 ?x ?x1]
+                     (!= (- ?y1 ?y) (- ?x1 ?x))
+                     (!= (- ?y1 ?y) (- ?x ?x1)))
+     (noattack-o [?x ?y] ?others)))
 
 (defn solve-nqueens []
   (run* [q]
@@ -126,7 +125,7 @@
   ;; 92 solutions
   (count (solve-nqueens))
 
-  ;; 4s
+  ;; 3.5s
   ;; about 10X slower that SWI
   (binding [*occurs-check* false]
    (dotimes [_ 5]

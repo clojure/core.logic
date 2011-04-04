@@ -41,30 +41,32 @@
   ([vs t a]
      `(exist [~@vs]
              (== ~t ~a)))
-  ([vs t a expr]
+  ([vs t a exprs]
      `(exist [~@vs]
              (== ~t ~a)
-             ~expr)))
+             ~@exprs)))
 
-(defn ex* [[[p a :as pa] & par] expr seen]
-  (let [t    (p->term p)
-        vs   (extract-vars p seen)
+;; TODO: redesign - still not quite nice
+
+(defn ex* [[[p a :as pa] & par] exprs seen]
+  (let [t (p->term p)
+        vs (extract-vars p seen)
         seen (reduce conj seen vs)]
     (cond
-     (nil? pa) expr
-     (= p '_) (ex* par expr seen)
-     (empty? par) (if expr
-                    (ex vs t a expr)
+     (nil? pa) `(exist [] ~@exprs)
+     (= p '_) (ex* par exprs seen)
+     (empty? par) (if exprs
+                    (ex vs t a exprs)
                     (ex vs t a))
-     :else (let [r (ex* par expr seen)]
+     :else (let [r (list (ex* par exprs seen))]
              (if r
                (ex vs t a r)
                (ex vs t a))))))
 
 (defn handle-clause [as]
-  (fn [[p & expr]]
+  (fn [[p & exprs]]
     (let [pas (partition 2 (interleave p as))]
-      (ex* pas (first expr) #{}))))
+      (ex* pas exprs #{}))))
 
 (defn handle-clauses [t as cs]
   `(~t
