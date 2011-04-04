@@ -97,11 +97,7 @@
 ;; =============================================================================
 ;; nqueens
 
-;; Bratko pg 103 on, nqueens variants
-
-;; first variant
-
-;; TODO: add implicit exist for defn-e
+;; Bratko pg 103
 
 (declare noattack-o)
 
@@ -143,5 +139,4 @@
          (take 1 (solve-nqueens)))))))
   )
 
-;; Bratko pg 344, finite domain, can we get close to this? there is a LOT more
-;; thinking to do. do we really want to go down this path?  
+;; Bratko pg 344, constraint version
