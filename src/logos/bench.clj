@@ -140,3 +140,27 @@
   )
 
 ;; Bratko pg 344, constraint version
+
+;; =============================================================================
+;; send more money
+
+;; FIXME
+(comment
+ (defn-e select-o [x l r]
+   ([_ [x . r] _])
+   ([_ [?y . ?xs] [?y . ?ys]]
+      (select-o x ?xs ?ys)))
+
+ (defn-e assign-digits-o [l1 l2]
+   ([() _])
+   ([[?d ?ds] _]
+      (exist [nl]
+             (select-o ?d l nl)
+             (assign-digits-o ?ds nl))))
+
+ (defn smm [x]
+   (exist [s e n d m o r y digits]
+          (== x [s e n d m o r y])
+          (member-o digits (range 10))
+          (assign-digits-o x digits)))
+ )
