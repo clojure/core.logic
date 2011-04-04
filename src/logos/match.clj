@@ -10,7 +10,7 @@
 
 (defn lcons-p? [p]
   (and (coll? p)
-       (not (nil? (some #{'.} p)))))
+       (not (nil? (some '#{.} p)))))
 
 (defn p->llist [p]
   `(llist
