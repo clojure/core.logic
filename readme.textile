@@ -171,6 +171,8 @@ h2. Interesting Questions
 
 h2. Resources
 
+* "Efficient Constraint Propagation Engines":http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008
+* "Techniques for Efficient Constraint Propagation":http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008
 * "Operations Research Tools developed at Google":http://code.google.com/p/or-tools/
 * "logilab-constraint":http://hg.logilab.org/logilab/constraint
 * "Solving Every Sudoku Puzzle":http://norvig.com/sudoku.html
