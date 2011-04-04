@@ -10,15 +10,15 @@
 
 (defn first-o [l a]
   (exist [d]
-    (cons-o a d l)))
+         (cons-o a d l)))
 
 (defn rest-o [l d]
   (exist [a]
-    (== (lcons a d) l)))
+         (== (lcons a d) l)))
 
 (defn pair-o [p]
   (exist [a d]
-    (== (lcons a d) p)))
+         (== (lcons a d) p)))
 
 (defn twin-o [p]
   (exist [x]
@@ -54,10 +54,10 @@
   (cond-e
    ((== '() l) (== '() out))
    ((exist [a d]
-      (cons-o a d l)
-      (== x a)
-      (== d out)))
+           (cons-o a d l)
+           (== x a)
+           (== d out)))
    ((exist [a d res]
-      (cons-o a d l)
-      (cons-o a res out)
-      (rember-o x d res)))))
+           (cons-o a d l)
+           (cons-o a res out)
+           (rember-o x d res)))))

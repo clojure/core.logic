@@ -1,10 +1,18 @@
 (ns logos.bench
   (:refer-clojure :exclude [reify inc ==])
   (:use [logos minikanren match]
-        [logos.logic :only [first-o member-o]]
+        [logos.logic :only [first-o]]
         [logos.disequality :only [!=]])
   (:require [logos.nonrel :as nonrel]
             [clojure.contrib.macro-utils :as macro]))
+
+;; =============================================================================
+;; Utilities
+
+(defn-e member-o [x l]
+  ([_ [x . ?tail]])
+  ([_ [?head . ?tail]]
+     (member-o x ?tail)))
 
 ;; =============================================================================
 ;; nrev
