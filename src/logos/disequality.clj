@@ -237,30 +237,28 @@
 (defn ^ConstraintStore make-store []
   (ConstraintStore. {} {} nil))
 
-(defn check-vars [s us]
-  (when s
-   (loop [[u & ur] (seq us)]
-     (if (nil? u)
-       (use-verify s constraint-verify)
-       (let [u (walk-var s u)
-             v (walk s u)
-             cs (constraints u)]
-         (if (and cs (cs v))
-           nil
-           (recur ur)))))))
+;; (defn check-vars [s us]
+;;   (when s
+;;    (loop [[u & ur] (seq us)]
+;;      (if (nil? u)
+;;        (use-verify s constraint-verify)
+;;        (let [u (walk-var s u)
+;;              v (walk s u)
+;;              cs (constraints u)]
+;;          (if (and cs (cs v))
+;;            nil
+;;            (recur ur)))))))
 
-;; NOTE: just trying to get this to work when it comes first
-;; TODO: refactor to use helper fn
-(defmacro all-different [& vars]
-  `(fn [a#]
-     (let [vars# (set (map #(walk-var a# %) [~@vars]))]
-       (check-vars (->> vars#
-                        (map (fn [v#]
-                               (add-constraints
-                                v# (set (map #(walk a# %)
-                                             (disj vars# v#))))))
-                        (reduce (fn [b# v#] (swap b# v#)) a#))
-                   vars#))))
+;; (defmacro all-different [& vars]
+;;   `(fn [a#]
+;;      (let [vars# (set (map #(walk-var a# %) [~@vars]))]
+;;        (check-vars (->> vars#
+;;                         (map (fn [v#]
+;;                                (add-constraints
+;;                                 v# (set (map #(walk a# %)
+;;                                              (disj vars# v#))))))
+;;                         (reduce (fn [b# v#] (swap b# v#)) a#))
+;;                    vars#))))
 
 ;; =============================================================================
 ;; Syntax
