@@ -15,12 +15,30 @@
      (member-o x ?tail)))
 
 ;; =============================================================================
-;; nrev
+;; flatten
 ;; =============================================================================
+
+;; =============================================================================
+;; append
 
 (defn-e append-o [x y z]
   ([() _ y])
   ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+
+(comment
+  ;; 1.4s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (doall
+        (run 700 [q]
+             (exist [x y]
+                    (append-o x y q)))))))
+  )
+
+;; =============================================================================
+;; nrev
+;; =============================================================================
 
 (defn-e nrev-o [l o]
   ([() ()])
@@ -79,8 +97,7 @@
 
 (comment
   ;; SWI-Prolog 6-8.5s
-  ;; < 2.1s
-  ;; with metadata checks ~2.2
+  ;; ~2.4s
   (binding [*occurs-check* false]
    (dotimes [_ 5]
     (time
@@ -137,6 +154,14 @@
       (dotimes [_ 100]
         (doall
          (take 1 (solve-nqueens)))))))
+
+  ;; ~650ms
+  (binding [*occurs-check* false]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1]
+         (doall
+          (solve-nqueens))))))
   )
 
 ;; Bratko pg 344, constraint version
@@ -144,7 +169,7 @@
 ;; =============================================================================
 ;; send more money
 
-;; FIXME
+;; FIXME, fix match
 (comment
  (defn-e select-o [x l r]
    ([_ [x . r] _])
