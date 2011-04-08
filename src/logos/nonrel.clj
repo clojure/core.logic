@@ -29,6 +29,8 @@
 (defprotocol IIfU
   (if-u [b gs c]))
 
+;; TODO : if -> when
+
 (defmacro if-a*
   ([])
   ([[e & gs] & grest]
