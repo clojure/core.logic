@@ -1003,29 +1003,22 @@
 ;; =============================================================================
 ;; Debugging
 
-;; NOTE: not 100% sure, using agents really helps here, need more investigation
-
-(def debug (agent nil))
-
-(defn print-debug [a s]
-  (println s))
-
 (defn trace-lvar [a lvar]
-  `(send debug print-debug (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
+  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
 (defmacro log [s]
   `(fn [a#]
-     (send debug print-debug ~s)
+     (println ~s)
      a#))
 
 (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
     `(fn [~a]
-       (send debug print-debug ~title)
+       (println ~title)
        ~@(map (partial trace-lvar a) lvars)
        ~a)))
 
 (defmacro trace-s []
   `(fn [a#]
-     (send debug print-debug (str a#))
+     (println (str a#))
      a#))
