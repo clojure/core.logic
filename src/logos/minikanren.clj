@@ -995,37 +995,29 @@
 ;; =============================================================================
 ;; Debugging
 
-(def ^:dynamic *debug* (atom []))
+(def debug (agent nil))
 
-(defn reset-debug! []
-  (reset! *debug* []))
+(defn print-debug [a s]
+  (println s))
 
-(defmacro trace [a & lm]
-  `(binding [*debug* (or ~a *debug*)]
-     ~@lm))
+(add-watch  debug :logging debug-watch)
 
 (defn trace-lvar [a lvar]
-  `(swap! *debug* conj (format "%5s = %s\n" (str '~lvar) (reify ~a ~lvar))))
+  `(send debug print-debug (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
-(defmacro log [title & exprs]
-  `(do
-     (swap! *debug* conj (str ~title "\n"))
-     (swap! *debug* conj (str ~@exprs "\n"))
-     (swap! *debug* conj "\n")))
+(defmacro log [s]
+  `(fn [a#]
+     (send debug print-debug ~s)
+     a#))
 
 (defmacro trace-lvars [title & lvars]
   (let [a (gensym "a")]
     `(fn [~a]
-       (swap! *debug* conj (str ~title "\n"))
+       (send debug print-debug ~title)
        ~@(map (partial trace-lvar a) lvars)
-       (swap! *debug* conj "\n")
        ~a)))
 
-(defn print-debug [a]
-  (println (reduce str @a)))
-
 (defmacro trace-s []
-  (let [a (gensym "a")]
-   `(fn [~a]
-      (swap! *debug* conj ~a)
-      ~a)))
+  `(fn [a#]
+     (send debug print-debug (str a#))
+     a#))
