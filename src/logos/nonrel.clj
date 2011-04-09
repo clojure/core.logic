@@ -1,6 +1,7 @@
 (ns logos.nonrel
   (:refer-clojure :exclude [reify == inc])
-  (:use [logos minikanren match])
+  (:use [logos.minikanren :exclude [lvar]]
+        logos.match)
   (:import [logos.minikanren Substitutions Choice]))
 
 ;; =============================================================================
@@ -22,6 +23,11 @@
 
 ;; =============================================================================
 ;; cond-a (soft-cut), cond-u (committed-choice)
+;;
+;; cond-a once a line succeeds no others are tried
+;; cond-u a line can succeed only one time
+
+;; TODO : cond-a and cond-u should probably understanding logging
 
 (defprotocol IIfA
   (if-a [b gs c]))
@@ -134,3 +140,21 @@
 (defn copy-term [u v]
   (project [u]
     (== (walk* (build empty-s u) u) v)))
+
+;; =============================================================================
+;; lvar nonlvar
+
+(defmacro lvar [v]
+  `(fn [a#]
+     (if (lvar? (walk a# ~v))
+       a# nil)))
+
+(defmacro nonlvar [v]
+  `(fn [a#]
+     (if (not (lvar? (walk a# ~v)))
+       a# nil)))
+
+(comment
+  (run 1 [q]
+       (nonlvar q))
+  )
