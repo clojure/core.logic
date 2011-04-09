@@ -1000,8 +1000,6 @@
 (defn print-debug [a s]
   (println s))
 
-(add-watch  debug :logging debug-watch)
-
 (defn trace-lvar [a lvar]
   `(send debug print-debug (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
