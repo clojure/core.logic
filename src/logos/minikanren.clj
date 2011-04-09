@@ -985,6 +985,14 @@
 (defmacro run-nc* [& body]
   `(run-nc false ~@body))
 
+(defmacro run-debug [& body]
+  `(doall
+    (run ~@body)))
+
+(defmacro run-debug* [& body]
+  `(doall
+    (run* ~@body)))
+
 (defn sym->lvar [sym]
   `(lvar '~sym))
 
@@ -994,6 +1002,8 @@
 
 ;; =============================================================================
 ;; Debugging
+
+;; NOTE: not 100% sure, using agents really helps here, need more investigation
 
 (def debug (agent nil))
 
