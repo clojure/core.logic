@@ -218,8 +218,10 @@
 ;; =============================================================================
 ;; Quick Sort
 
+(declare partition-o)
+
 (defn-e qsort-o [l r r0]
-  ([[] _ r1])
+  ([[] _ r])
   ([[?x . ?lr] _ _]
      (exist [l1 l2 r1]
       (partition-o ?lr ?x l1 l2)
@@ -229,7 +231,7 @@
 (defn-e partition-o [a b c d]
   ([[?x . ?l] _ [?x . ?l1] _]
      (nonrel/cond-a
-      ((project [x y]
-                (== (<= x y) true))
+      ((nonrel/project [?x b]
+                (== (<= ?x b) true))
        (partition ?l b ?l1 d))
       (partition ?l b c d))))
