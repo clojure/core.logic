@@ -26,6 +26,10 @@
   ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 
 (comment
+  (run 1 [q]
+       (exist [x y]
+              (append-o x y q)))
+  
   ;; 1.4s
   (dotimes [_ 10]
     (time
@@ -146,7 +150,7 @@
   ;; 92 solutions
   (count (solve-nqueens))
 
-  ;; 3.5s
+  ;; < 3s
   ;; about 10X slower that SWI
   (binding [*occurs-check* false]
    (dotimes [_ 5]
@@ -169,23 +173,36 @@
 ;; =============================================================================
 ;; send more money
 
-;; FIXME, fix match
+(defn-e select-o [x l r]
+  ([_ [x . r] _])
+  ([_ [?y . ?xs] [?y . ?ys]]
+     (select-o x ?xs ?ys)))
+
+(defn-e assign-digits-o [l1 l2]
+  ([() _])
+  ([[?d . ?ds] _]
+     (exist [nl]
+            (select-o ?d l2 nl)
+            (assign-digits-o ?ds nl))))
+
+(defn smm [x]
+  (exist [s e n d m o r y digits]
+         (== x [s e n d m o r y])
+         (== digits (range 10))
+         (assign-digits-o x digits)
+         (nonrel/project [s e n d m o r y]
+                         (== (> m 0) true)
+                         (== (> s 0) true)
+                         (== (+ (* 1e3 s) (* 1e2 e) (* 10 n) d (* 1e3 m) (* 1e2 o) (* 10 r) e)
+                             (+ (* 1e4 m) (* 1e3 o) (* 1e2 n) (* 10 e) y)))))
+
 (comment
- (defn-e select-o [x l r]
-   ([_ [x . r] _])
-   ([_ [?y . ?xs] [?y . ?ys]]
-      (select-o x ?xs ?ys)))
+  ;; SWI takes 4.4 seconds
 
- (defn-e assign-digits-o [l1 l2]
-   ([() _])
-   ([[?d ?ds] _]
-      (exist [nl]
-             (select-o ?d l nl)
-             (assign-digits-o ?ds nl))))
-
- (defn smm [x]
-   (exist [s e n d m o r y digits]
-          (== x [s e n d m o r y])
-          (member-o digits (range 10))
-          (assign-digits-o x digits)))
- )
+  ;; 113865ms, 113s
+  ;; 28X slower
+  ;; ([9 5 6 7 1 0 8 2])
+  (time
+   (doall (run 1 [q]
+               (smm q))))
+  )

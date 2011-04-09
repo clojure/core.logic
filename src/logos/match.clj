@@ -53,9 +53,6 @@
                (== ~t ~a)
                ~@exprs))))
 
-;; TODO: redesign - still not quite nice, fix affected tests
-;; TODO: test when a declared var twice.
-
 (defn ex* [[[p a :as pa] & par] exprs seen]
   (let [t (p->term p)
         vs (extract-vars p seen)
