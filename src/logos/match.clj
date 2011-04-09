@@ -37,14 +37,21 @@
   ([p seen]
      (set/difference (extract-vars p) (set seen))))
 
+(defn exist? [cs]
+  (= (first cs) `exist))
+
 (defn ex
   ([vs t a]
      `(exist [~@vs]
              (== ~t ~a)))
   ([vs t a exprs]
-     `(exist [~@vs]
-             (== ~t ~a)
-             ~@exprs)))
+     (if (exist? exprs)
+       `(exist [~@vs]
+               (== ~t ~a)
+               ~exprs)
+       `(exist [~@vs]
+               (== ~t ~a)
+               ~@exprs))))
 
 ;; TODO: redesign - still not quite nice, fix affected tests
 ;; TODO: test when a declared var twice.
@@ -54,12 +61,12 @@
         vs (extract-vars p seen)
         seen (reduce conj seen vs)]
     (cond
-     (nil? pa) `(exist [] ~@exprs)
+     (nil? pa) exprs
      (= p '_) (ex* par exprs seen)
      (empty? par) (if exprs
                     (ex vs t a exprs)
                     (ex vs t a))
-     :else (let [r (list (ex* par exprs seen))]
+     :else (let [r (ex* par exprs seen)]
              (if r
                (ex vs t a r)
                (ex vs t a))))))
@@ -95,46 +102,13 @@
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
 
-  (defn-e ^:tabled append-o-tabled [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
-
-  (run 1 [q] (append-o [1 2] [3 4] q))
-
-  ;; 1.5s
-  (dotimes [_ 5]
-    (time
-     (dotimes [_ 1e5]
-       (doall (run 1 [q] (append-o [1 2] [3 4] q))))))
-
-  ;; 1.6s actually a bit slower for this relation
-  (dotimes [_ 5]
-    (time
-     (dotimes [_ 1e5]
-       (doall (run 1 [q] (append-o-tabled [1 2] [3 4] q))))))
-
-  (defn-e arc-o [x y]
-    ([:a :b])
-    ([:b :a])
-    ([:b :d]))
-
-  (defn-e ^:tabled path-o [x y]
-    ([x y] (cond-e
-            ((arc-o x y))
-            ((exist [z]
-               (arc-o x z)
-               (path-o z y))))))
-
-  ;; (:b :a :d)
-  (run* [q] (path-o :a q))
-
-  (defn-e test-o [x y]
+  (defn-e test1 [x y]
     ([() _]))
 
-  (defn-e test-2-o [x y]
-    ([[_ _ ?a] _]))
+  (defn-e test2 [x y]
+    ([[_ _ ?a] _] (foo) (bar)))
 
-  (defn test-o [x y]
+  (defn test-match [x y]
     (match-e [x y]
        ([() _])
        ([[?a . ?b] [?c ?d]] (test-o ?a ?d))))
