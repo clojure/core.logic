@@ -150,12 +150,12 @@
   ;; 92 solutions
   (count (solve-nqueens))
 
-  ;; < 3s
+  ;; < 3s for 100x
   ;; about 10X slower that SWI
   (binding [*occurs-check* false]
    (dotimes [_ 5]
      (time
-      (dotimes [_ 100]
+      (dotimes [_ 1]
         (doall
          (take 1 (solve-nqueens)))))))
 
@@ -166,6 +166,8 @@
        (dotimes [_ 1]
          (doall
           (solve-nqueens))))))
+
+  ;; nqueens benefits from constraints
   )
 
 ;; Bratko pg 344, constraint version
@@ -205,4 +207,29 @@
   (time
    (doall (run 1 [q]
                (smm q))))
+
+  ;; looking at YourKit the time seems completely dominated by inc (thunking to force interleaving)
+  ;; not sure how to get better times w/o some sort of scheduler, a good argument for looking deeper
+  ;; at the ferns implementation and determining whether that can be made fast or not.
+
+  ;; send more money also benefits from constraints
   )
+
+;; =============================================================================
+;; Quick Sort
+
+(defn-e qsort-o [l r r0]
+  ([[] _ r1])
+  ([[?x . ?lr] _ _]
+     (exist [l1 l2 r1]
+      (partition-o ?lr ?x l1 l2)
+      (qsort-o l2 r1 r0)
+      (qsort-o l1 r (lcons ?x r1)))))
+
+(defn-e partition-o [a b c d]
+  ([[?x . ?l] _ [?x . ?l1] _]
+     (nonrel/cond-a
+      ((project [x y]
+                (== (<= x y) true))
+       (partition ?l b ?l1 d))
+      (partition ?l b c d))))
