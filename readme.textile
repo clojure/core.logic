@@ -92,13 +92,6 @@ Logos supports disequality constraints.
     (== x 1)
     (== y 2)
     (== q [x y]))) ; ()
-
-(run* [q]
-  (exist [x y]
-    (all-different x y)
-    (== x 1)
-    (== y 1)
-    (== q x))) ; ()
 </pre>
 
 h3. Unification
