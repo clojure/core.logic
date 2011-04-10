@@ -13,14 +13,16 @@
   (fn [expr]
    (cond
     (lvarq-sym? expr)
-      (let [v (mk/lvar (rem-? expr))]
-        (swap! store conj v)
+      (let [v (if-let [u (@store expr)]
+                u
+                (mk/lvar (rem-? expr)))]
+        (swap! store conj [expr v])
         v)
     :else expr)))
 
 ;; TODO: replace postwalk with something much faster ?
 (defn prep [expr]
-  (let [lvars (atom #{})]
+  (let [lvars (atom {})]
     (with-meta
       (postwalk (replace-lvar lvars) expr)
       {:lvars @lvars})))
@@ -32,12 +34,11 @@
          (mk/== u q))))
 
 (defn binding-map [u w]
-  (let [r (atom nil)
-        lvars (union (-> u meta :lvars)
+  (let [lvars (merge (-> u meta :lvars)
                      (-> w meta :lvars))
         s (mk/unify mk/empty-s u w)]
-    (into {} (map (fn [lvar]
-                    [lvar (mk/walk s lvar)])
+    (into {} (map (fn [[k v]]
+                    [k (mk/walk s v)])
               lvars))))
 
 (defn unifier' [u w]
@@ -71,14 +72,23 @@
     (unifier json-path1 {:foo 1
                          :bar {:baz [:incorrect false]}})
 
-    ;; TODO: use the original name in the binding map
-    ;; TODO: make sure that using the same name doesn't cause problems
     (def json-path2 (prep '{:foo ?x
-                           :bar {:baz [?y ?z]}}))
+                            :bar {:baz [?y ?z]}}))
 
     (unifier json-path2 {:foo "A val 1"
                          :bar {:baz ["A val 2" "A val 3"]}})
 
     (binding-map json-path2 {:foo "A val 1"
                              :bar {:baz ["A val 2" "A val 3"]}})
+
+    ;; ~1.1
+    (dotimes [_ 10]
+      (let [expr {:foo "A val 1"
+                  :bar {:baz ["A val 2" "A val 3"]}}]
+       (time
+        (dotimes [_ 2e5]
+          (binding-map json-path2 expr)))))
+
+    (def test-expr (prep '(?x 1 ?x)))
+    (unifier test-expr test-expr)
 )
