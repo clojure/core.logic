@@ -18,7 +18,6 @@
            (remove #(contains? '#{.} %) p))))
 
 (defn p->term [p]
-  (println p)
   (cond
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
