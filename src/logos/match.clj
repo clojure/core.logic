@@ -18,10 +18,12 @@
            (remove #(contains? '#{.} %) p))))
 
 (defn p->term [p]
+  (println p)
   (cond
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
-   (coll? p) `[~@(map p->term p)]
+   (and (coll? p)
+        (not= (first p) 'quote)) `[~@(map p->term p)]
    :else p))
 
 (defn lvar-sym? [s]

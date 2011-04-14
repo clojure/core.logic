@@ -65,8 +65,7 @@
 
 (defprotocol IPair
   (lhs [this])
-  (rhs [this])
-  (->map-entry [this]))
+  (rhs [this]))
 
 (deftype Pair [lhs rhs]
   clojure.lang.Counted
