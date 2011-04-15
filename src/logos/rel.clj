@@ -1,7 +1,8 @@
 (ns logos.rel
   (:refer-clojure :exclude [reify == inc test])
   (:use [logos.minikanren :exclude [lvar?]]
-        logos.match)
+        logos.match
+        logos.tabled)
   (:require [clojure.set :as set]))
 
 (defn lvar? [a v]
@@ -36,27 +37,70 @@
       (reset! ~idxsym (index @~setsym)))))
 
 (defn to-stream [aseq]
-  (when aseq
+  (when (seq aseq)
     (choice (first aseq)
             (fn [] (to-stream (next aseq))))))
 
 (defn answers [a aset indexed [f & r :as t]]
   (let [aset (if (lvar? a f)
-               (indexed f)
-               aset)]
-    (to-stream (filter (fn [cand]
-                    (unify a t cand))
-                  aset))))
+               aset
+               (indexed f))]
+    (to-stream
+     (->> aset
+          (map (fn [cand]
+                    (when-let [a (unify a t cand)]
+                      a)))
+          (remove nil?)))))
 
 (comment
-  (defrel is a b)
-  (fact is `even? `integer?)
-  (fact is `integer? `number?)
+  (do
+   (defrel subsumes a b)
+   (fact subsumes `even? `integer?)
+   (fact subsumes `integer? `number?))
+
+  ;; TODO: it would be nice to be able to extend a goal, redefinition
+  ;; complicates things tho.
+
+  (def is
+    (tabled [x y]
+       (cond-e
+        ((subsumes x y))
+        ((exist [z]
+                (subsumes x z)
+                (is z y))))))
 
   (run 1 [q]
        (is `even? q))
+
+  (run* [q]
+        (is `even? q))
+
+  ;; 200ms
+  ;; ~160ms w/ tabling
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (is `even? q))))))
+
+  (do
+   (fact subsumes :puppy :young)
+   (fact subsumes :puppy :dog)
+   (fact subsumes :puppy :cute))
+
+  (run* [q]
+        (subsumes :puppy q))
+
+  ;; 1 -> 3 possibilities
+  ;; 1.3s for 100000, not bad
+  ;; ~1.05s, when indexed
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (doall
+        (run* [q]
+              (subsumes :puppy q))))))
+
+  ;; ah we definitely want negation
  )
-
-;; we need to keep arity
-
-;; TODO: check that fact matches specification.
