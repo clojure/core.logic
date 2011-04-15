@@ -871,6 +871,9 @@
   (take* [this]
          (lazy-seq (cons (first a) (lazy-seq (take* f))))))
 
+(defn choice [a f]
+  (Choice. a f))
+
 ;; -----------------------------------------------------------------------------
 ;; MZero
 
