@@ -1,12 +1,9 @@
 (ns logos.rel
   (:refer-clojure :exclude [reify == inc test])
-  (:use [logos.minikanren :exclude [lvar?]]
+  (:use logos.minikanren
         logos.match
         logos.tabled)
   (:require [clojure.set :as set]))
-
-(defn lvar? [a v]
-  (logos.minikanren/lvar? (walk a v)))
 
 (defn index [tuples]
   (->> tuples
@@ -43,7 +40,7 @@
 
 (defn answers [a aset indexed [f & r :as t]]
   (let [aset (let [v (walk a f)]
-               (if (lvar? a v)
+               (if (lvar? v)
                  aset
                  (indexed v)))]
     (to-stream
