@@ -31,7 +31,8 @@
         idxsym (symbol (str rel "-indexed"))]
    `(do
       (swap! ~setsym conj [~@tuple])
-      (reset! ~idxsym (index @~setsym)))))
+      (reset! ~idxsym (index @~setsym))
+      nil)))
 
 (defn to-stream [aseq]
   (when (seq aseq)
@@ -39,10 +40,10 @@
             (fn [] (to-stream (next aseq))))))
 
 (defn answers [a aset indexed [f & r :as t]]
-  (let [aset (let [v (walk a f)]
-               (if (lvar? v)
-                 aset
-                 (indexed v)))]
+  (let [v (walk a f)
+        aset (if (lvar? v)
+               aset
+               (indexed v))]
     (to-stream
      (->> aset
           (map (fn [cand]
@@ -119,7 +120,8 @@
    (fact likes 'Ricky 'Lucy)
 
    (defrel fun p)
-   (fact fun 'Martha))
+   (fact fun 'Martha)
+   )
 
   ;; if fun comes first ok
   ;; if it comes after likes, doesn't work
@@ -130,17 +132,15 @@
                (likes x y)
                (== q [x y])))
 
-  ;; ERG
-  ;; trace-lvars here
   (run-debug* [q]
         (exist [x y]
                (likes x y)
                (fun y)
                (== q [x y])))
 
-  ;; works
-  (run-debug* [q]
-        (exist [x y]
-               (fun y)
-               (== q y)))
+  ;; a shorter syntax for common things would be nice
+  (? ?x :where (likes? x? y?) (fun y?))
+
+  ;; non lexically scopes definitions would be nice
+  (? (friend [x y]) :- (likes x y) )
  )
