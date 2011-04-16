@@ -42,9 +42,10 @@
             (fn [] (to-stream (next aseq))))))
 
 (defn answers [a aset indexed [f & r :as t]]
-  (let [aset (if (lvar? a f)
-               aset
-               (indexed f))]
+  (let [aset (let [v (walk a f)]
+               (if (lvar? a v)
+                 aset
+                 (indexed v)))]
     (to-stream
      (->> aset
           (map (fn [cand]
@@ -103,24 +104,25 @@
               (subsumes :puppy q))))))
 
   ;; ah we definitely want negation
-  (defrel man p)
+  (do
+    (defrel man p)
 
-  (fact man 'Bob)
-  (fact man 'John)
-  (fact man 'Ricky)
+   (fact man 'Bob)
+   (fact man 'John)
+   (fact man 'Ricky)
 
-  (defrel woman p)
-  (fact woman 'Mary)
-  (fact woman 'Martha)
-  (fact woman 'Lucy)
+   (defrel woman p)
+   (fact woman 'Mary)
+   (fact woman 'Martha)
+   (fact woman 'Lucy)
   
-  (defrel likes p1 p2)
-  (fact likes 'Bob 'Mary)
-  (fact likes 'John 'Martha)
-  (fact likes 'Ricky 'Lucy)
+   (defrel likes p1 p2)
+   (fact likes 'Bob 'Mary)
+   (fact likes 'John 'Martha)
+   (fact likes 'Ricky 'Lucy)
 
-  (defrel fun p)
-  (fact fun 'Martha)
+   (defrel fun p)
+   (fact fun 'Martha))
 
   ;; if fun comes first ok
   ;; if it comes after likes, doesn't work
@@ -133,9 +135,15 @@
 
   ;; ERG
   ;; trace-lvars here
-  (run* [q]
+  (run-debug* [q]
         (exist [x y]
                (likes x y)
                (fun y)
                (== q [x y])))
+
+  ;; works
+  (run-debug* [q]
+        (exist [x y]
+               (fun y)
+               (== q y)))
  )
