@@ -103,4 +103,39 @@
               (subsumes :puppy q))))))
 
   ;; ah we definitely want negation
+  (defrel man p)
+
+  (fact man 'Bob)
+  (fact man 'John)
+  (fact man 'Ricky)
+
+  (defrel woman p)
+  (fact woman 'Mary)
+  (fact woman 'Martha)
+  (fact woman 'Lucy)
+  
+  (defrel likes p1 p2)
+  (fact likes 'Bob 'Mary)
+  (fact likes 'John 'Martha)
+  (fact likes 'Ricky 'Lucy)
+
+  (defrel fun p)
+  (fact fun 'Martha)
+
+  ;; if fun comes first ok
+  ;; if it comes after likes, doesn't work
+  ;; FIXME
+  (run* [q]
+        (exist [x y]
+               (fun y)
+               (likes x y)
+               (== q [x y])))
+
+  ;; ERG
+  ;; trace-lvars here
+  (run* [q]
+        (exist [x y]
+               (likes x y)
+               (fun y)
+               (== q [x y])))
  )
