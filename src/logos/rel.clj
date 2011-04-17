@@ -105,23 +105,23 @@
   (do
     (defrel man p)
 
-   (fact man 'Bob)
-   (fact man 'John)
-   (fact man 'Ricky)
+    (fact man 'Bob)
+    (fact man 'John)
+    (fact man 'Ricky)
 
-   (defrel woman p)
-   (fact woman 'Mary)
-   (fact woman 'Martha)
-   (fact woman 'Lucy)
-  
-   (defrel likes p1 p2)
-   (fact likes 'Bob 'Mary)
-   (fact likes 'John 'Martha)
-   (fact likes 'Ricky 'Lucy)
+    (defrel woman p)
+    (fact woman 'Mary)
+    (fact woman 'Martha)
+    (fact woman 'Lucy)
+    
+    (defrel likes p1 p2)
+    (fact likes 'Bob 'Mary)
+    (fact likes 'John 'Martha)
+    (fact likes 'Ricky 'Lucy)
 
-   (defrel fun p)
-   (fact fun 'Martha)
-   )
+    (defrel fun p)
+    (fact fun 'Martha)
+    )
 
   ;; if fun comes first ok
   ;; if it comes after likes, doesn't work
@@ -132,11 +132,33 @@
                (likes x y)
                (== q [x y])))
 
+  ;; 200ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (fun y)
+                     (likes x y)
+                     (== q [x y])))))))
+
   (run-debug* [q]
         (exist [x y]
                (likes x y)
                (fun y)
                (== q [x y])))
+
+  ; 276ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e4]
+       (doall
+        (run* [q]
+              (exist [x y]
+                     (likes x y)
+                     (fun y)
+                     (== q [x y])))))))
 
   ;; a shorter syntax for common things would be nice
   (? ?x :where (likes? x? y?) (fun y?))
