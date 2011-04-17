@@ -1,7 +1,7 @@
 (ns logos.test.core
   (:refer-clojure :exclude [reify == inc intern])
   (:use [logos.minikanren] :reload)
-  (:use [logos.logic] :reload)
+  (:use [logos.prelude] :reload)
   (:use [logos.match] :reload)
   (:use [logos.nonrel] :reload)
   (:use [logos.disequality] :reload)

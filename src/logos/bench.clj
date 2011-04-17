@@ -1,7 +1,7 @@
 (ns logos.bench
   (:refer-clojure :exclude [reify inc ==])
   (:use [logos minikanren match]
-        [logos.logic :only [first-o]]
+        [logos.prelude :only [first-o]]
         [logos.disequality :only [!=]])
   (:require [logos.nonrel :as nonrel]
             [clojure.contrib.macro-utils :as macro]))

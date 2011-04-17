@@ -1,4 +1,4 @@
-(ns logos.logic
+(ns logos.prelude
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren))
 

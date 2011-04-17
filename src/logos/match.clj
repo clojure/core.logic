@@ -1,8 +1,7 @@
 (ns logos.match
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren)
-  (:require [logos.logic :as logic]
-            [logos.tabled :as tabled]
+  (:require [logos.tabled :as tabled]
             [clojure.set :as set])
   (:import [logos.minikanren Substitutions]))
 
