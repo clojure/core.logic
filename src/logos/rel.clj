@@ -120,12 +120,9 @@
     (fact likes 'Ricky 'Lucy)
 
     (defrel fun p)
-    (fact fun 'Martha)
+    (fact fun 'Lucy)
     )
 
-  ;; if fun comes first ok
-  ;; if it comes after likes, doesn't work
-  ;; FIXME
   (run* [q]
         (exist [x y]
                (fun y)

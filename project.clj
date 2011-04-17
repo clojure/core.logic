@@ -1,4 +1,4 @@
-(defproject logos "0.6.0-SNAPSHOT"
+(defproject logos "0.6.1-SNAPSHOT"
   :description "Logic programming for Clojure"
   :dependencies [[org.clojure/clojure "1.3.0-alpha5"]
                  [org.clojure.contrib/macro-utils "1.3.0-alpha4"]]
