@@ -136,7 +136,7 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
   (exist [x y]
     (fun y)
     (likes x y)
-    (== q [x y]))) ; ([Rick Lucy])
+    (== q [x y]))) ; ([Ricky Lucy])
 </pre>
 
 h2. About
