@@ -196,18 +196,10 @@
   (ext-no-check [this u v]
                 (verify this u v))
 
-  ;; NOTE: perhaps cleaner?
-  ;; (ext-no-check [this u v]
-  ;;               (when-let [me (verify this u v)]
-  ;;                 (Substitutions. (assoc (.s me) u v)
-  ;;                                 (.l me)
-  ;;                                 (.verify me)
-  ;;                                 (.cs me))))
-
   (swap [this cu]
         (if (contains? s cu)
           (let [v (s cu)]
-           (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
+            (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
           (Substitutions. (assoc s cu unbound) l verify cs)))
 
   (constrain [this u c]
