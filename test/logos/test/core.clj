@@ -3,7 +3,7 @@
   (:use [logos.minikanren] :reload)
   (:use [logos.prelude] :reload)
   (:use [logos.match] :reload)
-  (:use [logos.nonrel] :reload)
+  (:use [logos.nonrel :exclude [lvar]] :reload)
   (:use [logos.disequality] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
@@ -753,69 +753,7 @@
 ;; -----------------------------------------------------------------------------
 ;; match
 
-(deftest test-ex*-1
-  (is (= (ex* '[[?a x] [?b y] ] '(foo) #{})
-         '(logos.minikanren/exist
-           [?a]
-           (logos.minikanren/== ?a x)
-           (logos.minikanren/exist [?b] (logos.minikanren/== ?b y) (foo))))))
-
-(deftest test-ex*-2
-  (is (= (ex* '[[[?a ?b] x] [?c y] ] '(foo) #{})
-         '(logos.minikanren/exist
-           [?b ?a]
-           (logos.minikanren/== [?a ?b] x)
-           (logos.minikanren/exist [?c] (logos.minikanren/== ?c y) (foo))))))
-
-;; skipping
-(deftest test-ex*-3
-  (is (= (ex* '[[?a x] [_ y] [?b z]] '(foo) #{})
-         '(logos.minikanren/exist
-           [?a]
-           (logos.minikanren/== ?a x)
-           (logos.minikanren/exist [?b] (logos.minikanren/== ?b z) (foo))))))
-
-;; llist
-(deftest test-ex*-4
-  (is (= (ex* '[[[?a . ?b] x]] '(foo) #{})
-         '(logos.minikanren/exist [?b ?a]
-            (logos.minikanren/== (logos.minikanren/llist ?a ?b) x)
-            (foo)))))
-
-(deftest test-ex*-5
-  (is (= (ex* '[[[?a ?b] x]] '(foo) #{})
-         '(logos.minikanren/exist [?b ?a] (logos.minikanren/== [?a ?b] x) (foo)))))
-
-;; don't create vars for ones we've seen
-(deftest test-ex*-6
-  (is (= (ex* '[[?a x] [_ y] [?a z]] '(foo) #{})
-         '(logos.minikanren/exist [?a]
-            (logos.minikanren/== ?a x)
-            (logos.minikanren/exist []
-              (logos.minikanren/== ?a z) (foo))))))
-
-;; don't create vars for args
-(deftest test-ex*-7
-  (is (= (ex* '[[y x] [x y] [y z]] '(foo) #{})
-         '(logos.minikanren/exist []
-           (logos.minikanren/== y x)
-           (logos.minikanren/exist []
-            (logos.minikanren/== x y)
-            (logos.minikanren/exist [] (logos.minikanren/== y z) (foo)))))))
-
-;; empty test case
-(deftest test-ex*-8
-  (is (= (ex* '[[_ x]] '(foo) #{})
-         '(foo))))
-
-;; _ support
-(deftest test-ex*-9
-  (is (= (ex* '[[[_ _ _ ?a] x]] '(foo) #{})
-         '(logos.minikanren/exist [?a]
-             (logos.minikanren/== [(logos.minikanren/lvar)
-                                   (logos.minikanren/lvar)
-                                   (logos.minikanren/lvar) ?a] x)
-             (foo)))))
+;; TODO: bring tests back
 
 ;; -----------------------------------------------------------------------------
 ;; cond-a (soft-cut)

@@ -1,6 +1,7 @@
 (ns logos.minikanren
   (:refer-clojure :exclude [reify == inc intern])
-  (:use [clojure.pprint :only [pprint]]))
+  (:use [clojure.pprint :only [pprint]])
+  (:import [java.io Writer]))
 
 (set! *warn-on-reflection* true)
 
@@ -45,7 +46,7 @@
      (let [name (str name "_" (. clojure.lang.RT (nextID)))]
        (LVar. name (.hashCode name) cs))))
 
-(defmethod print-method LVar [x writer]
+(defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
 
 (defn lvar? [x]
@@ -133,7 +134,7 @@
                             (clojure.lang.Util/hash val))
                            (lnext xs))))))))
 
-(defmethod print-method LCons [x writer]
+(defmethod print-method LCons [x ^Writer writer]
   (.write writer (str x)))
 
 (defn lcons [a d]
@@ -214,7 +215,7 @@
               (Substitutions. s l f cs))
   
   ;; NOTE: a little bittle slower with find than get
-  ;; we do this for disequality constraints since the entry
+  ;; we do this for disequality constraints since the
   ;; entry always has the constrained var
   (walk [this v]
         (loop [lv v [v v'] (find s v)]
