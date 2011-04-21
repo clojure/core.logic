@@ -1,6 +1,9 @@
 (ns logos.prelude
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren))
+  (:use logos.minikanren)
+  (:require logos.tabled
+            [logos.match :as match]))
+
 
 (defn null-o [a]
   (== '() a))
@@ -61,3 +64,35 @@
            (cons-o a d l)
            (cons-o a res out)
            (rember-o x d res)))))
+
+;; =============================================================================
+;; Convenient Goal Fns
+
+(defn defn-m [t n as & cs]
+  (if-let [tabled? (-> n meta :tabled)]
+    `(def ~n
+       (logos.tabled/tabled [~@as]
+        ~(match/handle-clauses t as cs)))
+    `(defn ~n [~@as]
+       ~(match/handle-clauses t as cs))))
+
+(defmacro defn-e [& rest]
+  (apply defn-m `cond-e rest))
+
+(defmacro match-e [xs & cs]
+  (match/handle-clauses `cond-e xs cs))
+
+;; -----------------------------------------------------------------------------
+;; defn-u, defn-a, match-a, match-u
+
+(defmacro defn-a [& rest]
+  (apply defn-m `cond-a rest))
+
+(defmacro defn-u [& rest]
+  (apply defn-m `cond-u rest))
+
+(defmacro match-a [xs & cs]
+  (match/handle-clauses `cond-a xs cs))
+
+(defmacro match-u [xs & cs]
+  (match/handle-clauses `cond-u xs cs))
