@@ -21,7 +21,7 @@
    (lcons-p? p) (p->llist p)
    (and (coll? p)
         (not= (first p) 'quote)) `[~@(map p->term p)]
-   :else p))
+        :else p))
 
 (defn lvar-sym? [s]
   (= (first (str s)) \?))
@@ -42,15 +42,15 @@
 (defn ex
   ([vs t a]
      `(exist [~@vs]
-             (== ~t ~a)))
+        (== ~t ~a)))
   ([vs t a exprs]
      (if (exist? exprs)
        `(exist [~@vs]
-               (== ~t ~a)
-               ~exprs)
+          (== ~t ~a)
+          ~exprs)
        `(exist [~@vs]
-               (== ~t ~a)
-               ~@exprs))))
+          (== ~t ~a)
+          ~@exprs))))
 
 (defn ex* [[[p a :as pa] & par] exprs seen]
   (let [t (p->term p)
@@ -79,8 +79,8 @@
 (defn defnm [t n as & cs]
   (if-let [tabled? (-> n meta :tabled)]
     `(def ~n
-       (logos.tabled/tabled [~@as]
-        ~(handle-clauses t as cs)))
+          (logos.tabled/tabled [~@as]
+                               ~(handle-clauses t as cs)))
     `(defn ~n [~@as]
        ~(handle-clauses t as cs))))
 
@@ -100,6 +100,6 @@
 
   (defn test-match [x y]
     (matche [x y]
-       ([() _])
-       ([[?a . ?b] [?c ?d]] (testo ?a ?d))))
+      ([() _])
+      ([[?a . ?b] [?c ?d]] (testo ?a ?d))))
   )

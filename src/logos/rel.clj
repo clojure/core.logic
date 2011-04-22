@@ -14,11 +14,11 @@
 (defmacro defrel [name & args]
   (let [setsym (symbol (str name "-set"))
         idxsym (symbol (str name "-indexed"))]
-   `(do
-      (def ~setsym (atom #{}))
-      (def ~idxsym (atom {}))
-      (defmacro ~name [~@args]
-        (defrelg '~setsym '~idxsym ~@args)))))
+    `(do
+       (def ~setsym (atom #{}))
+       (def ~idxsym (atom {}))
+       (defmacro ~name [~@args]
+         (defrelg '~setsym '~idxsym ~@args)))))
 
 (defn defrelg [setsym idxsym & args]
   `(fn [a#]
@@ -29,10 +29,10 @@
 (defmacro fact [rel & tuple]
   (let [setsym (symbol (str rel "-set"))
         idxsym (symbol (str rel "-indexed"))]
-   `(do
-      (swap! ~setsym conj [~@tuple])
-      (reset! ~idxsym (index @~setsym))
-      nil)))
+    `(do
+       (swap! ~setsym conj [~@tuple])
+       (reset! ~idxsym (index @~setsym))
+       nil)))
 
 (defn to-stream [aseq]
   (when (seq aseq)
@@ -47,32 +47,32 @@
     (to-stream
      (->> aset
           (map (fn [cand]
-                    (when-let [a (unify a t cand)]
-                      a)))
+                 (when-let [a (unify a t cand)]
+                   a)))
           (remove nil?)))))
 
 (comment
   (do
-   (defrel subsumes a b)
-   (fact subsumes `even? `integer?)
-   (fact subsumes `integer? `number?))
+    (defrel subsumes a b)
+    (fact subsumes `even? `integer?)
+    (fact subsumes `integer? `number?))
 
   ;; TODO: it would be nice to be able to extend a goal, redefinition
   ;; complicates things tho.
 
   (def is
-    (tabled [x y]
-       (conde
-        ((subsumes x y))
-        ((exist [z]
-                (subsumes x z)
-                (is z y))))))
+       (tabled [x y]
+               (conde
+                 ((subsumes x y))
+                 ((exist [z]
+                    (subsumes x z)
+                    (is z y))))))
 
   (run 1 [q]
-       (is `even? q))
+    (is `even? q))
 
   (run* [q]
-        (is `even? q))
+    (is `even? q))
 
   ;; 200ms
   ;; ~160ms w/ tabling
@@ -81,15 +81,15 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (is `even? q))))))
+          (is `even? q))))))
 
   (do
-   (fact subsumes :puppy :young)
-   (fact subsumes :puppy :dog)
-   (fact subsumes :puppy :cute))
+    (fact subsumes :puppy :young)
+    (fact subsumes :puppy :dog)
+    (fact subsumes :puppy :cute))
 
   (run* [q]
-        (subsumes :puppy q))
+    (subsumes :puppy q))
 
   ;; 1 -> 3 possibilities
   ;; 1.3s for 100000, not bad
@@ -99,7 +99,7 @@
      (dotimes [_ 1e5]
        (doall
         (run* [q]
-              (subsumes :puppy q))))))
+          (subsumes :puppy q))))))
 
   ;; ah we definitely want negation
   (do
@@ -124,10 +124,10 @@
     )
 
   (run* [q]
-        (exist [x y]
-               (fun y)
-               (likes x y)
-               (== q [x y])))
+    (exist [x y]
+      (fun y)
+      (likes x y)
+      (== q [x y])))
 
   ;; 200ms
   (dotimes [_ 10]
@@ -135,31 +135,31 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (fun y)
-                     (likes x y)
-                     (== q [x y])))))))
+          (exist [x y]
+            (fun y)
+            (likes x y)
+            (== q [x y])))))))
 
   (run-debug* [q]
-        (exist [x y]
-               (likes x y)
-               (fun y)
-               (== q [x y])))
+    (exist [x y]
+      (likes x y)
+      (fun y)
+      (== q [x y])))
 
-  ; 276ms
+                                        ; 276ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (likes x y)
-                     (fun y)
-                     (== q [x y])))))))
+          (exist [x y]
+            (likes x y)
+            (fun y)
+            (== q [x y])))))))
 
   ;; a shorter syntax for common things would be nice
   (? ?x :where (likes? x? y?) (fun y?))
 
   ;; non lexically scopes definitions would be nice
   (? (friend [x y]) :- (likes x y) )
- )
+  )

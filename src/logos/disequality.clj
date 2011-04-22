@@ -26,14 +26,14 @@
 
 (defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
   (let [uc (set (map #(walk s %) (constraints u)))]
-   (if (contains? uc v)
-     nil
-     (let [u (remove-constraints u)
-           v (if (lvar? v) (add-constraints v uc) v)]
-       (make-s (-> (.s s) (dissoc u) (assoc u v))
-               (cons (pair u v) (.l s))
-               constraint-verify
-               (.cs s))))))
+    (if (contains? uc v)
+      nil
+      (let [u (remove-constraints u)
+            v (if (lvar? v) (add-constraints v uc) v)]
+        (make-s (-> (.s s) (dissoc u) (assoc u v))
+                (cons (pair u v) (.l s))
+                constraint-verify
+                (.cs s))))))
 
 (defn ^Substitutions constraint-verify [^Substitutions s u v]
   (when-let [s (constraint-verify-simple s u v)]
@@ -126,13 +126,13 @@
 ;; NOTE: gensym is slow don't use it directly
 (defn ^Constraint make-c [m]
   (let [name (str "constraint-" (. clojure.lang.RT (nextID)))]
-   (Constraint. name m (keys m) (.hashCode name))))
+    (Constraint. name m (keys m) (.hashCode name))))
 
 (defn constraint? [x]
   (instance? Constraint x))
 
 (defmethod print-method Constraint [x writer]
-  (.write writer (str "<constraint:" (.m ^Constraint x) ">")))
+           (.write writer (str "<constraint:" (.m ^Constraint x) ">")))
 
 ;; =============================================================================
 ;; Constraint Store
@@ -157,15 +157,15 @@
                            c (dissoc (get cmap name) u)
                            vmap (update-in vmap [u] #(disj % name))
                            vmap (if (empty? (vmap u))
-                                    (dissoc vmap u)
-                                    vmap)]
+                                  (dissoc vmap u)
+                                  vmap)]
                        (if (= (count c) 1)
                          (let [okeys (.okeys c)
                                cmap (dissoc cmap name)
                                vmap (reduce (fn [m v]
                                               (update-in m [v] #(disj % name)))
                                             vmap okeys)] ;; NOTE: hmm not all these keys exist
-                               ;; TODO: clear out empty vars like below
+                           ;; TODO: clear out empty vars like below
                            (ConstraintStore. vmap cmap
                                              (conj (or simple [])
                                                    (first c))))
@@ -199,7 +199,7 @@
                         (= v' v) (recur cr (refine-constraint me c u))
                         (or (lvar? v')
                             (lvar? v)) (recur cr me)
-                        :else (recur cr (discard-constraint me c)))))))
+                            :else (recur cr (discard-constraint me c)))))))
                this))
 
   (get-simplified [this] simple)
@@ -271,11 +271,11 @@
 (comment
   ;; all-different
   (run* [q]
-        (exist [x y]
-               (all-different x y)
-               (== x 1)
-               (== y 1)
-               (== q x)))
+    (exist [x y]
+      (all-different x y)
+      (== x 1)
+      (== y 1)
+      (== q x)))
 
   ;; ~120ms, not bad
   (dotimes [_ 10]
@@ -283,11 +283,11 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (== x 1)
-                     (all-different x y)
-                     (== y 1)
-                     (== q x)))))))
+          (exist [x y]
+            (== x 1)
+            (all-different x y)
+            (== y 1)
+            (== q x)))))))
 
   ;; 70ms, very close tho, all-different has to do a bit of work
   (dotimes [_ 10]
@@ -295,26 +295,26 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (!= x y)
-                     (== x 1)
-                     (== y 1)
-                     (== q x)))))))
+          (exist [x y]
+            (!= x y)
+            (== x 1)
+            (== y 1)
+            (== q x)))))))
 
   (run* [q]
-        (exist [x y]
-               (== x 1)
-               (all-different x y)
-               (== y 1)
-               (== q x)))
+    (exist [x y]
+      (== x 1)
+      (all-different x y)
+      (== y 1)
+      (== q x)))
   
   ;; FIXME
   (run* [q]
-        (exist [x y]
-               (== x 1)
-               (== y 1)
-               (all-different x y)
-               (== q x)))
+    (exist [x y]
+      (== x 1)
+      (== y 1)
+      (all-different x y)
+      (== q x)))
 
   ;; the contraints are there
   ;; this is weird
@@ -326,19 +326,19 @@
 
   ;; ()
   (run* [q]
-        (exist [x y z]
-               (!= x y)
-               (== y z)
-               (== x z)
-               (== q x)))
+    (exist [x y z]
+      (!= x y)
+      (== y z)
+      (== x z)
+      (== q x)))
 
   ;; ([1 3]) works!
   (run* [q]
-        (exist [x y]
-               (== x 1)
-               (!= [x 2] [1 y])
-               (== y 3)
-               (== q [x y])))
+    (exist [x y]
+      (== x 1)
+      (!= [x 2] [1 y])
+      (== y 3)
+      (== q [x y])))
 
   ;; 500ms
   (dotimes [_ 10]
@@ -346,11 +346,11 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (!= [x 2] [1 y])
-                     (== x 1)
-                     (== y 3)
-                     (== q [x y])))))))
+          (exist [x y]
+            (!= [x 2] [1 y])
+            (== x 1)
+            (== y 3)
+            (== q [x y])))))))
 
   ;; interesting complex constraints are fastest when last
   ;; 68ms
@@ -361,11 +361,11 @@
      (dotimes [_ 1e5]
        (doall
         (run* [q]
-              (exist [x y]
-                     (== x 1)
-                     (== y 2)
-                     (!= [x 2] [1 y])
-                     (== q [x y])))))))
+          (exist [x y]
+            (== x 1)
+            (== y 2)
+            (!= [x 2] [1 y])
+            (== q [x y])))))))
 
   ;; 271ms
   (dotimes [_ 10]
@@ -373,12 +373,12 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (!= x 1)
-                     (!= y 2)
-                     (== x 1)
-                     (== y 2)
-                     (== q [x y])))))))
+          (exist [x y]
+            (!= x 1)
+            (!= y 2)
+            (== x 1)
+            (== y 2)
+            (== q [x y])))))))
 
   ;; 60ms
   (dotimes [_ 10]
@@ -386,10 +386,10 @@
      (dotimes [_ 1e4]
        (doall
         (run* [q]
-              (exist [x y]
-                     (== x 1)
-                     (== y 2)
-                     (== q [x y])))))))
+          (exist [x y]
+            (== x 1)
+            (== y 2)
+            (== q [x y])))))))
 
   ;; 200ms
   (let [[x y z a] (map lvar '(x y z a))
@@ -459,5 +459,5 @@
              (assoc x c)
              (assoc y c)
              (assoc z c))))))
- )
+  )
 

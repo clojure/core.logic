@@ -13,57 +13,57 @@
 
 (defn firsto [l a]
   (exist [d]
-         (conso a d l)))
+    (conso a d l)))
 
 (defn resto [l d]
   (exist [a]
-         (== (lcons a d) l)))
+    (== (lcons a d) l)))
 
 (defn pairo [p]
   (exist [a d]
-         (== (lcons a d) p)))
+    (== (lcons a d) p)))
 
 (defn twino [p]
   (exist [x]
-         (conso x x p)))
+    (conso x x p)))
 
 (defn appendo [l s out]
   (conde
-   ((nullo l) (== s out))
-   ((exist [a d res]
-           (conso a d l)
-           (conso a res out)
-           (appendo d s res)))))
+    ((nullo l) (== s out))
+    ((exist [a d res]
+       (conso a d l)
+       (conso a res out)
+       (appendo d s res)))))
 
 (defn flatteno [s out]
   (conde
-   ((nullo s) (== '() out))
-   ((pairo s)
-    (exist [a d res-a res-d]
-           (conso a d s)
-           (flatteno a res-a)
-           (flatteno d res-d)
-           (appendo res-a res-d out)))
-   ((conso s '() out))))
+    ((nullo s) (== '() out))
+    ((pairo s)
+     (exist [a d res-a res-d]
+       (conso a d s)
+       (flatteno a res-a)
+       (flatteno d res-d)
+       (appendo res-a res-d out)))
+    ((conso s '() out))))
 
 (defn membero [x l]
   (conde
-   ((firsto l x))
-   ((exist [r]
-           (resto l r)
-           (membero x r)))))
+    ((firsto l x))
+    ((exist [r]
+       (resto l r)
+       (membero x r)))))
 
 (defn rembero [x l out]
   (conde
-   ((== '() l) (== '() out))
-   ((exist [a d]
-           (conso a d l)
-           (== x a)
-           (== d out)))
-   ((exist [a d res]
-           (conso a d l)
-           (conso a res out)
-           (rembero x d res)))))
+    ((== '() l) (== '() out))
+    ((exist [a d]
+       (conso a d l)
+       (== x a)
+       (== d out)))
+    ((exist [a d res]
+       (conso a d l)
+       (conso a res out)
+       (rembero x d res)))))
 
 ;; =============================================================================
 ;; Convenient Goal Fns

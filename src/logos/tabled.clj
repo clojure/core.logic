@@ -62,13 +62,13 @@
   ITabled
 
   (-reify-tabled [this v]
-             (let [v (walk this v)]
-               (cond
-                (lvar? v) (ext-no-check this v (lvar (count (.s this))))
-                (coll? v) (-reify-tabled
-                           (-reify-tabled this (first v))
-                           (next v))
-                :else this)))
+                 (let [v (walk this v)]
+                   (cond
+                    (lvar? v) (ext-no-check this v (lvar (count (.s this))))
+                    (coll? v) (-reify-tabled
+                               (-reify-tabled this (first v))
+                               (next v))
+                    :else this)))
 
   (reify-tabled [this v]
                 (let [v (walk* this v)]
@@ -83,7 +83,7 @@
            (letfn [(reuse-loop [ansv*]
                      (if (= ansv* end)
                        [(make-ss cache start
-                          (fn [] (reuse this argv cache @cache start)))]
+                                 (fn [] (reuse this argv cache @cache start)))]
                        (Choice. (subunify this argv (reify-tabled this (first ansv*)))
                                 (fn [] (reuse-loop (rest ansv*))))))]
              (reuse-loop start))))
@@ -131,8 +131,8 @@
     (when (every? (fn [ansv]
                     (not (alpha-equiv? a argv ansv)))
                   @cache)
-     (do (swap! cache conj (reify-tabled a argv))
-         a))))
+      (do (swap! cache conj (reify-tabled a argv))
+          a))))
 
 ;; -----------------------------------------------------------------------------
 ;; Syntax
@@ -141,18 +141,18 @@
 
 (defmacro tabled [args & grest]
   `(let [table# (atom {})]
-    (fn [~@args]
-      (let [argv# ~args]
-        (fn [a#]
-          (let [key# (reify a# argv#)
-                cache# (get @table# key#)]
-            (if (nil? cache#)
-              (let [cache# (atom [])]
-                (swap! table# assoc key# cache#)
-                ((exist []
-                        ~@grest
-                        (master argv# cache#)) a#))
-              (reuse a# argv# cache# nil nil))))))))
+     (fn [~@args]
+       (let [argv# ~args]
+         (fn [a#]
+           (let [key# (reify a# argv#)
+                 cache# (get @table# key#)]
+             (if (nil? cache#)
+               (let [cache# (atom [])]
+                 (swap! table# assoc key# cache#)
+                 ((exist []
+                    ~@grest
+                    (master argv# cache#)) a#))
+               (reuse a# argv# cache# nil nil))))))))
 
 (comment
   (defne arco [x y]
@@ -161,12 +161,12 @@
     ([:b :d]))
 
   (def patho
-    (tabled [x y]
-      (conde
-       ((arco x y))
-       ((exist [z]
-          (arco x z)
-          (patho z y))))))
+       (tabled [x y]
+         (conde
+           ((arco x y))
+           ((exist [z]
+              (arco x z)
+              (patho z y))))))
 
   ;; (:b :a :d)
   (run* [q] (patho :a q))

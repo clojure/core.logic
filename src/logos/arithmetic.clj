@@ -41,8 +41,8 @@
 
 (comment
   (run 1 [q]
-       (== q 100)
-       (> q 3))
+    (== q 100)
+    (> q 3))
 
   ;; TODO : remove tediousness w/ macro
   (defn core-sym [sym]
