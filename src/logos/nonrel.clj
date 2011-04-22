@@ -22,52 +22,52 @@
                 ~@goals) ~a)))))
 
 ;; =============================================================================
-;; cond-a (soft-cut), cond-u (committed-choice)
+;; conda (soft-cut), condu (committed-choice)
 ;;
-;; cond-a once a line succeeds no others are tried
-;; cond-u a line can succeed only one time
+;; conda once a line succeeds no others are tried
+;; condu a line can succeed only one time
 
-;; TODO : cond-a and cond-u should probably understanding logging
+;; TODO : conda and condu should probably understanding logging
 
 (defprotocol IIfA
-  (if-a [b gs c]))
+  (ifa [b gs c]))
 
 (defprotocol IIfU
-  (if-u [b gs c]))
+  (ifu [b gs c]))
 
 ;; TODO : if -> when
 
-(defmacro if-a*
+(defmacro ifa*
   ([])
   ([[e & gs] & grest]
-     `(if-a ~e [~@gs]
+     `(ifa ~e [~@gs]
             ~(if (seq grest)
-               `(delay (if-a* ~@grest))
+               `(delay (ifa* ~@grest))
                nil))))
 
-(defmacro if-u*
+(defmacro ifu*
   ([])
   ([[e & gs] & grest]
-     `(if-u ~e [~@gs]
+     `(ifu ~e [~@gs]
             ~(if (seq grest)
-               `(delay (if-u* ~@grest))
+               `(delay (ifu* ~@grest))
                nil))))
 
 (extend-protocol IIfA
   nil
-  (if-a [b gs c]
+  (ifa [b gs c]
         (when c
           (force c))))
 
 (extend-protocol IIfU
   nil
-  (if-u [b gs c]
+  (ifu [b gs c]
         (when c
           (force c))))
 
 (extend-type Substitutions
   IIfA
-  (if-a [b gs c]
+  (ifa [b gs c]
         (loop [b b [g0 & gr] gs]
           (if g0
             (when-let [b (g0 b)]
@@ -76,7 +76,7 @@
 
 (extend-type Substitutions
   IIfU
-  (if-u [b gs c]
+  (ifu [b gs c]
         (loop [b b [g0 & gr] gs]
           (if g0
             (when-let [b (g0 b)]
@@ -85,39 +85,39 @@
 
 (extend-type clojure.lang.Fn
   IIfA
-  (if-a [b gs c]
-        (inc (if-a (b) gs c))))
+  (ifa [b gs c]
+        (inc (ifa (b) gs c))))
 
 (extend-type clojure.lang.Fn
   IIfU
-  (if-u [b gs c]
-        (inc (if-u (b) gs c))))
+  (ifu [b gs c]
+        (inc (ifu (b) gs c))))
 
 (extend-protocol IIfA
   Choice
-  (if-a [b gs c]
+  (ifa [b gs c]
         (reduce bind b gs)))
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 (extend-protocol IIfU
   Choice
-  (if-u [b gs c]
+  (ifu [b gs c]
         (reduce bind (.a ^Choice b) gs)))
 
 (defn cond-clauses [a]
   (fn [goals]
     `((~(first goals) ~a) ~@(rest goals))))
 
-(defmacro cond-a
+(defmacro conda
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (if-a* ~@(map (cond-clauses a) clauses)))))
+       (ifa* ~@(map (cond-clauses a) clauses)))))
 
-(defmacro cond-u [& clauses]
+(defmacro condu [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (if-u* ~@(map (cond-clauses a) clauses)))))
+       (ifu* ~@(map (cond-clauses a) clauses)))))
 
 ;; =============================================================================
 ;; copy-term

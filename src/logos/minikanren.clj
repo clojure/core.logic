@@ -934,18 +934,18 @@
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
 
-(defn bind-cond-e-clause [a]
+(defn bind-conde-clause [a]
   (fn [g-rest]
     `(bind* ~a ~@g-rest)))
 
-(defn bind-cond-e-clauses [a clauses]
-  (map (bind-cond-e-clause a) clauses))
+(defn bind-conde-clauses [a clauses]
+  (map (bind-conde-clause a) clauses))
 
-(defmacro cond-e [& clauses]
+(defmacro conde [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (inc
-        (mplus* ~@(bind-cond-e-clauses a clauses))))))
+        (mplus* ~@(bind-conde-clauses a clauses))))))
 
 (defn lvar-bind [sym]
   ((juxt identity

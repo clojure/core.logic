@@ -1,7 +1,7 @@
 (ns logos.bench
   (:refer-clojure :exclude [reify inc ==])
   (:use logos.minikanren
-        [logos.prelude :only [first-o defn-e]]
+        [logos.prelude :only [firsto defne]]
         [logos.disequality :only [!=]])
   (:require [logos.nonrel :as nonrel]
             [clojure.contrib.macro-utils :as macro]))
@@ -9,10 +9,10 @@
 ;; =============================================================================
 ;; Utilities
 
-(defn-e member-o [x l]
+(defne membero [x l]
   ([_ [x . ?tail]])
   ([_ [?head . ?tail]]
-     (member-o x ?tail)))
+     (membero x ?tail)))
 
 ;; =============================================================================
 ;; flatten
@@ -21,14 +21,14 @@
 ;; =============================================================================
 ;; append
 
-(defn-e append-o [x y z]
+(defne appendo [x y z]
   ([() _ y])
-  ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 
 (comment
   (run 1 [q]
        (exist [x y]
-              (append-o x y q)))
+              (appendo x y q)))
   
   ;; 1.4s
   (dotimes [_ 10]
@@ -37,23 +37,23 @@
        (doall
         (run 700 [q]
              (exist [x y]
-                    (append-o x y q)))))))
+                    (appendo x y q)))))))
   )
 
 ;; =============================================================================
 ;; nrev
 ;; =============================================================================
 
-(defn-e nrev-o [l o]
+(defne nrevo [l o]
   ([() ()])
   ([[?a . ?d] _]
      (exist [r]
-      (nrev-o ?d r)
-      (append-o r [?a] o))))
+      (nrevo ?d r)
+      (appendo r [?a] o))))
 
 (comment
   ;; we can run backwards, unlike Prolog
-  (run 1 [q] (nrev-o q (range 30)))
+  (run 1 [q] (nrevo q (range 30)))
 
   ;; SWI-Prolog 0.06-0.08s
   ;; ~4.1s
@@ -62,7 +62,7 @@
      (dotimes [_ 5]
        (time
         (dotimes [_ 1e3]
-          (doall (run 1 [q] (nrev-o data q))))))))
+          (doall (run 1 [q] (nrevo data q))))))))
 
   ;; the LIPS are ridiculously high for SWI-Prolog
   ;; clearly nrev is a case that SWI-Prolog can optimize away
@@ -72,32 +72,32 @@
 ;; zebra
 ;; =============================================================================
 
-(defn-e on-right-o [x y l]
+(defne righto [x y l]
   ([_ _ [x y . ?r]])
-  ([_ _ [_ . ?r]] (on-right-o x y ?r)))
+  ([_ _ [_ . ?r]] (righto x y ?r)))
 
-(defn next-to-o [x y l]
-  (cond-e
-   ((on-right-o x y l))
-   ((on-right-o y x l))))
+(defn nexto [x y l]
+  (conde
+   ((righto x y l))
+   ((righto y x l))))
 
-(defn zebra-o [hs]
+(defn zebrao [hs]
   (macro/symbol-macrolet [_ (lvar)]
    (all
     (== [_ _ [_ _ 'milk _ _] _ _] hs)                         
-    (first-o hs ['norwegian _ _ _ _])                         
-    (next-to-o ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)       
-    (on-right-o [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)         
-    (member-o ['englishman _ _ _ 'red] hs)                    
-    (member-o [_ 'kools _ _ 'yellow] hs)                      
-    (member-o ['spaniard _ _ 'dog _] hs)                      
-    (member-o [_ _ 'coffee _ 'green] hs)                      
-    (member-o ['ukrainian _ 'tea _ _] hs)                     
-    (member-o [_ 'lucky-strikes 'oj _ _] hs)                  
-    (member-o ['japanese 'parliaments _ _ _] hs)              
-    (member-o [_ 'oldgolds _ 'snails _] hs)                   
-    (next-to-o [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          
-    (next-to-o [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
+    (firsto hs ['norwegian _ _ _ _])                         
+    (nexto ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)       
+    (righto [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)         
+    (membero ['englishman _ _ _ 'red] hs)                    
+    (membero [_ 'kools _ _ 'yellow] hs)                      
+    (membero ['spaniard _ _ 'dog _] hs)                      
+    (membero [_ _ 'coffee _ 'green] hs)                      
+    (membero ['ukrainian _ 'tea _ _] hs)                     
+    (membero [_ 'lucky-strikes 'oj _ _] hs)                  
+    (membero ['japanese 'parliaments _ _ _] hs)              
+    (membero [_ 'oldgolds _ 'snails _] hs)                   
+    (nexto [_ _ _ 'horse _] [_ 'kools _ _ _] hs)          
+    (nexto [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
 
 (comment
   ;; SWI-Prolog 6-8.5s
@@ -106,13 +106,13 @@
    (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
-       (doall (run 1 [q] (zebra-o q)))))))
+       (doall (run 1 [q] (zebrao q)))))))
 
   ;; < 3s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
-       (doall (run 1 [q] (zebra-o q))))))
+       (doall (run 1 [q] (zebrao q))))))
   )
 
 ;; =============================================================================
@@ -120,29 +120,29 @@
 
 ;; Bratko pg 103
 
-(declare noattack-o)
+(declare noattacko)
 
-(defn-e nqueens-o [l]
+(defne nqueenso [l]
   ([()])
   ([[[?x ?y] . ?others]]
-     (nqueens-o ?others)
-     (member-o ?y [1 2 3 4 5 6 7 8])
-     (noattack-o [?x ?y] ?others)))
+     (nqueenso ?others)
+     (membero ?y [1 2 3 4 5 6 7 8])
+     (noattacko [?x ?y] ?others)))
 
-(defn-e noattack-o [q others]
+(defne noattacko [q others]
   ([_ ()])
   ([[?x ?y] [[?x1 ?y1] . ?others]]
      (!= ?y ?y1)
      (nonrel/project [?y ?y1 ?x ?x1]
                      (!= (- ?y1 ?y) (- ?x1 ?x))
                      (!= (- ?y1 ?y) (- ?x ?x1)))
-     (noattack-o [?x ?y] ?others)))
+     (noattacko [?x ?y] ?others)))
 
 (defn solve-nqueens []
   (run* [q]
         (exist [y1 y2 y3 y4 y5 y6 y7 y8]
                (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
-               (nqueens-o q))))
+               (nqueenso q))))
 
 (comment
   (take 1 (solve-nqueens))
@@ -151,7 +151,7 @@
   (count (solve-nqueens))
 
   ;; < 3s for 100x
-  ;; about 10X slower that SWI
+  ;; about 18X slower that SWI
   (binding [*occurs-check* false]
    (dotimes [_ 5]
      (time
@@ -159,13 +159,20 @@
         (doall
          (take 1 (solve-nqueens)))))))
 
-  ;; ~650ms
+  ;; ~550ms
   (binding [*occurs-check* false]
     (dotimes [_ 10]
       (time
        (dotimes [_ 1]
          (doall
           (solve-nqueens))))))
+
+  ;; ~610ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (doall
+        (solve-nqueens)))))
 
   ;; nqueens benefits from constraints
   )
@@ -175,23 +182,23 @@
 ;; =============================================================================
 ;; send more money
 
-(defn-e select-o [x l r]
+(defne selecto [x l r]
   ([_ [x . r] _])
   ([_ [?y . ?xs] [?y . ?ys]]
-     (select-o x ?xs ?ys)))
+     (selecto x ?xs ?ys)))
 
-(defn-e assign-digits-o [l1 l2]
+(defne assign-digitso [l1 l2]
   ([() _])
   ([[?d . ?ds] _]
      (exist [nl]
-            (select-o ?d l2 nl)
-            (assign-digits-o ?ds nl))))
+            (selecto ?d l2 nl)
+            (assign-digitso ?ds nl))))
 
 (defn smm [x]
   (exist [s e n d m o r y digits]
          (== x [s e n d m o r y])
          (== digits (range 10))
-         (assign-digits-o x digits)
+         (assign-digitso x digits)
          (nonrel/project [s e n d m o r y]
                          (== (> m 0) true)
                          (== (> s 0) true)
@@ -218,19 +225,19 @@
 ;; =============================================================================
 ;; Quick Sort
 
-(declare partition-o)
+(declare partitiono)
 
-(defn-e qsort-o [l r r0]
+(defne qsorto [l r r0]
   ([[] _ r])
   ([[?x . ?lr] _ _]
      (exist [l1 l2 r1]
-      (partition-o ?lr ?x l1 l2)
-      (qsort-o l2 r1 r0)
-      (qsort-o l1 r (lcons ?x r1)))))
+      (partitiono ?lr ?x l1 l2)
+      (qsorto l2 r1 r0)
+      (qsorto l1 r (lcons ?x r1)))))
 
-(defn-e partition-o [a b c d]
+(defne partitiono [a b c d]
   ([[?x . ?l] _ [?x . ?l1] _]
-     (nonrel/cond-a
+     (nonrel/conda
       ((nonrel/project [?x b]
                 (== (<= ?x b) true))
        (partition ?l b ?l1 d))

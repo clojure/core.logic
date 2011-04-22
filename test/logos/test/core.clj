@@ -519,170 +519,170 @@
 ;; succeed
 
 ;; =============================================================================
-;; cond-e
+;; conde
 
-(deftest test-basic-cond-e
+(deftest test-basic-conde
   (is (=  (run* [x]
-                (cond-e
+                (conde
                  ((== x 'olive) succeed)
                  (succeed succeed)
                  ((== x 'oil) succeed)))
           '[olive _.0 oil])))
 
-(deftest test-basic-cond-e-2
+(deftest test-basic-conde-2
   (is (= (run* [r]
                (exist [x y]
-                      (cond-e
+                      (conde
                        ((== 'split x) (== 'pea y))
                        ((== 'navy x) (== 'bean y)))
                       (== (cons x (cons y ())) r)))
          '[(split pea) (navy bean)])))
 
-(defn teacup-o [x]
-  (cond-e
+(defn teacupo [x]
+  (conde
    ((== 'tea x) s#)
    ((== 'cup x) s#)))
 
 (deftest test-basic-conde-e-3
   (is (= (run* [r]
                (exist [x y]
-                      (cond-e
-                       ((teacup-o x) (== true y) s#)
+                      (conde
+                       ((teacupo x) (== true y) s#)
                        ((== false x) (== true y)))
                       (== (cons x (cons y ())) r)))
          '((false true) (tea true) (cup true)))))
 
 ;; =============================================================================
-;; cons-o
+;; conso
 
-(deftest test-cons-o
+(deftest test-conso
   (is (= (run* [q]
                (exist [a d]
-                      (cons-o a d '())
+                      (conso a d '())
                       (== (cons a d) q))
                []))))
 
-(deftest test-cons-o-1
+(deftest test-conso-1
   (let [a (lvar 'a)
         d (lvar 'd)]
     (is (= (run* [q]
-                 (cons-o a d q))
+                 (conso a d q))
            [(lcons a d)]))))
 
-(deftest test-cons-o-2
+(deftest test-conso-2
   (is (= (run* [q]
                (== [q] nil))
          [])))
 
-(deftest test-cons-o-3
+(deftest test-conso-3
   (is (=
        (run* [q]
-             (cons-o 'a nil q))
+             (conso 'a nil q))
        '[(a)])))
 
-(deftest test-cons-o-4
+(deftest test-conso-4
   (is (= (run* [q]
-               (cons-o 'a '(d) q))
+               (conso 'a '(d) q))
          '[(a d)])))
 
-(deftest test-cons-o-empty-list
+(deftest test-conso-empty-list
   (is (= (run* [q]
-               (cons-o 'a q '(a)))
+               (conso 'a q '(a)))
          '[()])))
 
-(deftest test-cons-o-5
+(deftest test-conso-5
   (is (= (run* [q]
-               (cons-o q '(b c) '(a b c)))
+               (conso q '(b c) '(a b c)))
          '[a])))
 
 ;; =============================================================================
-;; first-o
+;; firsto
 
-(deftest test-first-o
+(deftest test-firsto
   (is (= (run* [q]
-               (first-o q '(1 2)))
+               (firsto q '(1 2)))
          (list (lcons '(1 2) (lvar 'x))))))
 
 ;; =============================================================================
-;; rest-o
+;; resto
 
-(deftest test-rest-o
+(deftest test-resto
   (is (= (run* [q]
-               (rest-o q '(1 2)))
+               (resto q '(1 2)))
          '[(_.0 1 2)])))
 
-(deftest test-rest-o-2
+(deftest test-resto-2
   (is (= (run* [q]
-               (rest-o q [1 2]))
+               (resto q [1 2]))
          '[(_.0 1 2)])))
 
-(deftest test-rest-o-3
+(deftest test-resto-3
   (is (= (run* [q]
-               (rest-o [1 2] q))
+               (resto [1 2] q))
          '[(2)])))
 
-(deftest test-rest-o-4
+(deftest test-resto-4
   (is (= (run* [q]
-               (rest-o [1 2 3 4 5 6 7 8] q))
+               (resto [1 2 3 4 5 6 7 8] q))
          '[(2 3 4 5 6 7 8)])))
 
 ;; =============================================================================
-;; flatten-o
+;; flatteno
 
-(deftest test-flatten-o
+(deftest test-flatteno
   (is (= (run* [x]
-               (flatten-o '[[a b] c] x))
+               (flatteno '[[a b] c] x))
          '(([[a b] c]) ([a b] (c)) ([a b] c) (a (b) (c)) ([a b] c ()) (a (b) c)
            (a (b) c ()) (a b (c)) (a b c) (a b () (c)) (a b c ()) (a b () c)
            (a b () c ())))))
 
 ;; =============================================================================
-;; member-o
+;; membero
 
-(deftest member-o-1
+(deftest membero-1
   (is (= (run* [q]
                (macro/symbol-macrolet
                 [_ (lvar)]
                 (all
                  (== q [_])
-                 (member-o ['foo _] q)
-                 (member-o [_ 'bar] q))))
+                 (membero ['foo _] q)
+                 (membero [_ 'bar] q))))
          '([[foo bar]]))))
 
-(deftest member-o-2
+(deftest membero-2
   (is (= (run* [q]
                (macro/symbol-macrolet
                 [_ (lvar)]
                 (all
                  (== q [_ _])
-                 (member-o ['foo _] q)
-                 (member-o [_ 'bar] q))))
+                 (membero ['foo _] q)
+                 (membero [_ 'bar] q))))
          '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
              [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
 
 ;; -----------------------------------------------------------------------------
-;; rember-o
+;; rembero
 
-(deftest rember-o-1
+(deftest rembero-1
   (is (= (run 1 [q]
-              (rember-o 'b '(a b c b d) q))
+              (rembero 'b '(a b c b d) q))
          '((a c b d)))))
 
 ;; -----------------------------------------------------------------------------
-;; cond-e clause count
+;; conde clause count
 
 (defn digit-1 [x]
-  (cond-e
+  (conde
    ((== 0 x))))
 
 (defn digit-4 [x]
-  (cond-e
+  (conde
    ((== 0 x))
    ((== 1 x))
    ((== 2 x))
    ((== 3 x))))
 
-(deftest test-cond-e-1-clause
+(deftest test-conde-1-clause
   (is (= (run* [q]
                (exist [x y]
                       (digit-1 x)
@@ -690,7 +690,7 @@
                       (== q [x y])))
          '([0 0]))))
 
-(deftest test-cond-e-4-clauses
+(deftest test-conde-4-clauses
   (is (= (run* [q]
                (exist [x y]
                       (digit-4 x)
@@ -700,22 +700,22 @@
            [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
 
 ;; -----------------------------------------------------------------------------
-;; any-o
+;; anyo
 
-(defn any-o [q]
-  (cond-e
+(defn anyo [q]
+  (conde
    (q s#)
-   ((any-o q))))
+   ((anyo q))))
 
-(deftest test-any-o-1
+(deftest test-anyo-1
   (is (= (run 1 [q]
-              (any-o s#)
+              (anyo s#)
               (== true q))
          (list true))))
 
-(deftest test-any-o-2
+(deftest test-anyo-2
   (is (= (run 5 [q]
-              (any-o s#)
+              (anyo s#)
               (== true q))
          (list true true true true true))))
 
@@ -726,22 +726,22 @@
 
 (deftest test-divergence-1
   (is (= (run 1 [q]
-            (cond-e
+            (conde
              (f1)
              ((== false false))))
          '(_.0))))
 
 (deftest test-divergence-2
   (is (= (run 1 [q]
-            (cond-e
+            (conde
              (f1 (== false false))
              ((== false false))))
          '(_.0))))
 
 (def f2
      (exist []
-            (cond-e
-             (f2 (cond-e
+            (conde
+             (f2 (conde
                   (f2) 
                   ((== false false))))
              ((== false false)))))
@@ -756,82 +756,82 @@
 ;; TODO: bring tests back
 
 ;; -----------------------------------------------------------------------------
-;; cond-a (soft-cut)
+;; conda (soft-cut)
 
-(deftest test-cond-a-1
+(deftest test-conda-1
   (is (= (run* [x]
-               (cond-a
+               (conda
                 ((== 'olive x) s#)
                 ((== 'oil x) s#)
                 (u#)))
          '(olive))))
 
-(deftest test-cond-a-2
+(deftest test-conda-2
   (is (= (run* [x]
-               (cond-a
+               (conda
                 ((== 'virgin x) u#)
                 ((== 'olive x) s#)
                 ((== 'oil x) s#)
                 (u#)))
          '())))
 
-(deftest test-cond-a-3
+(deftest test-conda-3
   (is (= (run* [x]
                (exist (x y)
                       (== 'split x)
                       (== 'pea y)
-                      (cond-a
+                      (conda
                        ((== 'split x) (== x y))
                        (s#)))
                (== true x))
          '())))
 
-(deftest test-cond-a-4
+(deftest test-conda-4
   (is (= (run* [x]
                (exist (x y)
                       (== 'split x)
                       (== 'pea y)
-                      (cond-a
+                      (conda
                        ((== x y) (== 'split x))
                        (s#)))
                (== true x))
          '(true))))
 
-(defn not-pasta-o [x]
-    (cond-a
+(defn not-pastao [x]
+    (conda
      ((== 'pasta x) u#)
      (s#)))
 
-(deftest test-cond-a-5
+(deftest test-conda-5
   (is (= (run* [x]
-               (cond-a
-                ((not-pasta-o x))
+               (conda
+                ((not-pastao x))
                 ((== 'spaghetti x))))
          '(spaghetti))))
 
 ;; -----------------------------------------------------------------------------
-;; cond-u (committed-choice)
+;; condu (committed-choice)
 
-(defn once-o [g]
-    (cond-u
+(defn onceo [g]
+    (condu
      (g s#)))
 
-(deftest test-cond-u-1
+(deftest test-condu-1
   (is (= (run* [x]
-               (once-o (teacup-o x)))
+               (onceo (teacupo x)))
          '(tea))))
 
-(deftest test-cond-u-2
+(deftest test-condu-2
   (is (= (run* [r]
-               (cond-e
-                ((teacup-o r) s#)
+               (conde
+                ((teacupo r) s#)
                 ((== false r) s#)))
          '(false tea cup))))
 
-(deftest test-cond-u-3
+(deftest test-condu-3
   (is (= (run* [r]
-               (cond-a
-                ((teacup-o r) s#)
+               (conda
+                ((teacupo r) s#)
                 ((== false r) s#)))
          '(tea cup))))
 
@@ -987,62 +987,3 @@
                       (!= x y)
                       (== q x)))
          ())))
-
-;; -----------------------------------------------------------------------------
-;; all-different
-
-(comment
- (deftest test-all-different-1
-   (is (= (run* [q]
-                (exist [x y]
-                       (all-different x y)
-                       (== x 1)
-                       (== y 1)
-                       (== q x)))
-          ())))
-
- (deftest test-all-different-2
-   (is (= (run* [q]
-                (exist [x y]
-                       (all-different x y)
-                       (== x 1)
-                       (== y 2)
-                       (== q x)))
-          '(1))))
-
- (deftest test-all-different-3
-   (is (= (run* [q]
-                (exist [x y]
-                       (== x 1)
-                       (all-different x y)
-                       (== y 1)
-                       (== q x)))
-          ())))
-
- (deftest test-all-different-4
-   (is (= (run* [q]
-                (exist [x y]
-                       (== x 1)
-                       (all-different x y)
-                       (== y 2)
-                       (== q x)))
-          '(1))))
-
- (deftest test-all-different-5
-   (is (= (run* [q]
-                (exist [x y]
-                       (== x 1)
-                       (== y 1)
-                       (all-different x y)
-                       (== q x)))
-          '())))
-
- (deftest test-all-different-6
-   (is (= (run* [q]
-                (exist [x y]
-                       (== x 1)
-                       (== y 2)
-                       (all-different x y)
-                       (== q x)))
-          '(1))))
- )

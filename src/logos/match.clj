@@ -76,7 +76,7 @@
   `(~t
     ~@(map list (map (handle-clause as) cs))))
 
-(defn defn-m [t n as & cs]
+(defn defnm [t n as & cs]
   (if-let [tabled? (-> n meta :tabled)]
     `(def ~n
        (logos.tabled/tabled [~@as]
@@ -84,28 +84,22 @@
     `(defn ~n [~@as]
        ~(handle-clauses t as cs))))
 
-(defmacro defn-e [& rest]
-  (apply defn-m `cond-e rest))
-
-(defmacro match-e [xs & cs]
-  (handle-clauses `cond-e xs cs))
-
 ;; -----------------------------------------------------------------------------
 ;; quick tests
 
 (comment
-  (defn-e append-o [x y z]
+  (defne appendo [x y z]
     ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+    ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 
-  (defn-e test1 [x y]
+  (defne test1 [x y]
     ([() _]))
 
-  (defn-e test2 [x y]
+  (defne test2 [x y]
     ([[_ _ ?a] _] (foo) (bar)))
 
   (defn test-match [x y]
-    (match-e [x y]
+    (matche [x y]
        ([() _])
-       ([[?a . ?b] [?c ?d]] (test-o ?a ?d))))
+       ([[?a . ?b] [?c ?d]] (testo ?a ?d))))
   )

@@ -13,7 +13,7 @@ A classic AI program:
   (:require [logos.minikanren :as mk]
             [logos.match :as m]))
 
-(m/defn-e move-o [before action after]
+(m/defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
     :grasp
     [:middle :onbox :middle :has]])
@@ -27,14 +27,14 @@ A classic AI program:
     :walk
     [?pos2 :onfloor ?box ?has]]))
 
-(m/defn-e canget-o [state out]
+(m/defne cangeto [state out]
   ([[_ _ _ :has] true])
   ([_ _] (mk/exist [action next]
-                   (move-o state action next)
-                   (canget-o next out))))
+                   (moveo state action next)
+                   (cangeto next out))))
 
 (mk/run 1 [q]
-      (canget-o [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
+      (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
 </pre>
 
 A classic Prolog program:
@@ -47,9 +47,9 @@ append([A|D],Y2,[A|R]) :− append(D,Y2,R).
 The Logos version is almost equally succinct:
 
 <pre>
-(defn-e append-o [x y z]
+(defne appendo [x y z]
     ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (append-o ?d y ?r)))
+    ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 </pre>
 
 h3. Tabling
@@ -57,21 +57,21 @@ h3. Tabling
 Logos as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in Logos if you create a tabled goal.
 
 <pre>
-(defn-e arc-o [x y]
+(defne arco [x y]
   ([:a :b])
   ([:b :a])
   ([:b :d]))
 
-(def path-o
+(def patho
   (tabled [x y]
-    (cond-e
-     ((arc-o x y))
+    (conde
+     ((arco x y))
      ((exist [z]
-        (arc-o x z)
-        (path-o z y))))))
+        (arco x z)
+        (patho z y))))))
 
 ;; (:b :a :d)
-(run* [q] (path-o :a q))
+(run* [q] (patho :a q))
 </pre>
 
 h3. Disequality

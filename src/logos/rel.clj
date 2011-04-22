@@ -62,7 +62,7 @@
 
   (def is
     (tabled [x y]
-       (cond-e
+       (conde
         ((subsumes x y))
         ((exist [z]
                 (subsumes x z)

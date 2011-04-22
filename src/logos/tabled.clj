@@ -155,25 +155,25 @@
               (reuse a# argv# cache# nil nil))))))))
 
 (comment
-  (defn-e arc-o [x y]
+  (defne arco [x y]
     ([:a :b])
     ([:b :a])
     ([:b :d]))
 
-  (def path-o
+  (def patho
     (tabled [x y]
-      (cond-e
-       ((arc-o x y))
+      (conde
+       ((arco x y))
        ((exist [z]
-          (arc-o x z)
-          (path-o z y))))))
+          (arco x z)
+          (patho z y))))))
 
   ;; (:b :a :d)
-  (run* [q] (path-o :a q))
+  (run* [q] (patho :a q))
 
   ;; 1.5s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
-       (doall (run* [q] (path-o :a q))))))
+       (doall (run* [q] (patho :a q))))))
   )
