@@ -83,23 +83,3 @@
                                ~(handle-clauses t as cs)))
     `(defn ~n [~@as]
        ~(handle-clauses t as cs))))
-
-;; -----------------------------------------------------------------------------
-;; quick tests
-
-(comment
-  (defne appendo [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
-
-  (defne test1 [x y]
-    ([() _]))
-
-  (defne test2 [x y]
-    ([[_ _ ?a] _] (foo) (bar)))
-
-  (defn test-match [x y]
-    (matche [x y]
-      ([() _])
-      ([[?a . ?b] [?c ?d]] (testo ?a ?d))))
-  )

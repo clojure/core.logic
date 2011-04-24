@@ -6,6 +6,7 @@
   (:use [logos.nonrel :exclude [lvar]] :reload)
   (:use [logos.disequality] :reload)
   (:use [logos.tabled] :reload)
+  (:use [logos.rel] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
@@ -984,3 +985,73 @@
 (deftest test-tabled-1
   (is (= (run* [q] (patho :a q))
          '(:b :a :d))))
+
+;; -----------------------------------------------------------------------------
+;; rel
+
+(defrel man p)
+
+(fact man 'Bob)
+(fact man 'John)
+(fact man 'Ricky)
+
+(defrel woman p)
+(fact woman 'Mary)
+(fact woman 'Martha)
+(fact woman 'Lucy)
+
+(defrel likes p1 p2)
+(fact likes 'Bob 'Mary)
+(fact likes 'John 'Martha)
+(fact likes 'Ricky 'Lucy)
+
+(defrel fun p)
+(fact fun 'Lucy)
+
+(deftest test-rel-1
+  (is (= (run* [q]
+           (exist [x y]
+             (likes x y)
+             (fun y)
+             (== q [x y])))
+         '([Ricky Lucy]))))
+
+;; -----------------------------------------------------------------------------
+;; Unifier
+
+(comment
+  (unifier' '(?x ?y) '(1 2))
+  (unifier' '(?x ?y 3) '(1 2 ?z))
+  (unifier' '[?x ?y] [1 2])
+  (unifier' '{x ?y a 2} '{x 1 a ?b})
+
+  ;; TODO: look into this
+  (def json-path1 (prep '{:foo ?x
+                          :bar {:baz [?y '#{valid}]}}))
+
+  (unifier json-path1 {:foo 1
+                       :bar {:baz [:correct '#{valid}]}})
+
+  (unifier json-path1 {:foo 1
+                       :bar {:baz [:incorrect false]}})
+
+  (def json-path2 (prep '{:foo ?x
+                          :bar {:baz [?y ?z]}}))
+
+  (unifier json-path2 {:foo "A val 1"
+                       :bar {:baz ["A val 2" "A val 3"]}})
+
+  (binding-map json-path2 {:foo "A val 1"
+                           :bar {:baz ["A val 2" "A val 3"]}})
+
+  ;; ~1.1
+  (dotimes [_ 10]
+    (let [expr {:foo "A val 1"
+                :bar {:baz ["A val 2" "A val 3"]}}]
+      (time
+       (dotimes [_ 2e5]
+         (binding-map json-path2 expr)))))
+
+  (def test-expr (prep '(?x 1 ?x)))
+  (unifier test-expr test-expr)
+  )
