@@ -5,6 +5,7 @@
   (:use [logos.match] :reload)
   (:use [logos.nonrel :exclude [lvar]] :reload)
   (:use [logos.disequality] :reload)
+  (:use [logos.tabled] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 
@@ -836,36 +837,6 @@
          '(tea cup))))
 
 ;; -----------------------------------------------------------------------------
-;; unbound
-
-(def intern (var-get #'logos.minikanren/intern))
-
-(deftest test-unbound-1
-  (is (= (run* [q]
-               (exist [x]
-                      (intern x)
-                      (== x 5)
-                      (== x q)))
-         '(5))))
-
-(deftest test-unbound-2
-  (is (= (run* [q]
-               (exist [x]
-                      (== x 5)
-                      (intern x)
-                      (== x q)))
-         '(5))))
-
-(deftest test-unbound-3
-  (is (= (run* [q]
-               (exist [x y]
-                      (== x y)
-                      (== y 5)
-                      (intern y)
-                      (== x q)))
-         '(5))))
-
-;; -----------------------------------------------------------------------------
 ;; disequality
 
 (deftest test-disequality-1
@@ -987,3 +958,29 @@
                       (!= x y)
                       (== q x)))
          ())))
+
+
+;; -----------------------------------------------------------------------------
+;; match
+
+
+
+;; -----------------------------------------------------------------------------
+;; tabled
+
+(defne arco [x y]
+  ([:a :b])
+  ([:b :a])
+  ([:b :d]))
+
+(def patho
+     (tabled [x y]
+       (conde
+         ((arco x y))
+         ((exist [z]
+            (arco x z)
+            (patho z y))))))
+
+(deftest test-tabled-1
+  (is (= (run* [q] (patho :a q))
+         '(:b :a :d))))

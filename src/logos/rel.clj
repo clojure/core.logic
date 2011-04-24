@@ -125,8 +125,8 @@
 
   (run* [q]
     (exist [x y]
-      (fun y)
       (likes x y)
+      (fun y)
       (== q [x y])))
 
   ;; 200ms

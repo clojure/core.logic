@@ -153,27 +153,3 @@
                     ~@grest
                     (master argv# cache#)) a#))
                (reuse a# argv# cache# nil nil))))))))
-
-(comment
-  (defne arco [x y]
-    ([:a :b])
-    ([:b :a])
-    ([:b :d]))
-
-  (def patho
-       (tabled [x y]
-         (conde
-           ((arco x y))
-           ((exist [z]
-              (arco x z)
-              (patho z y))))))
-
-  ;; (:b :a :d)
-  (run* [q] (patho :a q))
-
-  ;; 1.5s
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (doall (run* [q] (patho :a q))))))
-  )

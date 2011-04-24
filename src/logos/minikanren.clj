@@ -207,16 +207,12 @@
              (let [u (walk this u)]
                (swap this (add-constraint u c))))
 
-  ;; get the var (usually the one w/ constraints on it)
   (get-var [this v]
            (first (find s v)))
 
   (use-verify [this f]
               (Substitutions. s l f cs))
   
-  ;; NOTE: a little bittle slower with find than get
-  ;; we do this for disequality constraints since the
-  ;; entry always has the constrained var
   (walk [this v]
         (loop [lv v [v v'] (find s v)]
           (cond
@@ -224,16 +220,7 @@
            (identical? v' unbound) v
            (not (lvar? v')) v'
            :else (recur v' (find s v')))))
-
-  ;; TODO: remove, we can use walk-var
-  (walk-unbound [this v]
-                (loop [v v lv nil]
-                  (cond
-                   (identical? v ::not-found) lv
-                   (not (lvar? v)) v
-                   :else (recur (get s v ::not-found) v))))
   
-  ;; when we just want to get the var
   (walk-var [this v]
             (loop [lv v [v v'] (find s v)]
               (cond
@@ -268,15 +255,6 @@
 
   (build [this u]
          (build-term u this)))
-
-(defn unbound1 [s u]
-  (let [u' (walk-unbound s u)]
-    (cond
-     (identical? u' u) (ext-no-check s u unbound)
-     :else s)))
-
-(defn unbound* [s & vars]
-  (reduce unbound1 s vars))
 
 (defn ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -923,11 +901,6 @@
 (def s# succeed)
 
 (def u# fail)
-
-(defn ^:private intern
-  ([& vars]
-     (fn [a]
-       (apply unbound* a vars))))
 
 (defmacro == [u v]
   `(fn [a#]

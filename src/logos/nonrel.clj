@@ -138,8 +138,3 @@
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
        a# nil)))
-
-(comment
-  (run 1 [q]
-    (nonlvar q))
-  )
