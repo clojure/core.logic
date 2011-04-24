@@ -21,18 +21,17 @@
    (lcons-p? p) (p->llist p)
    (and (coll? p)
         (not= (first p) 'quote)) `[~@(map p->term p)]
-        :else p))
+   :else p))
 
 (defn lvar-sym? [s]
   (= (first (str s)) \?))
 
 (defn extract-vars
   ([p]
-     (set
-      (cond
-       (lvar-sym? p) [p]
-       (coll? p) (filter lvar-sym? (flatten p))
-       :else nil)))
+     (set (cond
+           (lvar-sym? p) [p]
+           (coll? p) (filter lvar-sym? (flatten p))
+           :else nil)))
   ([p seen]
      (set/difference (extract-vars p) (set seen))))
 
@@ -67,14 +66,20 @@
                (ex vs t a r)
                (ex vs t a))))))
 
+(defn all-blank? [p]
+  (every? #(= % '_) p))
+
 (defn handle-clause [as]
   (fn [[p & exprs]]
-    (let [pas (partition 2 (interleave p as))]
-      (ex* pas exprs #{}))))
+    (let [pas (partition 2 (interleave p as))
+          r (ex* pas exprs #{})]
+      (if (all-blank? p)
+        r
+        (list r)))))
 
 (defn handle-clauses [t as cs]
   `(~t
-    ~@(map list (map (handle-clause as) cs))))
+    ~@(map (handle-clause as) cs)))
 
 (defn defnm [t n as & cs]
   (if-let [tabled? (-> n meta :tabled)]

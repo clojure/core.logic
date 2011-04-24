@@ -159,7 +159,6 @@
   (get-var [this v])
   (use-verify [this f])
   (walk [this v])
-  (walk-unbound [this v])
   (walk-var [this v])
   (walk* [this v])
   (unify [this u v])
