@@ -1,5 +1,5 @@
 (ns logos.minikanren
-  (:refer-clojure :exclude [reify == inc intern])
+  (:refer-clojure :exclude [reify == inc])
   (:use [clojure.pprint :only [pprint]])
   (:import [java.io Writer]))
 
