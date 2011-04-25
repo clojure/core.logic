@@ -1,5 +1,5 @@
 (ns logos.arithmetic
-  (:refer-clojure :exclude [reify == inc = > < >= <= + - * / mod])
+  (:refer-clojure :exclude [reify == inc = > < >= <=])
   (:use logos.minikanren
         [logos.nonrel :only [project]])
   (:import [logos.minikanren Substitutions]))
