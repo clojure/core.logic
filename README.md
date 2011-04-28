@@ -1,10 +1,12 @@
-h4. core.logic
+core.logic
+----
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> ~2.1s without <code>occurs-check</code>.
 
-h4. Examples
+Examples
+----
 
 A classic AI program:
 
@@ -52,7 +54,8 @@ The core.logic version is almost equally succinct:
     ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 ```
 
-h3. Tabling
+Tabling
+----
 
 core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in core.logic if you create a tabled goal.
 
@@ -74,7 +77,8 @@ core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs
 (run* [q] (patho :a q))
 ```
 
-h3. Disequality
+Disequality
+----
 
 core.logic supports disequality constraints.
 
@@ -94,7 +98,8 @@ core.logic supports disequality constraints.
     (== q [x y]))) ; ()
 ```
 
-h3. Unification
+Unification
+----
 
 core.logic comes with a unifier that can be used much like [core.unify](https://github.com/clojure/core.unify):
 
@@ -109,7 +114,8 @@ The above is quite slow since we have to walk the data structure and replace the
   (unifier u w))
 ```
 
-h3. Defining facts
+Defining facts
+----
 
 Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>. Facts are just tuples and core.logic will index them by the first element.
 
@@ -139,20 +145,23 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
     (== q [x y]))) ; ([Ricky Lucy])
 ```
 
-h2. About
+About
+----
 
 This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
 
 This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found [here](https://github.com/jduey/mini-kanren). His work on that got me interested in logic programming in the first place.
 
-h2. Roadmap
+Roadmap
+----
 
 The core Prolog aspect of core.logic is nearing completion. The following are tentative future directions:
 
 * Negation - Stratified Negation as provided by XSB ?
 * Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
-h2. YourKit
+YourKit
+----
 
 YourKit has has given me a free license for their profiler, greatly simplifying the profiling of core.logic performance. 
 
@@ -161,7 +170,8 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 * <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
 * <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
 
-h2. Notes
+Notes
+----
 
 I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
 
@@ -175,24 +185,23 @@ The goal and goal constructor portion has been written from scratch on top of th
 
 Currently the <code>Substitutions</code> deftype uses <code>clojure.lang.PersistentHashMap</code> internally. This may be replaced with something that provides better performance for triangular substitutions.
 
-h2. Goals
+Goals
+----
 
 * Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how core.logic is put together.
 * Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
 * Emphasis on pure relational programming.
 
-h2. Contributing
-
-I will only take contributions from people who have submitted Clojure CAs.
-
-h2. Interesting Questions
+Interesting Questions
+----
 
 * Can we avoid unification? Instead use map/filter when possible which are 10X faster?
 * Compilation to pure optimized Clojure ?
 * Compilation to byte-code ?
 * Fork/join ?
 
-h2. Resources
+Resources
+----
 
 * [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
 * [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
