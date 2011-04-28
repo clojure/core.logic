@@ -1,6 +1,6 @@
 h1. core.logic
 
-A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663. However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
+A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> ~2.1s without <code>occurs-check</code>.
 
@@ -96,7 +96,7 @@ core.logic supports disequality constraints.
 
 h3. Unification
 
-core.logic comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
+core.logic comes with a unifier that can be used much like [core.unify](https://github.com/clojure/core.unify):
 
 ```clj
 (unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
@@ -143,7 +143,7 @@ h2. About
 
 This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
 
-This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found "here":https://github.com/jduey/mini-kanren. His work on that got me interested in logic programming in the first place.
+This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found [here](https://github.com/jduey/mini-kanren). His work on that got me interested in logic programming in the first place.
 
 h2. Roadmap
 
@@ -194,27 +194,27 @@ h2. Interesting Questions
 
 h2. Resources
 
-* "Efficient Constraint Propagation Engines":http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008
-* "Techniques for Efficient Constraint Propagation":http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008
-* "Operations Research Tools developed at Google":http://code.google.com/p/or-tools/
-* "logilab-constraint":http://hg.logilab.org/logilab/constraint
-* "Solving Every Sudoku Puzzle":http://norvig.com/sudoku.html
-* "Constraint Handling Rules":http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html
-* "The XSB System Version 3.2 - Volume 2: Libraries, Interfaces, and Packages":http://xsb.sourceforge.net/manual2/manual2.pdf, particularly the section on Attributed Variables
-* "The XSB System Version 3.2 - Volume 1: Programmer's Manual":http://xsb.sourceforge.net/manual1/manual1.pdf
-* "Concepts, Technqiues, and Models of Computer Programming":http://www.info.ucl.ac.be/~pvr/book.html, Chapters 9 and 12
-* "Art of the Propagator":http://dspace.mit.edu/handle/1721.1/44215
-* "Constraint Propagation - Models, Techniques, Implementation":http://people.cs.kuleuven.be/~guido.tack/dissertation.php
-* "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html
-* "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663
-* "Efficient representations for triangular substitutions: A comparison in miniKanren":https://www.cs.indiana.edu/~lkuper/papers/walk.pdf
-* "A pattern matcher for miniKanren, or, how to get into trouble with CPS macros":http://www.cs.indiana.edu/~lkuper/papers/lambdae.pdf
-* "Kanren":http://kanren.sourceforge.net/
-* "Logical JVM: Implementing the miniKanren logic system in Scala":http://hircus.multics.org/kanren/presentation.html
-* "minikanren-scala":https://github.com/hircus/minikanren-scala
-* "Purely Functional Data Strucutres":http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.3080&rep=rep1&type=pdf
-* "Using Datalog with Binary Decision Diagrams for Program Analysis":http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf
-* "Memoing for Logic Programs":http://portal.acm.org/citation.cfm?id=131299
-* "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":http://portal.acm.org/citation.cfm?id=692605
+* [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
+* [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
+* [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_
+* [logilab-constraint](http://hg.logilab.org/logilab/constraint)
+* [Solving Every Sudoku Puzzle](http://norvig.com/sudoku.html)
+* [Constraint Handling Rules](http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html)
+* [The XSB System Version 3.2 - Volume 2: Libraries, Interfaces, and Packages](http://xsb.sourceforge.net/manual2/manual2.pdf), particularly the section on Attributed Variables
+* [The XSB System Version 3.2 - Volume 1: Programmer's Manual](http://xsb.sourceforge.net/manual1/manual1.pdf
+* [Concepts, Technqiues, and Models of Computer Programming](http://www.info.ucl.ac.be/~pvr/book.html), Chapters 9 and 12
+* [Art of the Propagator](http://dspace.mit.edu/handle/1721.1/44215)
+* [Constraint Propagation - Models, Techniques, Implementation](http://people.cs.kuleuven.be/~guido.tack/dissertation.php)
+* [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html)
+* [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663)
+* [Efficient representations for triangular substitutions: A comparison in miniKanren](https://www.cs.indiana.edu/~lkuper/papers/walk.pdf)
+* [A pattern matcher for miniKanren, or, how to get into trouble with CPS macros](http://www.cs.indiana.edu/~lkuper/papers/lambdae.pdf)
+* [Kanren](http://kanren.sourceforge.net/)
+* [Logical JVM: Implementing the miniKanren logic system in Scala](http://hircus.multics.org/kanren/presentation.html)
+* [minikanren-scala](https://github.com/hircus/minikanren-scala)
+* [Purely Functional Data Strucutres](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.64.3080&rep=rep1&type=pdf)
+* [Using Datalog with Binary Decision Diagrams for Program Analysis](http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf)
+* [Memoing for Logic Programs](http://portal.acm.org/citation.cfm?id=131299)
+* [Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains](http://portal.acm.org/citation.cfm?id=692605)
 
 Distributed under the Eclipse Public License, the same as Clojure.
