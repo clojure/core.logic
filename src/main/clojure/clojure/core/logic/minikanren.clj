@@ -1,6 +1,5 @@
 (ns clojure.core.logic.minikanren
   (:refer-clojure :exclude [reify == inc])
-  (:use [clojure.pprint :only [pprint]])
   (:import [java.io Writer]))
 
 (set! *warn-on-reflection* true)
