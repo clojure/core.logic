@@ -192,14 +192,6 @@ Goals
 * Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
 * Emphasis on pure relational programming.
 
-Interesting Questions
-----
-
-* Can we avoid unification? Instead use map/filter when possible which are 10X faster?
-* Compilation to pure optimized Clojure ?
-* Compilation to byte-code ?
-* Fork/join ?
-
 Resources
 ----
 
