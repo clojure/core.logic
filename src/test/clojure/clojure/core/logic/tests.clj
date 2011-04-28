@@ -7,8 +7,7 @@
   (:use [clojure.core.logic.disequality] :reload)
   (:use [clojure.core.logic.tabled] :reload)
   (:use [clojure.core.logic.rel] :reload)
-  (:use clojure.test clojure.pprint)
-  #_(:require [clojure.contrib.macro-utils :as macro]))
+  (:use clojure.test))
 
 ;; =============================================================================
 ;; unify
@@ -641,29 +640,23 @@
 ;; =============================================================================
 ;; membero
 
-(comment
- (deftest membero-1
-   (is (= (run* [q]
-            (macro/symbol-macrolet
-              [_ (lvar)]
-              (all
-               (== q [_])
-               (membero ['foo _] q)
-               (membero [_ 'bar] q))))
-          '([[foo bar]]))))
+(deftest membero-1
+  (is (= (run* [q]
+           (all
+            (== q [(lvar)])
+            (membero ['foo (lvar)] q)
+            (membero [(lvar) 'bar] q)))
+         '([[foo bar]]))))
 
- (deftest membero-2
-   (is (= (run* [q]
-            (macro/symbol-macrolet
-              [_ (lvar)]
-              (all
-               (== q [_ _])
-               (membero ['foo _] q)
-               (membero [_ 'bar] q))))
-          '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
-              [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
- )
-
+(deftest membero-2
+  (is (= (run* [q]
+           (all
+            (== q [(lvar) (lvar)])
+            (membero ['foo (lvar)] q)
+            (membero [(lvar) 'bar] q)))
+         '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
+             [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
+ 
 ;; -----------------------------------------------------------------------------
 ;; rembero
 

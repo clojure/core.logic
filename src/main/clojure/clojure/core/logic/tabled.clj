@@ -1,3 +1,6 @@
+;; See - William Byrd “Relational Programming in miniKanren:
+;; Techniques, Applications, and Implementations”
+
 (ns clojure.core.logic.tabled
   (:refer-clojure :exclude [reify == inc])
   (:use clojure.core.logic.minikanren)
