@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>core.logic</artifactId>
+  <version>0.6.1-SNAPSHOT</version>
+  <name>${artifactId}</name>
+  <description>A logic/relational programming library for Clojure</description>
+  <packaging>jar</packaging>
+
+  <licenses>
+    <license>
+      <name>Eclipse Public License 1.0</name>
+      <url>http://opensource.org/licenses/eclipse-1.0.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <parent>
+    <groupId>org.clojure</groupId>
+    <artifactId>pom.contrib</artifactId>
+    <version>0.0.21</version>
+  </parent>
+
+  <developers>
+    <developer>
+      <id>swannodette</id>
+      <name>David Nolen</name>
+      <url>http://dosync.posterous.com</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:git://github.com/clojure/core.logic.git</connection>
+    <url>http://github.com/clojure/core.logic</url>
+  </scm>
+
+  <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
+</project>
