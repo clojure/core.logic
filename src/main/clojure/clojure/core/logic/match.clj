@@ -1,6 +1,6 @@
 (ns clojure.core.logic.match
   (:refer-clojure :exclude [reify == inc])
-  (:use clojure.core.logic..minikanren)
+  (:use clojure.core.logic.minikanren)
   (:require [clojure.set :as set])
   (:import [clojure.core.logic.minikanren Substitutions]))
 
