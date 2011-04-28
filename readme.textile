@@ -8,7 +8,7 @@ h2. Examples
 
 A classic AI program:
 
-<pre>
+```clj
 (ns bratko-logos.monkey-banana
   (:require [logos.minikanren :as mk]
             [logos.match :as m]))
@@ -35,28 +35,28 @@ A classic AI program:
 
 (mk/run 1 [q]
       (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
-</pre>
+```
 
 A classic Prolog program:
 
-<pre>
+```prolog
 append ([] ,Y,Y).
 append([A|D],Y2,[A|R]) :− append(D,Y2,R).
-</pre>
+```
 
 The core.logic version is almost equally succinct:
 
-<pre>
+```clj
 (defne appendo [x y z]
     ([() _ y])
     ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
-</pre>
+```
 
 h3. Tabling
 
 core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in core.logic if you create a tabled goal.
 
-<pre>
+```clj
 (defne arco [x y]
   ([:a :b])
   ([:b :a])
@@ -72,13 +72,13 @@ core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs
 
 ;; (:b :a :d)
 (run* [q] (patho :a q))
-</pre>
+```
 
 h3. Disequality
 
 core.logic supports disequality constraints.
 
-<pre>
+```clj
 (run* [q]
   (exist [x y]
     (!= [x 2] [y 1])
@@ -92,28 +92,28 @@ core.logic supports disequality constraints.
     (== x 1)
     (== y 2)
     (== q [x y]))) ; ()
-</pre>
+```
 
 h3. Unification
 
 core.logic comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
 
-<pre>
+```clj
 (unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
-</pre>
+```
 
 The above is quite slow since we have to walk the data structure and replace the logic var symbols. It's more efficient to <code>prep</code> the expressions before hand if you're going to be unifying the same expressions over and over again.
 
-<pre>
+```clj
 (let [[u w] (map prep ['(?x ?y) (1 2)])]
   (unifier u w))
-</pre>
+```
 
 h3. Defining facts
 
 Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>. Facts are just tuples and core.logic will index them by the first element.
 
-<pre>
+```clj
 (defrel man p)
 (fact man 'Bob)
 (fact man 'John)
@@ -137,7 +137,7 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
     (fun y)
     (likes x y)
     (== q [x y]))) ; ([Ricky Lucy])
-</pre>
+```
 
 h2. About
 
@@ -165,9 +165,9 @@ h2. Notes
 
 I stayed pretty true to the ideas of the original implementation. There are however several key differences. Unification uses protocols in order leverage the full speed of the host. Clojure's cons operator differs significantly from Scheme's so I added the <code>LConsSeq</code> protocol. Sequences which end in a logic variables can be represented by using <code>lcons</code>
 
-<pre>
+```clj
 (lcons 'a (lvar 'b)) ; (a . <lvar:b>)
-</pre>
+```
 
 Logic variables are instances of <code>LVar</code> not vectors as they are in Scheme.
 
@@ -216,7 +216,5 @@ h2. Resources
 * "Using Datalog with Binary Decision Diagrams for Program Analysis":http://people.csail.mit.edu/mcarbin/papers/aplas05.pdf
 * "Memoing for Logic Programs":http://portal.acm.org/citation.cfm?id=131299
 * "Efficient bottom-up abstract interpretation of prolog by means of constraint solving over symbolic finite domains":http://portal.acm.org/citation.cfm?id=692605
-
-Copyright (C) 2010 David Nolen
 
 Distributed under the Eclipse Public License, the same as Clojure.
