@@ -1,7 +1,7 @@
 (ns clojure.core.logic.tabled
   (:refer-clojure :exclude [reify == inc])
   (:use clojure.core.logic.minikanren)
-  (:import [clojure.core.logic.minikanren Choice]))
+  (:import [clojure.core.logic.minikanren Substitutions Choice]))
 
 (set! *warn-on-reflection* true)
 
@@ -58,7 +58,7 @@
 
 ;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to them
 
-(extend-type logos.minikanren.Substitutions
+(extend-type Substitutions
   ITabled
 
   (-reify-tabled [this v]

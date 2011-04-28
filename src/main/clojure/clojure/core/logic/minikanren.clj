@@ -964,7 +964,7 @@
   `(lvar '~sym))
 
 (defmacro all
-  ([] `logos.minikanren/s#)
+  ([] `clojure.core.logic.minikanren/s#)
   ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
 
 ;; =============================================================================

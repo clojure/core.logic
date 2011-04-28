@@ -84,7 +84,7 @@
 (defn defnm [t n as & cs]
   (if-let [tabled? (-> n meta :tabled)]
     `(def ~n
-          (logos.tabled/tabled [~@as]
+          (clojure.core.logic.tabled/tabled [~@as]
                                ~(handle-clauses t as cs)))
     `(defn ~n [~@as]
        ~(handle-clauses t as cs))))

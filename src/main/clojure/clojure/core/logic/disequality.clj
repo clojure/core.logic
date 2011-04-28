@@ -1,8 +1,8 @@
 (ns clojure.core.logic.disequality
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren
-        logos.match)
-  (:import [logos.minikanren Substitutions Pair]))
+  (:use clojure.core.logic.minikanren
+        clojure.core.logic.match)
+  (:import [clojure.core.logic.minikanren Substitutions Pair]))
 
 ;; =============================================================================
 ;; Utilities
