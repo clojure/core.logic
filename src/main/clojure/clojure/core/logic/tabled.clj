@@ -1,7 +1,7 @@
-(ns logos.tabled
+(ns clojure.core.logic.tabled
   (:refer-clojure :exclude [reify == inc])
-  (:use [logos minikanren])
-  (:import [logos.minikanren Choice]))
+  (:use clojure.core.logic.minikanren)
+  (:import [clojure.core.logic.minikanren Choice]))
 
 (set! *warn-on-reflection* true)
 

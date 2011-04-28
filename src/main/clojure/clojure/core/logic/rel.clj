@@ -1,8 +1,8 @@
-(ns logos.rel
+(ns clojure.core.logic.rel
   (:refer-clojure :exclude [reify == inc test])
-  (:use logos.minikanren
-        logos.match
-        logos.tabled)
+  (:use clojure.core.logic.minikanren
+        clojure.core.logic.match
+        clojure.core.logic.tabled)
   (:require [clojure.set :as set]))
 
 (defn index [tuples]

@@ -1,9 +1,9 @@
-(ns logos.bench
+(ns clojure.core.logic.bench
   (:refer-clojure :exclude [reify inc ==])
-  (:use logos.minikanren
-        [logos.prelude :only [firsto defne]]
-        [logos.disequality :only [!=]])
-  (:require [logos.nonrel :as nonrel]
+  (:use clojure.core.logic.minikanren
+        [clojure.core.logic.prelude :only [firsto defne]]
+        [clojure.core.logic.disequality :only [!=]])
+  (:require [clojure.core.logic.nonrel :as nonrel]
             [clojure.contrib.macro-utils :as macro]))
 
 ;; =============================================================================

@@ -1,8 +1,8 @@
-(ns logos.nonrel
+(ns clojure.core.logic.nonrel
   (:refer-clojure :exclude [reify == inc])
-  (:use [logos.minikanren :exclude [lvar]]
-        logos.match)
-  (:import [logos.minikanren Substitutions Choice]))
+  (:use [clojure.core.logic.minikanren :exclude [lvar]]
+        clojure.core.logic.match)
+  (:import [clojure.core.logic.minikanren Substitutions Choice]))
 
 ;; =============================================================================
 ;; project

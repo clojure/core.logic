@@ -1,8 +1,8 @@
-(ns logos.prelude
+(ns clojure.core.logic.prelude
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren)
-  (:require logos.tabled
-            [logos.match :as match]))
+  (:use clojure.core.logic.minikanren)
+  (:require clojure.core.logic.tabled
+            [clojure.core.logic.match :as match]))
 
 
 (defn nullo [a]

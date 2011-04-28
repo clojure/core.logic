@@ -1,7 +1,7 @@
-(ns logos.unify
+(ns clojure.core.logic.unify
   (:use [clojure.walk :only [postwalk]]
         clojure.set)
-  (:require [logos.minikanren :as mk]))
+  (:require [clojure.core.logic.minikanren :as mk]))
 
 (defn lvarq-sym? [s]
   (= (first (str s)) \?))

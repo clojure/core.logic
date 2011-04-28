@@ -1,8 +1,8 @@
-(ns logos.arithmetic
+(ns clojure.core.logic.arithmetic
   (:refer-clojure :exclude [reify == inc = > < >= <=])
-  (:use logos.minikanren
-        [logos.nonrel :only [project]])
-  (:import [logos.minikanren Substitutions]))
+  (:use clojure.core.logic.minikanren
+        [clojure.core.logic.nonrel :only [project]])
+  (:import [clojure.core.logic.minikanren Substitutions]))
 
 (defmacro = [x y]
   `(fn [a#]

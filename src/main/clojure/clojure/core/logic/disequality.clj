@@ -1,4 +1,4 @@
-(ns logos.disequality
+(ns clojure.core.logic.disequality
   (:refer-clojure :exclude [reify == inc])
   (:use logos.minikanren
         logos.match)

@@ -1,12 +1,12 @@
-(ns logos.test.core
+(ns clojure.core.logic.tests
   (:refer-clojure :exclude [reify == inc intern])
-  (:use [logos.minikanren] :reload)
-  (:use [logos.prelude] :reload)
-  (:use [logos.match] :reload)
-  (:use [logos.nonrel :exclude [lvar]] :reload)
-  (:use [logos.disequality] :reload)
-  (:use [logos.tabled] :reload)
-  (:use [logos.rel] :reload)
+  (:use [clojure.core.logic.minikanren] :reload)
+  (:use [clojure.core.logic.prelude] :reload)
+  (:use [clojure.core.logic.match] :reload)
+  (:use [clojure.core.logic.nonrel :exclude [lvar]] :reload)
+  (:use [clojure.core.logic.disequality] :reload)
+  (:use [clojure.core.logic.tabled] :reload)
+  (:use [clojure.core.logic.rel] :reload)
   (:use clojure.test clojure.pprint)
   (:require [clojure.contrib.macro-utils :as macro]))
 

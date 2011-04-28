@@ -1,8 +1,8 @@
-(ns logos.match
+(ns clojure.core.logic.match
   (:refer-clojure :exclude [reify == inc])
-  (:use logos.minikanren)
+  (:use clojure.core.logic..minikanren)
   (:require [clojure.set :as set])
-  (:import [logos.minikanren Substitutions]))
+  (:import [clojure.core.logic.minikanren Substitutions]))
 
 (declare p->term)
 
