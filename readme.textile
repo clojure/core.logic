@@ -1,4 +1,4 @@
-h1. Logos
+h1. core.logic
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation "Relational Programming in miniKanren: Techniques, Applications, and Implementations":http://gradworks.umi.com/33/80/3380156.html. It's also described in great detail in the "The Reasoned Schemer":http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663. However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
@@ -44,7 +44,7 @@ append ([] ,Y,Y).
 append([A|D],Y2,[A|R]) :− append(D,Y2,R).
 </pre>
 
-The Logos version is almost equally succinct:
+The core.logic version is almost equally succinct:
 
 <pre>
 (defne appendo [x y z]
@@ -54,7 +54,7 @@ The Logos version is almost equally succinct:
 
 h3. Tabling
 
-Logos as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in Logos if you create a tabled goal.
+core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs that would not terminate in Prolog will terminate in core.logic if you create a tabled goal.
 
 <pre>
 (defne arco [x y]
@@ -76,7 +76,7 @@ Logos as of version 0.5.4 supports tabling. Certain kinds of logic programs that
 
 h3. Disequality
 
-Logos supports disequality constraints.
+core.logic supports disequality constraints.
 
 <pre>
 (run* [q]
@@ -96,7 +96,7 @@ Logos supports disequality constraints.
 
 h3. Unification
 
-Logos comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
+core.logic comes with a unifier that can be used much like "core.unify":https://github.com/clojure/core.unify:
 
 <pre>
 (unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
@@ -111,7 +111,7 @@ The above is quite slow since we have to walk the data structure and replace the
 
 h3. Defining facts
 
-Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>. Facts are just tuples and Logos will index them by the first element.
+Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>. Facts are just tuples and core.logic will index them by the first element.
 
 <pre>
 (defrel man p)
@@ -147,14 +147,14 @@ This is not the first implementation of miniKanren in Clojure. Jim Duey's versio
 
 h2. Roadmap
 
-The core Prolog aspect of Logos is nearing completion. The following are tentative future directions:
+The core Prolog aspect of core.logic is nearing completion. The following are tentative future directions:
 
 * Negation - Stratified Negation as provided by XSB ?
 * Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
 h2. YourKit
 
-YourKit has has given me a free license for their profiler, greatly simplifying the profiling of Logos performance. 
+YourKit has has given me a free license for their profiler, greatly simplifying the profiling of core.logic performance. 
 
 YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
 
@@ -177,7 +177,7 @@ Currently the <code>Substitutions</code> deftype uses <code>clojure.lang.Persist
 
 h2. Goals
 
-* Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how Logos is put together.
+* Simplicity. Optimizations should not destroy the *ideas* behind the original design. Any person willing to take take the time to understand the original Scheme implementation should have little trouble understanding how core.logic is put together.
 * Performance. This implementation is faster than miniKanren under Racket and seems to be close to performnace of miniKanren recorded by the original designers when running under Chez Scheme.
 * Emphasis on pure relational programming.
 
