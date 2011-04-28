@@ -1,10 +1,10 @@
-h1. core.logic
+h4. core.logic
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> ~2.1s without <code>occurs-check</code>.
 
-h2. Examples
+h4. Examples
 
 A classic AI program:
 
@@ -196,12 +196,12 @@ h2. Resources
 
 * [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
 * [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
-* [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_
+* [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_)
 * [logilab-constraint](http://hg.logilab.org/logilab/constraint)
 * [Solving Every Sudoku Puzzle](http://norvig.com/sudoku.html)
 * [Constraint Handling Rules](http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html)
 * [The XSB System Version 3.2 - Volume 2: Libraries, Interfaces, and Packages](http://xsb.sourceforge.net/manual2/manual2.pdf), particularly the section on Attributed Variables
-* [The XSB System Version 3.2 - Volume 1: Programmer's Manual](http://xsb.sourceforge.net/manual1/manual1.pdf
+* [The XSB System Version 3.2 - Volume 1: Programmer's Manual](http://xsb.sourceforge.net/manual1/manual1.pdf)
 * [Concepts, Technqiues, and Models of Computer Programming](http://www.info.ucl.ac.be/~pvr/book.html), Chapters 9 and 12
 * [Art of the Propagator](http://dspace.mit.edu/handle/1721.1/44215)
 * [Constraint Propagation - Models, Techniques, Implementation](http://people.cs.kuleuven.be/~guido.tack/dissertation.php)
