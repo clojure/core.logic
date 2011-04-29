@@ -42,8 +42,8 @@ A classic AI program:
 A classic Prolog program:
 
 ```prolog
-append ([] ,Y,Y).
-append([A|D],Y2,[A|R]) :− append(D,Y2,R).
+append([] ,Y,Y).
+append([A|D],Y2,[A|R]) :- append(D,Y2,R).
 ```
 
 The core.logic version is almost equally succinct:
