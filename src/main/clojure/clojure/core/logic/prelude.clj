@@ -1,9 +1,12 @@
 (ns clojure.core.logic.prelude
   (:refer-clojure :exclude [reify == inc])
   (:use clojure.core.logic.minikanren)
-  (:require clojure.core.logic.tabled
+  (:require [clojure.set :as set]
+            clojure.core.logic.tabled
             [clojure.core.logic.match :as match]))
 
+;; =============================================================================
+;; Basics from The Reasoned Schemer
 
 (defn nullo [a]
   (== '() a))
@@ -88,3 +91,52 @@
 
 (defmacro matchu [xs & cs]
   (match/handle-clauses `condu xs cs))
+
+;; =============================================================================
+;; Facts
+
+(defn index [tuples]
+  (->> tuples
+       (map (fn [[k :as t]] {k #{t}}))
+       (apply merge-with
+              (fn [a b] (set/union a b)))))
+
+(defmacro defrel [name & args]
+  (let [setsym (symbol (str name "-set"))
+        idxsym (symbol (str name "-indexed"))]
+    `(do
+       (def ~setsym (atom #{}))
+       (def ~idxsym (atom {}))
+       (defmacro ~name [~@args]
+         (defrelg '~setsym '~idxsym ~@args)))))
+
+(defn defrelg [setsym idxsym & args]
+  `(fn [a#]
+     (answers a# (deref ~setsym) (deref ~idxsym) [~@args])))
+
+;; NOTE: put in a dosync?
+
+(defmacro fact [rel & tuple]
+  (let [setsym (symbol (str rel "-set"))
+        idxsym (symbol (str rel "-indexed"))]
+    `(do
+       (swap! ~setsym conj [~@tuple])
+       (reset! ~idxsym (index @~setsym))
+       nil)))
+
+(defn to-stream [aseq]
+  (when (seq aseq)
+    (choice (first aseq)
+            (fn [] (to-stream (next aseq))))))
+
+(defn answers [a aset indexed [f & r :as t]]
+  (let [v (walk a f)
+        aset (if (lvar? v)
+               aset
+               (indexed v))]
+    (to-stream
+     (->> aset
+          (map (fn [cand]
+                 (when-let [a (unify a t cand)]
+                   a)))
+          (remove nil?)))))
