@@ -11,11 +11,9 @@ Examples
 A classic AI program:
 
 ```clj
-(ns bratko-logos.monkey-banana
-  (:require [logos.minikanren :as mk]
-            [logos.match :as m]))
+(use '[clojure.core.logic minikanren prelude])
 
-(m/defne moveo [before action after]
+(defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
     :grasp
     [:middle :onbox :middle :has]])
@@ -29,14 +27,14 @@ A classic AI program:
     :walk
     [?pos2 :onfloor ?box ?has]]))
 
-(m/defne cangeto [state out]
+(defne cangeto [state out]
   ([[_ _ _ :has] true])
-  ([_ _] (mk/exist [action next]
-                   (moveo state action next)
-                   (cangeto next out))))
+  ([_ _] (exist [action next]
+           (moveo state action next)
+           (cangeto next out))))
 
-(mk/run 1 [q]
-      (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
+(run 1 [q]
+  (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
 ```
 
 A classic Prolog program:
@@ -50,8 +48,8 @@ The core.logic version is almost equally succinct:
 
 ```clj
 (defne appendo [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
+  ([() _ y])
+  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 ```
 
 Tabling
