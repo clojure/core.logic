@@ -6,7 +6,6 @@
   (:use [clojure.core.logic.nonrel :exclude [lvar]] :reload)
   (:use [clojure.core.logic.disequality] :reload)
   (:use [clojure.core.logic.tabled] :reload)
-  (:use [clojure.core.logic.rel] :reload)
   (:use clojure.test))
 
 ;; =============================================================================

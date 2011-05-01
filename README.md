@@ -1,5 +1,5 @@
 core.logic
-----
+====
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
@@ -11,11 +11,9 @@ Examples
 A classic AI program:
 
 ```clj
-(ns bratko-logos.monkey-banana
-  (:require [logos.minikanren :as mk]
-            [logos.match :as m]))
+(use '[clojure.core.logic minikanren prelude])
 
-(m/defne moveo [before action after]
+(defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
     :grasp
     [:middle :onbox :middle :has]])
@@ -29,29 +27,29 @@ A classic AI program:
     :walk
     [?pos2 :onfloor ?box ?has]]))
 
-(m/defne cangeto [state out]
+(defne cangeto [state out]
   ([[_ _ _ :has] true])
-  ([_ _] (mk/exist [action next]
-                   (moveo state action next)
-                   (cangeto next out))))
+  ([_ _] (exist [action next]
+           (moveo state action next)
+           (cangeto next out))))
 
-(mk/run 1 [q]
-      (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
+(run 1 [q]
+  (cangeto [:atdoor :onfloor :atwindow :hasnot] q)) ; (true)
 ```
 
 A classic Prolog program:
 
 ```prolog
-append ([] ,Y,Y).
-append([A|D],Y2,[A|R]) :− append(D,Y2,R).
+append([] ,Y,Y).
+append([A|D],Y2,[A|R]) :- append(D,Y2,R).
 ```
 
 The core.logic version is almost equally succinct:
 
 ```clj
 (defne appendo [x y z]
-    ([() _ y])
-    ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
+  ([() _ y])
+  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 ```
 
 Tabling
