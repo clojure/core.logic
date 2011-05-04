@@ -1000,6 +1000,39 @@
          '([Ricky Lucy]))))
 
 ;; -----------------------------------------------------------------------------
+;; nil in collection
+
+(deftest test-nil-in-coll-1
+  (is (= (run* [q]
+           (== q [nil]))
+         '([nil]))))
+
+(deftest test-nil-in-coll-2
+  (is (= (run* [q]
+           (== q [1 nil]))
+         '([1 nil]))))
+
+(deftest test-nil-in-coll-3
+  (is (= (run* [q]
+           (== q [nil 1]))
+         '([nil 1]))))
+
+(deftest test-nil-in-coll-4
+  (is (= (run* [q]
+           (== q '(nil)))
+         '((nil)))))
+
+(deftest test-nil-in-coll-5
+  (is (= (run* [q]
+           (== q {:foo nil}))
+         '({:foo nil}))))
+
+(deftest test-nil-in-coll-6
+  (is (= (run* [q]
+           (== q {nil :foo}))
+         '({nil :foo}))))
+
+;; -----------------------------------------------------------------------------
 ;; Unifier
 
 (comment

@@ -650,6 +650,10 @@
 (defprotocol IReifyTerm
   (reify-term [v s]))
 
+(extend-protocol IReifyTerm
+  nil
+  (reify-term [v s] s))
+
 (extend-type Object
   IReifyTerm
   (reify-term [v s] s))
@@ -680,6 +684,10 @@
 
 (defprotocol IWalkTerm
   (walk-term [v s]))
+
+(extend-protocol IWalkTerm
+  nil
+  (walk-term [v s] nil))
 
 (extend-type Object
   IWalkTerm
@@ -733,6 +741,10 @@
 
 (defprotocol IOccursCheckTerm
   (occurs-check-term [v x s]))
+
+(extend-protocol IOccursCheckTerm
+  nil
+  (occurs-check-term [v x s] false))
 
 (extend-type Object
   IOccursCheckTerm
