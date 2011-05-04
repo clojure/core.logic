@@ -20,7 +20,9 @@
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
    (and (coll? p)
-        (not= (first p) 'quote)) `[~@(map p->term p)]
+        (not= (first p) 'quote)) (cond
+                                  (list? p) p
+                                  :else `[~@(map p->term p)])
    :else p))
 
 (defn lvar-sym? [s]
