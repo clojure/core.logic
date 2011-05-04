@@ -5,7 +5,6 @@
   <version>0.6.1-SNAPSHOT</version>
   <name>${artifactId}</name>
   <description>A logic/relational programming library for Clojure</description>
-  <packaging>jar</packaging>
 
   <licenses>
     <license>
@@ -31,13 +30,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/clojure/core.logic.git</connection>
+    <developerConnection>scm:git:git://github.com/clojure/core.logic.git</developerConnection>
     <url>http://github.com/clojure/core.logic</url>
   </scm>
-
-  <repositories>
-    <repository>
-      <id>sonatype-oss-snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-  </repositories>
 </project>
