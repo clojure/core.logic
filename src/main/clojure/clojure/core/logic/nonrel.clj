@@ -129,12 +129,12 @@
 ;; =============================================================================
 ;; lvar nonlvar
 
-(defmacro lvar [v]
+(defmacro lvaro [v]
   `(fn [a#]
      (if (lvar? (walk a# ~v))
        a# nil)))
 
-(defmacro nonlvar [v]
+(defmacro nonlvaro [v]
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
        a# nil)))
