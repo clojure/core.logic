@@ -22,7 +22,7 @@
 
 (defn ^SuspendedStream make-ss [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
-         (vector? ansv*)
+         (list? ansv*)
          (fn? f)]}
   (SuspendedStream. cache ansv* f))
 
@@ -150,7 +150,7 @@
            (let [key# (reify a# argv#)
                  cache# (get @table# key#)]
              (if (nil? cache#)
-               (let [cache# (atom [])]
+               (let [cache# (atom ())]
                  (swap! table# assoc key# cache#)
                  ((exist []
                     ~@grest

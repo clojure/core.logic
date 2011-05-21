@@ -969,6 +969,29 @@
   (is (= (run* [q] (patho :a q))
          '(:b :a :d))))
 
+(defne arco-2 [x y]
+  ([1 2])
+  ([1 4])
+  ([1 3])
+  ([2 3])
+  ([2 5])
+  ([3 4])
+  ([3 5])
+  ([4 5]))
+
+(def patho-2
+     (tabled [x y]
+       (conde
+         ((arco-2 x y))
+         ((exist [z]
+            (arco-2 x z)
+            (patho-2 z y))))))
+
+(deftest test-tabled-2
+  (let [r (set (run* [q] (patho-2 1 q)))]
+   (is (and (= (count r) 4)
+            (= r #{2 3 4 5})))))
+
 ;; -----------------------------------------------------------------------------
 ;; rel
 
