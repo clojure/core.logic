@@ -6,62 +6,56 @@
 
 (def ^:dynamic *occurs-check* true)
 
-;; =============================================================================
-;; Logic Variables
+(defprotocol IUnifyTerms
+  (unify-terms [u v s]))
+
+(defprotocol IUnifyWithNil
+  (unify-with-nil [v u s]))
+
+(defprotocol IUnifyWithObject
+  (unify-with-object [v u s]))
+
+(defprotocol IUnifyWithLVar
+  (unify-with-lvar [v u s]))
+
+(defprotocol IUnifyWithLSeq
+  (unify-with-lseq [v u s]))
+
+(defprotocol IUnifyWithSequential
+  (unify-with-seq [v u s]))
+
+(defprotocol IUnifyWithMap
+  (unify-with-map [v u s]))
+
+(defprotocol IUnifyWithSet
+  (unify-with-set [v u s]))
+
+(defprotocol IReifyTerm
+  (reify-term [v s]))
+
+(defprotocol IWalkTerm
+  (walk-term [v s]))
+
+(defprotocol IOccursCheckTerm
+  (occurs-check-term [v x s]))
+
+(defprotocol IBuildTerm
+  (build-term [u s]))
+
+(defprotocol IBind
+  (bind [this g]))
+
+(defprotocol IMPlus
+  (mplus [a f]))
+
+(defprotocol ITake
+  (take* [a]))
 
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
-(defprotocol ILVar
-  (constraints [this])
-  (add-constraint [this c])
-  (add-constraints [this ds])
-  (remove-constraint [this c])
-  (remove-constraints [this]))
-
-(deftype LVar [name hash cs]
-  Object
-  (toString [_] (str "<lvar:" name ">"))
-  (equals [this o]
-          (and (instance? LVar o)
-           (let [^LVar o o]
-             (identical? name (.name o)))))
-  (hashCode [_] hash)
-  ILVar
-  (constraints [_] cs)
-  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c)))
-  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds)))
-  (remove-constraint [_ c] (LVar. name hash (disj cs c)))
-  (remove-constraints [_] (LVar. name hash nil)))
-
-(defn ^LVar lvar
-  ([]
-     (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
-  ([name]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
-  ([name cs]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs))))
-
-(defmethod print-method LVar [x ^Writer writer]
-  (.write writer (str "<lvar:" (.name ^LVar x) ">")))
-
-(defn lvar? [x]
-  (instance? LVar x))
-
 ;; =============================================================================
-;; LCons
-
-(defprotocol LConsSeq
-  (lfirst [this])
-  (lnext [this]))
-
-;; TODO: clean up the printing code
-
-(defprotocol LConsPrint
-  (toShortString [this]))
+;; Pair
 
 (defprotocol IPair
   (lhs [this])
@@ -89,61 +83,8 @@
   (toString [_]
             (str "(" lhs " . " rhs ")")))
 
-(defn pair [lhs rhs]
+(defn ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
-
-(deftype LCons [a d cache]
-  LConsSeq
-  (lfirst [_] a)
-  (lnext [_] d)
-  LConsPrint
-  (toShortString [this]
-                 (cond
-                  (instance? LCons d) (str a " " (toShortString d))
-                  :else (str a " . " d )))
-  Object
-  (toString [this] (cond
-                    (instance? LCons d) (str "(" a " " (toShortString d) ")")
-                    :else (str "(" a " . " d ")")))
-  (equals [this o]
-          (or (identical? this o)
-              (and (instance? LCons o)
-                   (loop [me this
-                          you o]
-                     (cond
-                      (nil? me) (nil? you)
-                      (lvar? me) true
-                      (lvar? you) true
-                      :else (let [mef  (lfirst me)
-                                  youf (lfirst you)]
-                              (and (or (= mef youf)
-                                       (lvar? mef)
-                                       (lvar? youf))
-                                   (recur (lnext me) (lnext you)))))))))
-
-  (hashCode [this]
-            (if @cache
-              @cache
-              (loop [hash 1 xs this]
-                (if (or (nil? xs) (lvar? xs))
-                  (reset! cache hash)
-                  (let [val (lfirst xs)]
-                    (recur (unchecked-add-int
-                            (unchecked-multiply-int 31 hash)
-                            (clojure.lang.Util/hash val))
-                           (lnext xs))))))))
-
-(defmethod print-method LCons [x ^Writer writer]
-  (.write writer (str x)))
-
-(defn lcons [a d]
-  (if (or (coll? d) (nil? d))
-    (cons a (seq d))
-    (LCons. a d (atom nil))))
-
-(defmacro llist
-  ([f s] `(lcons ~f ~s))
-  ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
 ;; =============================================================================
 ;; Substitutions
@@ -172,6 +113,12 @@
 (declare reify-term)
 (declare walk-term)
 (declare build-term)
+(declare choice)
+(declare add-constraint)
+(declare lvar)
+(declare lvar?)
+(declare pair)
+(declare lcons)
 
 (deftype Substitutions [s l verify cs]
   Object
@@ -252,7 +199,16 @@
            (walk* (-reify empty-s v) v)))
 
   (build [this u]
-         (build-term u this)))
+         (build-term u this))
+
+  IBind
+  (bind [this g]
+        (g this))
+  IMPlus
+  (mplus [this f]
+         (choice this f))
+  ITake
+  (take* [this] this))
 
 (defn ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -276,33 +232,208 @@
     (make-s s l)))
 
 ;; =============================================================================
+;; Logic Variables
+
+(defprotocol ILVar
+  (constraints [this])
+  (add-constraint [this c])
+  (add-constraints [this ds])
+  (remove-constraint [this c])
+  (remove-constraints [this]))
+
+(deftype LVar [name hash cs]
+  Object
+  (toString [_] (str "<lvar:" name ">"))
+  (equals [this o]
+          (and (instance? LVar o)
+           (let [^LVar o o]
+             (identical? name (.name o)))))
+  (hashCode [_] hash)
+  ILVar
+  (constraints [_] cs)
+  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c)))
+  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds)))
+  (remove-constraint [_ c] (LVar. name hash (disj cs c)))
+  (remove-constraints [_] (LVar. name hash nil))
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-lvar v u s))
+  IUnifyWithNil
+  (unify-with-nil [v u s]
+    (ext-no-check s v u))
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (ext s v u))
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext-no-check s u v))
+  IUnifyWithLSeq
+  (unify-with-lseq [v u s]
+    (ext s v u))
+  IUnifyWithSequential
+  (unify-with-seq [v u s]
+    (ext s v u))
+  IUnifyWithMap
+  (unify-with-map [v u s]
+    (ext s v u))
+  IUnifyWithSet
+  (unify-with-set [v u s]
+    (ext s v u))
+  IReifyTerm
+  (reify-term [v s]
+    (ext s v (reify-lvar-name s)))
+  IWalkTerm
+  (walk-term [v s] v)
+  IOccursCheckTerm
+  (occurs-check-term [v x s] (= (walk s v) x))
+  IBuildTerm
+  (build-term [u s]
+   (let [m (.s ^Substitutions s)
+         l (.l ^Substitutions s)
+         lv (lvar 'ignore) ]
+     (if (contains? m u)
+       s
+       (make-s (assoc m u lv)
+               (cons (Pair. u lv) l))))))
+
+(defn ^LVar lvar
+  ([]
+     (let [name (str (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) nil)))
+  ([name]
+     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) nil)))
+  ([name cs]
+     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) cs))))
+
+(defmethod print-method LVar [x ^Writer writer]
+  (.write writer (str "<lvar:" (.name ^LVar x) ">")))
+
+(defn lvar? [x]
+  (instance? LVar x))
+
+;; =============================================================================
+;; LCons
+
+(defprotocol LConsSeq
+  (lfirst [this])
+  (lnext [this]))
+
+;; TODO: clean up the printing code
+
+(defprotocol LConsPrint
+  (toShortString [this]))
+
+(deftype LCons [a d cache]
+  LConsSeq
+  (lfirst [_] a)
+  (lnext [_] d)
+  LConsPrint
+  (toShortString [this]
+                 (cond
+                  (instance? LCons d) (str a " " (toShortString d))
+                  :else (str a " . " d )))
+  Object
+  (toString [this] (cond
+                    (instance? LCons d) (str "(" a " " (toShortString d) ")")
+                    :else (str "(" a " . " d ")")))
+  (equals [this o]
+          (or (identical? this o)
+              (and (instance? LCons o)
+                   (loop [me this
+                          you o]
+                     (cond
+                      (nil? me) (nil? you)
+                      (lvar? me) true
+                      (lvar? you) true
+                      :else (let [mef  (lfirst me)
+                                  youf (lfirst you)]
+                              (and (or (= mef youf)
+                                       (lvar? mef)
+                                       (lvar? youf))
+                                   (recur (lnext me) (lnext you)))))))))
+
+  (hashCode [this]
+            (if @cache
+              @cache
+              (loop [hash 1 xs this]
+                (if (or (nil? xs) (lvar? xs))
+                  (reset! cache hash)
+                  (let [val (lfirst xs)]
+                    (recur (unchecked-add-int
+                            (unchecked-multiply-int 31 hash)
+                            (clojure.lang.Util/hash val))
+                           (lnext xs)))))))
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-lseq v u s))
+  IUnifyWithNil
+  (unify-with-nil [v u s] false)
+  IUnifyWithObject
+  (unify-with-object [v u s] false)
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext s u v))
+  IUnifyWithLSeq
+  (unify-with-lseq [v u s]
+    (loop [u u v v s s]
+      (if (lvar? u)
+        (ext s u v)
+        (if (lvar? v)
+          (ext s v u)
+          (if-let [s (unify s (lfirst u) (lfirst v))]
+            (recur (lnext u) (lnext v) s)
+            false)))))
+  IUnifyWithSequential
+  (unify-with-seq [v u s]
+    (unify-with-lseq u v s))
+  IUnifyWithMap
+  (unify-with-map [v u s] false)
+  IUnifyWithSet
+  (unify-with-set [v u s] false)
+  IReifyTerm
+  (reify-term [v s]
+    (loop [v v s s]
+      (if (lvar? v)
+        (-reify s v)
+        (recur (lnext v) (-reify s (lfirst v))))))
+  ;; TODO: no way to make this non-stack consuming w/o a lot more thinking
+  ;; we could use continuation passing style and trampoline
+  IWalkTerm
+  (walk-term [v s]
+    (lcons (walk* s (lfirst v))
+           (walk* s (lnext v))))
+  IOccursCheckTerm
+  (occurs-check-term [v x s]
+    (loop [v v x x s s]
+      (if (lvar? v)
+        (occurs-check s x v)
+        (or (occurs-check s x (lfirst v))
+            (recur (lnext v) x s)))))
+  IBuildTerm
+  (build-term [u s]
+     (loop [u u s s]
+       (if (lvar? u)
+         (build s u)
+         (recur (lnext u) (build s (lfirst u)))))))
+
+(defmethod print-method LCons [x ^Writer writer]
+  (.write writer (str x)))
+
+(defn lcons [a d]
+  (if (or (coll? d) (nil? d))
+    (cons a (seq d))
+    (LCons. a d (atom nil))))
+
+(defmacro llist
+  ([f s] `(lcons ~f ~s))
+  ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
+
+;; =============================================================================
 ;; Unification
 
 ;; TODO : a lot of cascading ifs need to be converted to cond
-
-(defprotocol IUnifyTerms
-  (unify-terms [u v s]))
-
-(defprotocol IUnifyWithNil
-  (unify-with-nil [v u s]))
-
-(defprotocol IUnifyWithObject
-  (unify-with-object [v u s]))
-
-(defprotocol IUnifyWithLVar
-  (unify-with-lvar [v u s]))
-
-(defprotocol IUnifyWithLSeq
-  (unify-with-lseq [v u s]))
-
-(defprotocol IUnifyWithSequential
-  (unify-with-seq [v u s]))
-
-(defprotocol IUnifyWithMap
-  (unify-with-map [v u s]))
-
-(defprotocol IUnifyWithSet
-  (unify-with-set [v u s]))
 
 (extend-protocol IUnifyTerms
   nil
@@ -313,16 +444,6 @@
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-object v u s)))
-
-(extend-type LVar
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-lvar v u s)))
-
-(extend-type LCons
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-lseq v u s)))
 
 (extend-protocol IUnifyTerms
   clojure.lang.Sequential
@@ -350,15 +471,6 @@
   IUnifyWithNil
   (unify-with-nil [v u s] false))
 
-(extend-type LVar
-  IUnifyWithNil
-  (unify-with-nil [v u s]
-    (ext-no-check s v u)))
-
-(extend-type LCons
-  IUnifyWithNil
-  (unify-with-nil [v u s] false))
-
 (extend-protocol IUnifyWithNil
   clojure.lang.Sequential
   (unify-with-nil [v u s] false))
@@ -383,15 +495,6 @@
   (unify-with-object [v u s]
     (if (= u v) s false)))
 
-(extend-type LVar
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (ext s v u)))
-
-(extend-type LCons
-  IUnifyWithObject
-  (unify-with-object [v u s] false))
-
 (extend-protocol IUnifyWithObject
   clojure.lang.Sequential
   (unify-with-object [v u s] false))
@@ -412,16 +515,6 @@
   (unify-with-lvar [v u s] (ext-no-check s u v)))
 
 (extend-type Object
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext s u v)))
-
-(extend-type LVar
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext-no-check s u v)))
-
-(extend-type LCons
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext s u v)))
@@ -451,23 +544,6 @@
 (extend-type Object
   IUnifyWithLSeq
   (unify-with-lseq [v u s] false))
-
-(extend-type LVar
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s]
-    (ext s v u)))
-
-(extend-type LCons
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s]
-    (loop [u u v v s s]
-      (if (lvar? u)
-        (ext s u v)
-        (if (lvar? v)
-          (ext s v u)
-          (if-let [s (unify s (lfirst u) (lfirst v))]
-            (recur (lnext u) (lnext v) s)
-            false))))))
 
 (extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
@@ -502,16 +578,6 @@
   IUnifyWithSequential
   (unify-with-seq [v u s] false))
 
-(extend-type LVar
-  IUnifyWithSequential
-  (unify-with-seq [v u s]
-    (ext s v u)))
-
-(extend-type LCons
-  IUnifyWithSequential
-  (unify-with-seq [v u s]
-    (unify-with-lseq u v s)))
-
 (extend-protocol IUnifyWithSequential
   clojure.lang.IPersistentMap
   (unify-with-seq [v u s] false))
@@ -540,15 +606,6 @@
   (unify-with-map [v u s] false))
 
 (extend-type Object
-  IUnifyWithMap
-  (unify-with-map [v u s] false))
-
-(extend-type LVar
-  IUnifyWithMap
-  (unify-with-map [v u s]
-    (ext s v u)))
-
-(extend-type LCons
   IUnifyWithMap
   (unify-with-map [v u s] false))
 
@@ -585,15 +642,6 @@
   (unify-with-set [v u s] false))
 
 (extend-type Object
-  IUnifyWithSet
-  (unify-with-set [v u s] false))
-
-(extend-type LVar
-  IUnifyWithSet
-  (unify-with-set [v u s]
-    (ext s v u)))
-
-(extend-type LCons
   IUnifyWithSet
   (unify-with-set [v u s] false))
 
@@ -647,9 +695,6 @@
 ;; =============================================================================
 ;; Reification
 
-(defprotocol IReifyTerm
-  (reify-term [v s]))
-
 (extend-protocol IReifyTerm
   nil
   (reify-term [v s] s))
@@ -657,19 +702,6 @@
 (extend-type Object
   IReifyTerm
   (reify-term [v s] s))
-
-(extend-type LVar
-  IReifyTerm
-  (reify-term [v s]
-    (ext s v (reify-lvar-name s))))
-
-(extend-type LCons
-  IReifyTerm
-  (reify-term [v s]
-    (loop [v v s s]
-      (if (lvar? v)
-        (-reify s v)
-        (recur (lnext v) (-reify s (lfirst v)))))))
 
 (extend-protocol IReifyTerm
   clojure.lang.IPersistentCollection
@@ -682,9 +714,6 @@
 ;; =============================================================================
 ;; Walk Term
 
-(defprotocol IWalkTerm
-  (walk-term [v s]))
-
 (extend-protocol IWalkTerm
   nil
   (walk-term [v s] nil))
@@ -692,19 +721,6 @@
 (extend-type Object
   IWalkTerm
   (walk-term [v s] v))
-
-(extend-type LVar
-  IWalkTerm
-  (walk-term [v s] v))
-
-;; TODO: no way to make this non-stack consuming w/o a lot more thinking
-;; we could use continuation passing style and trampoline
-
-(extend-type LCons
-  IWalkTerm
-  (walk-term [v s]
-    (lcons (walk* s (lfirst v))
-           (walk* s (lnext v)))))
 
 (extend-protocol IWalkTerm
   clojure.lang.ISeq
@@ -739,9 +755,6 @@
 ;; =============================================================================
 ;; Occurs Check Term
 
-(defprotocol IOccursCheckTerm
-  (occurs-check-term [v x s]))
-
 (extend-protocol IOccursCheckTerm
   nil
   (occurs-check-term [v x s] false))
@@ -750,33 +763,17 @@
   IOccursCheckTerm
   (occurs-check-term [v x s] false))
 
-(extend-type LVar
-  IOccursCheckTerm
-  (occurs-check-term [v x s] (= (walk s v) x)))
-
-(extend-type LCons
-  IOccursCheckTerm
-  (occurs-check-term [v x s]
-    (loop [v v x x s s]
-      (if (lvar? v)
-        (occurs-check s x v)
-        (or (occurs-check s x (lfirst v))
-            (recur (lnext v) x s))))))
-
 (extend-protocol IOccursCheckTerm
   clojure.lang.IPersistentCollection
   (occurs-check-term [v x s]
     (loop [v v x x s s]
       (if (seq v)
-        (or (occurs-check s x (first v))
+,        (or (occurs-check s x (first v))
             (recur (next v) x s))
         false))))
 
 ;; =============================================================================
 ;; Build Term
-
-(defprotocol IBuildTerm
-  (build-term [u s]))
 
 (extend-protocol IBuildTerm
   nil
@@ -785,25 +782,6 @@
 (extend-type Object
   IBuildTerm
   (build-term [u s] s))
-
-(extend-type LVar
-  IBuildTerm
-  (build-term [u s]
-   (let [m (.s ^Substitutions s)
-         l (.l ^Substitutions s)
-         lv (lvar 'ignore) ]
-     (if (contains? m u)
-       s
-       (make-s (assoc m u lv)
-               (cons (Pair. u lv) l))))))
-
-(extend-type LCons
-  IBuildTerm
-  (build-term [u s]
-     (loop [u u s s]
-       (if (lvar? u)
-         (build s u)
-         (recur (lnext u) (build s (lfirst u)))))))
 
 (extend-protocol IBuildTerm
   clojure.lang.ISeq
@@ -812,15 +790,6 @@
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
-
-(defprotocol IBind
-  (bind [this g]))
-
-(defprotocol IMPlus
-  (mplus [a f]))
-
-(defprotocol ITake
-  (take* [a]))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -852,7 +821,7 @@
   (take* [this]
          (lazy-seq (cons (first a) (lazy-seq (take* f))))))
 
-(defn choice [a f]
+(defn ^Choice choice [a f]
   (Choice. a f))
 
 ;; -----------------------------------------------------------------------------
@@ -872,16 +841,6 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unit
-
-(extend-type Substitutions
-  IBind
-  (bind [this g]
-        (g this))
-  IMPlus
-  (mplus [this f]
-         (Choice. this f))
-  ITake
-  (take* [this] this))
 
 (extend-type Object
   IMPlus
