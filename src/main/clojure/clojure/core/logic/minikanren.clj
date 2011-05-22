@@ -768,7 +768,7 @@
   (occurs-check-term [v x s]
     (loop [v v x x s s]
       (if (seq v)
-,        (or (occurs-check s x (first v))
+        (or (occurs-check s x (first v))
             (recur (next v) x s))
         false))))
 
