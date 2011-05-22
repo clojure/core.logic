@@ -1,7 +1,7 @@
 core.logic
 ====
 
-A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
+A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> ~2.1s without <code>occurs-check</code>.
 
@@ -204,7 +204,7 @@ Resources
 * [Concepts, Technqiues, and Models of Computer Programming](http://www.info.ucl.ac.be/~pvr/book.html), Chapters 9 and 12
 * [Art of the Propagator](http://dspace.mit.edu/handle/1721.1/44215)
 * [Constraint Propagation - Models, Techniques, Implementation](http://people.cs.kuleuven.be/~guido.tack/dissertation.php)
-* [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://gradworks.umi.com/33/80/3380156.html)
+* [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156)
 * [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663)
 * [Efficient representations for triangular substitutions: A comparison in miniKanren](https://www.cs.indiana.edu/~lkuper/papers/walk.pdf)
 * [A pattern matcher for miniKanren, or, how to get into trouble with CPS macros](http://www.cs.indiana.edu/~lkuper/papers/lambdae.pdf)
