@@ -316,6 +316,18 @@
 ;; =============================================================================
 ;; LCons
 
+(defmacro umi
+  [& args]
+  (if (resolve 'unchecked-multiply-int)
+    `(unchecked-multiply-int ~@args)
+    `(unchecked-multiply ~@args)))
+
+(defmacro uai
+  [& args]
+  (if (resolve 'unchecked-add-int)
+    `(unchecked-add-int ~@args)
+    `(unchecked-add ~@args)))
+
 (defprotocol LConsSeq
   (lfirst [this])
   (lnext [this]))
@@ -357,12 +369,12 @@
   (hashCode [this]
             (if @cache
               @cache
-              (loop [hash 1 xs this]
+              (loop [hash (int 1) xs this]
                 (if (or (nil? xs) (lvar? xs))
                   (reset! cache hash)
                   (let [val (lfirst xs)]
-                    (recur (unchecked-add-int (unchecked-multiply-int 31 hash)
-                                              (clojure.lang.Util/hash val))
+                    (recur (uai (umi (int 31) hash)
+                                (clojure.lang.Util/hash val))
                            (lnext xs)))))))
   IUnifyTerms
   (unify-terms [u v s]
