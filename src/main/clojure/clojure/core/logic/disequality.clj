@@ -39,9 +39,9 @@
   (when-let [s (constraint-verify-simple s u v)]
     (if-let [cs (.cs s)]
       (let [cs (propagate cs s u v)
-            s (reduce (fn [s [u c]]
-                        (constrain s u c))
-                      s (get-simplified cs))
+            ^Substitutions s (reduce (fn [s [u c]]
+                                       (constrain s u c))
+                                     s (get-simplified cs))
             s (make-s (.s s) (.l s)
                       constraint-verify (discard-simplified cs))]
         (constraint-verify-simple s (get-var s u) v))
@@ -52,14 +52,14 @@
 
 (defn unify* [^Substitutions s m]
   (loop [[[u v :as p] & r] (seq m) result {}]
-    (let [^Substitutions s' (unify s u v)]
+    (let [^Substitutions sp (unify s u v)]
       (cond
        (nil? p) result
-       (not s') nil
-       (identical? s s') (recur r result)
+       (not sp) nil
+       (identical? s sp) (recur r result)
        :else (recur r
                     (conj result
-                          (first (prefix (.l s') (.l s)))))))))
+                          (first (prefix (.l sp) (.l s)))))))))
 
 (extend-type Substitutions
   IDisequality
@@ -103,7 +103,7 @@
 (deftype Constraint [^String name m okeys hash]
   Object
   (equals [this o]
-          (and (instance? Constraint o)
+          (and (.. this getClass (isInstance o))
                (let [^Constraint o o]
                  (identical? name (.name o)))))
   (hashCode [_] hash)
@@ -194,10 +194,10 @@
                  (loop [[c & cr] cs me this]
                    (if (nil? c)
                      me
-                     (let [v' (walk s (get c u))]
+                     (let [vp (walk s (get c u))]
                        (cond
-                        (= v' v) (recur cr (refine-constraint me c u))
-                        (or (lvar? v')
+                        (= vp v) (recur cr (refine-constraint me c u))
+                        (or (lvar? vp)
                             (lvar? v)) (recur cr me)
                             :else (recur cr (discard-constraint me c)))))))
                this))
