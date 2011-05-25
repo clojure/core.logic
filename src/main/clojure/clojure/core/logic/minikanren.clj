@@ -361,8 +361,8 @@
                 (if (or (nil? xs) (lvar? xs))
                   (reset! cache hash)
                   (let [val (lfirst xs)]
-                    (recur (+ (* 31 hash)
-                              (clojure.lang.Util/hash val))
+                    (recur (unchecked-add-int (unchecked-multiply-int 31 hash)
+                                              (clojure.lang.Util/hash val))
                            (lnext xs)))))))
   IUnifyTerms
   (unify-terms [u v s]
