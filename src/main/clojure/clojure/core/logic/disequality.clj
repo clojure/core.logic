@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [reify == inc])
   (:use clojure.core.logic.minikanren
         clojure.core.logic.match)
-  (:import [clojure.core.logic.minikanren Substitutions Pair]))
+  (:import [clojure.core.logic.minikanren Substitutions Pair]
+           [java.io Writer]))
 
 ;; =============================================================================
 ;; Utilities
@@ -100,7 +101,7 @@
 ;; Constraint
 
 ;; need hashCode and equals for propagation bit
-(deftype Constraint [^String name m okeys hash]
+(deftype Constraint [^String name ^clojure.lang.Associative m okeys hash]
   Object
   (equals [this o]
           (and (.. this getClass (isInstance o))
@@ -131,7 +132,7 @@
 (defn constraint? [x]
   (instance? Constraint x))
 
-(defmethod print-method Constraint [x writer]
+(defmethod print-method Constraint [x ^Writer writer]
            (.write writer (str "<constraint:" (.m ^Constraint x) ">")))
 
 ;; =============================================================================
@@ -154,7 +155,7 @@
   (refine-constraint [this c u]
                      (let [^Constraint c c
                            name (.name c)
-                           c (dissoc (get cmap name) u)
+                           ^Constraint c (dissoc (get cmap name) u)
                            vmap (update-in vmap [u] #(disj % name))
                            vmap (if (empty? (vmap u))
                                   (dissoc vmap u)
@@ -175,7 +176,7 @@
   (discard-constraint [this c]
                       (let [^Constraint c c
                             name (.name c)
-                            c (get cmap name)
+                            ^Constraint c (get cmap name)
                             okeys (.okeys c)
                             cmap (dissoc cmap name)
                             vmap (reduce (fn [m v] ;; TODO: combine
