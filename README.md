@@ -3,7 +3,7 @@ core.logic
 
 A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
-Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> ~2.1s without <code>occurs-check</code>.
+Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes <code>logos.minikanren</code> running under Clojure 1.3.0-alpha7 less then 2s without <code>occurs-check</code>.
 
 Examples
 ----
@@ -142,13 +142,6 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
     (likes x y)
     (== q [x y]))) ; ([Ricky Lucy])
 ```
-
-About
-----
-
-This library is under heavy development as I cover the ideas in Byrd's thesis and other sources on logic programming. It currently only supports the Clojure 1.3.0 alphas.
-
-This is not the first implementation of miniKanren in Clojure. Jim Duey's version can be found [here](https://github.com/jduey/mini-kanren). His work on that got me interested in logic programming in the first place.
 
 Roadmap
 ----
