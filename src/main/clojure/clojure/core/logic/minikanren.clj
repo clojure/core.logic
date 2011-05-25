@@ -4,7 +4,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:dynamic *occurs-check* true)
+(def ^{:dynamic true} *occurs-check* true)
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -124,7 +124,7 @@
   Object
   (equals [this o]
     (or (identical? this o)
-        (and (instance? Substitutions o)
+        (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
 
   ISubstitutions
@@ -159,20 +159,20 @@
               (Substitutions. s l f cs))
   
   (walk [this v]
-        (loop [lv v [v v'] (find s v)]
+        (loop [lv v [v vp] (find s v)]
           (cond
            (nil? v) lv
-           (identical? v' unbound) v
-           (not (lvar? v')) v'
-           :else (recur v' (find s v')))))
+           (identical? vp unbound) v
+           (not (lvar? vp)) vp
+           :else (recur vp (find s vp)))))
   
   (walk-var [this v]
-            (loop [lv v [v v'] (find s v)]
+            (loop [lv v [v vp] (find s v)]
               (cond
                (nil? v) lv
-               (identical? v' unbound) v
-               (not (lvar? v')) v
-               :else (recur v' (find s v')))))
+               (identical? vp unbound) v
+               (not (lvar? vp)) v
+               :else (recur vp (find s vp)))))
   
   (walk* [this v]
          (let [v (walk this v)]
@@ -245,7 +245,7 @@
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
-          (and (instance? LVar o)
+          (and (.. this getClass (isInstance o))
            (let [^LVar o o]
              (identical? name (.name o)))))
   (hashCode [_] hash)
@@ -332,15 +332,15 @@
   LConsPrint
   (toShortString [this]
                  (cond
-                  (instance? LCons d) (str a " " (toShortString d))
+                  (.. this getClass (isInstance d)) (str a " " (toShortString d))
                   :else (str a " . " d )))
   Object
   (toString [this] (cond
-                    (instance? LCons d) (str "(" a " " (toShortString d) ")")
+                    (.. this getClass (isInstance d)) (str "(" a " " (toShortString d) ")")
                     :else (str "(" a " . " d ")")))
   (equals [this o]
           (or (identical? this o)
-              (and (instance? LCons o)
+              (and (.. this getClass (isInstance o))
                    (loop [me this
                           you o]
                      (cond
@@ -361,9 +361,8 @@
                 (if (or (nil? xs) (lvar? xs))
                   (reset! cache hash)
                   (let [val (lfirst xs)]
-                    (recur (unchecked-add-int
-                            (unchecked-multiply-int 31 hash)
-                            (clojure.lang.Util/hash val))
+                    (recur (+ (* 31 hash)
+                              (clojure.lang.Util/hash val))
                            (lnext xs)))))))
   IUnifyTerms
   (unify-terms [u v s]
