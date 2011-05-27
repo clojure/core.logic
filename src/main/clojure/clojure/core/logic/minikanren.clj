@@ -81,7 +81,7 @@
   (getValue [_] rhs)
   Object
   (toString [_]
-            (str "(" lhs " . " rhs ")")))
+    (str "(" lhs " . " rhs ")")))
 
 (defn ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
@@ -131,82 +131,82 @@
   (length [this] (count s))
 
   (occurs-check [this u v]
-                (let [v (walk this v)]
-                  (occurs-check-term v u this)))
+    (let [v (walk this v)]
+      (occurs-check-term v u this)))
   
   (ext [this u v]
-       (if (and *occurs-check* (occurs-check this u v))
-         this
-         (ext-no-check this u v)))
+    (if (and *occurs-check* (occurs-check this u v))
+      this
+      (ext-no-check this u v)))
 
   (ext-no-check [this u v]
-                (verify this u v))
+    (verify this u v))
 
   (swap [this cu]
-        (if (contains? s cu)
-          (let [v (s cu)]
-            (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
-          (Substitutions. (assoc s cu unbound) l verify cs)))
+    (if (contains? s cu)
+      (let [v (s cu)]
+        (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
+      (Substitutions. (assoc s cu unbound) l verify cs)))
 
   (constrain [this u c]
-             (let [u (walk this u)]
-               (swap this (add-constraint u c))))
+    (let [u (walk this u)]
+      (swap this (add-constraint u c))))
 
   (get-var [this v]
-           (first (find s v)))
+    (first (find s v)))
 
   (use-verify [this f]
-              (Substitutions. s l f cs))
+    (Substitutions. s l f cs))
   
   (walk [this v]
-        (loop [lv v [v vp] (find s v)]
-          (cond
-           (nil? v) lv
-           (identical? vp unbound) v
-           (not (lvar? vp)) vp
-           :else (recur vp (find s vp)))))
+    (loop [lv v [v vp] (find s v)]
+      (cond
+       (nil? v) lv
+       (identical? vp unbound) v
+       (not (lvar? vp)) vp
+       :else (recur vp (find s vp)))))
   
   (walk-var [this v]
-            (loop [lv v [v vp] (find s v)]
-              (cond
-               (nil? v) lv
-               (identical? vp unbound) v
-               (not (lvar? vp)) v
-               :else (recur vp (find s vp)))))
+    (loop [lv v [v vp] (find s v)]
+      (cond
+       (nil? v) lv
+       (identical? vp unbound) v
+       (not (lvar? vp)) v
+       :else (recur vp (find s vp)))))
   
   (walk* [this v]
-         (let [v (walk this v)]
-           (walk-term v this)))
+    (let [v (walk this v)]
+      (walk-term v this)))
 
   (unify [this u v]
-         (if (identical? u v)
-           this
-           (let [u (walk this u)
-                 v (walk this v)]
-             (if (identical? u v)
-               this
-               (unify-terms u v this)))))
+    (if (identical? u v)
+      this
+      (let [u (walk this u)
+            v (walk this v)]
+        (if (identical? u v)
+          this
+          (unify-terms u v this)))))
 
   (reify-lvar-name [this]
-                   (symbol (str "_." (count s))))
+    (symbol (str "_." (count s))))
 
   (-reify [this v]
-          (let [v (walk this v)]
-            (reify-term v this)))
+    (let [v (walk this v)]
+      (reify-term v this)))
 
   (reify [this v]
-         (let [v (walk* this v)]
-           (walk* (-reify empty-s v) v)))
+    (let [v (walk* this v)]
+      (walk* (-reify empty-s v) v)))
 
   (build [this u]
-         (build-term u this))
+    (build-term u this))
 
   IBind
   (bind [this g]
-        (g this))
+    (g this))
   IMPlus
   (mplus [this f]
-         (choice this f))
+    (choice this f))
   ITake
   (take* [this] this))
 
@@ -245,9 +245,9 @@
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
-          (and (.. this getClass (isInstance o))
-           (let [^LVar o o]
-             (identical? name (.name o)))))
+    (and (.. this getClass (isInstance o))
+         (let [^LVar o o]
+           (identical? name (.name o)))))
   (hashCode [_] hash)
   ILVar
   (constraints [_] cs)
@@ -288,13 +288,13 @@
   (occurs-check-term [v x s] (= (walk s v) x))
   IBuildTerm
   (build-term [u s]
-   (let [m (.s ^Substitutions s)
-         l (.l ^Substitutions s)
-         lv (lvar 'ignore) ]
-     (if (contains? m u)
-       s
-       (make-s (assoc m u lv)
-               (cons (Pair. u lv) l))))))
+    (let [m (.s ^Substitutions s)
+          l (.l ^Substitutions s)
+          lv (lvar 'ignore) ]
+      (if (contains? m u)
+        s
+        (make-s (assoc m u lv)
+                (cons (Pair. u lv) l))))))
 
 (defn ^LVar lvar
   ([]
@@ -343,39 +343,38 @@
   (lnext [_] d)
   LConsPrint
   (toShortString [this]
-                 (cond
-                  (.. this getClass (isInstance d)) (str a " " (toShortString d))
-                  :else (str a " . " d )))
+    (cond
+     (.. this getClass (isInstance d)) (str a " " (toShortString d))
+     :else (str a " . " d )))
   Object
   (toString [this] (cond
                     (.. this getClass (isInstance d)) (str "(" a " " (toShortString d) ")")
                     :else (str "(" a " . " d ")")))
   (equals [this o]
-          (or (identical? this o)
-              (and (.. this getClass (isInstance o))
-                   (loop [me this
-                          you o]
-                     (cond
-                      (nil? me) (nil? you)
-                      (lvar? me) true
-                      (lvar? you) true
-                      :else (let [mef  (lfirst me)
-                                  youf (lfirst you)]
-                              (and (or (= mef youf)
-                                       (lvar? mef)
-                                       (lvar? youf))
-                                   (recur (lnext me) (lnext you)))))))))
+    (or (identical? this o)
+        (and (.. this getClass (isInstance o))
+             (loop [me this
+                    you o]
+               (cond
+                (nil? me) (nil? you)
+                (lvar? me) true
+                (lvar? you) true
+                :else (let [mef  (lfirst me)
+                            youf (lfirst you)]
+                        (and (or (= mef youf)
+                                 (lvar? mef)
+                                 (lvar? youf))
+                             (recur (lnext me) (lnext you)))))))))
 
   (hashCode [this]
-            (if @cache
-              @cache
-              (loop [hash (int 1) xs this]
-                (if (or (nil? xs) (lvar? xs))
-                  (reset! cache hash)
-                  (let [val (lfirst xs)]
-                    (recur (uai (umi (int 31) hash)
-                                (clojure.lang.Util/hash val))
-                           (lnext xs)))))))
+    (or @cache
+      (loop [hash (int 1) xs this]
+        (if (or (nil? xs) (lvar? xs))
+          (reset! cache hash)
+          (let [val (lfirst xs)]
+            (recur (uai (umi (int 31) hash)
+                        (clojure.lang.Util/hash val))
+                   (lnext xs)))))))
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lseq v u s))
@@ -424,10 +423,10 @@
             (recur (lnext v) x s)))))
   IBuildTerm
   (build-term [u s]
-     (loop [u u s s]
-       (if (lvar? u)
-         (build s u)
-         (recur (lnext u) (build s (lfirst u)))))))
+    (loop [u u s s]
+      (if (lvar? u)
+        (build s u)
+        (recur (lnext u) (build s (lfirst u)))))))
 
 (defmethod print-method LCons [x ^Writer writer]
   (.write writer (str x)))
@@ -699,7 +698,7 @@
                     (recur (disj v vf) (conj vlvars vf) vmissing)
                     (recur (disj v vf) vlvars (conj vmissing vf))))
                 (unify s (concat ulvars umissing)
-                         (concat vmissing vlvars))))
+                       (concat vmissing vlvars))))
             false)
           s)))))
 
@@ -824,13 +823,13 @@
 (deftype Choice [a f]
   IBind
   (bind [this g]
-        (mplus (g a) (inc (bind f g))))
+    (mplus (g a) (inc (bind f g))))
   IMPlus
   (mplus [this fp]
-         (Choice. a (fn [] (mplus (fp) f))))
+    (Choice. a (fn [] (mplus (fp) f))))
   ITake
   (take* [this]
-         (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
 
 (defn ^Choice choice [a f]
   (Choice. a f))
@@ -856,7 +855,7 @@
 (extend-type Object
   IMPlus
   (mplus [this f]
-         (Choice. this f)))
+    (Choice. this f)))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
@@ -864,10 +863,10 @@
 (extend-type clojure.lang.Fn
   IBind
   (bind [this g]
-        (inc (bind (this) g)))
+    (inc (bind (this) g)))
   IMPlus
   (mplus [this f]
-         (inc (mplus (f) this)))
+    (inc (mplus (f) this)))
   ITake
   (take* [this] (lazy-seq (take* (this)))))
 
@@ -915,10 +914,10 @@
 
 (defmacro run [& [n [x] & g-rest]]
   `(let [xs# (take* (fn []
-                     ((exist [~x] ~@g-rest
-                             (fn [a#]
-                               (cons (reify a# ~x) '()))) ;; TODO: do we need this?
-                      empty-s)))]
+                      ((exist [~x] ~@g-rest
+                         (fn [a#]
+                           (cons (reify a# ~x) '()))) ;; TODO: do we need this?
+                       empty-s)))]
      (if ~n
        (take ~n xs#)
        xs#)))
