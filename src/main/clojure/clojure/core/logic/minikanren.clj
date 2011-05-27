@@ -337,7 +337,7 @@
 (defprotocol LConsPrint
   (toShortString [this]))
 
-(deftype LCons [a d cache]
+(deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache]
   LConsSeq
   (lfirst [_] a)
   (lnext [_] d)
@@ -367,14 +367,15 @@
                              (recur (lnext me) (lnext you)))))))))
 
   (hashCode [this]
-    (or @cache
+    (if (= cache -1)
       (loop [hash (int 1) xs this]
         (if (or (nil? xs) (lvar? xs))
-          (reset! cache hash)
+          (set! cache (int hash))
           (let [val (lfirst xs)]
             (recur (uai (umi (int 31) hash)
                         (clojure.lang.Util/hash val))
-                   (lnext xs)))))))
+                   (lnext xs))))))
+    cache)
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lseq v u s))
@@ -434,7 +435,7 @@
 (defn lcons [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
-    (LCons. a d (atom nil))))
+    (LCons. a d -1)))
 
 (defmacro llist
   ([f s] `(lcons ~f ~s))
