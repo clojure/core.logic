@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [reify == inc])
   (:use clojure.core.logic.minikanren)
   (:require [clojure.set :as set]
+            [clojure.core.logic.nonrel :as nonrel]
             clojure.core.logic.tabled
             [clojure.core.logic.match :as match]))
 
@@ -81,16 +82,16 @@
 ;; defnu, defna, matcha, matchu
 
 (defmacro defna [& rest]
-  (apply match/defnm `conda rest))
+  (apply match/defnm 'clojure.core.logic.nonrel/conda rest))
 
 (defmacro defnu [& rest]
-  (apply match/defnm `condu rest))
+  (apply match/defnm 'clojure.core.lgoic.nonrel/condu rest))
 
 (defmacro matcha [xs & cs]
-  (match/handle-clauses `conda xs cs))
+  (match/handle-clauses 'clojure.core.logic.nonrel/conda xs cs))
 
 (defmacro matchu [xs & cs]
-  (match/handle-clauses `condu xs cs))
+  (match/handle-clauses 'clojure.core.logic.nonrel/condu xs cs))
 
 ;; =============================================================================
 ;; Facts
