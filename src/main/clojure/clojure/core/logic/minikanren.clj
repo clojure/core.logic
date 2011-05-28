@@ -368,14 +368,11 @@
 
   (hashCode [this]
     (if (= cache -1)
-      (loop [hash (int 1) xs this]
-        (if (or (nil? xs) (lvar? xs))
-          (set! cache (int hash))
-          (let [val (lfirst xs)]
-            (recur (uai (umi (int 31) hash)
-                        (clojure.lang.Util/hash val))
-                   (lnext xs))))))
-    cache)
+      (do
+        (set! cache (uai (umi (int 31) (clojure.lang.Util/hash d))
+                         (clojure.lang.Util/hash a)))
+        cache)
+      cache))
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lseq v u s))
