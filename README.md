@@ -52,6 +52,61 @@ The core.logic version is almost equally succinct:
   ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 ```
 
+Here's a simple type inferencer for the simply typed lambda calculus based on a version originally written in Prolog:
+
+```
+(use '[clojure.core.logic minikanren prelude nonrel match])
+
+(defna findo [x l o]
+  ([_ [[?y '- o] . ?r] _] (project [x ?y] (== (= x ?y) true)))
+  ([_ [_ . ?c] _] (findo x ?c o)))
+
+(defn typedo [c x t]
+  (conda
+    ((lvaro x) (findo x c t))
+    ((matche [c x t]
+       ([_ [[?x] '>> ?a] [?s '-> ?t]]
+          (exist [l]
+            (== (lcons [?x '- ?s] c) l)
+            (typedo l ?a ?t)))
+       ([_ [:apply ?a ?b] _]
+          (exist [s o]
+            (typedo c ?a [s '-> t])
+            (typedo c ?b o)
+            (== s o)))))))
+
+(comment
+  ;; ([_.0 -> _.1])
+  (run* [q]
+    (exist [f a g b c]
+     (typedo [[f '- a] [g '- b]] [:apply f g] c)
+     (== q a)))
+
+  ;; ([int -> _.0])
+  (run* [q]
+    (exist [f a g b c]
+     (typedo [[f '- a] [g '- 'int]] [:apply f g] c)
+     (== q a)))
+
+  ;; (int)
+  (run* [q]
+    (exist [f a g b c]
+     (typedo [[f '- '[int -> float]] [g '- a]] [:apply f g] c)
+     (== q a)))
+
+  ;; ()
+  (run* [q]
+    (exist [f a b]
+      (typedo [f '- a] [:apply f f] b)))
+
+  ;; ([_.0 -> [[_.1 -> _.2] -> _.2]])
+  (run* [q]
+    (exist [x y t]
+      (typedo [] [[x] '>> [[y] '>> [:apply y x]]] t)
+      (== q t)))
+  )
+```
+
 Tabling
 ----
 
