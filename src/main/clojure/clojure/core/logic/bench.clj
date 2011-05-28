@@ -3,7 +3,8 @@
   (:use clojure.core.logic.minikanren
         [clojure.core.logic.prelude :only [firsto defne]]
         [clojure.core.logic.disequality :only [!=]])
-  (:require [clojure.core.logic.nonrel :as nonrel]))
+  (:require [clojure.core.logic.nonrel :as nonrel]
+            [clojure.core.logic.arithmetic :as a]))
 
 ;; =============================================================================
 ;; Utilities
@@ -180,44 +181,53 @@
 ;; =============================================================================
 ;; send more money
 
-(defne selecto [x l r]
-  ([_ [x . r] _])
-  ([_ [?y . ?xs] [?y . ?ys]]
-     (selecto x ?xs ?ys)))
+(defne takeouto [x l y]
+  ([_ [x . y] _])
+  ([_ [?h . ?t] [?h . ?r]] (takeouto x ?t ?r)))
+ 
+(defn digito [x l y]
+  (takeouto x l y))
+  
+(defn first-digito [x l y]
+  (all
+   (digito x l y)
+   (a/> x 0)))
 
-(defne assign-digitso [l1 l2]
-  ([() _])
-  ([[?d . ?ds] _]
-     (exist [nl]
-       (selecto ?d l2 nl)
-       (assign-digitso ?ds nl))))
+(defne do-send-moolao [q l ll]
+  ([[?send ?more ?money] _ _]
+     (exist [s e n d m o r y
+             l1 l2 l3 l4 l5 l6 l7 l8 l9]
+       (first-digito s l l1)
+       (first-digito m l1 l2)
+       (digito e l2 l3)
+       (digito n l3 l4)
+       (digito d l4 l5)
+       (digito o l5 l6)
+       (digito r l6 l7)
+       (digito y l7 l8)
+       (nonrel/project [s e n d m o r y]
+         (== ?send (+ (* s 1000) (* e 100) (* n 10) d))
+         (== ?more (+ (* m 1000) (* o 100) (* r 10) e))
+         (== ?money (+ (* m 10000) (* o 1000) (* n 100) (* e 10) y))
+         (nonrel/project [?send ?more]
+           (== ?money (+ ?send ?more)))))))
 
-(defn smm [x]
-  (exist [s e n d m o r y digits]
-    (== x [s e n d m o r y])
-    (== digits (range 10))
-    (assign-digitso x digits)
-    (nonrel/project [s e n d m o r y]
-      (== (> m 0) true)
-      (== (> s 0) true)
-      (== (+ (* 1e3 s) (* 1e2 e) (* 10 n) d (* 1e3 m) (* 1e2 o) (* 10 r) e)
-          (+ (* 1e4 m) (* 1e3 o) (* 1e2 n) (* 10 e) y)))))
+(defn send-money-quicklyo [send more money]
+  (exist [l]
+    (do-send-moolao [send more money] (range 10) l)))
 
 (comment
-  ;; SWI takes 4.4 seconds
-
-  ;; 113865ms, 113s
-  ;; 28X slower
-  ;; ([9 5 6 7 1 0 8 2])
+  ;; ~16-17s, w/o occurs-check
+  ;; SWI-Prolog takes 4s, so 3.8X faster
+  ;; again I suspect the overhead here is from
+  ;; interleaving, need to figure
   (time
-   (doall (run 1 [q]
-            (smm q))))
-
-  ;; looking at YourKit the time seems completely dominated by inc (thunking to force interleaving)
-  ;; not sure how to get better times w/o some sort of scheduler, a good argument for looking deeper
-  ;; at the ferns implementation and determining whether that can be made fast or not.
-
-  ;; send more money also benefits from constraints
+   (binding [*occurs-check* false]
+    (doall
+     (run 1 [q]
+       (exist [send more money]
+         (send-money-quicklyo send more money)
+         (== [send more money] q))))))
   )
 
 ;; =============================================================================
