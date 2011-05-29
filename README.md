@@ -58,52 +58,54 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
 (use '[clojure.core.logic minikanren prelude nonrel match])
 
 (defna findo [x l o]
-  ([_ [[?y '- o] . ?r] _] (project [x ?y] (== (= x ?y) true)))
+  ([_ [[?y :- o] . ?r] _] 
+    (project [x ?y] (== (= x ?y) true)))
   ([_ [_ . ?c] _] (findo x ?c o)))
 
 (defn typedo [c x t]
   (conda
     ((lvaro x) (findo x c t))
     ((matche [c x t]
-       ([_ [[?x] '>> ?a] [?s '-> ?t]]
+       ([_ [[?x] :>> ?a] [?s :> ?t]]
           (exist [l]
-            (== (lcons [?x '- ?s] c) l)
+            (conso [?x :- ?s] c l)
             (typedo l ?a ?t)))
        ([_ [:apply ?a ?b] _]
           (exist [s o]
-            (typedo c ?a [s '-> t])
+            (typedo c ?a [s :> t])
             (typedo c ?b o)
             (== s o)))))))
 
 (comment
-  ;; ([_.0 -> _.1])
+  ;; ([_.0 :> _.1])
   (run* [q]
-    (exist [f a g b c]
-     (typedo [[f '- a] [g '- b]] [:apply f g] c)
+    (exist [f g a b t]
+     (typedo [[f :- a] [g :- b]] [:apply f g] t)
      (== q a)))
 
-  ;; ([int -> _.0])
+  ;; ([:int :> _.0])
   (run* [q]
-    (exist [f a g b c]
-     (typedo [[f '- a] [g '- 'int]] [:apply f g] c)
+    (exist [f g a t]
+     (typedo [[f :- a] [g :- :int]] [:apply f g] t)
      (== q a)))
 
-  ;; (int)
+  ;; (:int)
   (run* [q]
-    (exist [f a g b c]
-     (typedo [[f '- '[int -> float]] [g '- a]] [:apply f g] c)
+    (exist [f g a t]
+     (typedo [[f :- [:int :> :float]] [g :- a]] 
+       [:apply f g] t)
      (== q a)))
 
   ;; ()
-  (run* [q]
+  (run* [t]
     (exist [f a b]
-      (typedo [f '- a] [:apply f f] b)))
+      (typedo [f :- a] [:apply f f] t)))
 
-  ;; ([_.0 -> [[_.1 -> _.2] -> _.2]])
-  (run* [q]
-    (exist [x y t]
-      (typedo [] [[x] '>> [[y] '>> [:apply y x]]] t)
-      (== q t)))
+  ;; ([_.0 :> [[_.1 :> _.2] :> _.2]])
+  (run* [t]
+    (exist [x y]
+      (typedo [] 
+        [[x] :>> [[y] :>> [:apply y x]]] t)))
   )
 ```
 
