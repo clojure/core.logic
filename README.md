@@ -58,7 +58,7 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
 (use '[clojure.core.logic minikanren prelude nonrel match])
 
 (defna findo [x l o]
-  ([_ [[?y :- o] . ?r] _] 
+  ([_ [[?y :- o] . _] _] 
     (project [x ?y] (== (= x ?y) true)))
   ([_ [_ . ?c] _] (findo x ?c o)))
 
@@ -101,7 +101,7 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
     (exist [f a b]
       (typedo [f :- a] [:apply f f] t)))
 
-  ;; ([_.0 :> [[_.1 :> _.2] :> _.2]])
+  ;; ([_.0 :> [[_.0 :> _.1] :> _.1]])
   (run* [t]
     (exist [x y]
       (typedo [] 
