@@ -9,7 +9,10 @@
 ;; =============================================================================
 ;; Basics from The Reasoned Schemer
 
-(defn nullo [a]
+(defn nilo [a]
+  (== nil a))
+
+(defn emptyo [a]
   (== '() a))
 
 (defn conso [a d l]
@@ -33,7 +36,7 @@
 
 (defn appendo [l s out]
   (conde
-    ((nullo l) (== s out))
+    ((emptyo l) (== s out))
     ((exist [a d res]
        (conso a d l)
        (conso a res out)
@@ -41,7 +44,7 @@
 
 (defn flatteno [s out]
   (conde
-    ((nullo s) (== '() out))
+    ((emptyo s) (== '() out))
     ((pairo s)
      (exist [a d res-a res-d]
        (conso a d s)
