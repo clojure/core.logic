@@ -337,6 +337,8 @@
 (defprotocol LConsPrint
   (toShortString [this]))
 
+(declare lcons?)
+
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache]
   LConsSeq
   (lfirst [_] a)
@@ -359,12 +361,14 @@
                 (nil? me) (nil? you)
                 (lvar? me) true
                 (lvar? you) true
-                :else (let [mef  (lfirst me)
-                            youf (lfirst you)]
-                        (and (or (= mef youf)
-                                 (lvar? mef)
-                                 (lvar? youf))
-                             (recur (lnext me) (lnext you)))))))))
+                (and (lcons? me) (lcons? you))
+                  (let [mef  (lfirst me)
+                        youf (lfirst you)]
+                    (and (or (= mef youf)
+                             (lvar? mef)
+                             (lvar? youf))
+                         (recur (lnext me) (lnext you))))
+                :else (= me you))))))
 
   (hashCode [this]
     (if (= cache -1)
@@ -388,11 +392,13 @@
     (loop [u u v v s s]
       (if (lvar? u)
         (ext s u v)
-        (if (lvar? v)
-          (ext s v u)
-          (if-let [s (unify s (lfirst u) (lfirst v))]
-            (recur (lnext u) (lnext v) s)
-            false)))))
+        (cond
+         (lvar? v) (ext s v u)
+         (and (lcons? u) (lcons? v))
+           (if-let [s (unify s (lfirst u) (lfirst v))]
+             (recur (lnext u) (lnext v) s)
+             false)
+         :else (unify s u v)))))
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (unify-with-lseq u v s))
@@ -403,9 +409,9 @@
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
-      (if (lvar? v)
-        (-reify s v)
-        (recur (lnext v) (-reify s (lfirst v))))))
+      (if (lcons? v)
+        (recur (lnext v) (-reify s (lfirst v)))
+        (-reify s v))))
   ;; TODO: no way to make this non-stack consuming w/o a lot more thinking
   ;; we could use continuation passing style and trampoline
   IWalkTerm
@@ -415,16 +421,16 @@
   IOccursCheckTerm
   (occurs-check-term [v x s]
     (loop [v v x x s s]
-      (if (lvar? v)
-        (occurs-check s x v)
+      (if (lcons? v)
         (or (occurs-check s x (lfirst v))
-            (recur (lnext v) x s)))))
+            (recur (lnext v) x s))
+        (occurs-check s x v))))
   IBuildTerm
   (build-term [u s]
     (loop [u u s s]
-      (if (lvar? u)
-        (build s u)
-        (recur (lnext u) (build s (lfirst u)))))))
+      (if (lcons? u)
+        (recur (lnext u) (build s (lfirst u)))
+        (build s u)))))
 
 (defmethod print-method LCons [x ^Writer writer]
   (.write writer (str x)))
@@ -433,6 +439,9 @@
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
     (LCons. a d -1)))
+
+(defn lcons? [x]
+  (instance? LCons x))
 
 (defmacro llist
   ([f s] `(lcons ~f ~s))
@@ -558,11 +567,11 @@
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
       (if (seq v)
-        (if (lvar? u)
-          (ext s u v)
+        (if (lcons? u)
           (if-let [s (unify s (lfirst u) (first v))]
             (recur (lnext u) (next v) s)
-            false))
+            false)
+          (ext s u v))
         (if (lvar? u)
           (ext-no-check s u '())
           false)))))
