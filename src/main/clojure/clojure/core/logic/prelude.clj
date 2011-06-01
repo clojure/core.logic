@@ -88,7 +88,7 @@
   (apply match/defnm 'clojure.core.logic.nonrel/conda rest))
 
 (defmacro defnu [& rest]
-  (apply match/defnm 'clojure.core.lgoic.nonrel/condu rest))
+  (apply match/defnm 'clojure.core.logic.nonrel/condu rest))
 
 (defmacro matcha [xs & cs]
   (match/handle-clauses 'clojure.core.logic.nonrel/conda xs cs))
