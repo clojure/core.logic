@@ -28,13 +28,13 @@
       (postwalk (replace-lvar lvars) expr)
       {:lvars @lvars})))
 
-(defn unifier [u w]
+(defn unifier* [u w]
   (first
    (mk/run* [q]
             (mk/== u w)
             (mk/== u q))))
 
-(defn binding-map [u w]
+(defn binding-map* [u w]
   (let [lvars (merge (-> u meta :lvars)
                      (-> w meta :lvars))
         s (mk/unify mk/empty-s u w)]
@@ -42,12 +42,12 @@
                     [k (mk/walk s v)])
                   lvars))))
 
-(defn unifier' [u w]
-  (let [u' (prep u)
-        w' (prep w)]
-    (unifier u' w')))
+(defn unifier [u w]
+  (let [up (prep u)
+        wp (prep w)]
+    (unifier* up wp)))
 
-(defn binding-map' [u w]
-  (let [u' (prep u)
-        w' (prep w)]
-    (binding-map u w)))
+(defn binding-map [u w]
+  (let [up (prep u)
+        wp (prep w)]
+    (binding-map* up wp)))
