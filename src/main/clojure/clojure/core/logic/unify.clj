@@ -4,7 +4,7 @@
   (:require [clojure.core.logic.minikanren :as mk]))
 
 (defn lvarq-sym? [s]
-  (= (first (str s)) \?))
+  (and (symbol? s) (= (first (str s)) \?)))
 
 (defn rem-? [s]
   (symbol (apply str (drop 1 (str s)))))
@@ -19,8 +19,6 @@
        (swap! store conj [expr v])
        v)
      :else expr)))
-
-;; TODO: replace postwalk with something much faster ?
 
 (defn prep [expr]
   (let [lvars (atom {})]
