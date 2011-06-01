@@ -161,14 +161,14 @@ Unification
 core.logic comes with a unifier that can be used much like [core.unify](https://github.com/clojure/core.unify):
 
 ```clj
-(unifier' '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
+(unifier '(?x ?y ?z) '(1 2 ?y)) ; (1 2 _.0)
 ```
 
 The above is quite slow since we have to walk the data structure and replace the logic var symbols. It's more efficient to <code>prep</code> the expressions before hand if you're going to be unifying the same expressions over and over again.
 
 ```clj
 (let [[u w] (map prep ['(?x ?y) (1 2)])]
-  (unifier u w))
+  (unifier* u w))
 ```
 
 Defining facts
