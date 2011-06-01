@@ -38,9 +38,10 @@
   (let [lvars (merge (-> u meta :lvars)
                      (-> w meta :lvars))
         s (mk/unify mk/empty-s u w)]
-    (into {} (map (fn [[k v]]
-                    [k (mk/walk s v)])
-                  lvars))))
+    (when s
+      (into {} (map (fn [[k v]]
+                      [k (mk/walk s v)])
+                    lvars)))))
 
 (defn unifier [u w]
   (let [up (prep u)
