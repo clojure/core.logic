@@ -339,7 +339,12 @@
 
 (declare lcons?)
 
-(deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache]
+(deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
+  clojure.lang.IObj
+  (meta [this]
+    meta)
+  (withMeta [this new-meta]
+    (LCons. a d cache new-meta))
   LConsSeq
   (lfirst [_] a)
   (lnext [_] d)
@@ -438,7 +443,7 @@
 (defn lcons [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
-    (LCons. a d -1)))
+    (LCons. a d -1 nil)))
 
 (defn lcons? [x]
   (instance? LCons x))
