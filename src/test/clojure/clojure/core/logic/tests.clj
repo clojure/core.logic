@@ -6,6 +6,7 @@
   (:use [clojure.core.logic.nonrel :exclude [lvar]] :reload)
   (:use [clojure.core.logic.disequality] :reload)
   (:use [clojure.core.logic.tabled] :reload)
+  (:use [clojure.core.logic.unify] :reload)
   (:use clojure.test))
 
 ;; =============================================================================
@@ -1058,39 +1059,50 @@
 ;; -----------------------------------------------------------------------------
 ;; Unifier
 
-(comment
-  (unifier' '(?x ?y) '(1 2))
-  (unifier' '(?x ?y 3) '(1 2 ?z))
-  (unifier' '[?x ?y] [1 2])
-  (unifier' '{x ?y a 2} '{x 1 a ?b})
+(deftest test-unifier-1
+  (is (= (unifier '(?x ?y) '(1 2))
+         '(1 2))))
 
-  ;; TODO: look into this
-  (def json-path1 (prep '{:foo ?x
-                          :bar {:baz [?y '#{valid}]}}))
+(deftest test-unifier-2
+  (is (= (unifier '(?x ?y 3) '(1 2 ?z))
+         '(1 2 3))))
 
-  (unifier json-path1 {:foo 1
-                       :bar {:baz [:correct '#{valid}]}})
+(deftest test-unifier-3
+  (is (= (unifier '[(?x . ?y) 3] [[1 2] 3])
+         '[(1 2) 3])))
 
-  (unifier json-path1 {:foo 1
-                       :bar {:baz [:incorrect false]}})
+(deftest test-unifier-4
+  (is (= (unifier '(?x . ?y) '(1 . ?z))
+         (lcons 1 '_.0))))
 
-  (def json-path2 (prep '{:foo ?x
-                          :bar {:baz [?y ?z]}}))
+(deftest test-unifier-5
+  (is (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
+         '(1 2 3 4 5))))
 
-  (unifier json-path2 {:foo "A val 1"
-                       :bar {:baz ["A val 2" "A val 3"]}})
+(deftest test-unifier-6
+  (is (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+         nil)))
 
-  (binding-map json-path2 {:foo "A val 1"
-                           :bar {:baz ["A val 2" "A val 3"]}})
+(deftest test-binding-map-1
+  (is (= (binding-map '(?x ?y) '(1 2))
+         '{?x 1 ?y 2})))
 
-  ;; ~1.1
-  (dotimes [_ 10]
-    (let [expr {:foo "A val 1"
-                :bar {:baz ["A val 2" "A val 3"]}}]
-      (time
-       (dotimes [_ 2e5]
-         (binding-map json-path2 expr)))))
+(deftest test-binding-map-2
+  (is (= (binding-map '(?x ?y 3) '(1 2 ?z))
+         '{?x 1 ?y 2 ?z 3})))
 
-  (def test-expr (prep '(?x 1 ?x)))
-  (unifier test-expr test-expr)
-  )
+(deftest test-binding-map-3
+  (is (= (binding-map '[(?x . ?y) 3] [[1 2] 3])
+         '{?x 1 ?y (2)})))
+
+(deftest test-binding-map-4
+  (is (= (binding-map '(?x . ?y) '(1 . ?z))
+         '{?z _.0, ?x 1, ?y _.0})))
+
+(deftest test-binding-map-5
+  (is (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
+         '{?x 1 ?y (3 4 5)})))
+
+(deftest test-binding-map-6
+  (is (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
+         nil)))
