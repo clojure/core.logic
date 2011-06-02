@@ -241,7 +241,12 @@
   (remove-constraint [this c])
   (remove-constraints [this]))
 
-(deftype LVar [name hash cs]
+(deftype LVar [name hash cs meta]
+  clojure.lang.IObj
+  (meta [this]
+    meta)
+  (withMeta [this new-meta]
+    (LVar. name hash cs meta))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -251,10 +256,10 @@
   (hashCode [_] hash)
   ILVar
   (constraints [_] cs)
-  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c)))
-  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds)))
-  (remove-constraint [_ c] (LVar. name hash (disj cs c)))
-  (remove-constraints [_] (LVar. name hash nil))
+  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c) meta))
+  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds) meta))
+  (remove-constraint [_ c] (LVar. name hash (disj cs c) meta))
+  (remove-constraints [_] (LVar. name hash nil meta))
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lvar v u s))
@@ -299,13 +304,13 @@
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
+       (LVar. name (.hashCode name) nil nil)))
   ([name]
      (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
+       (LVar. name (.hashCode name) nil nil)))
   ([name cs]
      (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs))))
+       (LVar. name (.hashCode name) cs nil))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
