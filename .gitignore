@@ -1,0 +1,6 @@
+_site
+*.jar
+*.org
+*.patch
+target/
+src/
