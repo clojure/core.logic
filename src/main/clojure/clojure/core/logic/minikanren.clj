@@ -939,15 +939,15 @@
        (take ~n xs#)
        xs#)))
 
-(defmacro run [& [n & rest]]
+(defmacro run [n & rest]
   `(doall (solve ~n ~@rest)))
 
 (defmacro run* [& rest]
-  `(doall (solve false ~@rest)))
+  `(run false ~@rest))
 
 (defmacro run-nc [& [n & rest]]
   `(binding [*occurs-check* false]
-     (doall (solve ~n ~@rest))))
+     (run ~n ~@rest)))
 
 (defmacro run-nc* [& rest]
   `(run-nc false ~@rest))
