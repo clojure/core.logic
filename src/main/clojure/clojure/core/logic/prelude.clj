@@ -152,3 +152,88 @@
                  (when-let [a (unify a t cand)]
                    a)))
           (remove nil?)))))
+
+;; we want a macro to do this crap for us
+;; we need to be able to set the fns
+(deftype Rel [name
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f1
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f2
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f3
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f4
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f5
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f6
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f7
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f8
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f9
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f10
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f11
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f12
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f13
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f14
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f15
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f16
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f17
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f18
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f19
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f20]
+  clojure.lang.IFn
+  (invoke [_ a1]
+    (f1 a1))
+  (invoke [_ a1 a2]
+    (f2 a1 a2))
+  (invoke [_ a1 a2 a3]
+    (f3 a1 a2 a3))
+  (invoke [_ a1 a2 a3 a4]
+    (f4 a1 a2 a3 a4))
+  (invoke [_ a1 a2 a3 a4 a5]
+    (f5 a1 a2 a3 a4 a5))
+  (invoke [_ a1 a2 a3 a4 a5 a6]
+    (f6 a1 a2 a3 a4 a5 a6))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7]
+    (f7 a1 a2 a3 a4 a5 a6 a7))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8]
+    (f8 a1 a2 a3 a4 a5 a6 a7 a8))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9]
+    (f9 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10]
+    (f10 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11]
+    (f11 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12]
+    (f12 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13]
+    (f13 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14]
+    (f14 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15]
+    (f15 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16]
+    (f16 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17]
+    (f17 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18]
+    (f18 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19]
+    (f19 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19))
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20]
+    (f20 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20))
+  (applyTo [arglist]
+    ))
+
+(def foo (Rel. 'foo (fn [a1] :foo)
+               nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
+               (fn [a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 & a20]
+                 :bar)))
+
+;; work to do
+(comment
+  ;; 400ms, plenty fast
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e8]
+       (foo 1))))
+
+  (apply foo [1])
+
+  (foo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21)
+  )
