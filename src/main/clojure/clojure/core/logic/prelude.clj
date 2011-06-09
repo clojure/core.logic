@@ -3,7 +3,7 @@
   (:use clojure.core.logic.minikanren)
   (:require [clojure.set :as set]
             [clojure.core.logic.nonrel :as nonrel]
-            clojure.core.logic.tabled
+            [clojure.core.logic.tabled :as tabled]
             [clojure.core.logic.match :as match]))
 
 ;; =============================================================================
