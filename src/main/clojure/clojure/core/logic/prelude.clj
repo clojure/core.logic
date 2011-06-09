@@ -175,7 +175,8 @@
               ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f17
               ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f18
               ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f19
-              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f20]
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f20
+              ^{:unsynchronized-mutable true :tag clojure.lang.IFn} f21]
   clojure.lang.IFn
   (invoke [_ a1]
     (f1 a1))
@@ -217,12 +218,14 @@
     (f19 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19))
   (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20]
     (f20 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20))
-  (applyTo [arglist]
+  (invoke [_ a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 rest]
+    (f21 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 rest))
+  (applyTo [_ arglist]
     ))
 
 (def foo (Rel. 'foo (fn [a1] :foo)
-               nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
-               (fn [a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 & a20]
+               nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
+               (fn [a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 & a21]
                  :bar)))
 
 ;; work to do
@@ -233,7 +236,10 @@
      (dotimes [_ 1e8]
        (foo 1))))
 
+  ;; TODO: fix
   (apply foo [1])
 
-  (foo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21)
+  ;; voila
+  (foo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23)
+  ;; complex indexes?
   )
