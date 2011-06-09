@@ -34,6 +34,14 @@
   (exist [x]
     (conso x x p)))
 
+(defn listo [l]
+  (conde
+    ((emptyo l) s#)
+    ((pairo l)
+     (exist [d]
+       (resto l d)
+       (listo d)))))
+
 (defn appendo [l s out]
   (conde
     ((emptyo l) (== s out))
