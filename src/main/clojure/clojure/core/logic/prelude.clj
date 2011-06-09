@@ -3,7 +3,7 @@
   (:use clojure.core.logic.minikanren)
   (:require [clojure.set :as set]
             [clojure.core.logic.nonrel :as nonrel]
-            clojure.core.logic.tabled
+            [clojure.core.logic.tabled :as tabled]
             [clojure.core.logic.match :as match]))
 
 ;; =============================================================================
@@ -33,6 +33,14 @@
 (defn twino [p]
   (exist [x]
     (conso x x p)))
+
+(defn listo [l]
+  (conde
+    ((emptyo l) s#)
+    ((pairo l)
+     (exist [d]
+       (resto l d)
+       (listo d)))))
 
 (defn appendo [l s out]
   (conde

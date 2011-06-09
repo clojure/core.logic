@@ -929,7 +929,7 @@
       (let [~@(lvar-binds x-rest)]
         (bind* a# ~@g-rest)))))
 
-(defmacro run [& [n [x] & g-rest]]
+(defmacro solve [& [n [x] & g-rest]]
   `(let [xs# (take* (fn []
                       ((exist [~x] ~@g-rest
                          (fn [a#]
@@ -939,23 +939,24 @@
        (take ~n xs#)
        xs#)))
 
-(defmacro run* [& body]
-  `(run false ~@body))
+(defmacro run [n & rest]
+  `(doall (solve ~n ~@rest)))
 
-(defmacro run-nc [& [n [x] & g-rest]]
+(defmacro run* [& rest]
+  `(run false ~@rest))
+
+(defmacro run-nc [& [n & rest]]
   `(binding [*occurs-check* false]
-     (run ~n [~x] ~@g-rest)))
+     (run ~n ~@rest)))
 
-(defmacro run-nc* [& body]
-  `(run-nc false ~@body))
+(defmacro run-nc* [& rest]
+  `(run-nc false ~@rest))
 
-(defmacro run-debug [& body]
-  `(doall
-    (run ~@body)))
+(defmacro lazy-run [& [n & rest]]
+  `(solve ~n ~@rest))
 
-(defmacro run-debug* [& body]
-  `(doall
-    (run* ~@body)))
+(defmacro lazy-run* [& rest]
+  `(solve false ~@rest))
 
 (defn sym->lvar [sym]
   `(lvar '~sym))

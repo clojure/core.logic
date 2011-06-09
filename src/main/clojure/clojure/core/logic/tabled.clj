@@ -142,6 +142,21 @@
 
 ;; TODO: consider the concurrency implications much more closely
 
+(defn table [goal]
+  (let [table (atom {})]
+    (fn [& args]
+      (let [argv args]
+        (fn [a]
+          (let [key (reify a argv)
+                cache (get @table key)]
+            (if (nil? cache)
+              (let [cache (atom ())]
+                (swap! table assoc key cache)
+                ((exist []
+                   (apply goal args)
+                   (master argv cache)) a))
+              (reuse a argv cache nil nil))))))))
+
 (defmacro tabled [args & grest]
   `(let [table# (atom {})]
      (fn [~@args]
