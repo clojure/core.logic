@@ -34,10 +34,9 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1]
-       (doall
-        (run 700 [q]
-          (exist [x y]
-            (appendo x y q)))))))
+       (run 700 [q]
+         (exist [x y]
+           (appendo x y q))))))
   )
 
 ;; =============================================================================
@@ -62,7 +61,7 @@
       (dotimes [_ 5]
         (time
          (dotimes [_ 1e3]
-           (doall (run 1 [q] (nrevo data q))))))))
+           (run 1 [q] (nrevo data q)))))))
 
   ;; the LIPS are ridiculously high for SWI-Prolog
   ;; clearly nrev is a case that SWI-Prolog can optimize away
@@ -105,13 +104,13 @@
     (dotimes [_ 5]
       (time
        (dotimes [_ 1e3]
-         (doall (run 1 [q] (zebrao q)))))))
+         (run 1 [q] (zebrao q))))))
 
   ;; < 3s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
-       (doall (run 1 [q] (zebrao q))))))
+       (run 1 [q] (zebrao q)))))
   )
 
 ;; =============================================================================
@@ -155,23 +154,20 @@
     (dotimes [_ 5]
       (time
        (dotimes [_ 1]
-         (doall
-          (take 1 (solve-nqueens)))))))
+         (take 1 (solve-nqueens))))))
 
   ;; ~550ms
   (binding [*occurs-check* false]
     (dotimes [_ 10]
       (time
        (dotimes [_ 1]
-         (doall
-          (solve-nqueens))))))
+         (solve-nqueens)))))
 
   ;; ~610ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1]
-       (doall
-        (solve-nqueens)))))
+       (solve-nqueens))))
 
   ;; nqueens benefits from constraints
   )
@@ -223,11 +219,10 @@
   ;; interleaving, need to figure
   (time
    (binding [*occurs-check* false]
-    (doall
      (run 1 [q]
        (exist [send more money]
          (send-money-quicklyo send more money)
-         (== [send more money] q))))))
+         (== [send more money] q)))))
   )
 
 ;; =============================================================================
