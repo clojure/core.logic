@@ -278,7 +278,7 @@
         arities (map (fn [n]
                        (let [args (map a-sym (range 1 (clojure.core/inc n)))]
                         `([~'rel ~@args]
-                            (~'setfn ~'rel ~(f-sym n)
+                            (~'setfn ~'rel ~n
                                      (fn [~@args]
                                        )))))
                      r)]
