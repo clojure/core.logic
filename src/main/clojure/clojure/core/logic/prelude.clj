@@ -276,64 +276,7 @@
 ;; work to do
 (comment
   ;; BUG: mutable field are not visible and printing type causes confusing error
-
   (macroexpand '(RelHelper 1))
-
   (RelHelper 20)
   (defrel foo)
-
-  (deftype
-      Rel
-      [name meta
-       ^{:unsynchronized-mutable true} f1
-       ^{:unsynchronized-mutable true} f2]
-      clojure.lang.IObj
-      (withMeta [_ meta] (Rel. name meta f1 f2))
-      (meta [_] meta)
-      clojure.lang.IFn
-      (invoke [_ a1] (f1 a1))
-      (invoke [_ a1 a2] (f2 a1 a2)))
-  
-  (defrel people)
-
-  (def r
-    (Rel. "people" nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil
-          nil))
-
-  (RelHelper 20)
-
-  (create-rel "people")
-
-  ;; 400ms, plenty fast
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e8]
-       (foo 1))))
-
-  ;; TODO: fix
-  (apply foo [1])
-
-  ;; voila
-  (foo 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23)
-  ;; complex indexes?
   )
