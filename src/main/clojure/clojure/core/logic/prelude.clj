@@ -198,22 +198,22 @@
        (defmacro ~'defrel [~'name]
          (defrel-helper ~'name ~arity)))))
 
-(defmacro def-extend-rel [arity]
-  (let [r (range 1 (+ arity 2))
-        arities (map (fn [n]
-                       (let [args (map a-sym (range 1 (clojure.core/inc n)))]
-                        `([~'rel ~@args]
-                            (~'setfn ~'rel ~n
-                                     (fn [~@args]
-                                       )))))
-                     r)]
-   `(defn ~'extend-rel
-      ~@arities)))
+;; figure out which args are indexed
+;; need to store the index for a arity somewhere
+;; for arity greater than 20, we need to use rest args
+;; fact will need to understand arities as well
+;; applyToHelper
+(defmacro extend-rel [name & args]
+  (let [arity (count args)
+        r (range 1 (clojure.core/inc arity))]
+   `(setfn ~name ~arity
+           (fn [~(map a-sym r)]
+             ))))
+
+;; deffact
 
 ;; work to do
 (comment
-  (def-extend-rel 18)
-
   ;; BUG: mutable field are not visible and printing type causes confusing error
   (RelHelper 18)
   (defrel foo)
@@ -221,4 +221,16 @@
   (foo 1 2)
   
   (fn [a b c d e f g h i j k l m n o p q r s t & u])
+
+  ;; extend-rel should be a macro
+  ;; taking a rel name and args with indexing directives
+  ;; this will generate an appropiate fn for that rel
+  ;; there is no expectation for extend to be a fn
+
+  (defrel friends)
+  (extend-rel ^:index person1 ^:index person2)
+
+  (defrel person)
+  (extend-rel ^{:index true :name "name"} first-name
+              ^{:index true :name "name"} last-name)
   )
