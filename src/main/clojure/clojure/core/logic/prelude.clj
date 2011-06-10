@@ -228,31 +228,46 @@
                (fn [a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 & a21]
                  :bar)))
 
+(defn arity-exc-helper [name n]
+  (fn [& args]
+    (throw (clojure.lang.ArityException. n name))))
+
 (defmacro RelHelper [arity]
-  (let [r (range 1 arity)
+  (let [r (range 1 (clojure.core/inc arity))
         sym-helper (fn [prefix]
                      (fn [n] (symbol (str prefix n))))
         f-sym (sym-helper "f")
         a-sym (sym-helper "a")
         fs (map f-sym r)
-        mfs (map #(with-meta % {:mutable-volatile true :tag clojure.lang.IFn})
+        mfs (map #(with-meta % {:volatile-mutable true :tag clojure.lang.IFn})
                  fs)
         create-sig (fn [n]
-                     (let [args (map a-sym (range 1 (inc n)))]
-                      `(~'invoke [_ ~@args]
-                                 (~(f-sym n) ~@args))))]
-   `(deftype ~'Rel [~'name ~'meta
-                    ~@mfs]
-      clojure.lang.IObj
-      (~'withMeta [_ ~'meta]
-        (~'Rel. ~'name ~'meta ~@fs))
-      (~'meta [_]
-        ~'meta)
-      clojure.lang.IFn
-      ~@(map create-sig r))))
+                     (let [args (map a-sym (range 1 (clojure.core/inc n)))]
+                       `(~'invoke [_ ~@args]
+                                  (~(f-sym n) ~@args))))
+        set-case (fn [[f arity]]
+                   `(~arity (set! ~f ~'f)))]
+    `(do
+       (defprotocol ~'IRel
+         (~'setfn [~'this ~'arity ~'f]))
+       (deftype ~'Rel [~'name ~'meta
+                       ~@mfs]
+         clojure.lang.IObj
+         (~'withMeta [_ ~'meta]
+           (~'Rel. ~'name ~'meta ~@fs))
+         (~'meta [_]
+           ~'meta)
+         clojure.lang.IFn
+         ~@(map create-sig r)
+         ~'IRel
+         (~'setfn [_ ~'arity ~'f]
+           (case ~'arity
+                 ~@(mapcat set-case (map vector fs r))))))))
 
 ;; work to do
 (comment
+  (RelHelper 20)
+
   ;; 400ms, plenty fast
   (dotimes [_ 10]
     (time
