@@ -228,6 +228,25 @@
                (fn [a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 & a21]
                  :bar)))
 
+(defmacro RelHelper [arity]
+  (let [r (range 1 arity)
+        sym-helper (fn [prefix]
+                     (fn [n] (symbol (str prefix n))))
+        f-sym (sym-helper "f")
+        a-sym (sym-helper "a")
+        fs (map #(with-meta % {:mutable-volatile true :tag clojure.lang.IFn})
+                (map f-sym r))
+        create-sig (fn [n]
+                     (let [args (map a-sym (range 1 (inc n)))]
+                      `(~'invoke [_ ~@args]
+                                 (~(f-sym n) ~@args))))]
+   `(deftype ~'Rel [~'name ~'meta
+                  ~@fs]
+      clojure.lang.IFn
+      ~@(map create-sig r))))
+
+(RelHelper 20)
+
 ;; work to do
 (comment
   ;; 400ms, plenty fast
