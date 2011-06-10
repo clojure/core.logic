@@ -230,14 +230,14 @@
 
 (defn arity-exc-helper [name n]
   (fn [& args]
-    (throw (clojure.lang.ArityException. n name))))
+    (throw (clojure.lang.ArityException. n (str name)))))
 
 (def max-arity 20)
 
 (defn defrel-helper [name arity]
   (let [r (range 1 (+ arity 2))
-        arity-excs (fn [n] `(arity-exc-helper ~'name ~n))]
-   `(def ~name (~'Rel. ~'name nil ~@(map arity-excs r)))))
+        arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
+   `(def ~name (~'Rel. '~name nil ~@(map arity-excs r)))))
 
 (defmacro RelHelper [arity]
   (let [r (range 1 (+ arity 2))
@@ -276,7 +276,8 @@
 ;; work to do
 (comment
   ;; BUG: mutable field are not visible and printing type causes confusing error
-  (macroexpand '(RelHelper 1))
   (RelHelper 20)
   (defrel foo)
+
+  (foo 1 2)
   )
