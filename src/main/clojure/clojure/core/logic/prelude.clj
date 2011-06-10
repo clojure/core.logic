@@ -232,8 +232,15 @@
   (fn [& args]
     (throw (clojure.lang.ArityException. n name))))
 
+(def max-arity 20)
+
+(defn defrel-helper [name arity]
+  (let [r (range 1 (+ arity 2))
+        arity-excs (fn [n] `(arity-exc-helper ~'name ~n))]
+   `(def ~name (~'Rel. ~'name nil ~@(map arity-excs r)))))
+
 (defmacro RelHelper [arity]
-  (let [r (range 1 (clojure.core/inc arity))
+  (let [r (range 1 (+ arity 2))
         sym-helper (fn [prefix]
                      (fn [n] (symbol (str prefix n))))
         f-sym (sym-helper "f")
@@ -243,7 +250,7 @@
                  fs)
         create-sig (fn [n]
                      (let [args (map a-sym (range 1 (clojure.core/inc n)))]
-                       `(~'invoke [_ ~@args]
+                       `(~'invoke [~'_ ~@args]
                                   (~(f-sym n) ~@args))))
         set-case (fn [[f arity]]
                    `(~arity (set! ~f ~'f)))]
@@ -253,20 +260,69 @@
        (deftype ~'Rel [~'name ~'meta
                        ~@mfs]
          clojure.lang.IObj
-         (~'withMeta [_ ~'meta]
+         (~'withMeta [~'_ ~'meta]
            (~'Rel. ~'name ~'meta ~@fs))
-         (~'meta [_]
+         (~'meta [~'_]
            ~'meta)
          clojure.lang.IFn
          ~@(map create-sig r)
          ~'IRel
-         (~'setfn [_ ~'arity ~'f]
+         (~'setfn [~'_ ~'arity ~'f]
            (case ~'arity
-                 ~@(mapcat set-case (map vector fs r))))))))
+                 ~@(mapcat set-case (map vector fs r)))))
+       (defmacro ~'defrel [~'name]
+         (defrel-helper ~'name ~arity)))))
 
 ;; work to do
 (comment
+  ;; BUG: mutable field are not visible and printing type causes confusing error
+
+  (macroexpand '(RelHelper 1))
+
   (RelHelper 20)
+  (defrel foo)
+
+  (deftype
+      Rel
+      [name meta
+       ^{:unsynchronized-mutable true} f1
+       ^{:unsynchronized-mutable true} f2]
+      clojure.lang.IObj
+      (withMeta [_ meta] (Rel. name meta f1 f2))
+      (meta [_] meta)
+      clojure.lang.IFn
+      (invoke [_ a1] (f1 a1))
+      (invoke [_ a1 a2] (f2 a1 a2)))
+  
+  (defrel people)
+
+  (def r
+    (Rel. "people" nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil
+          nil))
+
+  (RelHelper 20)
+
+  (create-rel "people")
 
   ;; 400ms, plenty fast
   (dotimes [_ 10]
