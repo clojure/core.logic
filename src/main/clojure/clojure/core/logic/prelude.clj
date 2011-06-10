@@ -234,18 +234,22 @@
                      (fn [n] (symbol (str prefix n))))
         f-sym (sym-helper "f")
         a-sym (sym-helper "a")
-        fs (map #(with-meta % {:mutable-volatile true :tag clojure.lang.IFn})
-                (map f-sym r))
+        fs (map f-sym r)
+        mfs (map #(with-meta % {:mutable-volatile true :tag clojure.lang.IFn})
+                 fs)
         create-sig (fn [n]
                      (let [args (map a-sym (range 1 (inc n)))]
                       `(~'invoke [_ ~@args]
                                  (~(f-sym n) ~@args))))]
    `(deftype ~'Rel [~'name ~'meta
-                  ~@fs]
+                    ~@mfs]
+      clojure.lang.IObj
+      (~'withMeta [_ ~'meta]
+        (~'Rel. ~'name ~'meta ~@fs))
+      (~'meta [_]
+        ~'meta)
       clojure.lang.IFn
       ~@(map create-sig r))))
-
-(RelHelper 20)
 
 ;; work to do
 (comment
