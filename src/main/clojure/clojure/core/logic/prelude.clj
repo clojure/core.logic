@@ -232,19 +232,19 @@
   (fn [& args]
     (throw (clojure.lang.ArityException. n (str name)))))
 
-(def max-arity 20)
-
 (defn defrel-helper [name arity]
   (let [r (range 1 (+ arity 2))
         arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
    `(def ~name (~'Rel. '~name nil ~@(map arity-excs r)))))
 
+(defn sym-helper [prefix n]
+  (symbol (str prefix n)))
+
+(def f-sym (partial sym-helper "f"))
+(def a-sym (partial sym-helper "a"))
+
 (defmacro RelHelper [arity]
   (let [r (range 1 (+ arity 2))
-        sym-helper (fn [prefix]
-                     (fn [n] (symbol (str prefix n))))
-        f-sym (sym-helper "f")
-        a-sym (sym-helper "a")
         fs (map f-sym r)
         mfs (map #(with-meta % {:volatile-mutable true :tag clojure.lang.IFn})
                  fs)
@@ -273,11 +273,27 @@
        (defmacro ~'defrel [~'name]
          (defrel-helper ~'name ~arity)))))
 
+(defmacro def-extend-rel [arity]
+  (let [r (range 1 (+ arity 2))
+        arities (map (fn [n]
+                       (let [args (map a-sym (range 1 (clojure.core/inc n)))]
+                        `([~'rel ~@args]
+                            (~'setfn ~'rel ~(f-sym n)
+                                     (fn [~@args]
+                                       )))))
+                     r)]
+   `(defn ~'extend-rel
+      ~@arities)))
+
 ;; work to do
 (comment
+  (def-extend-rel 18)
+
   ;; BUG: mutable field are not visible and printing type causes confusing error
-  (RelHelper 20)
+  (RelHelper 18)
   (defrel foo)
 
   (foo 1 2)
+  
+  (fn [a b c d e f g h i j k l m n o p q r s t & u])
   )
