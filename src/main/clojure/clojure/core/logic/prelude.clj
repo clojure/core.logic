@@ -226,6 +226,8 @@
   ;; taking a rel name and args with indexing directives
   ;; this will generate an appropiate fn for that rel
   ;; there is no expectation for extend to be a fn
+  ;; most specific to least specific key
+  ;; design is slow
 
   (defrel friends)
   (extend-rel ^:index person1 ^:index person2)
@@ -233,4 +235,13 @@
   (defrel person)
   (extend-rel ^{:index true :name "name"} first-name
               ^{:index true :name "name"} last-name)
+
+  (doseq [f [[person "Bob" "Smith"]
+             [person "John" "Smith"]
+             [person "Ray" "Smith"]]]
+    (apply fact f))
+
+  ;; wondering about positional nature
+  ;; we could support take a map and normalizing to the
+  ;; positioned args
   )
