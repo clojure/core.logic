@@ -306,6 +306,11 @@
            [Trevor Spencer]
            [Bob Bill]])
 
+  ;; 1000 friends
+  (facts friends
+         (conj (into [] (map (juxt ->sym ->sym) (range 1 1e3)))
+               '[Bob Bill]))
+
   (run* [q]
     (friends q 'Bill))
 
