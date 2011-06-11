@@ -169,10 +169,14 @@
 (defn ->sym [& args]
   (symbol (apply str args)))
 
-(defn defrel-helper [name arity]
+(defn defrel-helper [name arity args]
   (let [r (range 1 (+ arity 2))
         arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
-   `(def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r)))))
+    (if (seq args)
+      `(do
+         (def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r)))
+         (extend-rel ~name ~@args))
+      `(def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
 
 (defprotocol IRel
   (setfn [this arity f])
@@ -210,8 +214,8 @@
            ((deref ~'indexes) ~'arity))
          (~'add-indexes [~'_ ~'arity ~'index]
            (swap! ~'indexes assoc ~'arity ~'index)))
-       (defmacro ~'defrel [~'name]
-         (defrel-helper ~'name ~arity)))))
+       (defmacro ~'defrel [~'name ~'& ~'rest]
+         (defrel-helper ~'name ~arity ~'rest)))))
 
 (defn index-sym [name arity o]
   (->sym name "_" arity "-" o "-index"))
@@ -282,8 +286,7 @@
   (defrel foo)
   (foo 1 2)
 
-  (defrel friends)
-  (extend-rel friends ^:index person1 ^:index person2)
+  (defrel friends ^:index person1 ^:index person2)
   
   (facts friends
          '[[John Jill]
