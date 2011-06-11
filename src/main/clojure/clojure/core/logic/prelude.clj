@@ -206,6 +206,7 @@
 (defn fact [rel & tuple]
   (facts rel [(vec tuple)]))
 
+;; TODO: ArityException not 1.2.0 compat
 ;; TODO: apply support
 ;; TODO: handle > 20 arg case
 
