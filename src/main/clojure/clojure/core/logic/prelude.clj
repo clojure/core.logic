@@ -176,8 +176,10 @@
 
 (defprotocol IRel
   (setfn [this arity f])
-  (index-for [this arity])
-  (add-index [this arity index]))
+  (indexes-for [this arity])
+  (add-indexes [this arity index]))
+
+;; TODO: consider moving the set/indexes inside Rel, perf implications?
 
 (defmacro RelHelper [arity]
   (let [r (range 1 (+ arity 2))
@@ -204,16 +206,21 @@
          (~'setfn [~'_ ~'arity ~'f]
            (case ~'arity
                  ~@(mapcat set-case (map vector fs r))))
-         (~'index-for [~'_ ~'arity]
+         (~'indexes-for [~'_ ~'arity]
            ((deref ~'indexes) ~'arity))
-         (~'add-index [~'_ ~'arity ~'index]
+         (~'add-indexes [~'_ ~'arity ~'index]
            (swap! ~'indexes assoc ~'arity ~'index)))
        (defmacro ~'defrel [~'name]
          (defrel-helper ~'name ~arity)))))
 
-;; 3) for arity greater than 20, we need to use rest args
-;; 4) fact will need to understand arities as well
-;; 5) applyToHelper
+(defn index-sym [name arity o]
+  (->sym name "_" arity "-" o "-index"))
+
+(defn set-sym [name arity]
+  (->sym name "_" arity "-set"))
+
+;; TODO: for arity greater than 20, we need to use rest args
+;; TODO: applyToHelper
 (defmacro extend-rel [name & args]
   (let [arity (count args)
         r (range 1 (clojure.core/inc arity))
@@ -225,20 +232,20 @@
                              (range 1 (clojure.core/inc arity))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (~'lvar? (~'walk ~'a ~a))) (~(->sym name "_" arity "-" o "-index") ~a))))
+                       `((not (~'lvar? (~'walk ~'a ~a))) (~(index-sym name arity o) ~a))))
         indexed-set (fn [[o i]]
-                      `(def ~(->sym name "_" arity "-" o "-index") (atom #{})))]
-    (println indexed)
+                      `(def ~(index-sym name arity o) (atom #{})))]
     (if (<= arity 20)
      `(do
-        (def ~(->sym name "_" arity "-set") (atom #{}))
+        (def ~(set-sym name arity) (atom #{}))
         ~@(map indexed-set indexed)
+        (add-indexes ~name ~arity '~indexed)
         (setfn ~name ~arity
                (fn [~@as]
                  (fn [~'a]
                    (let [set# (cond
                                ~@(mapcat check-lvar indexed)
-                               :else ~(->sym name "_" arity "-set"))]
+                               :else ~(set-sym name arity))]
                      (~'to-stream
                       (->> set#
                            (map (fn [cand#]
@@ -246,11 +253,29 @@
                                     ~'a)))
                            (remove nil?)))))))))))
 
-;; deffact
+(defn facts
+  ([rel [f :as tuples]] (facts (count f) tuples))
+  ([^Rel rel arity tuples]
+     (let [rel-set (var-get (resolve (set-sym (.name rel) arity)))
+           tuples (map vec tuples)]
+       (swap! rel-set (fn [s] (into s tuples)))
+       (let [indexes (indexes-for rel (count tuples))]
+         (doseq [[o i] indexes]
+           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+             (let [indexed-tuples (-> tuples
+                                      (map (fn [t]
+                                             {(nth t (dec i)) #{t}})))]
+               (swap! index
+                      (fn [i]
+                        (apply merge-with set/union index indexed-tuples))))))))))
+
+(defn fact [rel & tuple]
+  (facts rel [(vec tuple)]))
 
 ;; work to do
 (comment
-  ;; BUG: mutable field are not visible and printing type causes confusing error
+  ;; BUG: deftype mutable field are not visible and printing type causes confusing error
+
   (RelHelper 20)
   (defrel foo)
   (foo 1 2)
