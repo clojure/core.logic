@@ -160,16 +160,24 @@
   (fn [& args]
     (throw (clojure.lang.ArityException. n (str name)))))
 
-(defn defrel-helper [name arity]
-  (let [r (range 1 (+ arity 2))
-        arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
-   `(def ~name (~'Rel. '~name nil ~@(map arity-excs r)))))
-
 (defn sym-helper [prefix n]
   (symbol (str prefix n)))
 
 (def f-sym (partial sym-helper "f"))
 (def a-sym (partial sym-helper "a"))
+
+(defn ->sym [& args]
+  (symbol (apply str args)))
+
+(defn defrel-helper [name arity]
+  (let [r (range 1 (+ arity 2))
+        arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
+   `(def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r)))))
+
+(defprotocol IRel
+  (setfn [this arity f])
+  (index-for [this arity])
+  (add-index [this arity index]))
 
 (defmacro RelHelper [arity]
   (let [r (range 1 (+ arity 2))
@@ -183,13 +191,11 @@
         set-case (fn [[f arity]]
                    `(~arity (set! ~f ~'f)))]
     `(do
-       (defprotocol ~'IRel
-         (~'setfn [~'this ~'arity ~'f]))
-       (deftype ~'Rel [~'name ~'meta
+       (deftype ~'Rel [~'name ~'indexes ~'meta
                        ~@mfs]
          clojure.lang.IObj
          (~'withMeta [~'_ ~'meta]
-           (~'Rel. ~'name ~'meta ~@fs))
+           (~'Rel. ~'name ~'indexes ~'meta ~@fs))
          (~'meta [~'_]
            ~'meta)
          clojure.lang.IFn
@@ -197,33 +203,57 @@
          ~'IRel
          (~'setfn [~'_ ~'arity ~'f]
            (case ~'arity
-                 ~@(mapcat set-case (map vector fs r)))))
+                 ~@(mapcat set-case (map vector fs r))))
+         (~'index-for [~'_ ~'arity]
+           ((deref ~'indexes) ~'arity))
+         (~'add-index [~'_ ~'arity ~'index]
+           (swap! ~'indexes assoc ~'arity ~'index)))
        (defmacro ~'defrel [~'name]
          (defrel-helper ~'name ~arity)))))
 
-;; 1) figure out which args are indexed
-;; 2) need to store the index for a arity somewhere
 ;; 3) for arity greater than 20, we need to use rest args
 ;; 4) fact will need to understand arities as well
 ;; 5) applyToHelper
 (defmacro extend-rel [name & args]
   (let [arity (count args)
-        r (range 1 (clojure.core/inc arity))]
-   `(setfn ~name ~arity
-           (fn [~(map a-sym r)]
-             ))))
+        r (range 1 (clojure.core/inc arity))
+        as (map a-sym r)
+        indexed (filter (fn [[a i]]
+                          (-> a meta :index))
+                        (map vector
+                             args
+                             (range 1 (clojure.core/inc arity))))
+        check-lvar (fn [[o i]]
+                     (let [a (a-sym i)]
+                       `((not (~'lvar? (~'walk ~'a ~a))) (~(->sym name "_" arity "-" o "-index") ~a))))
+        indexed-set (fn [[o i]]
+                      `(def ~(->sym name "_" arity "-" o "-index") (atom #{})))]
+    (println indexed)
+    (if (<= arity 20)
+     `(do
+        (def ~(->sym name "_" arity "-set") (atom #{}))
+        ~@(map indexed-set indexed)
+        (setfn ~name ~arity
+               (fn [~@as]
+                 (fn [~'a]
+                   (let [set# (cond
+                               ~@(mapcat check-lvar indexed)
+                               :else ~(->sym name "_" arity "-set"))]
+                     (~'to-stream
+                      (->> set#
+                           (map (fn [cand#]
+                                  (when-let [~'a (~'unify ~'a [~@as] cand#)]
+                                    ~'a)))
+                           (remove nil?)))))))))))
 
 ;; deffact
 
 ;; work to do
 (comment
   ;; BUG: mutable field are not visible and printing type causes confusing error
-  (RelHelper 18)
+  (RelHelper 20)
   (defrel foo)
-
   (foo 1 2)
-  
-  (fn [a b c d e f g h i j k l m n o p q r s t & u])
 
   ;; extend-rel should be a macro
   ;; taking a rel name and args with indexing directives
@@ -231,9 +261,11 @@
   ;; there is no expectation for extend to be a fn
   ;; most specific to least specific key
   ;; design is slow
+  ;; each index is by arity and which part is being indexed
 
   (defrel friends)
-  (extend-rel ^:index person1 ^:index person2)
+  (extend-rel friends ^:index person1 ^:index person2)
+  (extend-rel friends person1 person2 person3)
 
   (defrel person)
   (extend-rel ^{:index true :name "name"} first-name
