@@ -153,6 +153,9 @@
                    a)))
           (remove nil?)))))
 
+;; -----------------------------------------------------------------------------
+;; Rel
+
 (defn arity-exc-helper [name n]
   (fn [& args]
     (throw (clojure.lang.ArityException. n (str name)))))
@@ -198,11 +201,11 @@
        (defmacro ~'defrel [~'name]
          (defrel-helper ~'name ~arity)))))
 
-;; figure out which args are indexed
-;; need to store the index for a arity somewhere
-;; for arity greater than 20, we need to use rest args
-;; fact will need to understand arities as well
-;; applyToHelper
+;; 1) figure out which args are indexed
+;; 2) need to store the index for a arity somewhere
+;; 3) for arity greater than 20, we need to use rest args
+;; 4) fact will need to understand arities as well
+;; 5) applyToHelper
 (defmacro extend-rel [name & args]
   (let [arity (count args)
         r (range 1 (clojure.core/inc arity))]
