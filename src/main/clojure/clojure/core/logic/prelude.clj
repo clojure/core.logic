@@ -232,9 +232,9 @@
                              (range 1 (clojure.core/inc arity))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (~'lvar? (~'walk ~'a ~a))) (~(index-sym name arity o) ~a))))
+                       `((not (~'lvar? (~'walk ~'a ~a))) ((deref ~(index-sym name arity o)) ~a))))
         indexed-set (fn [[o i]]
-                      `(def ~(index-sym name arity o) (atom #{})))]
+                      `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
      `(do
         (def ~(set-sym name arity) (atom #{}))
@@ -245,7 +245,7 @@
                  (fn [~'a]
                    (let [set# (cond
                                ~@(mapcat check-lvar indexed)
-                               :else ~(set-sym name arity))]
+                               :else (deref ~(set-sym name arity)))]
                      (~'to-stream
                       (->> set#
                            (map (fn [cand#]
@@ -253,21 +253,23 @@
                                     ~'a)))
                            (remove nil?)))))))))))
 
+;; TODO: Should probably happen in a transaction
+
 (defn facts
-  ([rel [f :as tuples]] (facts (count f) tuples))
+  ([rel [f :as tuples]] (facts rel (count f) tuples))
   ([^Rel rel arity tuples]
      (let [rel-set (var-get (resolve (set-sym (.name rel) arity)))
            tuples (map vec tuples)]
        (swap! rel-set (fn [s] (into s tuples)))
-       (let [indexes (indexes-for rel (count tuples))]
+       (let [indexes (indexes-for rel arity)]
          (doseq [[o i] indexes]
            (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
-             (let [indexed-tuples (-> tuples
-                                      (map (fn [t]
-                                             {(nth t (dec i)) #{t}})))]
+             (let [indexed-tuples (map (fn [t]
+                                         {(nth t (dec i)) #{t}})
+                                       tuples)]
                (swap! index
                       (fn [i]
-                        (apply merge-with set/union index indexed-tuples))))))))))
+                        (apply merge-with set/union i indexed-tuples))))))))))
 
 (defn fact [rel & tuple]
   (facts rel [(vec tuple)]))
@@ -280,28 +282,85 @@
   (defrel foo)
   (foo 1 2)
 
-  ;; extend-rel should be a macro
-  ;; taking a rel name and args with indexing directives
-  ;; this will generate an appropiate fn for that rel
-  ;; there is no expectation for extend to be a fn
-  ;; most specific to least specific key
-  ;; design is slow
-  ;; each index is by arity and which part is being indexed
-
   (defrel friends)
   (extend-rel friends ^:index person1 ^:index person2)
-  (extend-rel friends person1 person2 person3)
+  
+  (facts friends
+         '[[John Jill]
+           [Tom Jill]
+           [Jill Mary]
+           [Thomas Mary]
+           [Ben Carey]
+           [Lisa Tom]
+           [George Henry]
+           [Henry Wendy]
+           [Henry Peter]
+           [Henry David]
+           [Willis Tracy]
+           [Hal Tracy]
+           [Cathy Karl]
+           [Tony Tilly]
+           [Greg Rob]
+           [Ulrika Evan]
+           [Dan Ohal]
+           [Trevor Spencer]
+           [Bob Bill]])
 
+  (run* [q]
+    (friends q 'Bill))
+
+  ;; 400ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+         (friends 'Bob q)))))
+
+  (defn friends-slow [x y]
+    (conde
+      ((== '[John Jill] [x y]))
+      ((== '[Tom Jill] [x y]))
+      ((== '[Jill Mary] [x y]))
+      ((== '[Thomas Mary] [x y]))
+      ((== '[Ben Carey] [x y]))
+      ((== '[Lisa Tom] [x y]))
+      ((== '[George Henry] [x y]))
+      ((== '[Henry Wendy] [x y]))
+      ((== '[Henry Peter] [x y]))
+      ((== '[Henry David] [x y]))
+      ((== '[Willis Tracy] [x y]))
+      ((== '[Hal Tracy] [x y]))
+      ((== '[Cathy Karl] [x y]))
+      ((== '[Tony Tilly] [x y]))
+      ((== '[Greg Rob] [x y]))
+      ((== '[Ulrika Evan] [x y]))
+      ((== '[Dan Ohal] [x y]))
+      ((== '[Trevor Spencer] [x y]))
+      ((== '[Bob Bill] [x y]))))
+
+  (defn friends-one [x y]
+    (conde
+      ((== '[Bob Bill] [x y]))))
+
+  (run* [q]
+    (friends-slow 'Bob q))
+
+  ;; 1.3s
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+         (friends-slow 'Bob q)))))
+
+  ;; 200ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+         (friends-one 'Bob q)))))
+
+  ;; compound keys syntax
   (defrel person)
   (extend-rel ^{:index true :name "name"} first-name
               ^{:index true :name "name"} last-name)
-
-  (doseq [f [[person "Bob" "Smith"]
-             [person "John" "Smith"]
-             [person "Ray" "Smith"]]]
-    (apply fact f))
-
-  ;; wondering about positional nature
-  ;; we could support take a map and normalizing to the
-  ;; positioned args
   )
