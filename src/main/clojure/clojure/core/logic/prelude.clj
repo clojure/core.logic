@@ -164,7 +164,8 @@
                              (range 1 (clojure.core/inc arity))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (~'lvar? (~'walk ~'a ~a))) ((deref ~(index-sym name arity o)) ~a))))
+                       `((not (~'lvar? (~'walk ~'a ~a)))
+                         ((deref ~(index-sym name arity o)) (walk ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
@@ -217,6 +218,7 @@
   (foo 1 2)
 
   (defrel friends ^:index person1 ^:index person2)
+  (extend-rel friends ^:index person1 ^:index person2)
   
   (facts friends
          '[[John Jill]
@@ -301,4 +303,62 @@
   (defrel person)
   (extend-rel ^{:index true :name "name"} first-name
               ^{:index true :name "name"} last-name)
+
+  ;; from datalog example
+  (do
+   (defrel employee ^:index name ^:index position)
+   (fact employee 'Bob 'boss)
+   (fact employee 'Mary 'chief-accountant)
+   (fact employee 'John 'accountant)
+   (fact employee 'Sameer 'chief-programmer)
+   (fact employee 'Lilian 'programmer)
+   (fact employee 'Li 'technician)
+   (fact employee 'Fred 'sales)
+   (fact employee 'Brenda 'sales)
+   (fact employee 'Miki 'project-management)
+   (fact employee 'Albert 'technician)
+
+   (defrel boss ^:index employee1 ^:index employee2)
+   (fact boss 'Bob 'Mary)
+   (fact boss 'Mary 'John)
+   (fact boss 'Bob 'Sameer)
+   (fact boss 'Sameer 'Lilian)
+   (fact boss 'Sameer 'Li)
+   (fact boss 'Bob 'Fred)
+   (fact boss 'Fred 'Brenda)
+   (fact boss 'Bob 'Miki)
+   (fact boss 'Li 'Albert)
+
+   (defrel can-do-job ^:index position ^:index job)
+   (fact can-do-job 'boss 'management)
+   (fact can-do-job 'account 'accounting)
+   (fact can-do-job 'chief-accountant 'accounting)
+   (fact can-do-job 'programmer 'programming)
+   (fact can-do-job 'chief-programmer 'programming)
+   (fact can-do-job 'technician 'server-support)
+   (fact can-do-job 'sales 'sales)
+   (fact can-do-job 'project-management 'project-management)
+
+   (defrel job-replacement ^:index job1 ^:index job2)
+   (fact job-replacement 'pc-support 'server-support)
+   (fact job-replacement 'pc-support 'programming)
+   (fact job-replacement 'payroll 'accounting)
+
+  (defn works-for [x y]
+    (boss y x))
+
+  (defn can-do [x y]
+    (exist [j]
+      (employee x j)
+      (can-do-job j y)))
+   )
+
+  (run* [j]
+    (can-do 'Sameer j))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+         (works-for 'Albert q)))))
   )
