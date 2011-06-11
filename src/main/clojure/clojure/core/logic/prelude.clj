@@ -353,19 +353,19 @@
   (run* [q]
     (friends-slow 'Bob q))
 
-  ;; 1.3s
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (run* [q]
-         (friends-slow 'Bob q)))))
-
   ;; 200ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e5]
        (run* [q]
          (friends-one 'Bob q)))))
+
+  ;; 1.3s, grows with size of conde
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e5]
+       (run* [q]
+         (friends-slow 'Bob q)))))
 
   ;; compound keys syntax
   (defrel person)
