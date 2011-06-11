@@ -165,7 +165,7 @@
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
                        `((not (~'lvar? (~'walk ~'a ~a)))
-                         ((deref ~(index-sym name arity o)) (walk ~'a ~a)))))
+                         ((deref ~(index-sym name arity o)) (~'walk ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
@@ -218,7 +218,6 @@
   (foo 1 2)
 
   (defrel friends ^:index person1 ^:index person2)
-  (extend-rel friends ^:index person1 ^:index person2)
   
   (facts friends
          '[[John Jill]
@@ -305,7 +304,9 @@
               ^{:index true :name "name"} last-name)
 
   ;; from datalog example
+
   (do
+    
    (defrel employee ^:index name ^:index position)
    (fact employee 'Bob 'boss)
    (fact employee 'Mary 'chief-accountant)
@@ -344,21 +345,71 @@
    (fact job-replacement 'pc-support 'programming)
    (fact job-replacement 'payroll 'accounting)
 
-  (defn works-for [x y]
-    (boss y x))
+   (def ^:dynamic works-for
+     (fn [x y]
+       (conde
+         ((boss y x))
+         ((exist [z]
+            (boss z x)
+            (works-for z y))))))
 
-  (defn can-do [x y]
-    (exist [j]
-      (employee x j)
-      (can-do-job j y)))
+   (defn can-do [x y]
+     (exist [j]
+       (employee x j)
+       (can-do-job j y)))
+
+   (defn jobs [x y]
+     (exist [j]
+       (employee x j)
+       (can-do-job j )))
    )
+
+  (run* [p]
+    (works-for 'Albert p))
+
+  (run* [p]
+    (works-for p 'Bob))
 
   (run* [j]
     (can-do 'Sameer j))
 
-  (dotimes [_ 10]
-    (time
-     (dotimes [_ 1e5]
-       (run* [q]
-         (works-for 'Albert q)))))
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (run* [j]
+          (employee 'Bob j))))))
+
+  ;; 3.3-3.8s, Albert at the bottom
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (run* [q]
+          (works-for 'Albert q))))))
+
+  ;; 1.4s, why 4x slower?
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (run* [q]
+          (works-for 'Sameer q))))))
+
+  ;; 300ms
+  (binding [*occurs-check* false]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e5]
+        (run* [q]
+          (works-for 'Bob q))))))
+
+  ;; 1.8s
+  (binding [*occurs-check* false
+            works-for (tabled/table works-for)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e5]
+         (run* [q]
+           (works-for 'Albert q))))))
   )
