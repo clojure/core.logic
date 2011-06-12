@@ -71,7 +71,7 @@
     `(defn arity-exc-helper [~'name ~'n]
        (fn [~'& ~'args]
          (throw (clojure.lang.ArityException. ~'n (str ~'name)))))
-    (finally 
+    (catch java.lang.ClassNotFoundException e
      `(defn ~'arity-exc-helper [~'name ~'n]
         (fn [~'& ~'args]
           (throw (java.lang.IllegalArgumentException.
