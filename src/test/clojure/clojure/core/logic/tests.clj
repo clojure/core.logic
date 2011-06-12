@@ -516,8 +516,56 @@
                (== true q))
          [])))
 
+
 ;; =============================================================================
-;; succeed
+;; TRS
+
+(defn pairo [p]
+  (exist [a d]
+    (== (lcons a d) p)))
+
+(defn twino [p]
+  (exist [x]
+    (conso x x p)))
+
+(defn listo [l]
+  (conde
+    ((emptyo l) s#)
+    ((pairo l)
+     (exist [d]
+       (resto l d)
+       (listo d)))))
+
+(defn appendo [l s out]
+  (conde
+    ((emptyo l) (== s out))
+    ((exist [a d res]
+       (conso a d l)
+       (conso a res out)
+       (appendo d s res)))))
+
+(defn flatteno [s out]
+  (conde
+    ((emptyo s) (== '() out))
+    ((pairo s)
+     (exist [a d res-a res-d]
+       (conso a d s)
+       (flatteno a res-a)
+       (flatteno d res-d)
+       (appendo res-a res-d out)))
+    ((conso s '() out))))
+
+(defn rembero [x l out]
+  (conde
+    ((== '() l) (== '() out))
+    ((exist [a d]
+       (conso a d l)
+       (== x a)
+       (== d out)))
+    ((exist [a d res]
+       (conso a d l)
+       (conso a res out)
+       (rembero x d res)))))
 
 ;; =============================================================================
 ;; conde

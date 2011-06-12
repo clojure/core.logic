@@ -7,7 +7,7 @@
             [clojure.core.logic.match :as match]))
 
 ;; =============================================================================
-;; Basics from The Reasoned Schemer
+;; Useful goals
 
 (defn nilo [a]
   (== nil a))
@@ -26,59 +26,12 @@
   (exist [a]
     (== (lcons a d) l)))
 
-(defn pairo [p]
-  (exist [a d]
-    (== (lcons a d) p)))
-
-(defn twino [p]
-  (exist [x]
-    (conso x x p)))
-
-(defn listo [l]
-  (conde
-    ((emptyo l) s#)
-    ((pairo l)
-     (exist [d]
-       (resto l d)
-       (listo d)))))
-
-(defn appendo [l s out]
-  (conde
-    ((emptyo l) (== s out))
-    ((exist [a d res]
-       (conso a d l)
-       (conso a res out)
-       (appendo d s res)))))
-
-(defn flatteno [s out]
-  (conde
-    ((emptyo s) (== '() out))
-    ((pairo s)
-     (exist [a d res-a res-d]
-       (conso a d s)
-       (flatteno a res-a)
-       (flatteno d res-d)
-       (appendo res-a res-d out)))
-    ((conso s '() out))))
-
 (defn membero [x l]
   (conde
     ((firsto l x))
     ((exist [r]
        (resto l r)
        (membero x r)))))
-
-(defn rembero [x l out]
-  (conde
-    ((== '() l) (== '() out))
-    ((exist [a d]
-       (conso a d l)
-       (== x a)
-       (== d out)))
-    ((exist [a d res]
-       (conso a d l)
-       (conso a res out)
-       (rembero x d res)))))
 
 ;; =============================================================================
 ;; Convenient Goal Fns
@@ -105,50 +58,163 @@
   (match/handle-clauses 'clojure.core.logic.nonrel/condu xs cs))
 
 ;; =============================================================================
-;; Facts
-
-(defn index [tuples]
-  (->> tuples
-       (map (fn [[k :as t]] {k #{t}}))
-       (apply merge-with
-              (fn [a b] (set/union a b)))))
-
-(defmacro defrel [name & args]
-  (let [setsym (symbol (str name "-set"))
-        idxsym (symbol (str name "-indexed"))]
-    `(do
-       (def ~setsym (atom #{}))
-       (def ~idxsym (atom {}))
-       (defmacro ~name [~@args]
-         (defrelg '~setsym '~idxsym ~@args)))))
-
-(defn defrelg [setsym idxsym & args]
-  `(fn [a#]
-     (answers a# (deref ~setsym) (deref ~idxsym) [~@args])))
-
-;; NOTE: put in a dosync?
-
-(defmacro fact [rel & tuple]
-  (let [setsym (symbol (str rel "-set"))
-        idxsym (symbol (str rel "-indexed"))]
-    `(do
-       (swap! ~setsym conj [~@tuple])
-       (reset! ~idxsym (index @~setsym))
-       nil)))
+;; Rel
 
 (defn to-stream [aseq]
   (when (seq aseq)
     (choice (first aseq)
             (fn [] (to-stream (next aseq))))))
 
-(defn answers [a aset indexed [f & r :as t]]
-  (let [v (walk a f)
-        aset (if (lvar? v)
-               aset
-               (indexed v))]
-    (to-stream
-     (->> aset
-          (map (fn [cand]
-                 (when-let [a (unify a t cand)]
-                   a)))
-          (remove nil?)))))
+(defmacro def-arity-exc-helper []
+  (try
+    (Class/forName "clojure.lang.ArityException")
+    `(defn arity-exc-helper [~'name ~'n]
+       (fn [~'& ~'args]
+         (throw (clojure.lang.ArityException. ~'n (str ~'name)))))
+    (catch java.lang.ClassNotFoundException e
+     `(defn ~'arity-exc-helper [~'name ~'n]
+        (fn [~'& ~'args]
+          (throw (java.lang.IllegalArgumentException.
+                  (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
+
+(def-arity-exc-helper)
+
+(defn sym-helper [prefix n]
+  (symbol (str prefix n)))
+
+(def f-sym (partial sym-helper "f"))
+(def a-sym (partial sym-helper "a"))
+
+(defn ->sym [& args]
+  (symbol (apply str args)))
+
+(defn defrel-helper [name arity args]
+  (let [r (range 1 (+ arity 2))
+        arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
+    (if (seq args)
+      `(do
+         (def ~name (~'clojure.core.logic.prelude.Rel. '~name (atom {}) nil ~@(map arity-excs r)))
+         (extend-rel ~name ~@args))
+      `(def ~name (~'clojure.core.logic.prelude.Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
+
+(defmacro def-apply-to-helper [n]
+  (let [r (range 1 (clojure.core/inc n))
+        args (map a-sym r)
+        arg-binds (fn [n]
+                    (mapcat (fn [a]
+                              `(~a (first ~'arglist) ~'arglist (next ~'arglist)))
+                            (take n args)))
+        case-clause (fn [n]
+                      `(~n (let [~@(arg-binds (dec n))]
+                            (.invoke ~'ifn ~@(take (dec n) args)
+                                     (clojure.lang.Util/ret1 (first ~'arglist) nil)))))]
+   `(defn ~'apply-to-helper [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
+      (case (clojure.lang.RT/boundedLength ~'arglist 20)
+            ~@(mapcat case-clause r)))))
+
+(def-apply-to-helper 20)
+
+(defprotocol IRel
+  (setfn [this arity f])
+  (indexes-for [this arity])
+  (add-indexes [this arity index]))
+
+;; TODO: consider moving the set/indexes inside Rel, perf implications?
+
+(defmacro RelHelper [arity]
+  (let [r (range 1 (+ arity 2))
+        fs (map f-sym r)
+        mfs (map #(with-meta % {:volatile-mutable true :tag clojure.lang.IFn})
+                 fs)
+        create-sig (fn [n]
+                     (let [args (map a-sym (range 1 (clojure.core/inc n)))]
+                       `(~'invoke [~'_ ~@args]
+                                  (~(f-sym n) ~@args))))
+        set-case (fn [[f arity]]
+                   `(~arity (set! ~f ~'f)))]
+    `(do
+       (deftype ~'Rel [~'name ~'indexes ~'meta
+                       ~@mfs]
+         clojure.lang.IObj
+         (~'withMeta [~'_ ~'meta]
+           (~'Rel. ~'name ~'indexes ~'meta ~@fs))
+         (~'meta [~'_]
+           ~'meta)
+         clojure.lang.IFn
+         ~@(map create-sig r)
+         (~'applyTo [~'this ~'arglist]
+            (~'apply-to-helper ~'this ~'arglist))
+         ~'IRel
+         (~'setfn [~'_ ~'arity ~'f]
+           (case ~'arity
+                 ~@(mapcat set-case (map vector fs r))))
+         (~'indexes-for [~'_ ~'arity]
+           ((deref ~'indexes) ~'arity))
+         (~'add-indexes [~'_ ~'arity ~'index]
+           (swap! ~'indexes assoc ~'arity ~'index)))
+       (defmacro ~'defrel [~'name ~'& ~'rest]
+         (defrel-helper ~'name ~arity ~'rest)))))
+
+(RelHelper 20)
+
+(defn index-sym [name arity o]
+  (->sym name "_" arity "-" o "-index"))
+
+(defn set-sym [name arity]
+  (->sym name "_" arity "-set"))
+
+;; TODO: for arity greater than 20, we need to use rest args
+
+(defmacro extend-rel [name & args]
+  (let [arity (count args)
+        r (range 1 (clojure.core/inc arity))
+        as (map a-sym r)
+        indexed (filter (fn [[a i]]
+                          (-> a meta :index))
+                        (map vector
+                             args
+                             (range 1 (clojure.core/inc arity))))
+        check-lvar (fn [[o i]]
+                     (let [a (a-sym i)]
+                       `((not (~'lvar? (~'walk ~'a ~a)))
+                         ((deref ~(index-sym name arity o)) (~'walk ~'a ~a)))))
+        indexed-set (fn [[o i]]
+                      `(def ~(index-sym name arity o) (atom {})))]
+    (if (<= arity 20)
+     `(do
+        (def ~(set-sym name arity) (atom #{}))
+        ~@(map indexed-set indexed)
+        (add-indexes ~name ~arity '~indexed)
+        (setfn ~name ~arity
+               (fn [~@as]
+                 (fn [~'a]
+                   (let [set# (cond
+                               ~@(mapcat check-lvar indexed)
+                               :else (deref ~(set-sym name arity)))]
+                     (~'to-stream
+                      (->> set#
+                           (map (fn [cand#]
+                                  (when-let [~'a (~'unify ~'a [~@as] cand#)]
+                                    ~'a)))
+                           (remove nil?)))))))))))
+
+;; TODO: Should probably happen in a transaction
+
+(defn facts
+  ([rel [f :as tuples]] (facts rel (count f) tuples))
+  ([^Rel rel arity tuples]
+     (let [rel-set (var-get (resolve (set-sym (.name rel) arity)))
+           tuples (map vec tuples)]
+       (swap! rel-set (fn [s] (into s tuples)))
+       (let [indexes (indexes-for rel arity)]
+         (doseq [[o i] indexes]
+           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+             (let [indexed-tuples (map (fn [t]
+                                         {(nth t (dec i)) #{t}})
+                                       tuples)]
+               (swap! index
+                      (fn [i]
+                        (apply merge-with set/union i indexed-tuples))))))))))
+
+(defn fact [rel & tuple]
+  (facts rel [(vec tuple)]))
