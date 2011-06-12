@@ -7,6 +7,33 @@
             [clojure.core.logic.match :as match]))
 
 ;; =============================================================================
+;; Useful goals
+
+(defn nilo [a]
+  (== nil a))
+
+(defn emptyo [a]
+  (== '() a))
+
+(defn conso [a d l]
+  (== (lcons a d) l))
+
+(defn firsto [l a]
+  (exist [d]
+    (conso a d l)))
+
+(defn resto [l d]
+  (exist [a]
+    (== (lcons a d) l)))
+
+(defn membero [x l]
+  (conde
+    ((firsto l x))
+    ((exist [r]
+       (resto l r)
+       (membero x r)))))
+
+;; =============================================================================
 ;; Convenient Goal Fns
 
 (defmacro defne [& rest]
@@ -66,9 +93,9 @@
         arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
     (if (seq args)
       `(do
-         (def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r)))
+         (def ~name (~'clojure.core.logic.prelude.Rel. '~name (atom {}) nil ~@(map arity-excs r)))
          (extend-rel ~name ~@args))
-      `(def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
+      `(def ~name (~'clojure.core.logic.prelude.Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
 
 (defmacro def-apply-to-helper [n]
   (let [r (range 1 (clojure.core/inc n))

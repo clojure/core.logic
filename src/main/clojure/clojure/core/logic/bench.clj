@@ -1,7 +1,7 @@
 (ns clojure.core.logic.bench
   (:refer-clojure :exclude [reify inc ==])
   (:use clojure.core.logic.minikanren
-        [clojure.core.logic.prelude :only [firsto defne]]
+        [clojure.core.logic.prelude :only [defne]]
         [clojure.core.logic.disequality :only [!=]])
   (:require [clojure.core.logic.nonrel :as nonrel]
             [clojure.core.logic.arithmetic :as a]))
@@ -70,6 +70,24 @@
 ;; =============================================================================
 ;; zebra
 ;; =============================================================================
+
+(defn conso [a d l]
+  (== (lcons a d) l))
+
+(defn firsto [l a]
+  (exist [d]
+    (conso a d l)))
+
+(defn resto [l d]
+  (exist [a]
+    (== (lcons a d) l)))
+
+(defn membero [x l]
+  (conde
+    ((firsto l x))
+    ((exist [r]
+       (resto l r)
+       (membero x r)))))
 
 (defne righto [x y l]
   ([_ _ [x y . ?r]])
