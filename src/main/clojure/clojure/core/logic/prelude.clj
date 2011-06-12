@@ -122,8 +122,8 @@
                               `(~a (first ~'arglist) ~'arglist (next ~'arglist)))
                             (take n args)))
         case-clause (fn [n]
-                      `(~n (let [~@(arg-binds n)]
-                            (.invoke ~'ifn ~@(take n args)
+                      `(~n (let [~@(arg-binds (dec n))]
+                            (.invoke ~'ifn ~@(take (dec n) args)
                                      (clojure.lang.Util/ret1 (first ~'arglist) nil)))))]
    `(defn ~'apply-to-helper [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
       (case (clojure.lang.RT/boundedLength ~'arglist 20)
@@ -236,7 +236,6 @@
 (defn fact [rel & tuple]
   (facts rel [(vec tuple)]))
 
-;; TODO: apply support
 ;; TODO: handle > 20 arg case
 
 (comment
@@ -246,7 +245,7 @@
   (foo 1 2)
 
   (defrel friends ^:index person1 ^:index person2)
-  
+
   (facts friends
          '[[John Jill]
            [Tom Jill]
