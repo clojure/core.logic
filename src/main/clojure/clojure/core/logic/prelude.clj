@@ -82,9 +82,19 @@
 ;; -----------------------------------------------------------------------------
 ;; Rel
 
-(defn arity-exc-helper [name n]
-  (fn [& args]
-    (throw (clojure.lang.ArityException. n (str name)))))
+(defmacro def-arity-exc-helper []
+  (try
+    (Class/forName "clojure.lang.ArityException")
+    `(defn arity-exc-helper [~'name ~'n]
+       (fn [~'& ~'args]
+         (throw (clojure.lang.ArityException. ~'n (str ~'name)))))
+    (finally 
+     `(defn ~'arity-exc-helper [~'name ~'n]
+        (fn [~'& ~'args]
+          (throw (java.lang.IllegalArgumentException.
+                  (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
+
+(def-arity-exc-helper)
 
 (defn sym-helper [prefix n]
   (symbol (str prefix n)))
@@ -207,7 +217,6 @@
 (defn fact [rel & tuple]
   (facts rel [(vec tuple)]))
 
-;; TODO: ArityException not 1.2.0 compat
 ;; TODO: apply support
 ;; TODO: handle > 20 arg case
 
