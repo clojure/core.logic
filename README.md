@@ -73,10 +73,9 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
             (conso [?x :- ?s] c l)
             (typedo l ?a ?t)))
        ([_ [:apply ?a ?b] _]
-          (exist [s o]
+          (exist [s]
             (typedo c ?a [s :> t])
-            (typedo c ?b o)
-            (== s o)))))))
+            (typedo c ?b s)))))))
 
 (comment
   ;; ([_.0 :> _.1])
