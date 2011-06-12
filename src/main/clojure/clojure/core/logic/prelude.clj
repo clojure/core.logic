@@ -114,6 +114,23 @@
          (extend-rel ~name ~@args))
       `(def ~name (~'Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
 
+(defmacro def-apply-to-helper [n]
+  (let [r (range 1 (clojure.core/inc n))
+        args (map a-sym r)
+        arg-binds (fn [n]
+                    (mapcat (fn [a]
+                              `(~a (first ~'arglist) ~'arglist (next ~'arglist)))
+                            (take n args)))
+        case-clause (fn [n]
+                      `(~n (let [~@(arg-binds n)]
+                            (.invoke ~'ifn ~@(take n args)
+                                     (clojure.lang.Util/ret1 (first ~'arglist) nil)))))]
+   `(defn ~'apply-to-helper [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
+      (case (clojure.lang.RT/boundedLength ~'arglist 20)
+            ~@(mapcat case-clause r)))))
+
+(def-apply-to-helper 20)
+
 (defprotocol IRel
   (setfn [this arity f])
   (indexes-for [this arity])
@@ -142,6 +159,8 @@
            ~'meta)
          clojure.lang.IFn
          ~@(map create-sig r)
+         (~'applyTo [~'this ~'arglist]
+            (~'apply-to-helper ~'this ~'arglist))
          ~'IRel
          (~'setfn [~'_ ~'arity ~'f]
            (case ~'arity
