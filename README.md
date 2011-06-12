@@ -174,7 +174,7 @@ The above is quite slow since we have to walk the data structure and replace the
 Defining facts
 ----
 
-Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>. Facts are just tuples and core.logic will index them by the first element.
+Sometimes it's useful to create a list of facts that you want to run queries over. Use <code>defrel</code> and <code>fact</code>.
 
 ```clj
 (defrel man p)
@@ -200,6 +200,16 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
     (fun y)
     (likes x y)
     (== q [x y]))) ; ([Ricky Lucy])
+```
+
+It's important to index relationships so that the time to run queries doesn't grow linearly with the number of facts. You can create indexes for any element of the fact tuple. Note that this has implications for memory usage.
+
+```clj
+; Clojure 1.3.0
+(defrel likes ^:index p1 ^:index p2)
+
+; Clojure 1.2.0
+(defrel likes ^{:index true} p1 ^{:index true} p2)
 ```
 
 Roadmap
