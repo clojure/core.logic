@@ -9,27 +9,24 @@
 
 (defn ->lcons [env [m] i]
   (let [m (if (symbol? m) `(quote ~m) m)]
-    `(== (lcons ~m ~(env i)) ~(env (dec i)))))
+    `(== ~(env (dec i)) (lcons ~m ~(env i)))))
 
 (defn handle-clause [env c i]
   (if (vector? c)
-    (->lcons c i)
+    (->lcons env c i)
     (let [c (if (seq? c) c (list c))]
       (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
-  (let [c (count clauses)
-        r (range 1 (+ c 2))
+  (let [r (range 1 (+ (count clauses) 2))
         lsyms (into [] (map lsym r))
-        f (println lsyms)
         clauses (map (partial handle-clause lsyms) clauses r)]
     `(defn ~name [~(first lsyms) ~(last lsyms)]
        (exist [~@(butlast (rest lsyms))]
          ~@clauses))))
 
 (defn handle-cclauses [fsym osym cclause]
-  (let [c (count cclause)
-        r (range 1 (clojure.core/inc c))
+  (let [r (range 1 (clojure.core/inc (count cclause)))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (map (partial handle-clause lsym) cclause)]
     `(exist [~@lsyms]
@@ -42,8 +39,7 @@
       ~@(map (partial handle-cclauses fsym osym) cclauses))))
 
 (defmacro def--> [name args & clauses]
-  (let [c (count clauses)
-        r (range 1 (+ c 2))
+  (let [r (range 1 (+ (count clauses) 2))
         lsyms (map lsym r)
         clauses (map handle-clause clauses r)]
    `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
