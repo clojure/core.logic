@@ -48,8 +48,12 @@
       (conde
        ~@(map (partial handle-cclause fsym osym) cclauses)))))
 
-(defmacro def-->e [name args & clauses]
-  )
+(defmacro def-->e [name args & cclauses]
+  (let [fsym (gensym "l1_")
+        osym (gensym "o")]
+   `(defne ~name [~@args ~fsym ~osym]
+      (conde
+       ~@(map (partial handle-cclause fsym osym) cclauses)))))
 
 (comment
   (--> s np vp)
@@ -58,7 +62,7 @@
   (-->e det
     ([the])
     ([a]))
-  (-->e np-subject
+  (def-->e np-subject [x y]
     ((det) (n))
     ((pro-subject)))
   )
