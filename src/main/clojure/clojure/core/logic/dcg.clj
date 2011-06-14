@@ -103,6 +103,8 @@
   (run* [parse-tree]
     (sentence parse-tree '[the bat eats a cat] []))
 
+  ;; ([:s [:np [:d the] [:n bat]] [:vp [:v eats] [:np [:d a] [:n cat]]]])
+
   ;; ~70ms
   (dotimes [_ 10]
     (time
