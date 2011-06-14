@@ -44,25 +44,44 @@
 (defmacro -->e [name & cclauses]
   (let [fsym (gensym "l1_")
         osym (gensym "o")]
-   `(defne ~name [~fsym ~osym]
+   `(defn ~name [~fsym ~osym]
       (conde
-       ~@(map (partial handle-cclause fsym osym) cclauses)))))
+       ~@(map list (map (partial handle-cclause fsym osym) cclauses))))))
 
-(defmacro def-->e [name args & cclauses]
+(defmacro def-->e [name args & pcss]
   (let [fsym (gensym "l1_")
         osym (gensym "o")]
    `(defne ~name [~@args ~fsym ~osym]
-      (conde
-       ~@(map (partial handle-cclause fsym osym) cclauses)))))
+      ~@(map (fn [[p & cs]]
+               (list (-> p (conj '_) (conj '_))
+                     (handle-cclause fsym osym cs)))
+             pcss))))
 
 (comment
-  (--> s np vp)
-  (--> s (np subject) vp)
-  (--> n [go] [to])
   (-->e det
     ([the])
     ([a]))
-  (def-->e np-subject [x y]
-    ((det) (n))
-    ((pro-subject)))
+  
+  (-->e n
+    ([witch])
+    ([wizard]))
+
+  (--> v [curses])
+
+  (--> np det n)
+  (--> vp v np)
+  (--> s np vp)
+
+  (def-->e sentence [s]
+    ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
+
+  ;; success
+  (run* [q]
+    (np '[the witch] []))
+
+  ;; success
+  (run* [q]
+    (s '[a witch curses the wizard] []))
+
+  ;; parse tree
   )
