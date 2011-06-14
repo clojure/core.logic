@@ -2,10 +2,12 @@
   (:refer-clojure :exclude [reify == inc])
   (:use [clojure.core.logic minikanren prelude]))
 
+;; TODO: think about indexing
+;; TODO: note that rest args are problematic since we add two invisible args
+;; TODO: don't handle syms specially like we're currently doing
+
 (defn lsym [n]
   (gensym (str "l" n "_")))
-
-;; TODO: don't handle syms specially like this
 
 (defn ->lcons [env [m] i]
   (let [m (if (symbol? m) `(quote ~m) m)]
