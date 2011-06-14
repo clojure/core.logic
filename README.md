@@ -202,7 +202,7 @@ core.logic has Prolog-type DCG syntax for parsing:
 (run* [parse-tree]
   (sentence parse-tree '[the bat eats a cat] []))
 
-;; ([:s [:n [:d the] [:n bat]] [:v [:v eats] [:n [:a a] [:n cat]]]])
+;; ([:s [:np [:d the] [:n bat]] [:vp [:v eats] [:np [:d a] [:n cat]]]])
 ```
 
 Defining facts
