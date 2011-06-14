@@ -4,10 +4,17 @@
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
-;; TODO: don't handle syms specially like we're currently doing
+;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
+;; the clauses, if clause is not dcg clause, skip and remove the front
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
+
+(defn !dcg? [clause]
+  (and (sequential? clause)
+       (let [f (first clause)]
+         (and (symbol? f)
+              (= (name f) "!dcg")))))
 
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
@@ -15,19 +22,33 @@
      (let [m (if quoted `(quote ~m) m)]
        `(== ~(env (dec i)) (lcons ~m ~(env i))))))
 
-(defn handle-clause [env c i]
+(defn mark-clauses
+  ([clauses] (mark-clauses clauses 0))
+  ([clauses start]
+     (let [i (atom start)]
+       (map (fn [clause]
+              (if (!dcg? clause)
+                clause
+                (with-meta clause
+                  {:index (swap! i clojure.core/inc)})))
+            clauses))))
+
+(defn handle-clause [env c]
   (cond
-   (vector? c) (->lcons env c i)
+   (!dcg? c) (second c)
+   (vector? c) (->lcons env c (-> c meta :index))
    (and (seq? c)
         (= (first c) `quote)
-        (vector? (second c))) (->lcons env (second c) i true)
-   :else (let [c (if (seq? c) c (list c))]
+        (vector? (second c))) (->lcons env (second c) (-> c meta :index) true)
+   :else (let [i (-> c meta :index)
+               c (if (seq? c) c (list c))]
            (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
   (let [r (range 1 (+ (count clauses) 2))
         lsyms (into [] (map lsym r))
-        clauses (map (partial handle-clause lsyms) clauses r)]
+        clauses (mark-clauses clauses)
+        clauses (map (partial handle-clause lsyms) clauses)]
     `(defn ~name [~(first lsyms) ~(last lsyms)]
        (exist [~@(butlast (rest lsyms))]
          ~@clauses))))
@@ -35,7 +56,8 @@
 (defmacro def--> [name args & clauses]
   (let [r (range 1 (+ (count clauses) 2))
         lsyms (map lsym r)
-        clauses (map (partial handle-clause lsyms) clauses r)]
+        clauses (mark-clauses clauses)
+        clauses (map (partial handle-clause lsyms) clauses)]
    `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
       (exist [~@(butlast (rest lsyms))]
         ~@clauses))))
@@ -44,7 +66,8 @@
   (let [c (count cclause)
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
-        clauses (map (partial handle-clause lsyms) cclause (range 1 (+ c 2)))]
+        clauses (mark-clauses cclause)
+        clauses (map (partial handle-clause lsyms) clauses)]
     `(exist [~@(butlast (rest lsyms))]
        ~@clauses)))
 
@@ -79,6 +102,9 @@
   (--> vp v np)
   (--> s np vp)
 
+  ;; we can stop the dcg transform
+  (--> s np (!dcg (== 1 1)) vp)
+
   ;; success
   (run* [q]
     (np '[the witch] []))
@@ -107,15 +133,15 @@
   (def-->e sentence [s]
     ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
 
-  (run* [parse-tree]
+  (run 1 [parse-tree]
     (sentence parse-tree '[the bat eats a cat] []))
 
   ;; ([:s [:np [:d the] [:n bat]] [:vp [:v eats] [:np [:d a] [:n cat]]]])
 
-  ;; ~70ms
+  ;; ~90-100ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e3]
-       (run* [parse-tree]
+     (dotimes [_ 1e4]
+       (run 1 [parse-tree]
          (sentence parse-tree '[the bat eats a cat] [])))))
   )
