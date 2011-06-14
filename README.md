@@ -170,6 +170,41 @@ The above is quite slow since we have to walk the data structure and replace the
   (unifier* u w))
 ```
 
+Definite Clause Grammars
+----
+
+core.logic has Prolog-type DCG syntax for parsing:
+
+```clj
+(def-->e verb [v]
+  ([[:v 'eats]] [eats]))
+
+(def-->e noun [n]
+  ([[:n 'bat]] [bat])
+  ([[:n 'cat]] [cat]))
+
+(def-->e det [d]
+  ([[:d 'the]] [the])
+  ([[:a 'a]] [a]))
+
+(def-->e noun-phrase [n]
+  ([[:n ?d ?n]] (det ?d) (noun ?n)))
+
+(def-->e verb-phrase [n]
+  ([[:v ?v ?np]] (verb ?v) (noun-phrase ?np)))
+
+(def-->e sentence [s]
+  ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
+
+(run* [parse-tree]
+  (sentence parse-tree '[the bat eats a cat] []))
+
+(run* [parse-tree]
+  (sentence parse-tree '[the bat eats a cat] []))
+
+;; ([:s [:n [:d the] [:n bat]] [:v [:v eats] [:n [:a a] [:n cat]]]])
+```
+
 Defining facts
 ----
 
