@@ -73,10 +73,9 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
             (conso [?x :- ?s] c l)
             (typedo l ?a ?t)))
        ([_ [:apply ?a ?b] _]
-          (exist [s o]
+          (exist [s]
             (typedo c ?a [s :> t])
-            (typedo c ?b o)
-            (== s o)))))))
+            (typedo c ?b s)))))))
 
 (comment
   ;; ([_.0 :> _.1])
@@ -218,6 +217,7 @@ Roadmap
 The core Prolog aspect of core.logic is nearing completion. The following are tentative future directions:
 
 * Negation - Stratified Negation as provided by XSB ?
+* Definite Clause Grammar
 * Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
 YourKit
