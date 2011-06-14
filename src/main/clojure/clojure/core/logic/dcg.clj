@@ -4,9 +4,21 @@
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
+;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
+;; the clauses, if clause is not dcg clause, skip and remove the front
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
+
+;; this is not going to work, will need to put some more thought on how
+;; to do the lookup logic, it doesn't work because we need 1 more than
+;; what is required
+
+(defn !dcg? [clause]
+  (and (sequential? clause)
+       (let [f (first clause)]
+         (and (symbol? f)
+              (= (name f) "!dcg")))))
 
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
@@ -16,6 +28,7 @@
 
 (defn handle-clause [env c i]
   (cond
+   (!dcg? c) (first c)
    (vector? c) (->lcons env c i)
    (and (seq? c)
         (= (first c) `quote)
