@@ -177,15 +177,15 @@ core.logic has Prolog-type DCG syntax for parsing:
 
 ```clj
 (def-->e verb [v]
-  ([[:v 'eats]] [eats]))
+  ([[:v 'eats]] '[eats]))
 
 (def-->e noun [n]
-  ([[:n 'bat]] [bat])
-  ([[:n 'cat]] [cat]))
+  ([[:n 'bat]] '[bat])
+  ([[:n 'cat]] '[cat]))
 
 (def-->e det [d]
-  ([[:d 'the]] [the])
-  ([[:d 'a]] [a]))
+  ([[:d 'the]] '[the])
+  ([[:d 'a]] '[a]))
 
 (def-->e noun-phrase [n]
   ([[:np ?d ?n]] (det ?d) (noun ?n)))
@@ -195,9 +195,6 @@ core.logic has Prolog-type DCG syntax for parsing:
 
 (def-->e sentence [s]
   ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
-
-(run* [parse-tree]
-  (sentence parse-tree '[the bat eats a cat] []))
 
 (run* [parse-tree]
   (sentence parse-tree '[the bat eats a cat] []))
