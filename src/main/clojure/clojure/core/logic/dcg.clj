@@ -89,13 +89,13 @@
 
   (def-->e det [d]
     ([[:d 'the]] [the])
-    ([[:a 'a]] [a]))
+    ([[:d 'a]] [a]))
 
   (def-->e noun-phrase [n]
-    ([[:n ?d ?n]] (det ?d) (noun ?n)))
+    ([[:np ?d ?n]] (det ?d) (noun ?n)))
   
   (def-->e verb-phrase [n]
-    ([[:v ?v ?np]] (verb ?v) (noun-phrase ?np)))
+    ([[:vp ?v ?np]] (verb ?v) (noun-phrase ?np)))
 
   (def-->e sentence [s]
     ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
