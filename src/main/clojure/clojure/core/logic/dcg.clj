@@ -25,28 +25,31 @@
        (exist [~@(butlast (rest lsyms))]
          ~@clauses))))
 
-(defn handle-cclauses [fsym osym cclause]
-  (let [r (range 1 (clojure.core/inc (count cclause)))
+(defmacro def--> [name args & clauses]
+  (let [r (range 1 (+ (count clauses) 2))
+        lsyms (map lsym r)
+        clauses (map (partial handle-clause lsyms) clauses r)]
+   `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
+      (exist [~@(butlast (rest lsyms))]
+        ~@clauses))))
+
+(defn handle-cclause [fsym osym cclause]
+  (let [c (count cclause)
+        r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
-        clauses (map (partial handle-clause lsym) cclause)]
-    `(exist [~@lsyms]
+        clauses (map (partial handle-clause lsyms) cclause (range 1 (+ c 2)))]
+    `(exist [~@(butlast (rest lsyms))]
        ~@clauses)))
 
 (defmacro -->e [name & cclauses]
   (let [fsym (gensym "l1_")
         osym (gensym "o")]
    `(defne ~name [~fsym ~osym]
-      ~@(map (partial handle-cclauses fsym osym) cclauses))))
+      (conde
+       ~@(map (partial handle-cclause fsym osym) cclauses)))))
 
-(defmacro def--> [name args & clauses]
-  (let [r (range 1 (+ (count clauses) 2))
-        lsyms (map lsym r)
-        clauses (map handle-clause clauses r)]
-   `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
-      (exist [~@(butlast (rest lsyms))]
-        ~@clauses))))
-
-(defmacro def-->e [name args & clauses])
+(defmacro def-->e [name args & clauses]
+  )
 
 (comment
   (--> s np vp)
