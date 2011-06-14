@@ -72,9 +72,6 @@
   (--> vp v np)
   (--> s np vp)
 
-  (def-->e sentence [s]
-    ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
-
   ;; success
   (run* [q]
     (np '[the witch] []))
@@ -83,5 +80,33 @@
   (run* [q]
     (s '[a witch curses the wizard] []))
 
-  ;; parse tree
+  (def-->e verb [v]
+    ([[:v 'eats]] [eats]))
+
+  (def-->e noun [n]
+    ([[:n 'bat]] [bat])
+    ([[:n 'cat]] [cat]))
+
+  (def-->e det [d]
+    ([[:d 'the]] [the])
+    ([[:a 'a]] [a]))
+
+  (def-->e noun-phrase [n]
+    ([[:n ?d ?n]] (det ?d) (noun ?n)))
+  
+  (def-->e verb-phrase [n]
+    ([[:v ?v ?np]] (verb ?v) (noun-phrase ?np)))
+
+  (def-->e sentence [s]
+    ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
+
+  (run* [parse-tree]
+    (sentence parse-tree '[the bat eats a cat] []))
+
+  ;; ~70ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e3]
+       (run* [parse-tree]
+         (sentence parse-tree '[the bat eats a cat] [])))))
   )
