@@ -9,15 +9,20 @@
 (defn lsym [n]
   (gensym (str "l" n "_")))
 
-(defn ->lcons [env [m] i]
-  (let [m (if (symbol? m) `(quote ~m) m)]
-    `(== ~(env (dec i)) (lcons ~m ~(env i)))))
+(defn ->lcons
+  ([env [m :as c] i] (->lcons env c i false))
+  ([env [m :as c] i quoted]
+     (let [m (if quoted `(quote ~m) m)]
+       `(== ~(env (dec i)) (lcons ~m ~(env i))))))
 
 (defn handle-clause [env c i]
-  (if (vector? c)
-    (->lcons env c i)
-    (let [c (if (seq? c) c (list c))]
-      (concat c [(env (dec i)) (env i)]))))
+  (cond
+   (vector? c) (->lcons env c i)
+   (and (seq? c)
+        (= (first c) `quote)
+        (vector? (second c))) (->lcons env (second c) i true)
+   :else (let [c (if (seq? c) c (list c))]
+           (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
   (let [r (range 1 (+ (count clauses) 2))
@@ -61,14 +66,14 @@
 
 (comment
   (-->e det
-    ([the])
-    ([a]))
+    ('[the])
+    ('[a]))
   
   (-->e n
-    ([witch])
-    ([wizard]))
+    ('[witch])
+    ('[wizard]))
 
-  (--> v [curses])
+  (--> v '[curses])
 
   (--> np det n)
   (--> vp v np)
@@ -83,15 +88,15 @@
     (s '[a witch curses the wizard] []))
 
   (def-->e verb [v]
-    ([[:v 'eats]] [eats]))
+    ([[:v 'eats]] '[eats]))
 
   (def-->e noun [n]
-    ([[:n 'bat]] [bat])
-    ([[:n 'cat]] [cat]))
+    ([[:n 'bat]] '[bat])
+    ([[:n 'cat]] '[cat]))
 
   (def-->e det [d]
-    ([[:d 'the]] [the])
-    ([[:d 'a]] [a]))
+    ([[:d 'the]] '[the])
+    ([[:d 'a]] '[a]))
 
   (def-->e noun-phrase [n]
     ([[:np ?d ?n]] (det ?d) (noun ?n)))
