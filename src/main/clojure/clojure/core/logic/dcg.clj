@@ -5,10 +5,9 @@
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
-;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
-;; the clauses, if clause is not dcg clause, skip and remove the front
 ;; TODO: make handle-clause polymorphic, we don't want to futz around with
 ;; with forcing macroexpand
+;; TODO: exist? and !dcg? are odd, why can't we check w/ `sym
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
@@ -29,7 +28,9 @@
 
 (defn exist? [clause]
   (and (seq? clause)
-       (= (first clause) 'clojure.core.logic.minikanren/exist)))
+       (let [f (first clause)]
+         (and (symbol? f)
+              (= (name f) "exist")))))
 
 ;; TODO: make tail recursive
 
@@ -221,10 +222,9 @@
 
   (declare exprso)
 
-  ;; exist breaks it, something to work
   (def-->e expro [e]
-    ([[:s ?a]] (exist [cs] (symo cs)))
-    ([[:n ?n]] (exist [cs] (numo cs)))
+    ([[:s ?a]] (symo ?a))
+    ([[:n ?n]] (numo ?n))
     ([?list] [\(] (exprso ?list) [\)])
     ([[:s :quote ?q]] [\'] (expro ?q)))
 
@@ -246,5 +246,5 @@
     (numo q (vec "123") []))
 
   (run* [q]
-    (expro q (vec " 123 ")  []))
+    (expro q (vec "123") []))
   )
