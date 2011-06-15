@@ -31,6 +31,8 @@
   (and (seq? clause)
        (= (first clause) 'clojure.core.logic.minikanren/exist)))
 
+;; TODO: make tail recursive
+
 (defn count-clauses [clauses]
   (if (exist? clauses)
     (count-clauses (drop 2 clauses))
@@ -41,33 +43,47 @@
                :else (clojure.core/inc s)))
             0 clauses)))
 
-;; make recursive to handle exist/all
+;; TODO: might as well make this a lazy-seq
 
-(defn mark-clauses [clauses]
-  (let [i (atom 0)]
-    (map (fn [clause]
-           (if (!dcg? clause)
-             clause
-             (with-meta clause
-               {:index (swap! i clojure.core/inc)})))
-         clauses)))
+(defn mark-clauses
+  ([cs] (mark-clauses cs (atom 0)))
+  ([[c & r :as cs] i]
+     (cond
+      (nil? (seq cs)) ()
+      (exist? c) (cons `(exist ~(second c)
+                          ~@(mark-clauses (drop 2 c) i))
+                       (mark-clauses r i))
+      (!dcg? c) (cons c (mark-clauses r i))
+      :else (cons (with-meta c
+                    {:index (swap! i clojure.core/inc)})
+                  (mark-clauses r i)))))
 
-(defn handle-clause [env c]
+;; TODO: same as above
+;; combine this step with the above
+
+(defn handle-clauses [env [c & r :as cs]]
   (cond
-   (!dcg? c) (second c)
-   (vector? c) (->lcons env c (-> c meta :index))
+   (nil? (seq cs)) ()
+   (exist? c) (cons `(exist ~(second c)
+                       ~@(handle-clauses env (drop 2 c)))
+                    (handle-clauses env r))
+   (!dcg? c) (cons (second c) (handle-clauses env r))
+   (vector? c) (cons (->lcons env c (-> c meta :index))
+                     (handle-clauses env r))
    (and (seq? c)
         (= (first c) `quote)
-        (vector? (second c))) (->lcons env (second c) (-> c meta :index) true)
+        (vector? (second c))) (cons (->lcons env (second c) (-> c meta :index) true)
+                                     (handle-clauses env r))
    :else (let [i (-> c meta :index)
                c (if (seq? c) c (list c))]
-           (concat c [(env (dec i)) (env i)]))))
+           (cons (concat c [(env (dec i)) (env i)])
+                 (handle-clauses env r)))))
 
 (defmacro --> [name & clauses]
   (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (into [] (map lsym r))
         clauses (mark-clauses clauses)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
     `(defn ~name [~(first lsyms) ~(last lsyms)]
        (exist [~@(butlast (rest lsyms))]
          ~@clauses))))
@@ -76,7 +92,7 @@
   (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (map lsym r)
         clauses (mark-clauses clauses)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
    `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
       (exist [~@(butlast (rest lsyms))]
         ~@clauses))))
@@ -86,7 +102,7 @@
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
     `(exist [~@(butlast (rest lsyms))]
        ~@clauses)))
 
