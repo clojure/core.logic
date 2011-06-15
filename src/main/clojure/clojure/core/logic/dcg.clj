@@ -43,16 +43,14 @@
 
 ;; make recursive to handle exist/all
 
-(defn mark-clauses
-  ([clauses] (mark-clauses clauses 0))
-  ([clauses start]
-     (let [i (atom start)]
-       (map (fn [clause]
-              (if (!dcg? clause)
-                clause
-                (with-meta clause
-                  {:index (swap! i clojure.core/inc)})))
-            clauses))))
+(defn mark-clauses [clauses]
+  (let [i (atom 0)]
+    (map (fn [clause]
+           (if (!dcg? clause)
+             clause
+             (with-meta clause
+               {:index (swap! i clojure.core/inc)})))
+         clauses)))
 
 (defn handle-clause [env c]
   (cond
