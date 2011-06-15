@@ -1,6 +1,7 @@
 (ns clojure.core.logic.dcg
   (:refer-clojure :exclude [reify == inc])
-  (:use [clojure.core.logic minikanren prelude]))
+  (:use [clojure.core.logic minikanren prelude])
+  (:require [clojure.core.logic.nonrel :as nonrel]))
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
@@ -146,4 +147,72 @@
      (dotimes [_ 1e4]
        (run 1 [parse-tree]
          (sentence parse-tree '[the bat eats a cat] [])))))
+
+  ;; parsing lisp
+
+  (def digits (into #{} "1234567890"))
+  (defn cr [c1 c2]
+    (map char (range (int c1) (int c2))))
+  (def alpha (into #{} (concat (cr \a \z) (r \A \Z))))
+  (def alnum (into digits (concat (cr \a \z) (r \A \Z))))
+  (def nonalnum (into #{} "+/-*><="))
+  
+  (-->e wso
+    ([\space] wso)
+    ([]))
+
+  (def-->e digito [x]
+    ([_] [x]
+       (!dcg
+        (nonrel/project [x]
+          (== (contains? digits x) true)))))
+
+  (def-->e numo [x]
+    ([[?d . ?ds]] (digito ?d) (numo ?ds))
+    ([[?d]] (digito ?d)))
+
+  (def-->e symo [x]
+    ([[?a . ?as]] [?a]
+       (nonrel/project [x]
+         (conde
+           ((== (contains? alpha x) true))
+           ((== (contains? nonalnum x) true))))
+       (symro ?as)))
+
+  (def-->e symro [x]
+    ([[?a . ?as]] [?a]
+       (nonrel/project [x]
+         (conde
+           ((== (contains? alnum x) true))
+           ((== (contains? nonalnum x) true)))))
+    ([[]] []))
+
+  (declare exprso)
+
+  ;; exist breaks it, something to work
+  (def-->e expro [e]
+    ([[:s ?a]] (exist [cs] (symo cs)))
+    ([[:n ?n]] (exist [cs] (numo cs)))
+    ([?list] [\(] (exprso ?list) [\)])
+    ([[:s :quote ?q]] [\'] (expro ?q)))
+
+  (def-->e exprso [exs]
+    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es)))
+
+  ;; (_.0)
+  (run* [q]
+    (wso (vec "  ") []))
+
+  ;; ()
+  (run* [q]
+    (wso (vec " f ") []))
+
+  (run* [q]
+    (digito q [\1] []))
+
+  (run* [q]
+    (numo q (vec "123") []))
+
+  (run* [q]
+    (expro q (vec " 123 ")  []))
   )
