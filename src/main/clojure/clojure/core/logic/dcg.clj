@@ -17,12 +17,13 @@
        (let [f (first clause)]
          (and (symbol? f)
               (= (name f) "!dcg")))))
-
+ 
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
   ([env [m :as c] i quoted]
      (cond
-      (empty? c) `(== ~(env (dec i)) ())
+      (empty? c) `(exist []
+                    (== ~(env (dec i)) ~(env i)))
       :else (let [m (if quoted `(quote ~m) m)]
               `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
 
@@ -186,8 +187,8 @@
   (def digits (into #{} "1234567890"))
   (defn cr [c1 c2]
     (map char (range (int c1) (int c2))))
-  (def alpha (into #{} (concat (cr \a \z) (r \A \Z))))
-  (def alnum (into digits (concat (cr \a \z) (r \A \Z))))
+  (def alpha (into #{} (concat (cr \a \z) (cr \A \Z))))
+  (def alnum (into digits (concat (cr \a \z) (cr \A \Z))))
   (def nonalnum (into #{} "+/-*><="))
   
   (-->e wso
@@ -204,32 +205,39 @@
     ([[?d . ?ds]] (digito ?d) (numo ?ds))
     ([[?d]] (digito ?d)))
 
+  (declare symro)
+  
   (def-->e symo [x]
     ([[?a . ?as]] [?a]
-       (nonrel/project [x]
-         (conde
-           ((== (contains? alpha x) true))
-           ((== (contains? nonalnum x) true))))
+       (!dcg
+        (nonrel/project [?a]
+          (conde
+            ((== (contains? alpha ?a) true))
+            ((== (contains? nonalnum ?a) true)))))
        (symro ?as)))
 
   (def-->e symro [x]
     ([[?a . ?as]] [?a]
-       (nonrel/project [x]
-         (conde
-           ((== (contains? alnum x) true))
-           ((== (contains? nonalnum x) true)))))
+       (!dcg
+        (nonrel/project [?a]
+          (conde
+            ((== (contains? alnum ?a) true))
+            ((== (contains? nonalnum ?a) true)))))
+       (symro ?as))
     ([[]] []))
 
   (declare exprso)
 
   (def-->e expro [e]
-    ([[:s ?a]] (symo ?a))
-    ([[:n ?n]] (numo ?n))
-    ([?list] [\(] (exprso ?list) [\)])
-    ([[:s :quote ?q]] [\'] (expro ?q)))
+    ([[:sym ?a]] (symo ?a))
+    ([[:num ?n]] (numo ?n))
+    ([[:list ?list]] [\(] (exprso ?list) [\)])
+    ([[:sym :quote ?q]] [\'] (expro ?q)))
 
+  ;; TODO: we need cut here, we found a valid parse
   (def-->e exprso [exs]
-    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es)))
+    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es))
+    ([[]] []))
 
   ;; (_.0)
   (run* [q]
@@ -239,12 +247,36 @@
   (run* [q]
     (wso (vec " f ") []))
 
+  ;; (\1)
   (run* [q]
     (digito q [\1] []))
 
+  ;; ((\1 \2 \3))
   (run* [q]
     (numo q (vec "123") []))
 
+  ;; ((\a \b \c))
+  (run* [q]
+    (symo q (vec "abc") []))
+
+  ;; ([:n (\1 \2 \3)])
   (run* [q]
     (expro q (vec "123") []))
+
+  ;; ([:s (\a \b \c)])
+  (run* [q]
+    (expro q (vec "abc") []))
+
+  ;; (([:list ([:sym (\+)] [:sym (\a \b \c)] [:sym (\b)] [:sym :quote [:list ([:num [\1]] [:num (\2 \3)])]])]))
+  (run 1 [q]
+    (exprso q (vec " (+ abc b '(1 23))  ") []))
+
+  ;; w/ def-->a ~2500ms
+  ;; w/ def-->e ~1400ms
+  (dotimes [_ 10]
+    (let [s (vec " (+ abc b '(1 23))  ")]
+      (time
+       (dotimes [_ 50]
+         (run 1 [q]
+           (exprso q s []))))))
   )

@@ -45,6 +45,9 @@
 ;; -----------------------------------------------------------------------------
 ;; defnu, defna, matcha, matchu
 
+;; TODO: we need to rethink defna and defnu, the unification comes first
+;; the *question* should come first
+
 (defmacro defna [& rest]
   (apply match/defnm 'clojure.core.logic.nonrel/conda rest))
 
