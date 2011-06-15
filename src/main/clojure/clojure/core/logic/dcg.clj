@@ -7,6 +7,8 @@
 ;; TODO: note that rest args are problematic since we add two invisible args
 ;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
 ;; the clauses, if clause is not dcg clause, skip and remove the front
+;; TODO: make handle-clause polymorphic, we don't want to futz around with
+;; with forcing macroexpand
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
@@ -24,6 +26,22 @@
       (empty? c) `(== ~(env (dec i)) ())
       :else (let [m (if quoted `(quote ~m) m)]
               `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
+
+(defn exist? [clause]
+  (and (seq? clause)
+       (= (first clause) 'clojure.core.logic.minikanren/exist)))
+
+(defn count-clauses [clauses]
+  (if (exist? clauses)
+    (count-clauses (drop 2 clauses))
+    (reduce (fn [s c]
+              (cond
+               (exist? c) (+ s (count-clauses (drop 2 c)))
+               (!dcg? c) s
+               :else (clojure.core/inc s)))
+            0 clauses)))
+
+;; make recursive to handle exist/all
 
 (defn mark-clauses
   ([clauses] (mark-clauses clauses 0))
@@ -48,7 +66,7 @@
            (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
-  (let [r (range 1 (+ (count (remove !dcg? clauses)) 2))
+  (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (into [] (map lsym r))
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -57,7 +75,7 @@
          ~@clauses))))
 
 (defmacro def--> [name args & clauses]
-  (let [r (range 1 (+ (count (remove !dcg? clauses)) 2))
+  (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (map lsym r)
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -66,7 +84,7 @@
         ~@clauses))))
 
 (defn handle-cclause [fsym osym cclause]
-  (let [c (count (remove !dcg? cclause))
+  (let [c (count-clauses cclause)
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
@@ -144,7 +162,7 @@
   ;; ~90-100ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e4]
+     (dotimes [_ 1e3]
        (run 1 [parse-tree]
          (sentence parse-tree '[the bat eats a cat] [])))))
 
