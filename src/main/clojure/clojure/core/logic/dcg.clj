@@ -19,8 +19,10 @@
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
   ([env [m :as c] i quoted]
-     (let [m (if quoted `(quote ~m) m)]
-       `(== ~(env (dec i)) (lcons ~m ~(env i))))))
+     (cond
+      (empty? c) `(== ~(env (dec i)) ())
+      :else (let [m (if quoted `(quote ~m) m)]
+              `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
 
 (defn mark-clauses
   ([clauses] (mark-clauses clauses 0))
@@ -45,7 +47,7 @@
            (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
-  (let [r (range 1 (+ (count clauses) 2))
+  (let [r (range 1 (+ (count (remove !dcg? clauses)) 2))
         lsyms (into [] (map lsym r))
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -54,7 +56,7 @@
          ~@clauses))))
 
 (defmacro def--> [name args & clauses]
-  (let [r (range 1 (+ (count clauses) 2))
+  (let [r (range 1 (+ (count (remove !dcg? clauses)) 2))
         lsyms (map lsym r)
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -63,7 +65,7 @@
         ~@clauses))))
 
 (defn handle-cclause [fsym osym cclause]
-  (let [c (count cclause)
+  (let [c (count (remove !dcg? cclause))
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
