@@ -5,10 +5,9 @@
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
-;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
-;; the clauses, if clause is not dcg clause, skip and remove the front
 ;; TODO: make handle-clause polymorphic, we don't want to futz around with
 ;; with forcing macroexpand
+;; TODO: exist? and !dcg? are odd, why can't we check w/ `sym
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
@@ -18,18 +17,23 @@
        (let [f (first clause)]
          (and (symbol? f)
               (= (name f) "!dcg")))))
-
+ 
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
   ([env [m :as c] i quoted]
      (cond
-      (empty? c) `(== ~(env (dec i)) ())
+      (empty? c) `(exist []
+                    (== ~(env (dec i)) ~(env i)))
       :else (let [m (if quoted `(quote ~m) m)]
               `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
 
 (defn exist? [clause]
   (and (seq? clause)
-       (= (first clause) 'clojure.core.logic.minikanren/exist)))
+       (let [f (first clause)]
+         (and (symbol? f)
+              (= (name f) "exist")))))
+
+;; TODO: make tail recursive
 
 (defn count-clauses [clauses]
   (if (exist? clauses)
@@ -41,33 +45,47 @@
                :else (clojure.core/inc s)))
             0 clauses)))
 
-;; make recursive to handle exist/all
+;; TODO: might as well make this a lazy-seq
 
-(defn mark-clauses [clauses]
-  (let [i (atom 0)]
-    (map (fn [clause]
-           (if (!dcg? clause)
-             clause
-             (with-meta clause
-               {:index (swap! i clojure.core/inc)})))
-         clauses)))
+(defn mark-clauses
+  ([cs] (mark-clauses cs (atom 0)))
+  ([[c & r :as cs] i]
+     (cond
+      (nil? (seq cs)) ()
+      (exist? c) (cons `(exist ~(second c)
+                          ~@(mark-clauses (drop 2 c) i))
+                       (mark-clauses r i))
+      (!dcg? c) (cons c (mark-clauses r i))
+      :else (cons (with-meta c
+                    {:index (swap! i clojure.core/inc)})
+                  (mark-clauses r i)))))
 
-(defn handle-clause [env c]
+;; TODO: same as above
+;; combine this step with the above
+
+(defn handle-clauses [env [c & r :as cs]]
   (cond
-   (!dcg? c) (second c)
-   (vector? c) (->lcons env c (-> c meta :index))
+   (nil? (seq cs)) ()
+   (exist? c) (cons `(exist ~(second c)
+                       ~@(handle-clauses env (drop 2 c)))
+                    (handle-clauses env r))
+   (!dcg? c) (cons (second c) (handle-clauses env r))
+   (vector? c) (cons (->lcons env c (-> c meta :index))
+                     (handle-clauses env r))
    (and (seq? c)
         (= (first c) `quote)
-        (vector? (second c))) (->lcons env (second c) (-> c meta :index) true)
+        (vector? (second c))) (cons (->lcons env (second c) (-> c meta :index) true)
+                                     (handle-clauses env r))
    :else (let [i (-> c meta :index)
                c (if (seq? c) c (list c))]
-           (concat c [(env (dec i)) (env i)]))))
+           (cons (concat c [(env (dec i)) (env i)])
+                 (handle-clauses env r)))))
 
 (defmacro --> [name & clauses]
   (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (into [] (map lsym r))
         clauses (mark-clauses clauses)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
     `(defn ~name [~(first lsyms) ~(last lsyms)]
        (exist [~@(butlast (rest lsyms))]
          ~@clauses))))
@@ -76,7 +94,7 @@
   (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (map lsym r)
         clauses (mark-clauses clauses)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
    `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
       (exist [~@(butlast (rest lsyms))]
         ~@clauses))))
@@ -86,7 +104,7 @@
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
-        clauses (map (partial handle-clause lsyms) clauses)]
+        clauses (handle-clauses lsyms clauses)]
     `(exist [~@(butlast (rest lsyms))]
        ~@clauses)))
 
@@ -169,8 +187,8 @@
   (def digits (into #{} "1234567890"))
   (defn cr [c1 c2]
     (map char (range (int c1) (int c2))))
-  (def alpha (into #{} (concat (cr \a \z) (r \A \Z))))
-  (def alnum (into digits (concat (cr \a \z) (r \A \Z))))
+  (def alpha (into #{} (concat (cr \a \z) (cr \A \Z))))
+  (def alnum (into digits (concat (cr \a \z) (cr \A \Z))))
   (def nonalnum (into #{} "+/-*><="))
   
   (-->e wso
@@ -187,33 +205,39 @@
     ([[?d . ?ds]] (digito ?d) (numo ?ds))
     ([[?d]] (digito ?d)))
 
+  (declare symro)
+  
   (def-->e symo [x]
     ([[?a . ?as]] [?a]
-       (nonrel/project [x]
-         (conde
-           ((== (contains? alpha x) true))
-           ((== (contains? nonalnum x) true))))
+       (!dcg
+        (nonrel/project [?a]
+          (conde
+            ((== (contains? alpha ?a) true))
+            ((== (contains? nonalnum ?a) true)))))
        (symro ?as)))
 
   (def-->e symro [x]
     ([[?a . ?as]] [?a]
-       (nonrel/project [x]
-         (conde
-           ((== (contains? alnum x) true))
-           ((== (contains? nonalnum x) true)))))
+       (!dcg
+        (nonrel/project [?a]
+          (conde
+            ((== (contains? alnum ?a) true))
+            ((== (contains? nonalnum ?a) true)))))
+       (symro ?as))
     ([[]] []))
 
   (declare exprso)
 
-  ;; exist breaks it, something to work
   (def-->e expro [e]
-    ([[:s ?a]] (exist [cs] (symo cs)))
-    ([[:n ?n]] (exist [cs] (numo cs)))
-    ([?list] [\(] (exprso ?list) [\)])
-    ([[:s :quote ?q]] [\'] (expro ?q)))
+    ([[:sym ?a]] (symo ?a))
+    ([[:num ?n]] (numo ?n))
+    ([[:list ?list]] [\(] (exprso ?list) [\)])
+    ([[:sym :quote ?q]] [\'] (expro ?q)))
 
+  ;; TODO: we need cut here, we found a valid parse
   (def-->e exprso [exs]
-    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es)))
+    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es))
+    ([[]] []))
 
   ;; (_.0)
   (run* [q]
@@ -223,12 +247,36 @@
   (run* [q]
     (wso (vec " f ") []))
 
+  ;; (\1)
   (run* [q]
     (digito q [\1] []))
 
+  ;; ((\1 \2 \3))
   (run* [q]
     (numo q (vec "123") []))
 
+  ;; ((\a \b \c))
   (run* [q]
-    (expro q (vec " 123 ")  []))
+    (symo q (vec "abc") []))
+
+  ;; ([:n (\1 \2 \3)])
+  (run* [q]
+    (expro q (vec "123") []))
+
+  ;; ([:s (\a \b \c)])
+  (run* [q]
+    (expro q (vec "abc") []))
+
+  ;; (([:list ([:sym (\+)] [:sym (\a \b \c)] [:sym (\b)] [:sym :quote [:list ([:num [\1]] [:num (\2 \3)])]])]))
+  (run 1 [q]
+    (exprso q (vec " (+ abc b '(1 23))  ") []))
+
+  ;; w/ def-->a ~2500ms
+  ;; w/ def-->e ~1400ms
+  (dotimes [_ 10]
+    (let [s (vec " (+ abc b '(1 23))  ")]
+      (time
+       (dotimes [_ 50]
+         (run 1 [q]
+           (exprso q s []))))))
   )
