@@ -1,11 +1,14 @@
 (ns clojure.core.logic.dcg
   (:refer-clojure :exclude [reify == inc])
-  (:use [clojure.core.logic minikanren prelude]))
+  (:use [clojure.core.logic minikanren prelude])
+  (:require [clojure.core.logic.nonrel :as nonrel]))
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
 ;; TODO: support !dcg, filter !dcg clauses to generate env, as we map over
 ;; the clauses, if clause is not dcg clause, skip and remove the front
+;; TODO: make handle-clause polymorphic, we don't want to futz around with
+;; with forcing macroexpand
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
@@ -19,19 +22,35 @@
 (defn ->lcons
   ([env [m :as c] i] (->lcons env c i false))
   ([env [m :as c] i quoted]
-     (let [m (if quoted `(quote ~m) m)]
-       `(== ~(env (dec i)) (lcons ~m ~(env i))))))
+     (cond
+      (empty? c) `(== ~(env (dec i)) ())
+      :else (let [m (if quoted `(quote ~m) m)]
+              `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
 
-(defn mark-clauses
-  ([clauses] (mark-clauses clauses 0))
-  ([clauses start]
-     (let [i (atom start)]
-       (map (fn [clause]
-              (if (!dcg? clause)
-                clause
-                (with-meta clause
-                  {:index (swap! i clojure.core/inc)})))
-            clauses))))
+(defn exist? [clause]
+  (and (seq? clause)
+       (= (first clause) 'clojure.core.logic.minikanren/exist)))
+
+(defn count-clauses [clauses]
+  (if (exist? clauses)
+    (count-clauses (drop 2 clauses))
+    (reduce (fn [s c]
+              (cond
+               (exist? c) (+ s (count-clauses (drop 2 c)))
+               (!dcg? c) s
+               :else (clojure.core/inc s)))
+            0 clauses)))
+
+;; make recursive to handle exist/all
+
+(defn mark-clauses [clauses]
+  (let [i (atom 0)]
+    (map (fn [clause]
+           (if (!dcg? clause)
+             clause
+             (with-meta clause
+               {:index (swap! i clojure.core/inc)})))
+         clauses)))
 
 (defn handle-clause [env c]
   (cond
@@ -45,7 +64,7 @@
            (concat c [(env (dec i)) (env i)]))))
 
 (defmacro --> [name & clauses]
-  (let [r (range 1 (+ (count clauses) 2))
+  (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (into [] (map lsym r))
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -54,7 +73,7 @@
          ~@clauses))))
 
 (defmacro def--> [name args & clauses]
-  (let [r (range 1 (+ (count clauses) 2))
+  (let [r (range 1 (+ (count-clauses clauses) 2))
         lsyms (map lsym r)
         clauses (mark-clauses clauses)
         clauses (map (partial handle-clause lsyms) clauses)]
@@ -63,7 +82,7 @@
         ~@clauses))))
 
 (defn handle-cclause [fsym osym cclause]
-  (let [c (count cclause)
+  (let [c (count-clauses cclause)
         r (range 2 (clojure.core/inc c))
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
@@ -141,7 +160,75 @@
   ;; ~90-100ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e4]
+     (dotimes [_ 1e3]
        (run 1 [parse-tree]
          (sentence parse-tree '[the bat eats a cat] [])))))
+
+  ;; parsing lisp
+
+  (def digits (into #{} "1234567890"))
+  (defn cr [c1 c2]
+    (map char (range (int c1) (int c2))))
+  (def alpha (into #{} (concat (cr \a \z) (r \A \Z))))
+  (def alnum (into digits (concat (cr \a \z) (r \A \Z))))
+  (def nonalnum (into #{} "+/-*><="))
+  
+  (-->e wso
+    ([\space] wso)
+    ([]))
+
+  (def-->e digito [x]
+    ([_] [x]
+       (!dcg
+        (nonrel/project [x]
+          (== (contains? digits x) true)))))
+
+  (def-->e numo [x]
+    ([[?d . ?ds]] (digito ?d) (numo ?ds))
+    ([[?d]] (digito ?d)))
+
+  (def-->e symo [x]
+    ([[?a . ?as]] [?a]
+       (nonrel/project [x]
+         (conde
+           ((== (contains? alpha x) true))
+           ((== (contains? nonalnum x) true))))
+       (symro ?as)))
+
+  (def-->e symro [x]
+    ([[?a . ?as]] [?a]
+       (nonrel/project [x]
+         (conde
+           ((== (contains? alnum x) true))
+           ((== (contains? nonalnum x) true)))))
+    ([[]] []))
+
+  (declare exprso)
+
+  ;; exist breaks it, something to work
+  (def-->e expro [e]
+    ([[:s ?a]] (exist [cs] (symo cs)))
+    ([[:n ?n]] (exist [cs] (numo cs)))
+    ([?list] [\(] (exprso ?list) [\)])
+    ([[:s :quote ?q]] [\'] (expro ?q)))
+
+  (def-->e exprso [exs]
+    ([[?e . ?es]] wso (expro ?e) wso (exprso ?es)))
+
+  ;; (_.0)
+  (run* [q]
+    (wso (vec "  ") []))
+
+  ;; ()
+  (run* [q]
+    (wso (vec " f ") []))
+
+  (run* [q]
+    (digito q [\1] []))
+
+  (run* [q]
+    (numo q (vec "123") []))
+
+  (run* [q]
+    (expro q (vec " 123 ")  []))
   )
