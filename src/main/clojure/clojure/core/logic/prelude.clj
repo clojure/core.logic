@@ -172,11 +172,11 @@
   (let [arity (count args)
         r (range 1 (clojure.core/inc arity))
         as (map a-sym r)
-        indexed (filter (fn [[a i]]
-                          (-> a meta :index))
-                        (map vector
-                             args
-                             (range 1 (clojure.core/inc arity))))
+        indexed (vec (filter (fn [[a i]]
+                               (-> a meta :index))
+                             (map vector
+                                  args
+                                  (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
                        `((not (~'lvar? (~'walk ~'a ~a)))
