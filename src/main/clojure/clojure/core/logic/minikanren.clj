@@ -136,7 +136,7 @@
   
   (ext [this u v]
     (if (and *occurs-check* (occurs-check this u v))
-      this
+      nil
       (ext-no-check this u v)))
 
   (ext-no-check [this u v]

@@ -1154,3 +1154,11 @@
 (deftest test-binding-map-6
   (is (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
          nil)))
+
+;; -----------------------------------------------------------------------------
+;; Occurs Check
+
+(deftest occurs-check-1
+  (is (= (run* [q]
+           (== q [q]))
+         ())))
