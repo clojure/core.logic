@@ -2,7 +2,7 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>core.logic</artifactId>
-  <version>0.6.1</version>
+  <version>0.6.1-SNAPSHOT</version>
   <name>${artifactId}</name>
   <description>A logic/relational programming library for Clojure</description>
 
@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.clojure</groupId>
     <artifactId>pom.contrib</artifactId>
-    <version>0.0.21</version>
+    <version>0.0.23</version>
   </parent>
 
   <developers>
