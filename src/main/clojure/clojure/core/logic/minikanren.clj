@@ -2,8 +2,6 @@
   (:refer-clojure :exclude [reify == inc])
   (:import [java.io Writer]))
 
-(set! *warn-on-reflection* true)
-
 (def ^{:dynamic true} *occurs-check* true)
 
 (defprotocol IUnifyTerms

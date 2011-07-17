@@ -6,8 +6,6 @@
   (:use clojure.core.logic.minikanren)
   (:import [clojure.core.logic.minikanren Substitutions Choice]))
 
-(set! *warn-on-reflection* true)
-
 ;; =============================================================================
 ;; Data Structures
 ;; (atom []) is cache, waiting streams are PersistentVectors
