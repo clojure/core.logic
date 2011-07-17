@@ -401,9 +401,9 @@
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
       (if (lvar? u)
-        (ext s u v)
+        (unify s u v)
         (cond
-         (lvar? v) (ext s v u)
+         (lvar? v) (unify s v u)
          (and (lcons? u) (lcons? v))
            (if-let [s (unify s (lfirst u) (lfirst v))]
              (recur (lnext u) (lnext v) s)
@@ -581,9 +581,9 @@
           (if-let [s (unify s (lfirst u) (first v))]
             (recur (lnext u) (next v) s)
             false)
-          (ext s u v))
+          (unify s u v))
         (if (lvar? u)
-          (ext-no-check s u '())
+          (unify s u '())
           false)))))
 
 (extend-protocol IUnifyWithLSeq

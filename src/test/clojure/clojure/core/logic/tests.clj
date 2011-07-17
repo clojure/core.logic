@@ -1158,7 +1158,22 @@
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
 
-(deftest occurs-check-1
+(deftest test-occurs-check-1
   (is (= (run* [q]
            (== q [q]))
+         ())))
+
+;; -----------------------------------------------------------------------------
+;; Unifications that should fail
+
+(deftest test-unify-fail-1
+  (is (= (run* [p] (exist [a b] (== b ()) (== '(0 1) (lcons a b)) (== p [a b])))
+         ())))
+
+(deftest test-unify-fail-2
+  (is (= (run* [p] (exist [a b] (== b '(1)) (== '(0) (lcons a b)) (== p [a b])))
+         ())))
+
+(deftest test-unify-fail-3
+  (is (= (run* [p] (exist [a b c d] (== () b) (== '(1) d) (== (lcons a b) (lcons c d)) (== p [a b c d])))
          ())))
