@@ -892,11 +892,11 @@
 ;; Syntax
 
 (defn succeed [a]
-  "Always a successful goal."
+  "A goal that always succeeds."
   a)
 
 (defn fail [a] 
-  "Always a failed goal."
+  "A goal that always fails."
   nil)
 
 (def s# succeed)
@@ -904,7 +904,7 @@
 (def u# fail)
 
 (defmacro == [u v]
-  "A goal that attempts to unify u and v."
+  "A goal that attempts to unify terms u and v."
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
@@ -917,6 +917,9 @@
   (map (bind-conde-clause a) clauses))
 
 (defmacro conde [& clauses]
+  "Logical disjunction of the clauses. The first goal in
+  a clause is considered the head of that clause. Interleaves the
+  execution of the clauses."
   (let [a (gensym "a")]
     `(fn [~a]
        (inc
@@ -930,7 +933,8 @@
   (mapcat lvar-bind syms))
 
 (defmacro exist [[& lvars] & goals]
-  "Declares names in lvars to be fresh variables in goals"
+  "Creates fresh variables. Goals occuring within form a logical 
+  conjunction."
   `(fn [a#]
      (inc
       (let [~@(lvar-binds lvars)]
@@ -947,52 +951,58 @@
        xs#)))
 
 (defmacro run [n & goals]
-  "Executes until a maximum of n results are found."
+  "Executes goals until a maximum of n results are found."
   `(doall (solve ~n ~@goals)))
 
 (defmacro run* [& goals]
-  "Executes until results are exhausted."
+  "Executes goals until results are exhausted."
   `(run false ~@goals))
 
-(defmacro run-nc [& [n & rest]]
+(defmacro run-nc [& [n & goals]]
+  "Executes goals until a maximum of n results are found. Does not occurs-check."
   `(binding [*occurs-check* false]
-     (run ~n ~@rest)))
+     (run ~n ~@goals)))
 
-(defmacro run-nc* [& rest]
-  `(run-nc false ~@rest))
+(defmacro run-nc* [& goals]
+  "Executes goals until results are exhausted. Does not occurs-check."
+  `(run-nc false ~@goals))
 
-(defmacro lazy-run [& [n & rest]]
-  `(solve ~n ~@rest))
+(defmacro lazy-run [& [n & goals]]
+  "Lazily executes goals until a maximum of n results are found."
+  `(solve ~n ~@goals))
 
-(defmacro lazy-run* [& rest]
-  `(solve false ~@rest))
+(defmacro lazy-run* [& goals]
+  "Lazily executes goals until results are exhausted."
+  `(solve false ~@goals))
 
 (defn sym->lvar [sym]
   `(lvar '~sym))
 
 (defmacro all
+  "Like exist but does does not create logic variables."
   ([] `clojure.core.logic.minikanren/s#)
-  ([& g-rest] `(fn [a#] (bind* a# ~@g-rest))))
+  ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 ;; =============================================================================
 ;; Debugging
-
-(defn trace-lvar [a lvar]
-  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
 
 (defmacro log [s]
   `(fn [a#]
      (println ~s)
      a#))
 
+(defmacro trace-s []
+  `(fn [a#]
+     (println (str a#))
+     a#))
+
+(defn trace-lvar [a lvar]
+  `(println (format "%5s = %s" (str '~lvar) (reify ~a ~lvar))))
+
 (defmacro trace-lvars [title & lvars]
+  "Goal for tracing the values of logic variables."
   (let [a (gensym "a")]
     `(fn [~a]
        (println ~title)
        ~@(map (partial trace-lvar a) lvars)
        ~a)))
-
-(defmacro trace-s []
-  `(fn [a#]
-     (println (str a#))
-     a#))
