@@ -444,6 +444,7 @@
   (.write writer (str x)))
 
 (defn lcons [a d]
+  "Constructs a sequence a with an improper tail d if d is a logic variable."
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
     (LCons. a d -1 nil)))
@@ -452,6 +453,8 @@
   (instance? LCons x))
 
 (defmacro llist
+  "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
+  The tail is improper if the last argument is a logic variable."
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
@@ -888,15 +891,20 @@
 ;; =============================================================================
 ;; Syntax
 
-(defn succeed [a] a)
+(defn succeed [a]
+  "Always a successful goal."
+  a)
 
-(defn fail [a] nil)
+(defn fail [a] 
+  "Always a failed goal."
+  nil)
 
 (def s# succeed)
 
 (def u# fail)
 
 (defmacro == [u v]
+  "A goal that attempts to unify u and v."
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
@@ -921,15 +929,16 @@
 (defn lvar-binds [syms]
   (mapcat lvar-bind syms))
 
-(defmacro exist [[& x-rest] & g-rest]
+(defmacro exist [[& lvars] & goals]
+  "Declares names in lvars to be fresh variables in goals"
   `(fn [a#]
      (inc
-      (let [~@(lvar-binds x-rest)]
-        (bind* a# ~@g-rest)))))
+      (let [~@(lvar-binds lvars)]
+        (bind* a# ~@goals)))))
 
-(defmacro solve [& [n [x] & g-rest]]
+(defmacro solve [& [n [x] & goals]]
   `(let [xs# (take* (fn []
-                      ((exist [~x] ~@g-rest
+                      ((exist [~x] ~@goals
                          (fn [a#]
                            (cons (reify a# ~x) '()))) ;; TODO: do we need this?
                        empty-s)))]
@@ -937,11 +946,13 @@
        (take ~n xs#)
        xs#)))
 
-(defmacro run [n & rest]
-  `(doall (solve ~n ~@rest)))
+(defmacro run [n & goals]
+  "Executes until a maximum of n results are found."
+  `(doall (solve ~n ~@goals)))
 
-(defmacro run* [& rest]
-  `(run false ~@rest))
+(defmacro run* [& goals]
+  "Executes until results are exhausted."
+  `(run false ~@goals))
 
 (defmacro run-nc [& [n & rest]]
   `(binding [*occurs-check* false]
