@@ -7,6 +7,16 @@ Performance is a central concern of this project. Anything that makes it slower 
 
 If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
 
+Roadmap
+----
+
+The following are tentative current and future directions:
+
+* Environment Trimming - Definite Clause Grammars are quite slow in miniKanren. This may be due to a lack of groudness analysis or it may be because we are not trimming the environment of needless logic variables.
+* Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring. William Byrd and Daniel Friedman are working on CLP(FD) and CLP(X) extensions to miniKanren. We should incorporate this.
+* Groundness Analysis - Initial research on feasibility. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult.
+* Negation - Stratified Negation as provided by XSB ?
+
 Examples
 ----
 
@@ -242,15 +252,6 @@ It's important to index relationships so that the time to run queries doesn't gr
 ; Clojure 1.2.0
 (defrel likes ^{:index true} p1 ^{:index true} p2)
 ```
-
-Roadmap
-----
-
-The core Prolog aspect of core.logic is nearing completion. The following are tentative future directions:
-
-* Negation - Stratified Negation as provided by XSB ?
-* Definite Clause Grammar
-* Constraint Logic Programming - Constraint Handling Rules (CHR) is particularly inspiring
 
 YourKit
 ----
