@@ -9,7 +9,7 @@
 
 (defn project-binding [s]
   (fn [var]
-    `(~var (walk ~s ~var))))
+    `(~var (walk* ~s ~var))))
 
 (defn project-bindings [vars s]
   (reduce concat (map (project-binding s) vars)))
