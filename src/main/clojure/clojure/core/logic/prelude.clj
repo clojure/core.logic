@@ -179,8 +179,8 @@
                                   (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (~'lvar? (~'walk ~'a ~a)))
-                         ((deref ~(index-sym name arity o)) (~'walk ~'a ~a)))))
+                       `((not (~'lvar? (~'walk* ~'a ~a)))
+                         ((deref ~(index-sym name arity o)) (~'walk* ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
