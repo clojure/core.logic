@@ -242,5 +242,9 @@
 ;; Syntax
 
 (defmacro != [u v]
+  "Impose a disequality constraint on u and v. If the two
+  terms ever unify will result in failure. u and v can be
+  compound terms allowing complex conditions to require
+  failure."
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))

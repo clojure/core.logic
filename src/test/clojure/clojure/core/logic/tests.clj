@@ -536,14 +536,6 @@
        (resto l d)
        (listo d)))))
 
-(defn appendo [l s out]
-  (conde
-    ((emptyo l) (== s out))
-    ((exist [a d res]
-       (conso a d l)
-       (conso a res out)
-       (appendo d s res)))))
-
 (defn flatteno [s out]
   (conde
     ((emptyo s) (== '() out))
@@ -681,8 +673,9 @@
 (deftest test-flatteno
   (is (= (run* [x]
                (flatteno '[[a b] c] x))
-         '(([[a b] c]) ([a b] (c)) ([a b] c) (a (b) (c)) ([a b] c ()) (a (b) c)
-           (a (b) c ()) (a b (c)) (a b c) (a b () (c)) (a b c ()) (a b () c)
+         '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
+           (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
+           (a b () (c)) (a b c) (a b c ()) (a b () c)
            (a b () c ())))))
 
 ;; =============================================================================

@@ -141,6 +141,8 @@
 ;; TODO: consider the concurrency implications much more closely
 
 (defn table [goal]
+  "Function to table a goal. Useful when tabling should only persist
+  for the duration of a run."
   (let [table (atom {})]
     (fn [& args]
       (let [argv args]
@@ -156,6 +158,8 @@
               (reuse a argv cache nil nil))))))))
 
 (defmacro tabled [args & grest]
+  "Macro for defining a tabled goal. Prefer ^:tabled with the 
+  defne/a/u forms over using this directly."
   `(let [table# (atom {})]
      (fn [~@args]
        (let [argv# ~args]

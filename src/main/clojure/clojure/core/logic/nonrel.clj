@@ -15,6 +15,7 @@
   (reduce concat (map (project-binding s) vars)))
 
 (defmacro project [[& vars] & goals]
+  "Extract the values bound to the specified logic vars. Non-relational."
   (let [a (gensym "a")]
     `(fn [~a]
        (let [~@(project-bindings vars a)]
@@ -110,11 +111,16 @@
 
 (defmacro conda
   [& clauses]
+  "Soft cut. Once the head of a clause has succeeded
+  all other clauses will be ignored. Non-relational."
   (let [a (gensym "a")]
     `(fn [~a]
        (ifa* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro condu [& clauses]
+  "Committed choice. Once the head (first goal) of a clause 
+  has succeeded, remaining goals of the clause will only
+  be run once. Non-relational."
   (let [a (gensym "a")]
     `(fn [~a]
        (ifu* ~@(map (cond-clauses a) clauses)))))
@@ -123,6 +129,7 @@
 ;; copy-term
 
 (defn copy-term [u v]
+  "Copies a term u into v. Non-relational."
   (project [u]
     (== (walk* (build empty-s u) u) v)))
 
@@ -130,11 +137,13 @@
 ;; lvar nonlvar
 
 (defmacro lvaro [v]
+  "Goal to test whether a logic var is ground. Non-relational."
   `(fn [a#]
      (if (lvar? (walk a# ~v))
        a# nil)))
 
 (defmacro nonlvaro [v]
+  "Goal to test whether a logic var is ground. Non-relational."
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
        a# nil)))

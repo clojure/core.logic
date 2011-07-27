@@ -10,36 +10,39 @@
 ;; Useful goals
 
 (defn nilo [a]
+  "Goal that unifies its argument with nil."
   (== nil a))
 
 (defn emptyo [a]
+  "Goal that unifies its argument with the empty list."
   (== '() a))
 
 (defn conso [a d l]
+  "The cons operation as a relation. Can be used to
+  construct a list or destructure one."
   (== (lcons a d) l))
 
 (defn firsto [l a]
+  "first as a relation."
   (exist [d]
     (conso a d l)))
 
 (defn resto [l d]
+  "rest as a relation."
   (exist [a]
     (== (lcons a d) l)))
 
-(defn membero [x l]
-  (conde
-    ((firsto l x))
-    ((exist [r]
-       (resto l r)
-       (membero x r)))))
-
 ;; =============================================================================
-;; Convenient Goal Fns
+;; Goal sugar syntax
 
 (defmacro defne [& rest]
+  "Define a goal fn. Supports pattern matching. All
+   patterns will be tried. See conde."
   (apply match/defnm `conde rest))
 
 (defmacro matche [xs & cs]
+  "Pattern matching macro. All patterns will be tried.
+  See conde."
   (match/handle-clauses `conde xs cs))
 
 ;; -----------------------------------------------------------------------------
@@ -49,16 +52,32 @@
 ;; the *question* should come first
 
 (defmacro defna [& rest]
+  "Define a soft cut goal. See conda."
   (apply match/defnm 'clojure.core.logic.nonrel/conda rest))
 
 (defmacro defnu [& rest]
+  "Define a committed choice goal. See condu."
   (apply match/defnm 'clojure.core.logic.nonrel/condu rest))
 
 (defmacro matcha [xs & cs]
+  "Define a soft cut pattern match. See conda."
   (match/handle-clauses 'clojure.core.logic.nonrel/conda xs cs))
 
 (defmacro matchu [xs & cs]
+  "Define a committed choice goal. See condu."
   (match/handle-clauses 'clojure.core.logic.nonrel/condu xs cs))
+
+;; ==============================================================================
+;; More convenient goals
+
+(defne membero [x l]
+  ([_ [x . ?tail]])
+  ([_ [?head . ?tail]]
+     (membero x ?tail)))
+
+(defne appendo [x y z]
+  ([() _ y])
+  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 
 ;; =============================================================================
 ;; Rel
@@ -204,6 +223,8 @@
 ;; TODO: Should probably happen in a transaction
 
 (defn facts
+  "Define a series of facts. Takes a vector of vectors where each vector
+   represents a fact tuple, all with the same number of elements."
   ([rel [f :as tuples]] (facts rel (count f) tuples))
   ([^Rel rel arity tuples]
      (let [rel-set (var-get (resolve (set-sym (.name rel) arity)))
@@ -220,4 +241,5 @@
                         (apply merge-with set/union i indexed-tuples))))))))))
 
 (defn fact [rel & tuple]
+  "Add a fact to a relation defined with defrel."
   (facts rel [(vec tuple)]))

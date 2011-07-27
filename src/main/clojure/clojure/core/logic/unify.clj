@@ -49,6 +49,8 @@
         :else expr))))
 
 (defn prep [expr]
+  "Prep a quoted expression. All symbols preceded by ? will
+  be replaced with logic vars."
   (let [lvars (atom {})
         prepped (if (lcons-expr? expr)
                   (prep* expr lvars true)
@@ -56,12 +58,15 @@
     (with-meta prepped {:lvars @lvars})))
 
 (defn unifier* [u w]
+  "Unify the terms u and w."
   (first
     (mk/run* [q]
       (mk/== u w)
       (mk/== u q))))
 
 (defn binding-map* [u w]
+  "Return the binding map that unifies terms u and w.
+  u and w should prepped terms."
   (let [lvars (merge (-> u meta :lvars)
                      (-> w meta :lvars))
         s (mk/unify mk/empty-s u w)]
@@ -71,6 +76,7 @@
                     lvars)))))
 
 (defn unifier [u w]
+  "Unify the terms u and w. Will prep the terms."
   {:pre [(not (mk/lcons? u))
          (not (mk/lcons? w))]}
   (let [up (prep u)
@@ -78,6 +84,8 @@
     (unifier* up wp)))
 
 (defn binding-map [u w]
+  "Return the binding map that unifies terms u and w.
+  Will prep the terms."
   {:pre [(not (mk/lcons? u))
          (not (mk/lcons? w))]}
   (let [up (prep u)
