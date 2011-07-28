@@ -12,9 +12,9 @@ Roadmap
 
 The following are tentative current and future directions:
 
-* **Environment Trimming** - Definite Clause Grammars are quite slow in miniKanren. This may be due to a lack of groudness analysis or it may be because we are not trimming the environment of needless logic variables.
+* **Environment Trimming** - Definite Clause Grammars (DCGs) are quite slow in miniKanren. This may be due to a lack of groundness analysis or it may be because we are not trimming the environment of needless logic variables.
 * **Constraint Logic Programming** - Constraint Handling Rules (CHR) is particularly inspiring. William Byrd and Daniel Friedman are working on CLP(FD) and CLP(X) extensions to miniKanren. We should incorporate this.
-* **Groundness Analysis** - Initial research on feasibility. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult.
+* **Groundness Analysis** - Initial research on feasibility done. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult. Perhaps limit optimization to DCGs and pattern matching sugar.
 * **Negation** - Stratified Negation as provided by XSB ?
 
 Examples
