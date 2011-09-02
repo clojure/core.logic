@@ -38,7 +38,7 @@
          a# nil))))
 
 (defmacro <= [x y]
-  "Goal for testing whehter x is less than or equal to y.
+  "Goal for testing whether x is less than or equal to y.
   Non-relational."
   `(fn [a#]
      (let [wx# (walk a# ~x)
