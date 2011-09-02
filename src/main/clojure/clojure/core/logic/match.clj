@@ -4,6 +4,10 @@
   (:require [clojure.set :as set])
   (:import [clojure.core.logic.minikanren Substitutions]))
 
+(defn warn [& msg]
+  (binding [*out* *err*]
+    (apply println "WARNING:" msg)))
+
 (declare p->term)
 
 (defn lcons-p? [p]
@@ -72,7 +76,13 @@
   (every? #(= % '_) p))
 
 (defn handle-clause [as]
+  (when-not (vector? as)
+    (throw (Exception. (str "Expecting vector of arguments, instead " as))))
   (fn [[p & exprs]]
+    (when-not (vector? p)
+      (throw (Exception. (str "Expecting vector of matches, instead " p))))
+    (when-not (= (count p) (count as))
+      (warn "Differing number of matches. Matching" p "against" as))
     (let [pas (partition 2 (interleave p as))
           r (ex* pas exprs #{})]
       (if (all-blank? p)
