@@ -41,7 +41,7 @@ A classic AI program:
 
 (defne cangeto [state out]
   ([[_ _ _ :has] true])
-  ([_ _] (exist [action next]
+  ([_ _] (fresh [action next]
            (moveo state action next)
            (cangeto next out))))
 
@@ -79,42 +79,42 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
     ((lvaro x) (findo x c t))
     ((matche [c x t]
        ([_ [[?x] :>> ?a] [?s :> ?t]]
-          (exist [l]
+          (fresh [l]
             (conso [?x :- ?s] c l)
             (typedo l ?a ?t)))
        ([_ [:apply ?a ?b] _]
-          (exist [s]
+          (fresh [s]
             (typedo c ?a [s :> t])
             (typedo c ?b s)))))))
 
 (comment
   ;; ([_.0 :> _.1])
   (run* [q]
-    (exist [f g a b t]
+    (fresh [f g a b t]
      (typedo [[f :- a] [g :- b]] [:apply f g] t)
      (== q a)))
 
   ;; ([:int :> _.0])
   (run* [q]
-    (exist [f g a t]
+    (fresh [f g a t]
      (typedo [[f :- a] [g :- :int]] [:apply f g] t)
      (== q a)))
 
   ;; (:int)
   (run* [q]
-    (exist [f g a t]
+    (fresh [f g a t]
      (typedo [[f :- [:int :> :float]] [g :- a]] 
        [:apply f g] t)
      (== q a)))
 
   ;; ()
   (run* [t]
-    (exist [f a b]
+    (fresh [f a b]
       (typedo [f :- a] [:apply f f] t)))
 
   ;; ([_.0 :> [[_.0 :> _.1] :> _.1]])
   (run* [t]
-    (exist [x y]
+    (fresh [x y]
       (typedo [] 
         [[x] :>> [[y] :>> [:apply y x]]] t)))
   )
@@ -135,7 +135,7 @@ core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs
   (tabled [x y]
     (conde
      ((arco x y))
-     ((exist [z]
+     ((fresh [z]
         (arco x z)
         (patho z y))))))
 
@@ -150,14 +150,14 @@ core.logic supports disequality constraints.
 
 ```clj
 (run* [q]
-  (exist [x y]
+  (fresh [x y]
     (!= [x 2] [y 1])
     (== x 1)
     (== y 3)
     (== q [x y]))) ; ([1 3])
 
 (run* [q]
-  (exist [x y]
+  (fresh [x y]
     (!= [x 2] [y 1])
     (== x 1)
     (== y 2)
@@ -237,7 +237,7 @@ Sometimes it's useful to create a list of facts that you want to run queries ove
 (fact fun 'Lucy)
 
 (run* [q]
-  (exist [x y]
+  (fresh [x y]
     (fun y)
     (likes x y)
     (== q [x y]))) ; ([Ricky Lucy])
