@@ -496,14 +496,14 @@
 
 (deftest test-basic-unify-2
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (== [x y] [1 5])
                       (== [x y] q)))
          [[1 5]])))
 
 (deftest test-basic-unify-3
   (is (=  (run* [q]
-                (exist [x y]
+                (fresh [x y]
                        (== [x y] q)))
           '[[_.0 _.1]])))
 
@@ -521,18 +521,18 @@
 ;; TRS
 
 (defn pairo [p]
-  (exist [a d]
+  (fresh [a d]
     (== (lcons a d) p)))
 
 (defn twino [p]
-  (exist [x]
+  (fresh [x]
     (conso x x p)))
 
 (defn listo [l]
   (conde
     ((emptyo l) s#)
     ((pairo l)
-     (exist [d]
+     (fresh [d]
        (resto l d)
        (listo d)))))
 
@@ -540,7 +540,7 @@
   (conde
     ((emptyo s) (== '() out))
     ((pairo s)
-     (exist [a d res-a res-d]
+     (fresh [a d res-a res-d]
        (conso a d s)
        (flatteno a res-a)
        (flatteno d res-d)
@@ -550,11 +550,11 @@
 (defn rembero [x l out]
   (conde
     ((== '() l) (== '() out))
-    ((exist [a d]
+    ((fresh [a d]
        (conso a d l)
        (== x a)
        (== d out)))
-    ((exist [a d res]
+    ((fresh [a d res]
        (conso a d l)
        (conso a res out)
        (rembero x d res)))))
@@ -572,7 +572,7 @@
 
 (deftest test-basic-conde-2
   (is (= (run* [r]
-               (exist [x y]
+               (fresh [x y]
                       (conde
                        ((== 'split x) (== 'pea y))
                        ((== 'navy x) (== 'bean y)))
@@ -586,7 +586,7 @@
 
 (deftest test-basic-conde-e-3
   (is (= (run* [r]
-               (exist [x y]
+               (fresh [x y]
                       (conde
                        ((teacupo x) (== true y) s#)
                        ((== false x) (== true y)))
@@ -598,7 +598,7 @@
 
 (deftest test-conso
   (is (= (run* [q]
-               (exist [a d]
+               (fresh [a d]
                       (conso a d '())
                       (== (cons a d) q))
                []))))
@@ -722,7 +722,7 @@
 
 (deftest test-conde-1-clause
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (digit-1 x)
                       (digit-1 y)
                       (== q [x y])))
@@ -730,7 +730,7 @@
 
 (deftest test-conde-4-clauses
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (digit-4 x)
                       (digit-4 y)
                       (== q [x y])))
@@ -760,7 +760,7 @@
 ;; -----------------------------------------------------------------------------
 ;; divergence
 
-(def f1 (exist [] f1))
+(def f1 (fresh [] f1))
 
 (deftest test-divergence-1
   (is (= (run 1 [q]
@@ -777,7 +777,7 @@
          '(_.0))))
 
 (def f2
-     (exist []
+     (fresh []
             (conde
              (f2 (conde
                   (f2) 
@@ -810,7 +810,7 @@
 
 (deftest test-conda-3
   (is (= (run* [x]
-               (exist (x y)
+               (fresh (x y)
                       (== 'split x)
                       (== 'pea y)
                       (conda
@@ -821,7 +821,7 @@
 
 (deftest test-conda-4
   (is (= (run* [x]
-               (exist (x y)
+               (fresh (x y)
                       (== 'split x)
                       (== 'pea y)
                       (conda
@@ -873,21 +873,21 @@
 
 (deftest test-disequality-1
   (is (= (run* [q]
-               (exist [x]
+               (fresh [x]
                       (!= x 1)
                       (== q x)))
          '(_.0))))
 
 (deftest test-disequality-2
   (is (= (run* [q]
-               (exist [x]
+               (fresh [x]
                       (== q x)
                       (!= x 1)))
          '(_.0))))
 
 (deftest test-disequality-3
   (is (= (run* [q]
-               (exist [x]
+               (fresh [x]
                       (!= x 1)
                       (== x 1)
                       (== q x)))
@@ -895,7 +895,7 @@
 
 (deftest test-disequality-4
   (is (= (run* [q]
-               (exist [x]
+               (fresh [x]
                       (== x 1)
                       (!= x 1)
                       (== q x)))
@@ -903,7 +903,7 @@
 
 (deftest test-disequality-5
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (!= x y)
                       (== x 1)
                       (== y 1)
@@ -912,7 +912,7 @@
 
 (deftest test-disequality-6
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (== x 1)
                       (== y 1)
                       (!= x y)
@@ -921,7 +921,7 @@
 
 (deftest test-disequality-7
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (== x 1)
                       (!= x y)
                       (== y 2)
@@ -930,7 +930,7 @@
 
 (deftest test-disequality-8
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (!= [x 2] [y 1])
                       (== x 1)
                       (== y 3)
@@ -939,7 +939,7 @@
 
 (deftest test-disequality-9
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (== x 1)
                       (== y 3)
                       (!= [x 2] [y 1])
@@ -948,7 +948,7 @@
 
 (deftest test-disequality-10
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (!= [x 2] [1 y])
                       (== x 1)
                       (== y 2)
@@ -957,7 +957,7 @@
 
 (deftest test-disequality-11
   (is (= (run* [q]
-               (exist [x y]
+               (fresh [x y]
                       (== x 1)
                       (== y 2)
                       (!= [x 2] [1 y])
@@ -966,7 +966,7 @@
 
 (deftest test-disequality-12
   (is (= (run* [q]
-               (exist [x y z]
+               (fresh [x y z]
                       (!= x y)
                       (== y z)
                       (== x z)
@@ -975,7 +975,7 @@
 
 (deftest test-disequality-13
   (is (= (run* [q]
-               (exist [x y z]
+               (fresh [x y z]
                       (== y z)
                       (== x z)
                       (!= x y)
@@ -984,7 +984,7 @@
 
 (deftest test-disequality-14
   (is (= (run* [q]
-               (exist [x y z]
+               (fresh [x y z]
                       (== z y)
                       (== x z)
                       (!= x y)
@@ -1003,7 +1003,7 @@
      (tabled [x y]
        (conde
          ((arco x y))
-         ((exist [z]
+         ((fresh [z]
             (arco x z)
             (patho z y))))))
 
@@ -1025,7 +1025,7 @@
      (tabled [x y]
        (conde
          ((arco-2 x y))
-         ((exist [z]
+         ((fresh [z]
             (arco-2 x z)
             (patho-2 z y))))))
 
@@ -1058,7 +1058,7 @@
 
 (deftest test-rel-1
   (is (= (run* [q]
-           (exist [x y]
+           (fresh [x y]
              (likes x y)
              (fun y)
              (== q [x y])))
@@ -1160,13 +1160,13 @@
 ;; Unifications that should fail
 
 (deftest test-unify-fail-1
-  (is (= (run* [p] (exist [a b] (== b ()) (== '(0 1) (lcons a b)) (== p [a b])))
+  (is (= (run* [p] (fresh [a b] (== b ()) (== '(0 1) (lcons a b)) (== p [a b])))
          ())))
 
 (deftest test-unify-fail-2
-  (is (= (run* [p] (exist [a b] (== b '(1)) (== '(0) (lcons a b)) (== p [a b])))
+  (is (= (run* [p] (fresh [a b] (== b '(1)) (== '(0) (lcons a b)) (== p [a b])))
          ())))
 
 (deftest test-unify-fail-3
-  (is (= (run* [p] (exist [a b c d] (== () b) (== '(1) d) (== (lcons a b) (lcons c d)) (== p [a b c d])))
+  (is (= (run* [p] (fresh [a b c d] (== () b) (== '(1) d) (== (lcons a b) (lcons c d)) (== p [a b c d])))
          ())))

@@ -7,7 +7,7 @@
 ;; TODO: note that rest args are problematic since we add two invisible args
 ;; TODO: make handle-clause polymorphic, we don't want to futz around with
 ;; with forcing macroexpand
-;; TODO: exist? and !dcg? are odd, why can't we check w/ `sym
+;; TODO: fresh-expr? and !dcg? are odd, why can't we check w/ `sym
 
 (defn lsym [n]
   (gensym (str "l" n "_")))
@@ -22,25 +22,25 @@
   ([env [m :as c] i] (->lcons env c i false))
   ([env [m :as c] i quoted]
      (cond
-      (empty? c) `(exist []
+      (empty? c) `(fresh []
                     (== ~(env (dec i)) ~(env i)))
       :else (let [m (if quoted `(quote ~m) m)]
               `(== ~(env (dec i)) (lcons ~m ~(env i)))))))
 
-(defn exist? [clause]
+(defn fresh-expr? [clause]
   (and (seq? clause)
        (let [f (first clause)]
          (and (symbol? f)
-              (= (name f) "exist")))))
+              (= (name f) "fresh")))))
 
 ;; TODO: make tail recursive
 
 (defn count-clauses [clauses]
-  (if (exist? clauses)
+  (if (fresh-expr? clauses)
     (count-clauses (drop 2 clauses))
     (reduce (fn [s c]
               (cond
-               (exist? c) (+ s (count-clauses (drop 2 c)))
+               (fresh-expr? c) (+ s (count-clauses (drop 2 c)))
                (!dcg? c) s
                :else (clojure.core/inc s)))
             0 clauses)))
@@ -52,7 +52,7 @@
   ([[c & r :as cs] i]
      (cond
       (nil? (seq cs)) ()
-      (exist? c) (cons `(exist ~(second c)
+      (fresh-expr? c) (cons `(fresh ~(second c)
                           ~@(mark-clauses (drop 2 c) i))
                        (mark-clauses r i))
       (!dcg? c) (cons c (mark-clauses r i))
@@ -66,7 +66,7 @@
 (defn handle-clauses [env [c & r :as cs]]
   (cond
    (nil? (seq cs)) ()
-   (exist? c) (cons `(exist ~(second c)
+   (fresh-expr? c) (cons `(fresh ~(second c)
                        ~@(handle-clauses env (drop 2 c)))
                     (handle-clauses env r))
    (!dcg? c) (cons (second c) (handle-clauses env r))
@@ -87,7 +87,7 @@
         clauses (mark-clauses clauses)
         clauses (handle-clauses lsyms clauses)]
     `(defn ~name [~(first lsyms) ~(last lsyms)]
-       (exist [~@(butlast (rest lsyms))]
+       (fresh [~@(butlast (rest lsyms))]
          ~@clauses))))
 
 (defmacro def--> [name args & clauses]
@@ -96,7 +96,7 @@
         clauses (mark-clauses clauses)
         clauses (handle-clauses lsyms clauses)]
    `(defn ~name [~@args ~(first lsyms) ~(last lsyms)]
-      (exist [~@(butlast (rest lsyms))]
+      (fresh [~@(butlast (rest lsyms))]
         ~@clauses))))
 
 (defn handle-cclause [fsym osym cclause]
@@ -105,7 +105,7 @@
         lsyms (conj (into [fsym] (map lsym r)) osym)
         clauses (mark-clauses cclause)
         clauses (handle-clauses lsyms clauses)]
-    `(exist [~@(butlast (rest lsyms))]
+    `(fresh [~@(butlast (rest lsyms))]
        ~@clauses)))
 
 (defmacro -->e [name & cclauses]

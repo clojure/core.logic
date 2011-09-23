@@ -41,19 +41,19 @@
   ([p seen]
      (set/difference (extract-vars p) (set seen))))
 
-(defn exist? [cs]
-  (= (first cs) `exist))
+(defn fresh-expr? [cs]
+  (= (first cs) `fresh))
 
 (defn ex
   ([vs t a]
-     `(exist [~@vs]
+     `(fresh [~@vs]
         (== ~t ~a)))
   ([vs t a exprs]
-     (if (exist? exprs)
-       `(exist [~@vs]
+     (if (fresh-expr? exprs)
+       `(fresh [~@vs]
           (== ~t ~a)
           ~exprs)
-       `(exist [~@vs]
+       `(fresh [~@vs]
           (== ~t ~a)
           ~@exprs))))
 

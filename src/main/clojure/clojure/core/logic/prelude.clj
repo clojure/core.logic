@@ -24,12 +24,12 @@
 
 (defn firsto [l a]
   "first as a relation."
-  (exist [d]
+  (fresh [d]
     (conso a d l)))
 
 (defn resto [l d]
   "rest as a relation."
-  (exist [a]
+  (fresh [a]
     (== (lcons a d) l)))
 
 ;; =============================================================================

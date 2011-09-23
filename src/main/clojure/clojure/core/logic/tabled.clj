@@ -152,7 +152,7 @@
             (if (nil? cache)
               (let [cache (atom ())]
                 (swap! table assoc key cache)
-                ((exist []
+                ((fresh []
                    (apply goal args)
                    (master argv cache)) a))
               (reuse a argv cache nil nil))))))))
@@ -169,7 +169,7 @@
              (if (nil? cache#)
                (let [cache# (atom ())]
                  (swap! table# assoc key# cache#)
-                 ((exist []
+                 ((fresh []
                     ~@grest
                     (master argv# cache#)) a#))
                (reuse a# argv# cache# nil nil))))))))

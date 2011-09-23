@@ -932,7 +932,7 @@
 (defn lvar-binds [syms]
   (mapcat lvar-bind syms))
 
-(defmacro exist [[& lvars] & goals]
+(defmacro fresh [[& lvars] & goals]
   "Creates fresh variables. Goals occuring within form a logical 
   conjunction."
   `(fn [a#]
@@ -942,7 +942,7 @@
 
 (defmacro solve [& [n [x] & goals]]
   `(let [xs# (take* (fn []
-                      ((exist [~x] ~@goals
+                      ((fresh [~x] ~@goals
                          (fn [a#]
                            (cons (reify a# ~x) '()))) ;; TODO: do we need this?
                        empty-s)))]
@@ -979,7 +979,7 @@
   `(lvar '~sym))
 
 (defmacro all
-  "Like exist but does does not create logic variables."
+  "Like fresh but does does not create logic variables."
   ([] `clojure.core.logic.minikanren/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 

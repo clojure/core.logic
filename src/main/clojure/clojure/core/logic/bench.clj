@@ -7,8 +7,19 @@
             [clojure.core.logic.arithmetic :as a]))
 
 (comment
+  (run* [q]
+    (== q true))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+         (== q true)))))
+ )
+
+(comment
   (run 1 [q]
-    (exist [x y]
+    (fresh [x y]
       (appendo x y q)))
   
   ;; 1.4s
@@ -16,7 +27,7 @@
     (time
      (dotimes [_ 1]
        (run 700 [q]
-         (exist [x y]
+         (fresh [x y]
            (appendo x y q))))))
   )
 
@@ -27,7 +38,7 @@
 (defne nrevo [l o]
   ([() ()])
   ([[?a . ?d] _]
-     (exist [r]
+     (fresh [r]
        (nrevo ?d r)
        (appendo r [?a] o))))
 
@@ -56,11 +67,11 @@
   (== (lcons a d) l))
 
 (defn firsto [l a]
-  (exist [d]
+  (fresh [d]
     (conso a d l)))
 
 (defn resto [l d]
-  (exist [a]
+  (fresh [a]
     (== (lcons a d) l)))
 
 (defne righto [x y l]
@@ -130,7 +141,7 @@
 
 (defn solve-nqueens []
   (run* [q]
-    (exist [y1 y2 y3 y4 y5 y6 y7 y8]
+    (fresh [y1 y2 y3 y4 y5 y6 y7 y8]
       (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
       (nqueenso q))))
 
@@ -183,7 +194,7 @@
 
 (defne do-send-moolao [q l ll]
   ([[?send ?more ?money] _ _]
-     (exist [s e n d m o r y
+     (fresh [s e n d m o r y
              l1 l2 l3 l4 l5 l6 l7 l8 l9]
        (first-digito s l l1)
        (first-digito m l1 l2)
@@ -201,7 +212,7 @@
            (== ?money (+ ?send ?more)))))))
 
 (defn send-money-quicklyo [send more money]
-  (exist [l]
+  (fresh [l]
     (do-send-moolao [send more money] (range 10) l)))
 
 (comment
@@ -212,7 +223,7 @@
   (time
    (binding [*occurs-check* false]
      (run 1 [q]
-       (exist [send more money]
+       (fresh [send more money]
          (send-money-quicklyo send more money)
          (== [send more money] q)))))
   )
@@ -225,7 +236,7 @@
 (defne qsorto [l r r0]
   ([[] _ r])
   ([[?x . ?lr] _ _]
-     (exist [l1 l2 r1]
+     (fresh [l1 l2 r1]
        (partitiono ?lr ?x l1 l2)
        (qsorto l2 r1 r0)
        (qsorto l1 r (lcons ?x r1)))))
