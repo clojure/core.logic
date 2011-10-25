@@ -287,7 +287,7 @@ Goals
 
 Resources
 ----
-
+* [cKanren](http://scheme2011.ucombinator.org/papers/Alvis2011.pdf)
 * [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
 * [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
 * [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_)
