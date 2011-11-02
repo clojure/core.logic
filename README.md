@@ -23,7 +23,8 @@ Examples
 A classic AI program:
 
 ```clj
-(use '[clojure.core.logic minikanren prelude])
+(refer '[clojure.core :exclude [==]])
+(use 'clojure.core.logic)
 
 (defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
@@ -67,7 +68,8 @@ The core.logic version is almost equally succinct:
 Here's a simple type inferencer for the simply typed lambda calculus based on a version originally written in Prolog:
 
 ```clj
-(use '[clojure.core.logic minikanren prelude nonrel match])
+(refer '[clojure.core :exclude [==]])
+(use 'clojure.core.logic)
 
 (defna findo [x l o]
   ([_ [[?y :- o] . _] _] 
