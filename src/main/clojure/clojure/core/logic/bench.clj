@@ -1,10 +1,7 @@
 (ns clojure.core.logic.bench
   (:refer-clojure :exclude [reify inc ==])
-  (:use clojure.core.logic.minikanren
-        [clojure.core.logic.prelude :only [defne membero appendo]]
-        [clojure.core.logic.disequality :only [!=]])
-  (:require [clojure.core.logic.nonrel :as nonrel]
-            [clojure.core.logic.arithmetic :as a]))
+  (:use clojure.core.logic)
+  (:require [clojure.core.logic.arithmetic :as a]))
 
 (comment
   (run* [q]
@@ -62,17 +59,6 @@
 ;; =============================================================================
 ;; zebra
 ;; =============================================================================
-
-(defn conso [a d l]
-  (== (lcons a d) l))
-
-(defn firsto [l a]
-  (fresh [d]
-    (conso a d l)))
-
-(defn resto [l d]
-  (fresh [a]
-    (== (lcons a d) l)))
 
 (defne righto [x y l]
   ([_ _ [x y . ?r]])
@@ -134,7 +120,7 @@
   ([_ ()])
   ([[?x ?y] [[?x1 ?y1] . ?others]]
      (!= ?y ?y1)
-     (nonrel/project [?y ?y1 ?x ?x1]
+     (project [?y ?y1 ?x ?x1]
        (!= (- ?y1 ?y) (- ?x1 ?x))
        (!= (- ?y1 ?y) (- ?x ?x1)))
      (noattacko [?x ?y] ?others)))
@@ -204,11 +190,11 @@
        (digito o l5 l6)
        (digito r l6 l7)
        (digito y l7 l8)
-       (nonrel/project [s e n d m o r y]
+       (project [s e n d m o r y]
          (== ?send (+ (* s 1000) (* e 100) (* n 10) d))
          (== ?more (+ (* m 1000) (* o 100) (* r 10) e))
          (== ?money (+ (* m 10000) (* o 1000) (* n 100) (* e 10) y))
-         (nonrel/project [?send ?more]
+         (project [?send ?more]
            (== ?money (+ ?send ?more)))))))
 
 (defn send-money-quicklyo [send more money]
@@ -243,8 +229,8 @@
 
 (defne partitiono [a b c d]
   ([[?x . ?l] _ [?x . ?l1] _]
-     (nonrel/conda
-      ((nonrel/project [?x b]
+     (conda
+      ((project [?x b]
          (== (<= ?x b) true))
        (partition ?l b ?l1 d))
       (partition ?l b c d))))

@@ -1,8 +1,6 @@
 (ns clojure.core.logic.arithmetic
   (:refer-clojure :exclude [reify == inc = > < >= <=])
-  (:use clojure.core.logic.minikanren
-        [clojure.core.logic.nonrel :only [project]])
-  (:import [clojure.core.logic.minikanren Substitutions]))
+  (:use clojure.core.logic))
 
 (defmacro = [x y]
   "Goal for testing whether x and y are equal. Non-relational."

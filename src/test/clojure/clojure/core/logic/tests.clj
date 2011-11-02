@@ -1,12 +1,6 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [reify == inc intern])
-  (:use [clojure.core.logic.minikanren] :reload)
-  (:use [clojure.core.logic.prelude] :reload)
-  (:use [clojure.core.logic.match] :reload)
-  (:use [clojure.core.logic.nonrel :exclude [lvar]] :reload)
-  (:use [clojure.core.logic.disequality] :reload)
-  (:use [clojure.core.logic.tabled] :reload)
-  (:use [clojure.core.logic.unify] :reload)
+  (:use [clojure.core.logic] :reload)
   (:use clojure.test))
 
 ;; =============================================================================
