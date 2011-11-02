@@ -1,5 +1,5 @@
 (ns clojure.core.logic.tests
-  (:refer-clojure :exclude [reify == inc intern])
+  (:refer-clojure :exclude [==])
   (:use [clojure.core.logic] :reload)
   (:use clojure.test))
 
