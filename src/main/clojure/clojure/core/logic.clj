@@ -54,6 +54,13 @@
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
+(defprotocol ILVar
+  (constraints [this])
+  (add-constraint [this c])
+  (add-constraints [this ds])
+  (remove-constraint [this c])
+  (remove-constraints [this]))
+
 ;; =============================================================================
 ;; Pair
 
@@ -108,13 +115,7 @@
   (build [this u]))
 
 (declare empty-s)
-(declare unify-terms)
-(declare occurs-check-term)
-(declare reify-term)
-(declare walk-term)
-(declare build-term)
 (declare choice)
-(declare add-constraint)
 (declare lvar)
 (declare lvar?)
 (declare pair)
@@ -233,13 +234,6 @@
 
 ;; =============================================================================
 ;; Logic Variables
-
-(defprotocol ILVar
-  (constraints [this])
-  (add-constraint [this c])
-  (add-constraints [this ds])
-  (remove-constraint [this c])
-  (remove-constraints [this]))
 
 (deftype LVar [name hash cs meta]
   clojure.lang.IObj
@@ -1766,12 +1760,19 @@
 ;; =============================================================================
 ;; Verification
 
+(defprotocol IConstraintStore
+  (merge-constraint [this c])
+  (refine-constraint [this c u])
+  (discard-constraint [this c])
+  (propagate [this s u v])
+  (get-simplified [this])
+  (discard-simplified [this]))
+
+(defprotocol IDisequality
+  (!=-verify [this sp]))
+
 (declare make-store)
-(declare merge-constraint)
 (declare make-c)
-(declare propagate)
-(declare get-simplified)
-(declare discard-simplified)
 (declare constraint-verify)
 
 (defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
@@ -1797,8 +1798,6 @@
         (constraint-verify-simple s (get-var s u) v))
       s)))
 
-(defprotocol IDisequality
-  (!=-verify [this sp]))
 
 (defn unify* [^Substitutions s m]
   (loop [[[u v :as p] & r] (seq m) result {}]
@@ -1886,14 +1885,6 @@
 
 ;; =============================================================================
 ;; Constraint Store
-
-(defprotocol IConstraintStore
-  (merge-constraint [this c])
-  (refine-constraint [this c u])
-  (discard-constraint [this c])
-  (propagate [this s u v])
-  (get-simplified [this])
-  (discard-simplified [this]))
 
 (deftype ConstraintStore [vmap cmap simple]
   IConstraintStore
