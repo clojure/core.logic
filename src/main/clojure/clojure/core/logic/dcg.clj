@@ -1,7 +1,6 @@
 (ns clojure.core.logic.dcg
   (:refer-clojure :exclude [reify == inc])
-  (:use [clojure.core.logic minikanren prelude])
-  (:require [clojure.core.logic.nonrel :as nonrel]))
+  (:use [clojure.core.logic]))
 
 ;; TODO: think about indexing
 ;; TODO: note that rest args are problematic since we add two invisible args
@@ -198,7 +197,7 @@
   (def-->e digito [x]
     ([_] [x]
        (!dcg
-        (nonrel/project [x]
+        (project [x]
           (== (contains? digits x) true)))))
 
   (def-->e numo [x]
@@ -210,7 +209,7 @@
   (def-->e symo [x]
     ([[?a . ?as]] [?a]
        (!dcg
-        (nonrel/project [?a]
+        (project [?a]
           (conde
             ((== (contains? alpha ?a) true))
             ((== (contains? nonalnum ?a) true)))))
@@ -219,7 +218,7 @@
   (def-->e symro [x]
     ([[?a . ?as]] [?a]
        (!dcg
-        (nonrel/project [?a]
+        (project [?a]
           (conde
             ((== (contains? alnum ?a) true))
             ((== (contains? nonalnum ?a) true)))))

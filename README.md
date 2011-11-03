@@ -7,14 +7,17 @@ Performance is a central concern of this project. Anything that makes it slower 
 
 If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
 
-Roadmap
+Immediate Roadmap
 ----
 
-The following are tentative current and future directions:
+The following are avenues we are interesting in pursuing now:
 
-* **Environment Trimming** - Definite Clause Grammars (DCGs) are quite slow in miniKanren. This may be due to a lack of groundness analysis or it may be because we are not trimming the environment of needless logic variables.
+* **Environment Trimming** - Definite Clause Grammars (DCGs) are quite slow in miniKanren. This may be due to a lack of groundness analysis or it may be because we are not trimming the environment of needless logic variables. It looks like the original Kanren paper may have some good approaches.
 * **Constraint Logic Programming** - Constraint Handling Rules (CHR) is particularly inspiring. William Byrd and Daniel Friedman are working on CLP(FD) and CLP(X) extensions to miniKanren. We should incorporate this.
-* **Groundness Analysis** - Initial research on feasibility done. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult. Perhaps limit optimization to DCGs and pattern matching sugar.
+* **Groundness Analysis** - Initial research on feasibility done. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult. Perhaps limit optimization to DCGs and pattern matching sugar. Again, the original Kanren paper may have insights here.
+
+Future Things
+----
 * **Negation** - Stratified Negation as provided by XSB ?
 
 Examples
@@ -23,7 +26,8 @@ Examples
 A classic AI program:
 
 ```clj
-(use '[clojure.core.logic minikanren prelude])
+(refer '[clojure.core :exclude [==]])
+(use 'clojure.core.logic)
 
 (defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
@@ -67,7 +71,8 @@ The core.logic version is almost equally succinct:
 Here's a simple type inferencer for the simply typed lambda calculus based on a version originally written in Prolog:
 
 ```clj
-(use '[clojure.core.logic minikanren prelude nonrel match])
+(refer '[clojure.core :exclude [==]])
+(use 'clojure.core.logic)
 
 (defna findo [x l o]
   ([_ [[?y :- o] . _] _] 
@@ -287,7 +292,7 @@ Goals
 
 Resources
 ----
-
+* [cKanren](http://scheme2011.ucombinator.org/papers/Alvis2011.pdf)
 * [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
 * [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
 * [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_)
