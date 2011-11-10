@@ -1678,6 +1678,18 @@
                (reuse a# argv# cache# nil nil))))))))
 
 ;; =============================================================================
+;; cKanren
+
+(defmacro infd [& xs-and-dom]
+  (let [xs (butlast xs-and-dom)
+        dom (last xs-and-dom)]
+    `(let [dom# ~dom]
+      (fresh []
+        ~@(map (fn [x]
+                 `(domfd ~x dom#))
+               xs)))))
+
+;; =============================================================================
 ;; Disequality
 
 ;; TODO: change to lazy-seq
