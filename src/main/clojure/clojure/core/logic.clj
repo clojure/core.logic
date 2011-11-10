@@ -495,18 +495,6 @@
   IUnifyWithNil
   (unify-with-nil [v u s] false))
 
-(extend-protocol IUnifyWithNil
-  clojure.lang.Sequential
-  (unify-with-nil [v u s] false))
-
-(extend-protocol IUnifyWithNil
-  clojure.lang.IPersistentMap
-  (unify-with-nil [v u s] false))
-
-(extend-protocol IUnifyWithNil
-  clojure.lang.IPersistentSet
-  (unify-with-nil [v u s] false))
-
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
@@ -519,18 +507,6 @@
   (unify-with-object [v u s]
     (if (= u v) s false)))
 
-(extend-protocol IUnifyWithObject
-  clojure.lang.Sequential
-  (unify-with-object [v u s] false))
-
-(extend-protocol IUnifyWithObject
-  clojure.lang.IPersistentMap
-  (unify-with-object [v u s] false))
-
-(extend-protocol IUnifyWithObject
-  clojure.lang.IPersistentSet
-  (unify-with-object [v u s] false))
-
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
 
@@ -540,21 +516,6 @@
 
 (extend-type Object
   IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext s u v)))
-
-(extend-protocol IUnifyWithLVar
-  clojure.lang.Sequential
-  (unify-with-lvar [v u s]
-    (ext s u v)))
-
-(extend-protocol IUnifyWithLVar
-  clojure.lang.IPersistentMap
-  (unify-with-lvar [v u s]
-    (ext s u v)))
-
-(extend-protocol IUnifyWithLVar
-  clojure.lang.IPersistentSet
   (unify-with-lvar [v u s]
     (ext s u v)))
 
@@ -583,14 +544,6 @@
           (unify s u '())
           false)))))
 
-(extend-protocol IUnifyWithLSeq
-  clojure.lang.IPersistentMap
-  (unify-with-lseq [v u s] false))
-
-(extend-protocol IUnifyWithLSeq
-  clojure.lang.IPersistentSet
-  (unify-with-lseq [v u s] false))
-
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
@@ -600,14 +553,6 @@
 
 (extend-type Object
   IUnifyWithSequential
-  (unify-with-seq [v u s] false))
-
-(extend-protocol IUnifyWithSequential
-  clojure.lang.IPersistentMap
-  (unify-with-seq [v u s] false))
-
-(extend-protocol IUnifyWithSequential
-  clojure.lang.IPersistentSet
   (unify-with-seq [v u s] false))
 
 (extend-protocol IUnifyWithSequential
@@ -634,10 +579,6 @@
   (unify-with-map [v u s] false))
 
 (extend-protocol IUnifyWithMap
-  clojure.lang.Sequential
-  (unify-with-map [v u s] false))
-
-(extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
     (let [ks (keys u)]
@@ -654,10 +595,6 @@
             false
             s))))))
 
-(extend-protocol IUnifyWithMap
-  clojure.lang.IPersistentSet
-  (unify-with-map [v u s] false))
-
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentSet with X
 
@@ -667,14 +604,6 @@
 
 (extend-type Object
   IUnifyWithSet
-  (unify-with-set [v u s] false))
-
-(extend-protocol IUnifyWithSet
-  clojure.lang.Sequential
-  (unify-with-set [v u s] false))
-
-(extend-protocol IUnifyWithSet
-  clojure.lang.IPersistentMap
   (unify-with-set [v u s] false))
 
 ;; TODO : improve speed, the following takes 890ms
