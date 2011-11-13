@@ -1410,9 +1410,15 @@
         arity-excs (fn [n] `(arity-exc-helper '~name ~n))]
     (if (seq args)
       `(do
-         (def ~name (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r)))
+         (def ~name
+           (.withMeta
+            (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r))
+            {:ns ~'*ns*}))
          (extend-rel ~name ~@args))
-      `(def ~name (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r))))))
+      `(def ~name
+         (.withMeta
+          (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r))
+          {:ns ~'*ns*})))))
 
 (defmacro def-apply-to-helper [n]
   (let [r (range 1 (clojure.core/inc n))
@@ -1522,7 +1528,8 @@
    represents a fact tuple, all with the same number of elements."
   ([rel [f :as tuples]] (facts rel (count f) tuples))
   ([^Rel rel arity tuples]
-     (let [rel-set (var-get (resolve (set-sym (.name rel) arity)))
+     (let [rel-ns (:ns (meta rel))
+           rel-set (var-get (ns-resolve rel-ns (set-sym (.name rel) arity)))
            tuples (map vec tuples)]
        (swap! rel-set (fn [s] (into s tuples)))
        (let [indexes (indexes-for rel arity)]
