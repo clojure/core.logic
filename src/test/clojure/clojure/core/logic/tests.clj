@@ -865,125 +865,126 @@
 ;; -----------------------------------------------------------------------------
 ;; disequality
 
-(deftest test-disequality-1
-  (is (= (run* [q]
-               (fresh [x]
-                      (!= x 1)
-                      (== q x)))
-         '(_.0))))
+(comment
+ (deftest test-disequality-1
+   (is (= (run* [q]
+            (fresh [x]
+              (!= x 1)
+              (== q x)))
+          '(_.0))))
 
-(deftest test-disequality-2
-  (is (= (run* [q]
-               (fresh [x]
-                      (== q x)
-                      (!= x 1)))
-         '(_.0))))
+ (deftest test-disequality-2
+   (is (= (run* [q]
+            (fresh [x]
+              (== q x)
+              (!= x 1)))
+          '(_.0))))
 
-(deftest test-disequality-3
-  (is (= (run* [q]
-               (fresh [x]
-                      (!= x 1)
-                      (== x 1)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-3
+   (is (= (run* [q]
+            (fresh [x]
+              (!= x 1)
+              (== x 1)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-4
-  (is (= (run* [q]
-               (fresh [x]
-                      (== x 1)
-                      (!= x 1)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-4
+   (is (= (run* [q]
+            (fresh [x]
+              (== x 1)
+              (!= x 1)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-5
-  (is (= (run* [q]
-               (fresh [x y]
-                      (!= x y)
-                      (== x 1)
-                      (== y 1)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-5
+   (is (= (run* [q]
+            (fresh [x y]
+              (!= x y)
+              (== x 1)
+              (== y 1)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-6
-  (is (= (run* [q]
-               (fresh [x y]
-                      (== x 1)
-                      (== y 1)
-                      (!= x y)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-6
+   (is (= (run* [q]
+            (fresh [x y]
+              (== x 1)
+              (== y 1)
+              (!= x y)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-7
-  (is (= (run* [q]
-               (fresh [x y]
-                      (== x 1)
-                      (!= x y)
-                      (== y 2)
-                      (== q x)))
-         '(1))))
+ (deftest test-disequality-7
+   (is (= (run* [q]
+            (fresh [x y]
+              (== x 1)
+              (!= x y)
+              (== y 2)
+              (== q x)))
+          '(1))))
 
-(deftest test-disequality-8
-  (is (= (run* [q]
-               (fresh [x y]
-                      (!= [x 2] [y 1])
-                      (== x 1)
-                      (== y 3)
-                      (== q [x y])))
-         '([1 3]))))
+ (deftest test-disequality-8
+   (is (= (run* [q]
+            (fresh [x y]
+              (!= [x 2] [y 1])
+              (== x 1)
+              (== y 3)
+              (== q [x y])))
+          '([1 3]))))
 
-(deftest test-disequality-9
-  (is (= (run* [q]
-               (fresh [x y]
-                      (== x 1)
-                      (== y 3)
-                      (!= [x 2] [y 1])
-                      (== q [x y])))
-         '([1 3]))))
+ (deftest test-disequality-9
+   (is (= (run* [q]
+            (fresh [x y]
+              (== x 1)
+              (== y 3)
+              (!= [x 2] [y 1])
+              (== q [x y])))
+          '([1 3]))))
 
-(deftest test-disequality-10
-  (is (= (run* [q]
-               (fresh [x y]
-                      (!= [x 2] [1 y])
-                      (== x 1)
-                      (== y 2)
-                      (== q [x y])))
-         ())))
+ (deftest test-disequality-10
+   (is (= (run* [q]
+            (fresh [x y]
+              (!= [x 2] [1 y])
+              (== x 1)
+              (== y 2)
+              (== q [x y])))
+          ())))
 
-(deftest test-disequality-11
-  (is (= (run* [q]
-               (fresh [x y]
-                      (== x 1)
-                      (== y 2)
-                      (!= [x 2] [1 y])
-                      (== q [x y])))
-         ())))
+ (deftest test-disequality-11
+   (is (= (run* [q]
+            (fresh [x y]
+              (== x 1)
+              (== y 2)
+              (!= [x 2] [1 y])
+              (== q [x y])))
+          ())))
 
-(deftest test-disequality-12
-  (is (= (run* [q]
-               (fresh [x y z]
-                      (!= x y)
-                      (== y z)
-                      (== x z)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-12
+   (is (= (run* [q]
+            (fresh [x y z]
+              (!= x y)
+              (== y z)
+              (== x z)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-13
-  (is (= (run* [q]
-               (fresh [x y z]
-                      (== y z)
-                      (== x z)
-                      (!= x y)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-13
+   (is (= (run* [q]
+            (fresh [x y z]
+              (== y z)
+              (== x z)
+              (!= x y)
+              (== q x)))
+          ())))
 
-(deftest test-disequality-14
-  (is (= (run* [q]
-               (fresh [x y z]
-                      (== z y)
-                      (== x z)
-                      (!= x y)
-                      (== q x)))
-         ())))
+ (deftest test-disequality-14
+   (is (= (run* [q]
+            (fresh [x y z]
+              (== z y)
+              (== x z)
+              (!= x y)
+              (== q x)))
+          ()))))
 
 ;; -----------------------------------------------------------------------------
 ;; tabled
