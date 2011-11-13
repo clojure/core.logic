@@ -188,12 +188,12 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name hash cs meta]
+(deftype LVar [name hash meta]
   clojure.lang.IObj
   (meta [this]
     meta)
   (withMeta [this new-meta]
-    (LVar. name hash cs meta))
+    (LVar. name hash meta))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -245,13 +245,10 @@
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil nil)))
+       (LVar. name (.hashCode name) nil)))
   ([name]
      (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil nil)))
-  ([name cs]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs nil))))
+       (LVar. name (.hashCode name) nil))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
