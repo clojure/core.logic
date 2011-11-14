@@ -383,8 +383,9 @@
 (defmethod print-method LCons [x ^Writer writer]
   (.write writer (str x)))
 
-(defn lcons [a d]
+(defn lcons
   "Constructs a sequence a with an improper tail d if d is a logic variable."
+  [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
     (LCons. a d -1 nil)))
@@ -760,20 +761,21 @@
 ;; =============================================================================
 ;; Syntax
 
-(defn succeed [a]
+(defn succeed
   "A goal that always succeeds."
-  a)
+  [a] a)
 
-(defn fail [a] 
+(defn fail
   "A goal that always fails."
-  nil)
+  [a] nil)
 
 (def s# succeed)
 
 (def u# fail)
 
-(defmacro == [u v]
+(defmacro ==
   "A goal that attempts to unify terms u and v."
+  [u v]
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
@@ -785,10 +787,11 @@
 (defn- bind-conde-clauses [a clauses]
   (map (bind-conde-clause a) clauses))
 
-(defmacro conde [& clauses]
+(defmacro conde
   "Logical disjunction of the clauses. The first goal in
   a clause is considered the head of that clause. Interleaves the
   execution of the clauses."
+  [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (-inc
@@ -801,9 +804,10 @@
 (defn- lvar-binds [syms]
   (mapcat lvar-bind syms))
 
-(defmacro fresh [[& lvars] & goals]
+(defmacro fresh
   "Creates fresh variables. Goals occuring within form a logical 
   conjunction."
+  [[& lvars] & goals]
   `(fn [a#]
      (-inc
       (let [~@(lvar-binds lvars)]
@@ -819,29 +823,35 @@
        (take ~n xs#)
        xs#)))
 
-(defmacro run [n & goals]
+(defmacro run
   "Executes goals until a maximum of n results are found."
+  [n & goals]
   `(doall (solve ~n ~@goals)))
 
-(defmacro run* [& goals]
+(defmacro run*
   "Executes goals until results are exhausted."
+  [& goals]
   `(run false ~@goals))
 
-(defmacro run-nc [& [n & goals]]
+(defmacro run-nc
   "Executes goals until a maximum of n results are found. Does not occurs-check."
+  [& [n & goals]]
   `(binding [*occurs-check* false]
      (run ~n ~@goals)))
 
-(defmacro run-nc* [& goals]
+(defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
+  [& goals]
   `(run-nc false ~@goals))
 
-(defmacro lazy-run [& [n & goals]]
+(defmacro lazy-run
   "Lazily executes goals until a maximum of n results are found."
+  [& [n & goals]]
   `(solve ~n ~@goals))
 
-(defmacro lazy-run* [& goals]
+(defmacro lazy-run*
   "Lazily executes goals until results are exhausted."
+  [& goals]
   `(solve false ~@goals))
 
 (defmacro all
@@ -865,8 +875,9 @@
 (defn trace-lvar [a lvar]
   `(println (format "%5s = %s" (str '~lvar) (-reify ~a ~lvar))))
 
-(defmacro trace-lvars [title & lvars]
+(defmacro trace-lvars
   "Goal for tracing the values of logic variables."
+  [title & lvars]
   (let [a (gensym "a")]
     `(fn [~a]
        (println ~title)
@@ -921,25 +932,29 @@
                       (postwalk (replace-lvar store) expr))
         :else expr))))
 
-(defn- prep [expr]
+(defn- prep
   "Prep a quoted expression. All symbols preceded by ? will
   be replaced with logic vars."
+  [expr]
   (let [lvars (atom {})
         prepped (if (lcons-expr? expr)
                   (prep* expr lvars true)
                   (postwalk (replace-lvar lvars) expr))]
     (with-meta prepped {:lvars @lvars})))
 
-(defn- unifier* [u w]
+(defn- unifier*
   "Unify the terms u and w."
+  [u w]
+  
   (first
     (run* [q]
       (== u w)
       (== u q))))
 
-(defn- binding-map* [u w]
+(defn- binding-map*
   "Return the binding map that unifies terms u and w.
   u and w should prepped terms."
+  [u w]
   (let [lvars (merge (-> u meta :lvars)
                      (-> w meta :lvars))
         s (unify empty-s u w)]
@@ -948,17 +963,19 @@
                       [k (-reify s v)])
                     lvars)))))
 
-(defn unifier [u w]
+(defn unifier
   "Unify the terms u and w. Will prep the terms."
+  [u w]
   {:pre [(not (lcons? u))
          (not (lcons? w))]}
   (let [up (prep u)
         wp (prep w)]
     (unifier* up wp)))
 
-(defn binding-map [u w]
+(defn binding-map
   "Return the binding map that unifies terms u and w.
   Will prep the terms."
+  [u w]
   {:pre [(not (lcons? u))
          (not (lcons? w))]}
   (let [up (prep u)
@@ -978,8 +995,9 @@
 (defn- project-bindings [vars s]
   (reduce concat (map (project-binding s) vars)))
 
-(defmacro project [[& vars] & goals]
+(defmacro project
   "Extract the values bound to the specified logic vars. Non-relational."
+  [[& vars] & goals]
   (let [a (gensym "a")]
     `(fn [~a]
        (let [~@(project-bindings vars a)]
@@ -1074,17 +1092,18 @@
     `((~(first goals) ~a) ~@(rest goals))))
 
 (defmacro conda
-  [& clauses]
   "Soft cut. Once the head of a clause has succeeded
   all other clauses will be ignored. Non-relational."
+  [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (ifa* ~@(map (cond-clauses a) clauses)))))
 
-(defmacro condu [& clauses]
+(defmacro condu
   "Committed choice. Once the head (first goal) of a clause 
   has succeeded, remaining goals of the clause will only
   be run once. Non-relational."
+  [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
        (ifu* ~@(map (cond-clauses a) clauses)))))
@@ -1092,22 +1111,25 @@
 ;; =============================================================================
 ;; copy-term
 
-(defn copy-term [u v]
+(defn copy-term
   "Copies a term u into v. Non-relational."
+  [u v]
   (project [u]
     (== (walk* (build empty-s u) u) v)))
 
 ;; =============================================================================
 ;; lvar nonlvar
 
-(defmacro lvaro [v]
+(defmacro lvaro
   "Goal to test whether a logic var is ground. Non-relational."
+  [v]
   `(fn [a#]
      (if (lvar? (walk a# ~v))
        a# nil)))
 
-(defmacro nonlvaro [v]
+(defmacro nonlvaro
   "Goal to test whether a logic var is ground. Non-relational."
+  [v]
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
        a# nil)))
@@ -1215,40 +1237,47 @@
 ;; =============================================================================
 ;; Useful goals
 
-(defn nilo [a]
+(defn nilo
   "Goal that unifies its argument with nil."
+  [a]
   (== nil a))
 
-(defn emptyo [a]
+(defn emptyo
   "Goal that unifies its argument with the empty list."
+  [a]
   (== '() a))
 
-(defn conso [a d l]
+(defn conso
   "The cons operation as a relation. Can be used to
   construct a list or destructure one."
+  [a d l]
   (== (lcons a d) l))
 
-(defn firsto [l a]
+(defn firsto
   "first as a relation."
+  [l a]
   (fresh [d]
     (conso a d l)))
 
-(defn resto [l d]
+(defn resto
   "rest as a relation."
+  [l d]
   (fresh [a]
     (== (lcons a d) l)))
 
 ;; =============================================================================
 ;; Goal sugar syntax
 
-(defmacro defne [& rest]
+(defmacro defne
   "Define a goal fn. Supports pattern matching. All
    patterns will be tried. See conde."
+  [& rest]
   (apply defnm `conde rest))
 
-(defmacro matche [xs & cs]
+(defmacro matche
   "Pattern matching macro. All patterns will be tried.
   See conde."
+  [xs & cs]
   (handle-clauses `conde xs cs))
 
 ;; -----------------------------------------------------------------------------
@@ -1257,20 +1286,24 @@
 ;; TODO: we need to rethink defna and defnu, the unification comes first
 ;; the *question* should come first
 
-(defmacro defna [& rest]
+(defmacro defna
   "Define a soft cut goal. See conda."
+  [& rest]
   (apply defnm `conda rest))
 
-(defmacro defnu [& rest]
+(defmacro defnu
   "Define a committed choice goal. See condu."
+  [& rest]
   (apply defnm `condu rest))
 
-(defmacro matcha [xs & cs]
+(defmacro matcha
   "Define a soft cut pattern match. See conda."
+  [xs & cs]
   (handle-clauses `conda xs cs))
 
-(defmacro matchu [xs & cs]
+(defmacro matchu
   "Define a committed choice goal. See condu."
+  [xs & cs]
   (handle-clauses `condu xs cs))
 
 ;; ==============================================================================
@@ -1446,8 +1479,9 @@
                       (fn [i]
                         (apply merge-with set/union i indexed-tuples))))))))))
 
-(defn fact [rel & tuple]
+(defn fact
   "Add a fact to a relation defined with defrel."
+  [rel & tuple]
   (facts rel [(vec tuple)]))
 
 ;; =============================================================================
@@ -1587,9 +1621,10 @@
 
 ;; TODO: consider the concurrency implications much more closely
 
-(defn table [goal]
+(defn table
   "Function to table a goal. Useful when tabling should only persist
   for the duration of a run."
+  [goal]
   (let [table (atom {})]
     (fn [& args]
       (let [argv args]
@@ -1604,9 +1639,10 @@
                    (master argv cache)) a))
               (reuse a argv cache nil nil))))))))
 
-(defmacro tabled [args & grest]
+(defmacro tabled
   "Macro for defining a tabled goal. Prefer ^:tabled with the 
   defne/a/u forms over using this directly."
+  [args & grest]
   `(let [table# (atom {})]
      (fn [~@args]
        (let [argv# ~args]
