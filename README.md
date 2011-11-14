@@ -7,6 +7,13 @@ Performance is a central concern of this project. Anything that makes it slower 
 
 If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
 
+Contributing
+----
+
+No pull requests please. Please open tickets and submit patches to [JIRA](http://dev.clojure.org/jira/browse/LOGIC)
+
+For simple fixes you can message @swannodette. Thanks.
+
 Immediate Roadmap
 ----
 
