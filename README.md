@@ -12,7 +12,7 @@ Contributing
 
 No pull requests please. Please open tickets and submit patches to [JIRA](http://dev.clojure.org/jira/browse/LOGIC)
 
-For simple fixes you can message @swannodette. Thanks.
+For simple fixes you can message [swannodette](http://github.com/swannodette). Thanks.
 
 Immediate Roadmap
 ----
