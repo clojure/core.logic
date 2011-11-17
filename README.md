@@ -192,7 +192,7 @@ The above is quite slow since we have to walk the data structure and replace the
   (unifier* u w))
 ```
 
-Definite Clause Grammars
+Definite Clause Grammars (Experimental)
 ----
 
 core.logic has Prolog-type DCG syntax for parsing:
