@@ -1164,3 +1164,19 @@
 (deftest test-unify-fail-3
   (is (= (run* [p] (fresh [a b c d] (== () b) (== '(1) d) (== (lcons a b) (lcons c d)) (== p [a b c d])))
          ())))
+
+;; -----------------------------------------------------------------------------
+;; Pattern matching functions preserve metadata
+
+(defne ^:tabled dummy 
+  "Docstring"
+  [x l]
+  ([_ [x . ?tail]])
+  ([_ [?head . ?tail]]
+     (membero x ?tail)))
+
+(deftest test-metadata-defne
+  (is (= (-> #'dummy meta :tabled)
+         true))
+  (is (= (-> #'dummy meta :doc)
+         "Docstring")))
