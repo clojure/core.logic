@@ -1428,7 +1428,7 @@
                  fs)
         create-sig (fn [n]
                      (let [args (map a-sym (range 1 (clojure.core/inc n)))]
-                       `(~'invoke [~'_ ~@args]
+                       `(invoke [~'_ ~@args]
                                   (~(f-sym n) ~@args))))
         set-case (fn [[f arity]]
                    `(~arity (set! ~f ~'f)))]
@@ -1479,8 +1479,8 @@
                                   (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (~'lvar? (~'walk* ~'a ~a)))
-                         ((deref ~(index-sym name arity o)) (~'walk* ~'a ~a)))))
+                       `((not (clojure.core.logic/lvar? (clojure.core.logic/walk* ~'a ~a)))
+                         ((deref ~(index-sym name arity o)) (clojure.core.logic/walk* ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
@@ -1494,10 +1494,10 @@
                    (let [set# (cond
                                ~@(mapcat check-lvar indexed)
                                :else (deref ~(set-sym name arity)))]
-                     (~'to-stream
+                     (to-stream
                       (->> set#
                            (map (fn [cand#]
-                                  (when-let [~'a (~'unify ~'a [~@as] cand#)]
+                                  (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
                                     ~'a)))
                            (remove nil?)))))))))))
 
