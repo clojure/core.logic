@@ -862,12 +862,14 @@
 ;; =============================================================================
 ;; Debugging
 
-(defmacro log [s]
+(defmacro log [& s]
+  "Goal for println"
   `(fn [a#]
-     (println ~s)
+     (println ~@s)
      a#))
 
 (defmacro trace-s []
+  "Goal that prints the current substitution"
   `(fn [a#]
      (println (str a#))
      a#))
@@ -1226,41 +1228,67 @@
   `(~t
     ~@(map (handle-clause as) cs)))
 
-(defn- defnm [t n as & cs]
-  (if-let [tabled? (-> n meta :tabled)]
-    `(def ~n
-          (clojure.core.logic.tabled/tabled [~@as]
-                               ~(handle-clauses t as cs)))
-    `(defn ~n [~@as]
-       ~(handle-clauses t as cs))))
+;; name-with-attributes by Konrad Hinsen, from clojure.contrib.def
+(defn- name-with-attributes
+  "To be used in macro definitions.
+   Handles optional docstrings and attribute maps for a name to be defined
+   in a list of macro arguments. If the first macro argument is a string
+   it is added as a docstring to name and removed from the macro argument
+   list. If afterwards the first macro argument is a map, its entries are
+   added to the name's metadata map and the map is removed from the
+   macro argument list. The return value is a vector containing the name
+   with its extended metadata map and the list of unprocessed macro
+   arguments."
+  [name macro-args]
+  (let [[docstring macro-args] (if (string? (first macro-args))
+                                 [(first macro-args) (next macro-args)]
+                                 [nil macro-args])
+    [attr macro-args]          (if (map? (first macro-args))
+                                 [(first macro-args) (next macro-args)]
+                                 [{} macro-args])
+    attr                       (if docstring
+                                 (assoc attr :doc docstring)
+                                 attr)
+    attr                       (if (meta name)
+                                 (conj (meta name) attr)
+                                 attr)]
+    [(with-meta name attr) macro-args]))
+
+(declare tabled)
+
+(defn- defnm [t n & rest]
+  (let [[n [as & cs]] (name-with-attributes n rest)]
+    (if-let [tabled? (-> n meta :tabled)]
+      `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
+      `(defn ~n [~@as] ~(handle-clauses t as cs)))))
 
 ;; =============================================================================
 ;; Useful goals
 
 (defn nilo
-  "Goal that unifies its argument with nil."
+  "A relation where a is nil"
   [a]
   (== nil a))
 
 (defn emptyo
-  "Goal that unifies its argument with the empty list."
+  "A relation where a is the empty list"
   [a]
   (== '() a))
 
 (defn conso
-  "The cons operation as a relation. Can be used to
-  construct a list or destructure one."
+  "A relation where l is a collection, such that a is the first of l 
+  and d is the rest of l"
   [a d l]
   (== (lcons a d) l))
 
 (defn firsto
-  "first as a relation."
+  "A relation where l is a collection, such that a is the first of l"
   [l a]
   (fresh [d]
     (conso a d l)))
 
 (defn resto
-  "rest as a relation."
+  "A relation where l is a collection, such that d is the rest of l"
   [l d]
   (fresh [a]
     (== (lcons a d) l)))
@@ -1309,12 +1337,17 @@
 ;; ==============================================================================
 ;; More convenient goals
 
-(defne membero [x l]
+(defne membero 
+  "A relation where l is a collection, such that l contains x"
+  [x l]
   ([_ [x . ?tail]])
   ([_ [?head . ?tail]]
      (membero x ?tail)))
 
-(defne appendo [x y z]
+(defne appendo 
+  "A relation where x, y, and z are proper collections, 
+  such that z is x appended to y"
+  [x y z]
   ([() _ y])
   ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 
@@ -1419,7 +1452,10 @@
            ((deref ~'indexes) ~'arity))
          (~'add-indexes [~'_ ~'arity ~'index]
            (swap! ~'indexes assoc ~'arity ~'index)))
-       (defmacro ~'defrel [~'name ~'& ~'rest]
+       (defmacro ~'defrel 
+         "Define a relation for adding facts. Takes a name and some fields.
+         Use fact/facts to add facts and invoke the relation to query it."
+         [~'name ~'& ~'rest]
          (defrel-helper ~'name ~arity ~'rest)))))
 
 (RelHelper 20)
