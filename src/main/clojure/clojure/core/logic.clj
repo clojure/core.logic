@@ -94,6 +94,7 @@
   (walk [this v])
   (walk* [this v])
   (unify [this u v])
+  (update [this x v])
   (reify-lvar-name [_])
   (-reify* [this v])
   (-reify [this v])
@@ -105,8 +106,9 @@
 (declare lvar?)
 (declare pair)
 (declare lcons)
+(declare run-constraints)
 
-(deftype Substitutions [s l]
+(deftype Substitutions [s l c]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -127,7 +129,8 @@
 
   (ext-no-check [this u v]
     (Substitutions. (assoc s u v)
-                    (cons (pair u v) l)))
+                    (cons (pair u v) l)
+                    c))
 
   (walk [this v]
     (loop [lv v [v vp] (find s v)]
@@ -148,6 +151,11 @@
         (if (identical? u v)
           this
           (unify-terms u v this)))))
+
+  (update [this x v]
+    (let [sp (ext this x v)]
+      ((run-constraints (if (var? v) [x v] [x]))
+       (Substitutions. sp l c))))
 
   (reify-lvar-name [this]
     (symbol (str "_." (count s))))
@@ -173,9 +181,12 @@
   (take* [this] this))
 
 (defn- ^Substitutions make-s
-  ([m l] (Substitutions. m l)))
+  ([] (Substitutions. {} () []))
+  ([m] (Substitutions. m () []))
+  ([m l] (Substitutions. m l []))
+  ([m l c] (Substitutions. m l c)))
 
-(def ^Substitutions empty-s (make-s {} '()))
+(def ^Substitutions empty-s (make-s))
 
 (defn- subst? [x]
   (instance? Substitutions x))
@@ -183,7 +194,7 @@
 (defn ^Substitutions to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
-    (make-s s l)))
+    (make-s s l [])))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -1702,6 +1713,98 @@
 
 ;; =============================================================================
 ;; cKanren
+
+(declare any-relevant-var?)
+(declare !=tree)
+(declare !=fd)
+
+(defprotocol IDisequality
+  (!= [u v]))
+
+(def !=default !=tree)
+
+(extend-type Number
+  IDisequality
+  (!= [u v]
+    (if (number? v)
+      (!=fd u v)
+      (!=default u v))))
+
+(defprotocol IConstraint
+  (proc [this])
+  (rator [this])
+  (rands [this])
+  (process-prefix [this p])
+  (enforcec [this])
+  (reifyc [this]))
+
+(deftype FiniteDomain [lb ub])
+(deftype FDConstraint [proc rator rands])
+(deftype NEQConstraint [proc rator rands])
+
+(defn rem-run [oc]
+  (fn [^Substitutions a]
+    (let [c (.c a)]
+      (if (contains? c oc)
+        (let [ocp (dissoc oc c)]
+          ((.proc c) (make-s (.s a) (.l a) ocp)))
+        a))))
+
+(defn run-constraints [xs [^Constraint f & r :as c]]
+  (cond
+   (empty? c) identity
+   (any-relevant-var? (.rands f) xs) (composeg
+                                      (rem-run f)
+                                      (run-constraints))
+   :else (run-constraints xs (next c))))
+
+(defn composeg [g0 g1]
+  (fn [a]
+    (let [a (g0 a)]
+      (and a
+           (g1 a)))))
+
+(declare any-vars?)
+
+(defn ext-c [^Constraint c oc]
+  (if (any-vars? (.rands oc))
+    (conj c oc)
+    c))
+
+(defn build-oc [])
+
+;; NOTE: do we need this?
+(defn goal-construct [f]
+  (fn [a] (f a)))
+
+(defn updateg [u v]
+  (fn [a]
+    (update a u v)))
+
+(defn ==-c [u v]
+  (fn [^Substitutions a]
+    (when-let [a (unify a u v)]
+      (let [al (.l a)]
+        (fn [^Substitutions ap]
+          ((loop [apl (.l ap) gs []]
+             (if (identical? apl al)
+               (reduce composeg gs)
+               (let [p (first apl)
+                     lhs (lhs p)
+                     rhs (rhs p)
+                     ug (updateg lhs rhs)]
+                 (recur (rest apl) (conj gs ug))))) a))))))
+
+(declare reify-constraints)
+
+(defn reifyg [x]
+  (fn [^Substitutions a]
+    (let [v (walk* a x)
+          r (-reify empty-s v)]
+      (if (empty? r)
+        (list v)
+        (let [v (walk* r v)]
+          (reify-constraints a r v))))))
 
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
