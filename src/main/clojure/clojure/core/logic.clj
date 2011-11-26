@@ -388,9 +388,6 @@
   (unify-with-nil [v u s] false)
   IUnifyWithObject
   (unify-with-object [v u s] false)
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext s u v))
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
