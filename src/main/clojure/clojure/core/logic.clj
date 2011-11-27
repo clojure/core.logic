@@ -403,8 +403,8 @@
   (instance? LCons x))
 
 (defmacro llist
-  "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
-  The tail is improper if the last argument is a logic variable."
+  "Constructs a sequence from 2 or more arguments, with the last argument as the
+   tail. The tail is improper if the last argument is a logic variable."
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
@@ -843,7 +843,8 @@
   `(run false ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not occurs-check."
+  "Executes goals until a maximum of n results are found. Does not 
+   occurs-check."
   [& [n & goals]]
   `(binding [*occurs-check* false]
      (run ~n ~@goals)))
@@ -1345,7 +1346,7 @@
   [xs & cs]
   (handle-clauses `condu xs cs))
 
-;; ==============================================================================
+;; =============================================================================
 ;; More convenient goals
 
 (defne membero 
@@ -1379,8 +1380,9 @@
     (catch java.lang.ClassNotFoundException e
      `(defn ~'arity-exc-helper [~'name ~'n]
         (fn [~'& ~'args]
-          (throw (java.lang.IllegalArgumentException.
-                  (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
+          (throw
+           (java.lang.IllegalArgumentException.
+            (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
 
 (def-arity-exc-helper)
 
@@ -1400,7 +1402,8 @@
       `(do
          (def ~name
            (.withMeta
-            (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r))
+            (~'clojure.core.logic.Rel.
+             '~name (atom {}) nil ~@(map arity-excs r))
             {:ns ~'*ns*}))
          (extend-rel ~name ~@args))
       `(def ~name
@@ -1413,13 +1416,16 @@
         args (map a-sym r)
         arg-binds (fn [n]
                     (mapcat (fn [a]
-                              `(~a (first ~'arglist) ~'arglist (next ~'arglist)))
+                              `(~a (first ~'arglist)
+                                   ~'arglist (next ~'arglist)))
                             (take n args)))
         case-clause (fn [n]
                       `(~n (let [~@(arg-binds (dec n))]
                             (.invoke ~'ifn ~@(take (dec n) args)
-                                     (clojure.lang.Util/ret1 (first ~'arglist) nil)))))]
-   `(defn ~'apply-to-helper [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
+                                     (clojure.lang.Util/ret1
+                                      (first ~'arglist) nil)))))]
+   `(defn ~'apply-to-helper
+      [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
       (case (clojure.lang.RT/boundedLength ~'arglist 20)
             ~@(mapcat case-clause r)))))
 
@@ -1490,8 +1496,10 @@
                                   (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (clojure.core.logic/lvar? (clojure.core.logic/walk* ~'a ~a)))
-                         ((deref ~(index-sym name arity o)) (clojure.core.logic/walk* ~'a ~a)))))
+                       `((not (clojure.core.logic/lvar?
+                               (clojure.core.logic/walk* ~'a ~a)))
+                         ((deref ~(index-sym name arity o))
+                          (clojure.core.logic/walk* ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
@@ -1508,7 +1516,8 @@
                      (to-stream
                       (->> set#
                            (map (fn [cand#]
-                                  (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
+                                  (when-let [~'a (clojure.core.logic/unify
+                                                  ~'a [~@as] cand#)]
                                     ~'a)))
                            (remove nil?)))))))))))
 
@@ -1595,7 +1604,8 @@
   (reuse [this argv cache start end])
   (subunify [this arg ans]))
 
-;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to them
+;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to
+;; them
 
 (extend-type Substitutions
   ITabled
@@ -1623,7 +1633,8 @@
                      (if (= ansv* end)
                        [(make-ss cache start
                                  (fn [] (reuse this argv cache @cache start)))]
-                       (Choice. (subunify this argv (reify-tabled this (first ansv*)))
+                       (Choice. (subunify this argv
+                                          (reify-tabled this (first ansv*)))
                                 (fn [] (reuse-loop (rest ansv*))))))]
              (reuse-loop start))))
 
@@ -1897,7 +1908,8 @@
           du (walk s u)
           dv (walk s v)]
       (cond
-       (or (not (domain? du)) (not (domain? dv))) ((update-c (build-oc !=fdg u v)) a)
+       (or (not (domain? du))
+           (not (domain? dv))) ((update-c (build-oc !=fdg u v)) a)
        (= u v) false
        (disjoint? u v) a
        :else (let [oc (build-oc !=fdg u v)]
