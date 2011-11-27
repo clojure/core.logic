@@ -1788,14 +1788,24 @@
   (drop-before [this n]
     (cond
      (= n ub) n
-     (< n ub) (RangeFD. n ub)
-     :else (sorted-set)))
+     (< n lb) this
+     (> n ub) (sorted-set)
+     :else (RangeFD. n ub)))
+  (keep-before [this n]
+    (cond
+     (= n lb) n
+     (> n ub) this
+     (< n lb) (sorted-set)
+     :else (RangeFD. lb n)))
   (expand [this] (apply sorted-set (range lb ub))))
+
+;; TODO: BigRangeFD ?
+;; perhaps used sorted sets only for range < 100 elements?
 
 (defn ^RangeFD rangefd [lb ub]
   (RangeFD. lb ub))
 
-(extend-type clojure.IPersistentTreeSet
+(extend-type clojure.lang.PersistentTreeSet
   IFiniteDomain
   (lb [this]
     (first this))
