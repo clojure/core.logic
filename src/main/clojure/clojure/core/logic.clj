@@ -1833,6 +1833,10 @@
 (declare map-sum)
 (declare domain?)
 
+(defn updateg [u v]
+  (fn [a]
+    (update a u v)))
+
 (defn force-ans [x]
   (fn [a]
     (let [x (walk a x)]
@@ -1855,24 +1859,24 @@
           ((.proc c) (make-s (.s a) (.l a) ocp)))
         a))))
 
-(defn run-constraints [xs [^Constraint f & r :as c]]
-  (cond
-   (empty? c) identity
-   (any-relevant-var? (.rands f) xs) (composeg
-                                      (rem-run f)
-                                      (run-constraints))
-   :else (run-constraints xs (next c))))
-
 (defn composeg [g0 g1]
   (fn [a]
     (let [a (g0 a)]
       (and a
            (g1 a)))))
 
+(defn run-constraints [xs [f & r :as c]]
+  (cond
+   (empty? c) identity
+   (any-relevant-var? (rands f) xs) (composeg
+                                      (rem-run f)
+                                      (run-constraints))
+   :else (run-constraints xs (next c))))
+
 (declare any-vars?)
 
-(defn ext-c [^Constraint c oc]
-  (if (any-vars? (.rands oc))
+(defn ext-c [c oc]
+  (if (any-vars? (rands oc))
     (conj c oc)
     c))
 
@@ -1881,10 +1885,6 @@
 ;; NOTE: do we need this?
 (defn goal-construct [f]
   (fn [a] (f a)))
-
-(defn updateg [u v]
-  (fn [a]
-    (update a u v)))
 
 (defn ==-c [u v]
   (fn [^Substitutions a]
