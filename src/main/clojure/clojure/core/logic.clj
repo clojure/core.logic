@@ -1735,7 +1735,78 @@
   (enforcec [this])
   (reifyc [this]))
 
-(deftype FiniteDomain [lb ub])
+(defprotocol IFiniteDomain
+  (lb [this])
+  (ub [this])
+  (member? [this v])
+  (disjoint? [this that])
+  (drop-before [this n])
+  (keep-before [this n])
+  (expand [this]))
+
+(defn intersection [this that]
+  (set/intersection (expand this) (expand that)))
+
+(defn difference [this that]
+  (set/difference (expand this) (expand that)))
+
+(defmacro extend-to-fd [t]
+  `(extend-type ~t
+     IFiniteDomain
+     (~'lb [this#] this#)
+     (~'ub [this#] this#)
+     (~'member? [this# v#] (== this# v#))
+     (~'expand [this#] (sorted-set this#))
+     (~'drop-before [this# n#]
+       (if (= this# n#)
+         n#
+         (sorted-set)))
+     (~'keep-before [this# n#]
+       (if (= this# n#)
+         n#
+         (sorted-set)))
+     (~'disjoint? [this# that#]
+       (if (number? that#)
+         (not= this# that#)
+         (disjoint? (expand this#) (expand that#))))))
+
+(extend-to-fd java.lang.Long)
+(extend-to-fd java.lang.Integer)
+(extend-to-fd java.math.BigInteger)
+
+(deftype RangeFD [lb ub]
+  IFiniteDomain
+  (lb [_] lb)
+  (ub [_] ub)
+  (member? [this v]
+    (and (>= v lb) (<= v ub)))
+  (disjoint? [this that]
+    (if (instance? RangeFD that)
+      (or (< (ub this) (lb that))
+          (< (lb this) (ub that)))
+      (disjoint? (expand this) (expand that))))
+  (drop-before [this n]
+    (cond
+     (= n ub) n
+     (< n ub) (RangeFD. n ub)
+     :else (sorted-set)))
+  (expand [this] (apply sorted-set (range lb ub))))
+
+(defn ^RangeFD rangefd [lb ub]
+  (RangeFD. lb ub))
+
+(extend-type clojure.IPersistentTreeSet
+  IFiniteDomain
+  (lb [this]
+    (first this))
+  (ub [this]
+    (first (rseq this)))
+  (member? [this v]
+    (contains? this v))
+  (expand [this] this)
+  (intersection [this that]
+    (set/intersection this that)))
+
 (deftype FDConstraint [proc rator rands])
 (deftype NEQConstraint [proc rator rands])
 
