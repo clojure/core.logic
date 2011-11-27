@@ -154,7 +154,7 @@
 
   (update [this x v]
     (let [sp (ext this x v)]
-      ((run-constraints (if (var? v) [x v] [x]))
+      ((run-constraints (if (var? v) #{x v} #{x}))
        (Substitutions. sp l c))))
 
   (reify-lvar-name [this]
@@ -187,6 +187,7 @@
   ([m l c] (Substitutions. m l c)))
 
 (def ^Substitutions empty-s (make-s))
+(def empty-f (fn []))
 
 (defn- subst? [x]
   (instance? Substitutions x))
@@ -1118,6 +1119,8 @@
     `(fn [~a]
        (ifu* ~@(map (cond-clauses a) clauses)))))
 
+(defn onceo [g] (condu (g)))
+
 ;; =============================================================================
 ;; copy-term
 
@@ -1538,6 +1541,9 @@
 ;; =============================================================================
 ;; Tabling
 
+;; See - William Byrd “Relational Programming in miniKanren:
+;; Techniques, Applications, and Implementations”
+
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
 ;; (atom []) is cache, waiting streams are PersistentVectors
@@ -1711,21 +1717,16 @@
 ;; =============================================================================
 ;; cKanren
 
-(declare any-relevant-var?)
-(declare !=tree)
-(declare !=fd)
+;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
+;; cKanren - miniKanren with Constraints
 
-(defprotocol IDisequality
-  (!= [u v]))
+;; TODO: change to lazy-seq
+(defn prefix [s <s]
+  (if (= s <s)
+    ()
+    (cons (first s) (prefix (rest s) <s))))
 
-(def !=default !=tree)
-
-(extend-type Number
-  IDisequality
-  (!= [u v]
-    (if (number? v)
-      (!=fd u v)
-      (!=default u v))))
+(defprotocol IDomain (-idomain-marker [_])) ;; potential marker protocol - David
 
 (defprotocol IConstraint
   (proc [this])
@@ -1733,94 +1734,38 @@
   (rands [this])
   (process-prefix [this p])
   (enforcec [this])
-  (reifyc [this]))
+  (reifyc [this v r]))
 
-(defprotocol IFiniteDomain
-  (lb [this])
-  (ub [this])
-  (member? [this v])
-  (disjoint? [this that])
-  (drop-before [this n])
-  (keep-before [this n])
-  (expand [this]))
+(defprotocol IDisequalityConstrain
+  (!=c [u v]))
 
-(defn intersection [this that]
-  (set/intersection (expand this) (expand that)))
+(defprotocol IAllDiffConstrain
+  (all-diffc [u v]))
 
-(defn difference [this that]
-  (set/difference (expand this) (expand that)))
+(defprotocol IFDConstrain
+  (=c [u v])
+  (<c [u v])
+  (<=c [u v])
+  (+c [u v w]))
 
-(defmacro extend-to-fd [t]
-  `(extend-type ~t
-     IFiniteDomain
-     (~'lb [this#] this#)
-     (~'ub [this#] this#)
-     (~'member? [this# v#] (== this# v#))
-     (~'expand [this#] (sorted-set this#))
-     (~'drop-before [this# n#]
-       (if (= this# n#)
-         n#
-         (sorted-set)))
-     (~'keep-before [this# n#]
-       (if (= this# n#)
-         n#
-         (sorted-set)))
-     (~'disjoint? [this# that#]
-       (if (number? that#)
-         (not= this# that#)
-         (disjoint? (expand this#) (expand that#))))))
+(deftype Constraint [proc rator rands])
+(deftype FDConstraint [proc rator rands])
+(deftype NEQConstraint [proc rator rands])
 
-(extend-to-fd java.lang.Long)
-(extend-to-fd java.lang.Integer)
-(extend-to-fd java.math.BigInteger)
+(defn ^Substitutions update-c [oc]
+  (fn [^Substitutions a]
+    (make-s (.s a) (ext-c (.c a) oc))))
 
-(deftype RangeFD [lb ub]
-  IFiniteDomain
-  (lb [_] lb)
-  (ub [_] ub)
-  (member? [this v]
-    (and (>= v lb) (<= v ub)))
-  (disjoint? [this that]
-    (if (instance? RangeFD that)
-      (or (< (ub this) (lb that))
-          (< (lb this) (ub that)))
-      (disjoint? (expand this) (expand that))))
-  (drop-before [this n]
-    (cond
-     (= n ub) n
-     (< n lb) this
-     (> n ub) (sorted-set)
-     :else (RangeFD. n ub)))
-  (keep-before [this n]
-    (cond
-     (= n lb) n
-     (> n ub) this
-     (< n lb) (sorted-set)
-     :else (RangeFD. lb n)))
-  (expand [this] (apply sorted-set (range lb ub))))
+(defn ext-c [c oc]
+  (if (any-var? (rands oc))
+    (conj c oc)
+    c))
 
-;; TODO: BigRangeFD ?
-;; perhaps used sorted sets only for range < 100 elements?
+(defn ^Constraint makec [proc rator rands]
+  (Constraint. proc rator rands))
 
-(defn ^RangeFD rangefd
-  ([ub] (RangeFD. 0 ub))
-  ([lb ub] (RangeFD. lb ub)))
-
-(extend-type clojure.lang.PersistentTreeSet
-  IFiniteDomain
-  (lb [this]
-    (first this))
-  (ub [this]
-    (first (rseq this)))
-  (member? [this v]
-    (contains? this v))
-  (disjoint? [this that]
-    (empty? (set/intersection this (expand that))))
-  (drop-before [this n]
-    (apply sorted-set (drop-while #(< % n)) this))
-  (keep-before [this n]
-    (apply sorted-set (take-while #(< % n)) this))
-  (expand [this] this))
+(defmacro build-oc [op & args]
+  `(makec (~op ~@args) '~(symbol op) (vector ~@args)))
 
 (declare update-var)
 
@@ -1831,7 +1776,9 @@
      (member? dom v) a)))
 
 (declare map-sum)
-(declare domain?)
+
+(defn domain? [x]
+  (satisfies? IDomain x))
 
 (defn updateg [u v]
   (fn [a]
@@ -1848,15 +1795,12 @@
         :else identity)
        a))))
 
-(deftype FDConstraint [proc rator rands])
-(deftype NEQConstraint [proc rator rands])
-
 (defn rem-run [oc]
   (fn [^Substitutions a]
     (let [c (.c a)]
       (if (contains? c oc)
         (let [ocp (dissoc oc c)]
-          ((.proc c) (make-s (.s a) (.l a) ocp)))
+          ((proc c) (make-s (.s a) (.l a) ocp)))
         a))))
 
 (defn composeg [g0 g1]
@@ -1865,22 +1809,46 @@
       (and a
            (g1 a)))))
 
-(defn run-constraints [xs [f & r :as c]]
-  (cond
-   (empty? c) identity
-   (any-relevant-var? (rands f) xs) (composeg
-                                      (rem-run f)
-                                      (run-constraints))
-   :else (run-constraints xs (next c))))
+(defn any-var? [p]
+  (some var? p))
 
-(declare any-vars?)
+(defn any-relevant-var? [t xs]
+  (if (var? t)
+    (contains? xs t)
+    (not (empty? (set/intersection t xs)))))
 
-(defn ext-c [c oc]
-  (if (any-vars? (rands oc))
-    (conj c oc)
-    c))
+(defn run-constraints [xs c]
+  (if (nil? c)
+    identity
+    (let [f (first c)]
+      (if (any-relevant-var? (rands f) xs)
+        (composeg
+         (rem-run f)
+         (run-constraints xs (next c)))
+        (run-constraints xs (next c)))) ))
 
-(defn build-oc [])
+(declare verify-all-bound)
+
+(defn enforce-constraints [x]
+  (fresh []
+    (force-ans x)
+    (fn [^Substitutions a]
+      (let [c (.c a)
+            bound-xs (map (fn [oc]
+                            (first (rand oc)))
+                          c)]
+        (verify-all-bound (.s a) c bound-xs)
+        ((onceo (force-ans bound-xs)) a)))))
+
+(defn reify-constraints [v r]
+  (fn [^Substitutions a]
+    (let [c (apply concat
+                   (map (fn [oc]
+                          ((reifyc oc v r) a))
+                        (.c a)))]
+      (if (empty? c)
+        (choice v empty-f)
+        (choice `(~v :- ~@c) empty-f)))))
 
 ;; NOTE: do we need this?
 (defn goal-construct [f]
@@ -1921,10 +1889,129 @@
                xs)))))
 
 ;; =============================================================================
-;; Disequality
+;; CLP(FD)
 
-;; TODO: change to lazy-seq
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
+(defn !=fd-c [u v]
+  (fn [^Substitutions a]
+    (let [s (.s a)
+          du (walk s u)
+          dv (walk s v)]
+      (cond
+       (or (not (domain? du)) (not (domain? dv))) ((update-c (build-oc !=fdg u v)) a)
+       (= u v) false
+       (disjoint? u v) a
+       :else (let [oc (build-oc !=fdg u v)]
+               ((update-c oc) a))))))
+
+(defn all-difffd-c* [y* n*]
+  (fn [a]
+    ))
+
+(defn all-difffd-c [v*]
+  (fn [a]
+    (let [v* (walk a v*)]
+      (cond
+       (var? v*) (let [oc (build-oc all-difffd-c v*)]
+                   ((update-c oc) a))
+       :else (let [{x* true n* false} (group-by var? v*)]
+               ((all-difffd-c* x* n*) a))))))
+
+(defmacro c-op [op bindings])
+
+(defprotocol IFiniteDomain
+  (lb [this])
+  (ub [this])
+  (member? [this v])
+  (disjoint? [this that])
+  (drop-before [this n])
+  (keep-before [this n])
+  (expand [this]))
+
+(defn intersection [this that]
+  (set/intersection (expand this) (expand that)))
+
+(defn difference [this that]
+  (set/difference (expand this) (expand that)))
+
+(defmacro extend-to-fd [t]
+  `(extend-type ~t
+     IDomain
+     IFiniteDomain
+     (~'lb [this#] this#)
+     (~'ub [this#] this#)
+     (~'member? [this# v#] (== this# v#))
+     (~'expand [this#] (sorted-set this#))
+     (~'drop-before [this# n#]
+       (if (= this# n#)
+         n#
+         (sorted-set)))
+     (~'keep-before [this# n#]
+       (if (= this# n#)
+         n#
+         (sorted-set)))
+     (~'disjoint? [this# that#]
+       (if (number? that#)
+         (not= this# that#)
+         (disjoint? (expand this#) (expand that#))))))
+
+(extend-to-fd java.lang.Byte)
+(extend-to-fd java.lang.Short)
+(extend-to-fd java.lang.Integer)
+(extend-to-fd java.lang.Long)
+(extend-to-fd java.math.BigInteger)
+(extend-to-fd clojure.lang.BigInt)
+
+(deftype RangeFD [lb ub]
+  IDomain
+  IFiniteDomain
+  (lb [_] lb)
+  (ub [_] ub)
+  (member? [this v]
+    (and (>= v lb) (<= v ub)))
+  (disjoint? [this that]
+    (if (instance? RangeFD that)
+      (or (< (ub this) (lb that))
+          (< (lb this) (ub that)))
+      (disjoint? (expand this) (expand that))))
+  (drop-before [this n]
+    (cond
+     (= n ub) n
+     (< n lb) this
+     (> n ub) (sorted-set)
+     :else (RangeFD. n ub)))
+  (keep-before [this n]
+    (cond
+     (= n lb) n
+     (> n ub) this
+     (< n lb) (sorted-set)
+     :else (RangeFD. lb n)))
+  (expand [this] (apply sorted-set (range lb ub)))
+  IDisequalityConstrain
+  (!=c [this that]))
+
+;; TODO: BigRangeFD, perhaps just replace RangeFD and sorted-set
+;; implementations. Question if reification should then change. - David
+
+(defn ^RangeFD rangefd
+  ([ub] (RangeFD. 0 ub))
+  ([lb ub] (RangeFD. lb ub)))
+
+(extend-type clojure.lang.PersistentTreeSet
+  IDomain
+  IFiniteDomain
+  (lb [this]
+    (first this))
+  (ub [this]
+    (first (rseq this)))
+  (member? [this v]
+    (contains? this v))
+  (disjoint? [this that]
+    (empty? (set/intersection this (expand that))))
+  (drop-before [this n]
+    (apply sorted-set (drop-while #(< % n)) this))
+  (keep-before [this n]
+    (apply sorted-set (take-while #(< % n)) this))
+  (expand [this] this))
+
+;; =============================================================================
+;; CLP(Tree)
