@@ -1874,16 +1874,13 @@
          (run-constraints xs (next c)))
         (run-constraints xs (next c)))) ))
 
-(defn verify-all-bound [s c constrained]
-  (when-not (empty? c)
-    (let []
-      )))
+(defn verify-all-bound [a constrained]
+  (when (seq constrainted)
+    (let [f (first constrained)]
+      (if (and (lvar? f) (= f (walk a f)))
+        (throw (Exception. (str "Constrained variable " f " without domain")))
+        (recur a (rest constrained))))))
 
-;; NOTE: why do we need to track which vars have a domain?
-;; we know which vars have constraints
-;; we can extract out the vars that are bound in the actual
-;; constraints.
-;; if we put a constraint on a logic var
 (defn enforce-constraints [x]
   (fresh []
     (force-ans x)
