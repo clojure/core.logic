@@ -2031,19 +2031,19 @@
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-(defn !=neq-c [u v]
-  (fn [a]
-    (if-let [ap (unify s u v)]
-      (let [p (prefix-s sp)]
-        (when (not (empty? p))
-          ((normalize-store p) a)))
-      a)))
-
 (defn normalize-store [u v]
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
       )))
 
+(defn !=neq-c [u v]
+  (fn [a]
+    (if-let [ap (unify a u v)]
+      (let [p (prefix ap)]
+        (when (not (empty? p))
+          ((normalize-store p) a)))
+      a)))
+
 (defn subsumes? [s u v]
   (when-let [sp (unify s u v)]
-    (eq? s sp)))
+    (identical? s sp)))
