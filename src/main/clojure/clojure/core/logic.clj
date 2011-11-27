@@ -1771,10 +1771,14 @@
   (+c [u v w]))
 
 (defn intersection [this that]
-  (set/intersection (expand this) (expand that)))
+  (let [s (set/intersection (expand this) (expand that))]
+    (when (not (empty? s))
+      s)))
 
 (defn difference [this that]
-  (set/difference (expand this) (expand that)))
+  (let [s (set/difference (expand this) (expand that))]
+    (when (not (empty? s))
+      s)))
 
 (deftype Constraint [proc rator rands])
 (deftype FDConstraint [proc rator rands])
