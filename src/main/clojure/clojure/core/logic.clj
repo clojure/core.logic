@@ -1987,7 +1987,12 @@
        (process v i)))))
 
 (defn <=fd-c [u v]
-  )
+  (c-op <=c [u ud v vd]
+    (let [[ulb uub] (bounds ud)
+          [vlb vub] (bounds vd)]
+      (composeg
+        (process u (keep-before ud vub))
+        (process v (drop-before vd ulb))))))
 
 (defn +fd-c [u v w]
   (c-op +c [u ud v vd w wd]
