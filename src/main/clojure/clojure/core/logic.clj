@@ -1782,16 +1782,13 @@
 
 (deftype Constraint [proc rator rands])
 
-(defn any-var? [p]
-  (some var? p))
-
 (defn any-relevant-var? [t xs]
   (if (var? t)
     (contains? xs t)
     (not (empty? (set/intersection t xs)))))
 
 (defn ext-c [c oc]
-  (if (any-var? (rands oc))
+  (if (some var? (rands oc))
     (conj c oc)
     c))
 
