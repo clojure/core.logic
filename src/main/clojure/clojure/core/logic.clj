@@ -2015,3 +2015,35 @@
 
 ;; =============================================================================
 ;; CLP(Tree)
+
+(defn recover-vars [p]
+  (if (empty? p)
+    #{}
+    (let [f (first p)
+          x (lhs f)
+          v (rhs f)
+          r (recover-vars (rest p))]
+      (if (var? v)
+        (conj r x v)
+        (conj r x)))))
+
+;; oc->prefix, what does that do?
+
+;; TODO: unify should return the prefix sub, then can eliminate l - David
+
+(defn !=neq-c [u v]
+  (fn [a]
+    (if-let [ap (unify s u v)]
+      (let [p (prefix-s sp)]
+        (when (not (empty? p))
+          ((normalize-store p) a)))
+      a)))
+
+(defn normalize-store [u v]
+  (fn [^Substitutions a]
+    (loop [c (.c a) cp ()]
+      )))
+
+(defn subsumes? [s u v]
+  (when-let [sp (unify s u v)]
+    (eq? s sp)))
