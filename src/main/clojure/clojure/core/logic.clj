@@ -1899,8 +1899,15 @@
                  `(domfd ~x dom#))
                xs)))))
 
+(defmulti make-dom (fn [x & r] x))
+
 ;; =============================================================================
 ;; CLP(FD)
+
+;; NOTE: aliasing FD? for solving problems like zebra - David
+
+(defmethod make-dom :fd
+  [_ ns] (apply sorted-set ns))
 
 (defn !=fd-c [u v]
   (fn [^Substitutions a]
@@ -1917,7 +1924,29 @@
 
 (defn all-difffd-c* [y* n*]
   (fn [a]
-    ))
+    (let [n* (make-dom :fd n*)]
+     (loop [y* y* n* n* x* ()]
+       (if (empty? y*)
+         (let [oc (build-oc all-difffd-c* x* n*)]
+           ((composeg
+             (update-c oc)
+             (exclude-from n* a x*))
+            a))
+         (let [y (walk a (first y*))]
+           (cond
+            (var? y) (recur (rest y*) n* (cons y x*))
+            (member? y n*) nil
+            :else (recur (rest y*) (conj n* y) x*))))))))
+
+(defn exclude-from [dom1 a xs]
+  (loop [xs xs gs []]
+    (if (empty? xs)
+      (reduce composeg gs)
+      (let [x (first xs)]
+        (if (domain? x)
+          (let [dom2 (walk a x)]
+            (recur (rest xs) (conj gs (process x (difference dom2 dom1)))))
+          (recur (rest xs) gs))))))
 
 (defn all-difffd-c [v*]
   (fn [a]
