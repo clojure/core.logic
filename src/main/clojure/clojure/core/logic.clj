@@ -1730,7 +1730,7 @@
 ;; cKanren
 
 ;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
-;; cKanren - miniKanren with Constraints
+;; "cKanren - miniKanren with Constraints"
 
 ;; TODO: change to lazy-seq
 (defn prefix [s <s]
@@ -1751,6 +1751,7 @@
 (defprotocol IFiniteDomain
   (lb [this])
   (ub [this])
+  (bounds [this])
   (member? [this v])
   (disjoint? [this that])
   (drop-before [this n])
@@ -1803,13 +1804,20 @@
   `(makec (~op ~@args) '~(symbol op) (vector ~@args)))
 
 (defn update-var [x dom]
-  )
+  (fn [^Substitutions a]
+    (let [xdom (walk a x)]
+      (if (domain? xdom)
+        (let [new-dom (intersection xdom dom)]
+          (when new-dom
+            (ext-no-check a x new-dom)))
+        (ext-no-check a x dom)))))
 
 (defn process [v dom]
   (fn [^Substitutions a]
     (cond
      (var? v) ((update-var v dom) a)
-     (member? dom v) a)))
+     (member? dom v) a
+     :else nil)))
 
 (declare map-sum)
 
@@ -1969,16 +1977,24 @@
 
 (defn =fd-c [u v]
   (c-op =c [u ud v vd]
-     (let [i (intersection ud vd)]
-       (composeg
-        (process u i)
-        (process v i)))))
+    (let [i (intersection ud vd)]
+      (composeg
+       (process u i)
+       (process v i)))))
 
 (defn <=fd-c [u v]
   )
 
-(defn +fd-c [u v]
-  )
+(defn +fd-c [u v w]
+  (c-op +c [u ud v vd w wd]
+    (let [[wlb wub] (bounds wd)
+          [ulb uub] (bounds ud)
+          [vlb vub] (bounds vd)]
+      (composeg
+        (process w (range (+ ulb vlb) (+ uub vub)))
+        (composeg
+          (process u (range (- wlb vub) (- wub vlb)))
+          (process v (range (- wlb uub) (- wub ulb))))))))
 
 (defn all-difffd-c* [ys ns]
   (fn [a]
@@ -2011,16 +2027,17 @@
      IFiniteDomain
      (~'lb [this#] this#)
      (~'ub [this#] this#)
+     (~'bounds [this#] (pair this# this#))
      (~'member? [this# v#] (== this# v#))
      (~'expand [this#] (sorted-set this#))
      (~'drop-before [this# n#]
        (if (= this# n#)
          n#
-         (sorted-set)))
+         nil))
      (~'keep-before [this# n#]
        (if (= this# n#)
          n#
-         (sorted-set)))
+         nil))
      (~'disjoint? [this# that#]
        (if (number? that#)
          (not= this# that#)
@@ -2038,6 +2055,7 @@
   IFiniteDomain
   (lb [_] lb)
   (ub [_] ub)
+  (bounds [_] (pair lb ub))
   (member? [this v]
     (and (>= v lb) (<= v ub)))
   (disjoint? [this that]
@@ -2049,13 +2067,13 @@
     (cond
      (= n ub) n
      (< n lb) this
-     (> n ub) (sorted-set)
+     (> n ub) nil
      :else (RangeFD. n ub)))
   (keep-before [this n]
     (cond
      (= n lb) n
      (> n ub) this
-     (< n lb) (sorted-set)
+     (< n lb) nil
      :else (RangeFD. lb n)))
   (expand [this] (apply sorted-set (range lb ub)))
   IDisequalityConstrain
