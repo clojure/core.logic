@@ -1782,11 +1782,6 @@
 
 (deftype Constraint [proc rator rands])
 
-(defn any-relevant-var? [t xs]
-  (if (var? t)
-    (contains? xs t)
-    (not (empty? (set/intersection t xs)))))
-
 (defn ext-c [c oc]
   (if (some var? (rands oc))
     (conj c oc)
@@ -1866,14 +1861,18 @@
            (g1 a)))))
 
 (defn run-constraints [xs c]
-  (if (nil? c)
-    identity
-    (let [f (first c)]
-      (if (any-relevant-var? (rands f) xs)
-        (composeg
-         (rem-run f)
-         (run-constraints xs (next c)))
-        (run-constraints xs (next c)))) ))
+  (letfn [(any-relevant-var? [t xs]
+            (if (var? t)
+              (contains? xs t)
+              (not (empty? (set/intersection t xs)))))]
+    (if (nil? c)
+      identity
+      (let [f (first c)]
+        (if (any-relevant-var? (rands f) xs)
+          (composeg
+           (rem-run f)
+           (run-constraints xs (next c)))
+          (run-constraints xs (next c)))) )))
 
 (defn verify-all-bound [a constrained]
   (when (seq constrained)
