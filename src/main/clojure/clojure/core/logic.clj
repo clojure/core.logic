@@ -310,7 +310,8 @@
      :else (str a " . " d )))
   Object
   (toString [this] (cond
-                    (.. this getClass (isInstance d)) (str "(" a " " (toShortString d) ")")
+                    (.. this getClass (isInstance d))
+                      (str "(" a " " (toShortString d) ")")
                     :else (str "(" a " . " d ")")))
   (equals [this o]
     (or (identical? this o)
@@ -1747,6 +1748,15 @@
   (enforcec [this])
   (reifyc [this v r]))
 
+(defprotocol IFiniteDomain
+  (lb [this])
+  (ub [this])
+  (member? [this v])
+  (disjoint? [this that])
+  (drop-before [this n])
+  (keep-before [this n])
+  (expand [this]))
+
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
 
@@ -1759,18 +1769,32 @@
   (<=c [u v])
   (+c [u v w]))
 
+(defn intersection [this that]
+  (set/intersection (expand this) (expand that)))
+
+(defn difference [this that]
+  (set/difference (expand this) (expand that)))
+
 (deftype Constraint [proc rator rands])
 (deftype FDConstraint [proc rator rands])
 (deftype NEQConstraint [proc rator rands])
 
-(defn ^Substitutions update-c [oc]
-  (fn [^Substitutions a]
-    (make-s (.s a) (ext-c (.c a) oc))))
+(defn any-var? [p]
+  (some var? p))
+
+(defn any-relevant-var? [t xs]
+  (if (var? t)
+    (contains? xs t)
+    (not (empty? (set/intersection t xs)))))
 
 (defn ext-c [c oc]
   (if (any-var? (rands oc))
     (conj c oc)
     c))
+
+(defn ^Substitutions update-c [oc]
+  (fn [^Substitutions a]
+    (make-s (.s a) (ext-c (.c a) oc))))
 
 (defn ^Constraint makec [proc rator rands]
   (Constraint. proc rator rands))
@@ -1778,7 +1802,8 @@
 (defmacro build-oc [op & args]
   `(makec (~op ~@args) '~(symbol op) (vector ~@args)))
 
-(declare update-var)
+(defn update-var [x dom]
+  )
 
 (defn process [v dom]
   (fn [^Substitutions a]
@@ -1819,14 +1844,6 @@
     (let [a (g0 a)]
       (and a
            (g1 a)))))
-
-(defn any-var? [p]
-  (some var? p))
-
-(defn any-relevant-var? [t xs]
-  (if (var? t)
-    (contains? xs t)
-    (not (empty? (set/intersection t xs)))))
 
 (defn run-constraints [xs c]
   (if (nil? c)
@@ -1909,6 +1926,34 @@
 (defmethod make-dom :fd
   [_ ns] (apply sorted-set ns))
 
+(defn walk-var [a [v b]]
+  `(~b (walk ~a ~v)))
+
+(defmacro let-dom [a vars & body]
+  `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
+     ~@body))
+
+(defmacro c-op [op vars & body]
+  (let [ps (partition 2 vars)
+        vs (map first ps)
+        ds (map second ps)]
+   `(fn [a#]
+     (let-dom a# ~vars
+       (let [oc# (build-oc ~op ~@vs)]
+         (if (and ~@(map (fn [d] `(domain? ~d)) ds))
+           ((composeg (update-c oc#) ~@body) a#)
+           ((update-c oc#) a#)))))))
+
+(defn exclude-from [dom1 a xs]
+  (loop [xs xs gs []]
+    (if (empty? xs)
+      (reduce composeg gs)
+      (let [x (first xs)
+            dom2 (walk a x)]
+        (if (domain? dom2)
+          (recur (rest xs) (conj gs (process x (difference dom2 dom1))))
+          (recur (rest xs) gs))))))
+
 (defn !=fd-c [u v]
   (fn [^Substitutions a]
     (let [s (.s a)
@@ -1916,37 +1961,40 @@
           dv (walk s v)]
       (cond
        (or (not (domain? du))
-           (not (domain? dv))) ((update-c (build-oc !=fdg u v)) a)
+           (not (domain? dv))) ((update-c (build-oc !=fd-c u v)) a)
        (= u v) false
        (disjoint? u v) a
-       :else (let [oc (build-oc !=fdg u v)]
+       :else (let [oc (build-oc !=fd-c u v)]
                ((update-c oc) a))))))
 
-(defn all-difffd-c* [y* n*]
+(defn =fd-c [u v]
+  (c-op =c [u ud v vd]
+     (let [i (intersection ud vd)]
+       (composeg
+        (process u i)
+        (process v i)))))
+
+(defn <=fd-c [u v]
+  )
+
+(defn +fd-c [u v]
+  )
+
+(defn all-difffd-c* [ys ns]
   (fn [a]
-    (let [n* (make-dom :fd n*)]
-     (loop [y* y* n* n* x* ()]
-       (if (empty? y*)
-         (let [oc (build-oc all-difffd-c* x* n*)]
+    (let [ns (make-dom :fd ns)]
+     (loop [ys ys ns ns xs ()]
+       (if (empty? ys)
+         (let [oc (build-oc all-difffd-c* xs ns)]
            ((composeg
              (update-c oc)
-             (exclude-from n* a x*))
+             (exclude-from ns a xs))
             a))
-         (let [y (walk a (first y*))]
+         (let [y (walk a (first ys))]
            (cond
-            (var? y) (recur (rest y*) n* (cons y x*))
-            (member? y n*) nil
-            :else (recur (rest y*) (conj n* y) x*))))))))
-
-(defn exclude-from [dom1 a xs]
-  (loop [xs xs gs []]
-    (if (empty? xs)
-      (reduce composeg gs)
-      (let [x (first xs)]
-        (if (domain? x)
-          (let [dom2 (walk a x)]
-            (recur (rest xs) (conj gs (process x (difference dom2 dom1)))))
-          (recur (rest xs) gs))))))
+            (var? y) (recur (rest ys) ns (cons y xs))
+            (member? y ns) nil
+            :else (recur (rest ys) (conj ns y) xs))))))))
 
 (defn all-difffd-c [v*]
   (fn [a]
@@ -1956,23 +2004,6 @@
                    ((update-c oc) a))
        :else (let [{x* true n* false} (group-by var? v*)]
                ((all-difffd-c* x* n*) a))))))
-
-(defmacro c-op [op bindings])
-
-(defprotocol IFiniteDomain
-  (lb [this])
-  (ub [this])
-  (member? [this v])
-  (disjoint? [this that])
-  (drop-before [this n])
-  (keep-before [this n])
-  (expand [this]))
-
-(defn intersection [this that]
-  (set/intersection (expand this) (expand that)))
-
-(defn difference [this that]
-  (set/difference (expand this) (expand that)))
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
