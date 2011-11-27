@@ -1823,7 +1823,13 @@
      (member? dom v) a
      :else nil)))
 
-(declare map-sum)
+(defn map-sum [f]
+  (fn loop [ls]
+    (if (empty? ls)
+      (fn [a] nil)
+      (conde
+        ((f (first ls)))
+        ((loop (rest ls)))))))
 
 (defn domain? [x]
   (satisfies? IDomain x))
@@ -1837,6 +1843,7 @@
     (let [x (walk a x)]
       ((cond
         (domain? x) (map-sum (fn [v] (updateg x v)))
+        ;; FIXME: x may be a lot of types - David
         (seq? x) (fresh []
                    (force-ans (first x))
                    (force-ans (rest x)))
@@ -1867,18 +1874,26 @@
          (run-constraints xs (next c)))
         (run-constraints xs (next c)))) ))
 
-(declare verify-all-bound)
+(defn verify-all-bound [s c constrained]
+  (when-not (empty? c)
+    (let []
+      )))
 
+;; NOTE: why do we need to track which vars have a domain?
+;; we know which vars have constraints
+;; we can extract out the vars that are bound in the actual
+;; constraints.
+;; if we put a constraint on a logic var
 (defn enforce-constraints [x]
   (fresh []
     (force-ans x)
     (fn [^Substitutions a]
       (let [c (.c a)
-            bound-xs (map (fn [oc]
-                            (first (rand oc)))
-                          c)]
-        (verify-all-bound (.s a) c bound-xs)
-        ((onceo (force-ans bound-xs)) a)))))
+            constrained (reduce (fn [r oc]
+                                  (rand oc))
+                                #{} c)]
+        (verify-all-bound (.s a) constrained)
+        ((onceo (force-ans constrained)) a)))))
 
 (defn reify-constraints [v r]
   (fn [^Substitutions a]
