@@ -1781,8 +1781,6 @@
       s)))
 
 (deftype Constraint [proc rator rands])
-(deftype FDConstraint [proc rator rands])
-(deftype NEQConstraint [proc rator rands])
 
 (defn any-var? [p]
   (some var? p))
@@ -1804,8 +1802,14 @@
 (defn ^Constraint makec [proc rator rands]
   (Constraint. proc rator rands))
 
+(defn domain-compare [a b]
+  (if (and (number? a) (number? b))
+    (compare a b)
+    1))
+
 (defmacro build-oc [op & args]
-  `(makec (~op ~@args) '~(symbol op) (vector ~@args)))
+  `(makec (~op ~@args) '~(symbol op)
+          (sorted-set-by domain-compare ~@args)))
 
 (defn update-var [x dom]
   (fn [^Substitutions a]
@@ -1875,7 +1879,7 @@
         (run-constraints xs (next c)))) ))
 
 (defn verify-all-bound [a constrained]
-  (when (seq constrainted)
+  (when (seq constrained)
     (let [f (first constrained)]
       (if (and (lvar? f) (= f (walk a f)))
         (throw (Exception. (str "Constrained variable " f " without domain")))
@@ -1887,7 +1891,8 @@
     (fn [^Substitutions a]
       (let [c (.c a)
             constrained (reduce (fn [r oc]
-                                  (rand oc))
+                                  (set/union r (into #{}
+                                                 (filter var? (rands oc)))))
                                 #{} c)]
         (verify-all-bound (.s a) constrained)
         ((onceo (force-ans constrained)) a)))))
