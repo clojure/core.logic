@@ -1802,8 +1802,9 @@
 ;; TODO: BigRangeFD ?
 ;; perhaps used sorted sets only for range < 100 elements?
 
-(defn ^RangeFD rangefd [lb ub]
-  (RangeFD. lb ub))
+(defn ^RangeFD rangefd
+  ([ub] (RangeFD. 0 ub))
+  ([lb ub] (RangeFD. lb ub)))
 
 (extend-type clojure.lang.PersistentTreeSet
   IFiniteDomain
@@ -1813,9 +1814,35 @@
     (first (rseq this)))
   (member? [this v]
     (contains? this v))
-  (expand [this] this)
-  (intersection [this that]
-    (set/intersection this that)))
+  (disjoint? [this that]
+    (empty? (set/intersection this (expand that))))
+  (drop-before [this n]
+    (apply sorted-set (drop-while #(< % n)) this))
+  (keep-before [this n]
+    (apply sorted-set (take-while #(< % n)) this))
+  (expand [this] this))
+
+(declare update-var)
+
+(defn process [v dom]
+  (fn [^Substitutions a]
+    (cond
+     (var? v) ((update-var v dom) a)
+     (member? dom v) a)))
+
+(declare map-sum)
+(declare domain?)
+
+(defn force-ans [x]
+  (fn [a]
+    (let [x (walk a x)]
+      ((cond
+        (domain? x) (map-sum (fn [v] (updateg x v)))
+        (seq? x) (fresh []
+                   (force-ans (first x))
+                   (force-ans (rest x)))
+        :else identity)
+       a))))
 
 (deftype FDConstraint [proc rator rands])
 (deftype NEQConstraint [proc rator rands])
