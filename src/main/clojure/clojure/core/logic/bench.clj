@@ -66,13 +66,12 @@
 
 (defn nexto [x y l]
   (conde
-    ((righto x y l))
-    ((righto y x l))))
+    [(righto x y l)]
+    [(righto y x l)]))
 
 (defn zebrao [hs]
   (all
-   (== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)                         
-   (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])                         
+   (== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)                          (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])                         
    (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)       
    (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)         
    (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)                    
@@ -230,7 +229,7 @@
 (defne partitiono [a b c d]
   ([[?x . ?l] _ [?x . ?l1] _]
      (conda
-      ((project [?x b]
-         (== (<= ?x b) true))
-       (partition ?l b ?l1 d))
-      (partition ?l b c d))))
+       ((project [?x b]
+          (== (<= ?x b) true))
+        (partition ?l b ?l1 d))
+       (partition ?l b c d))))

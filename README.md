@@ -89,8 +89,8 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
 
 (defn typedo [c x t]
   (conda
-    ((lvaro x) (findo x c t))
-    ((matche [c x t]
+    [(lvaro x) (findo x c t)]
+    [(matche [c x t]
        ([_ [[?x] :>> ?a] [?s :> ?t]]
           (fresh [l]
             (conso [?x :- ?s] c l)
@@ -98,7 +98,7 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
        ([_ [:apply ?a ?b] _]
           (fresh [s]
             (typedo c ?a [s :> t])
-            (typedo c ?b s)))))))
+            (typedo c ?b s))))]))
 
 (comment
   ;; ([_.0 :> _.1])
@@ -147,10 +147,10 @@ core.logic as of version 0.5.4 supports tabling. Certain kinds of logic programs
 (def patho
   (tabled [x y]
     (conde
-     ((arco x y))
-     ((fresh [z]
+     [(arco x y)]
+     [(fresh [z]
         (arco x z)
-        (patho z y))))))
+        (patho z y))])))
 
 ;; (:b :a :d)
 (run* [q] (patho :a q))
