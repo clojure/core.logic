@@ -1,6 +1,6 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
-  (:use [clojure.core.logic] :reload)
+  (:use [clojure.core.logic :exclude [is]] :reload)
   (:use clojure.test))
 
 ;; =============================================================================
