@@ -5,6 +5,7 @@
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *occurs-check* true)
+(def ^{:dynamic true} *locals*)
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -1353,13 +1354,15 @@
   "Define a goal fn. Supports pattern matching. All
    patterns will be tried. See conde."
   [& rest]
-  (apply defnm `conde rest))
+  (binding [*locals* (dissoc &env '_)]
+    (apply defnm `conde rest)))
 
 (defmacro matche
   "Pattern matching macro. All patterns will be tried.
   See conde."
   [xs & cs]
-  (handle-clauses `conde xs cs))
+  (binding [*locals* (dissoc &env '_)]
+    (handle-clauses `conde xs cs)))
 
 ;; -----------------------------------------------------------------------------
 ;; defnu, defna, matcha, matchu
@@ -1370,22 +1373,26 @@
 (defmacro defna
   "Define a soft cut goal. See conda."
   [& rest]
-  (apply defnm `conda rest))
+  (binding [*locals* (dissoc &env '_)]
+    (apply defnm `conda rest)))
 
 (defmacro defnu
   "Define a committed choice goal. See condu."
   [& rest]
-  (apply defnm `condu rest))
+  (binding [*locals* (dissoc &env '_)]
+    (apply defnm `condu rest)))
 
 (defmacro matcha
   "Define a soft cut pattern match. See conda."
   [xs & cs]
-  (handle-clauses `conda xs cs))
+  (binding [*locals* (dissoc &env '_)]
+    (handle-clauses `conda xs cs)))
 
 (defmacro matchu
   "Define a committed choice goal. See condu."
   [xs & cs]
-  (handle-clauses `condu xs cs))
+  (binding [*locals* (dissoc &env '_)]
+    (handle-clauses `condu xs cs)))
 
 ;; ==============================================================================
 ;; More convenient goals
