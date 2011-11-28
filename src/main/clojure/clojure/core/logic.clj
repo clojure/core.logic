@@ -1772,12 +1772,6 @@
   (keep-before [this n])
   (expand [this]))
 
-;; these operators can't really be on the domains
-;; we don't know what they are, if something doesn't
-;; have a domain, if the user hasn't specified a domain
-;; we could default to tree constraint, but can they replace it?
-;; worry about that later
-
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
 
@@ -1862,6 +1856,12 @@
         :else identity)
        a))))
 
+(defn composeg [g0 g1]
+  (fn [a]
+    (let [a (g0 a)]
+      (and a
+           (g1 a)))))
+
 (defn rem-run [oc]
   (fn [^Substitutions a]
     (let [c (.c a)]
@@ -1869,12 +1869,6 @@
         (let [ocp (dissoc oc c)]
           ((proc c) (make-s (.s a) (.l a) ocp)))
         a))))
-
-(defn composeg [g0 g1]
-  (fn [a]
-    (let [a (g0 a)]
-      (and a
-           (g1 a)))))
 
 (defn run-constraints [xs c]
   (letfn [(any-relevant-var? [t xs]
