@@ -1843,10 +1843,8 @@
     (if (empty? ls)
       (fn [a] nil)
       (conde
-        ((f (first ls)))
-        ((loop (rest ls)))))))
-
-
+        [(f (first ls))]
+        [(loop (rest ls))]))))
 
 (defn updateg [u v]
   (fn [a]
@@ -2213,3 +2211,13 @@
         (when (not (empty? p))
           ((normalize-store p) a)))
       a)))
+
+(defn all-diffo [l]
+  (conde
+    [(== l ())]
+    [(fresh (a) (== l [a]))]
+    [(fresh (a ad dd)
+      (== l (llist a ad dd))
+      (!=c a ad)
+      (all-diffo (llist a dd))
+      (all-diffo (llist ad dd)))]))
