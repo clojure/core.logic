@@ -2185,8 +2185,8 @@
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-(defn subsumes? [s u v]
-  (when-let [sp (unify s u v)]
+(defn subsumes? [s p pp]
+  (when-let [sp (unify s p pp)]
     (identical? s sp)))
 
 (declare !=neq-c)
@@ -2200,15 +2200,15 @@
             (if (= (rator oc) '!=new-c)
               (let [pp (oc->prefix oc)]
                 (cond
-                 (subsumes? pp p) a
-                 (subsumes? p pp) (recur (rest c) cp)
+                 (subsumes? a pp p) a
+                 (subsumes? a p pp) (recur (rest c) cp)
                  :else (recur (rest c) (cons oc cp))))
               (recur (rest c) (cons oc cp))))))))
 
 (defn !=neq-c [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
-      (let [p (prefix ap)]
+      (let [p (prefix a ap)]
         (when (not (empty? p))
           ((normalize-store p) a)))
       a)))
