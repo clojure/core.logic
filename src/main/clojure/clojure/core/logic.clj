@@ -2194,16 +2194,17 @@
 (defn normalize-store [p]
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
-      (if (empty? c) (let [cp (ext-c (build-oc !=neq-c p) cp)]
-                       (make-s (.s a) (.l a) cp))
-          (let [oc (first c)]
-            (if (= (rator oc) '!=new-c)
-              (let [pp (oc->prefix oc)]
-                (cond
-                 (subsumes? a pp p) a
-                 (subsumes? a p pp) (recur (rest c) cp)
-                 :else (recur (rest c) (cons oc cp))))
-              (recur (rest c) (cons oc cp))))))))
+      (if (empty? c)
+        (let [cp (ext-c (build-oc !=neq-c p) cp)]
+          (make-s (.s a) (.l a) cp))
+        (let [oc (first c)]
+          (if (= (rator oc) '!=new-c)
+            (let [pp (oc->prefix oc)]
+              (cond
+               (subsumes? a pp p) a
+               (subsumes? a p pp) (recur (rest c) cp)
+               :else (recur (rest c) (cons oc cp))))
+            (recur (rest c) (cons oc cp))))))))
 
 (defn !=neq-c [u v]
   (fn [a]
