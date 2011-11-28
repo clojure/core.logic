@@ -34,10 +34,10 @@
 
 (defne nrevo [l o]
   ([() ()])
-  ([[?a . ?d] _]
+  ([[a . d] _]
      (fresh [r]
-       (nrevo ?d r)
-       (appendo r [?a] o))))
+       (nrevo d r)
+       (appendo r [a] o))))
 
 (comment
   ;; we can run backwards, unlike Prolog
@@ -61,8 +61,8 @@
 ;; =============================================================================
 
 (defne righto [x y l]
-  ([_ _ [x y . ?r]])
-  ([_ _ [_ . ?r]] (righto x y ?r)))
+  ([_ _ [x y . r]])
+  ([_ _ [_ . r]] (righto x y r)))
 
 (defn nexto [x y l]
   (conde
@@ -110,19 +110,19 @@
 
 (defne nqueenso [l]
   ([()])
-  ([[[?x ?y] . ?others]]
-     (nqueenso ?others)
-     (membero ?y [1 2 3 4 5 6 7 8])
-     (noattacko [?x ?y] ?others)))
+  ([[[x y] . others]]
+     (nqueenso others)
+     (membero y [1 2 3 4 5 6 7 8])
+     (noattacko [x y] others)))
 
 (defne noattacko [q others]
   ([_ ()])
-  ([[?x ?y] [[?x1 ?y1] . ?others]]
-     (!= ?y ?y1)
-     (project [?y ?y1 ?x ?x1]
-       (!= (- ?y1 ?y) (- ?x1 ?x))
-       (!= (- ?y1 ?y) (- ?x ?x1)))
-     (noattacko [?x ?y] ?others)))
+  ([[x y] [[x1 y1] . others]]
+     (!= y y1)
+     (project [y y1 x x1]
+       (!= (- y1 y) (- x1 x))
+       (!= (- y1 y) (- x x1)))
+     (noattacko [x y] others)))
 
 (defn solve-nqueens []
   (run* [q]
@@ -167,7 +167,7 @@
 
 (defne takeouto [x l y]
   ([_ [x . y] _])
-  ([_ [?h . ?t] [?h . ?r]] (takeouto x ?t ?r)))
+  ([_ [h . t] [h . r]] (takeouto x t r)))
  
 (defn digito [x l y]
   (takeouto x l y))
@@ -178,7 +178,7 @@
    (a/> x 0)))
 
 (defne do-send-moolao [q l ll]
-  ([[?send ?more ?money] _ _]
+  ([[send more money] _ _]
      (fresh [s e n d m o r y
              l1 l2 l3 l4 l5 l6 l7 l8 l9]
        (first-digito s l l1)
@@ -190,11 +190,11 @@
        (digito r l6 l7)
        (digito y l7 l8)
        (project [s e n d m o r y]
-         (== ?send (+ (* s 1000) (* e 100) (* n 10) d))
-         (== ?more (+ (* m 1000) (* o 100) (* r 10) e))
-         (== ?money (+ (* m 10000) (* o 1000) (* n 100) (* e 10) y))
-         (project [?send ?more]
-           (== ?money (+ ?send ?more)))))))
+         (== send (+ (* s 1000) (* e 100) (* n 10) d))
+         (== more (+ (* m 1000) (* o 100) (* r 10) e))
+         (== money (+ (* m 10000) (* o 1000) (* n 100) (* e 10) y))
+         (project [send more]
+           (== money (+ send more)))))))
 
 (defn send-money-quicklyo [send more money]
   (fresh [l]
@@ -220,16 +220,16 @@
 
 (defne qsorto [l r r0]
   ([[] _ r])
-  ([[?x . ?lr] _ _]
+  ([[x . lr] _ _]
      (fresh [l1 l2 r1]
-       (partitiono ?lr ?x l1 l2)
+       (partitiono lr x l1 l2)
        (qsorto l2 r1 r0)
-       (qsorto l1 r (lcons ?x r1)))))
+       (qsorto l1 r (lcons x r1)))))
 
 (defne partitiono [a b c d]
-  ([[?x . ?l] _ [?x . ?l1] _]
+  ([[x . l] _ [x . l1] _]
      (conda
-       ((project [?x b]
-          (== (<= ?x b) true))
-        (partition ?l b ?l1 d))
-       (partition ?l b c d))))
+       ((project [x b]
+          (== (<= x b) true))
+        (partition l b l1 d))
+       (partition l b c d))))
