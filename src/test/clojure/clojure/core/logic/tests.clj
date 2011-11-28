@@ -1173,12 +1173,13 @@
 (defne ^:tabled dummy 
   "Docstring"
   [x l]
-  ([_ [x . ?tail]])
-  ([_ [?head . ?tail]]
-     (membero x ?tail)))
+  ([_ [x . tail]])
+  ([_ [head . tail]]
+     (membero x tail)))
 
 (deftest test-metadata-defne
   (is (= (-> #'dummy meta :tabled)
          true))
   (is (= (-> #'dummy meta :doc)
          "Docstring")))
+

@@ -5,6 +5,7 @@
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *occurs-check* true)
+(def ^{:dynamic true} *locals*)
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -1178,7 +1179,9 @@
    :else p))
 
 (defn- lvar-sym? [s]
-  (= (first (str s)) \?))
+  (and (symbol? s)
+       (not= s '.)
+       (not (contains? *locals* s))))
 
 (defn- extract-vars
   ([p]
@@ -1239,7 +1242,7 @@
 
 (defn- handle-clauses [t as cs]
   `(~t
-    ~@(map (handle-clause as) cs)))
+    ~@(doall (map (handle-clause as) cs))))
 
 ;; name-with-attributes by Konrad Hinsen, from clojure.contrib.def
 (defn- name-with-attributes
@@ -1271,9 +1274,10 @@
 
 (defn- defnm [t n & rest]
   (let [[n [as & cs]] (name-with-attributes n rest)]
-    (if-let [tabled? (-> n meta :tabled)]
-      `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
-      `(defn ~n [~@as] ~(handle-clauses t as cs)))))
+    (binding [*locals* (disj (set as) '_)]
+     (if-let [tabled? (-> n meta :tabled)]
+       `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
+       `(defn ~n [~@as] ~(handle-clauses t as cs))))))
 
 ;; =============================================================================
 ;; Useful goals
@@ -1319,7 +1323,8 @@
   "Pattern matching macro. All patterns will be tried.
   See conde."
   [xs & cs]
-  (handle-clauses `conde xs cs))
+  (binding [*locals* (disj (set xs) '_)]
+    (handle-clauses `conde xs cs)))
 
 ;; -----------------------------------------------------------------------------
 ;; defnu, defna, matcha, matchu
@@ -1340,12 +1345,14 @@
 (defmacro matcha
   "Define a soft cut pattern match. See conda."
   [xs & cs]
-  (handle-clauses `conda xs cs))
+  (binding [*locals* (disj (set xs) '_)]
+    (handle-clauses `conda xs cs)))
 
 (defmacro matchu
   "Define a committed choice goal. See condu."
   [xs & cs]
-  (handle-clauses `condu xs cs))
+  (binding [*locals* (disj (set xs) '_)]
+    (handle-clauses `condu xs cs)))
 
 ;; =============================================================================
 ;; More convenient goals
@@ -1353,16 +1360,16 @@
 (defne membero 
   "A relation where l is a collection, such that l contains x"
   [x l]
-  ([_ [x . ?tail]])
-  ([_ [?head . ?tail]]
-     (membero x ?tail)))
+  ([_ [x . tail]])
+  ([_ [head . tail]]
+     (membero x tail)))
 
 (defne appendo 
   "A relation where x, y, and z are proper collections, 
   such that z is x appended to y"
   [x y z]
   ([() _ y])
-  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
+  ([[a . d] _ [a . r]] (appendo d y r)))
 
 ;; =============================================================================
 ;; Rel

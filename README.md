@@ -34,15 +34,15 @@ A classic AI program:
   ([[:middle :onbox :middle :hasnot]
     :grasp
     [:middle :onbox :middle :has]])
-  ([[?pos :onfloor ?pos ?has]
+  ([[pos :onfloor pos has]
     :climb
-    [?pos :onbox ?pos ?has]])
-  ([[?pos1 :onfloor ?pos1 ?has]
+    [pos :onbox pos has]])
+  ([[pos1 :onfloor pos1 has]
     :push
-    [?pos2 :onfloor ?pos2 ?has]])
-  ([[?pos1 :onfloor ?box ?has]
+    [pos2 :onfloor pos2 has]])
+  ([[pos1 :onfloor box has]
     :walk
-    [?pos2 :onfloor ?box ?has]]))
+    [pos2 :onfloor box has]]))
 
 (defne cangeto [state out]
   ([[_ _ _ :has] true])
@@ -66,7 +66,7 @@ The core.logic version is almost equally succinct:
 ```clj
 (defne appendo [x y z]
   ([() _ y])
-  ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
+  ([[a . d] _ [a . r]] (appendo d y r)))
 ```
 
 Here's a simple type inferencer for the simply typed lambda calculus based on a version originally written in Prolog:
@@ -76,22 +76,22 @@ Here's a simple type inferencer for the simply typed lambda calculus based on a 
 (use 'clojure.core.logic)
 
 (defna findo [x l o]
-  ([_ [[?y :- o] . _] _] 
-    (project [x ?y] (== (= x ?y) true)))
-  ([_ [_ . ?c] _] (findo x ?c o)))
+  ([_ [[y :- o] . _] _] 
+    (project [x y] (== (= x y) true)))
+  ([_ [_ . c] _] (findo x c o)))
 
 (defn typedo [c x t]
   (conda
     [(lvaro x) (findo x c t)]
     [(matche [c x t]
-       ([_ [[?x] :>> ?a] [?s :> ?t]]
+       ([_ [[y] :>> a] [s :> t]]
           (fresh [l]
-            (conso [?x :- ?s] c l)
-            (typedo l ?a ?t)))
-       ([_ [:apply ?a ?b] _]
+            (conso [y :- s] c l)
+            (typedo l a t)))
+       ([_ [:apply a b] _]
           (fresh [s]
-            (typedo c ?a [s :> t])
-            (typedo c ?b s))))]))
+            (typedo c a [s :> t])
+            (typedo c b s))))]))
 
 (comment
   ;; ([_.0 :> _.1])
@@ -204,13 +204,13 @@ core.logic has Prolog-type DCG syntax for parsing:
   ([[:d 'a]] '[a]))
 
 (def-->e noun-phrase [n]
-  ([[:np ?d ?n]] (det ?d) (noun ?n)))
+  ([[:np d n]] (det d) (noun n)))
 
 (def-->e verb-phrase [n]
-  ([[:vp ?v ?np]] (verb ?v) (noun-phrase ?np)))
+  ([[:vp v np]] (verb v) (noun-phrase np)))
 
 (def-->e sentence [s]
-  ([[:s ?np ?vp]] (noun-phrase ?np) (verb-phrase ?vp)))
+  ([[:s np vp]] (noun-phrase np) (verb-phrase vp)))
 
 (run* [parse-tree]
   (sentence parse-tree '[the bat eats a cat] []))
