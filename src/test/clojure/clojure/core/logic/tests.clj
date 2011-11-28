@@ -15,19 +15,19 @@
 (deftest unify-nil-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x nil)]
-   (is (= (unify empty-s nil x) os))))
+    (is (= (unify empty-s nil x) os))))
 
 (deftest unify-nil-lseq-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s nil (lcons 1 x)) false))))
+    (is (= (unify empty-s nil (lcons 1 x)) false))))
 
 (deftest unify-nil-map-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s nil {}) false))))
+    (is (= (unify empty-s nil {}) false))))
 
 (deftest unify-nil-set-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s nil #{}) false))))
+    (is (= (unify empty-s nil #{}) false))))
 
 ;; -----------------------------------------------------------------------------
 ;; object
@@ -69,7 +69,7 @@
 
 (deftest unify-object-lcons-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s 1 (lcons 1 'x)) false))))
+    (is (= (unify empty-s 1 (lcons 1 'x)) false))))
 
 (deftest unify-object-seq-1
   (is (= (unify empty-s 1 '()) false)))
@@ -173,8 +173,8 @@
         lc1 (lcons 1 (lcons 2 x))
         lc2 (lcons 1 (lcons z y))
         os (-> empty-s
-            (ext-no-check x y)
-            (ext-no-check z 2))]
+               (ext-no-check x y)
+               (ext-no-check z 2))]
     (is (= (unify empty-s lc1 lc2) os))))
 
 (deftest unify-lcons-lcons-3
@@ -311,12 +311,12 @@
 (deftest unify-seq-seq-13
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
-   (is (= (unify empty-s [[x 2]] [[1 2]]) os))))
+    (is (= (unify empty-s [[x 2]] [[1 2]]) os))))
 
 (deftest unify-seq-seq-14
   (let [x (lvar 'x)
         os (ext-no-check empty-s x [1 2])]
-   (is (= (unify empty-s [x] [[1 2]]) os))))
+    (is (= (unify empty-s [x] [[1 2]]) os))))
 
 (deftest unify-seq-seq-15
   (let [x (lvar 'x) y (lvar 'y)
@@ -324,7 +324,7 @@
         os (-> empty-s
                (ext-no-check x 'b)
                (ext-no-check y 'a))]
-   (is (= (unify empty-s ['a x] [y 'b]) os))))
+    (is (= (unify empty-s ['a x] [y 'b]) os))))
 
 (deftest unify-seq-map-1
   (is (= (unify empty-s [] {}) false)))
@@ -351,7 +351,7 @@
 
 (deftest unify-map-lcons-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s {} (lcons 1 x)) false))))
+    (is (= (unify empty-s {} (lcons 1 x)) false))))
 
 (deftest unify-map-seq-1
   (is (= (unify empty-s {} '()) false)))
@@ -370,13 +370,13 @@
         m1 {1 2 3 4}
         m2 {1 2 3 x}
         os (ext-no-check empty-s x 4)]
-   (is (= (unify empty-s m1 m2) os))))
+    (is (= (unify empty-s m1 m2) os))))
 
 (deftest unify-map-map-5
   (let [x (lvar 'x)
         m1 {1 2 3 4}
         m2 {1 4 3 x}]
-   (is (= (unify empty-s m1 m2) false))))
+    (is (= (unify empty-s m1 m2) false))))
 
 (deftest unify-map-set-1
   (is (= (unify empty-s {} #{}) false)))
@@ -394,7 +394,7 @@
 
 (deftest unify-set-lcons-1
   (let [x (lvar 'x)]
-   (is (= (unify empty-s #{} (lcons 1 x)) false))))
+    (is (= (unify empty-s #{} (lcons 1 x)) false))))
 
 (deftest unify-set-seq-1
   (is (= (unify empty-s #{} '()) false)))
@@ -411,7 +411,7 @@
 (deftest unify-set-set-3
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
-   (is (= (unify empty-s #{x} #{1}) os))))
+    (is (= (unify empty-s #{x} #{1}) os))))
 
 (deftest unify-set-set-4
   (let [x (lvar 'x)
@@ -419,7 +419,7 @@
         os (-> empty-s
                (ext-no-check x 2)
                (ext-no-check y 1))]
-   (is (= (unify empty-s #{1 x} #{2 y}) os))))
+    (is (= (unify empty-s #{1 x} #{2 y}) os))))
 
 (deftest unify-set-set-5
   (let [x (lvar 'x)
@@ -427,7 +427,7 @@
         os (-> empty-s
                (ext-no-check x 2)
                (ext-no-check y 1))]
-   (is (= (unify empty-s #{x 1} #{2 y}) os))))
+    (is (= (unify empty-s #{x 1} #{2 y}) os))))
 
 (deftest unify-set-set-6
   (let [a (lvar 'a)
@@ -485,20 +485,20 @@
 
 (deftest test-basic-unify
   (is (= (run* [q]
-               (== true q))
+           (== true q))
          '(true))))
 
 (deftest test-basic-unify-2
   (is (= (run* [q]
-               (fresh [x y]
-                      (== [x y] [1 5])
-                      (== [x y] q)))
+           (fresh [x y]
+             (== [x y] [1 5])
+             (== [x y] q)))
          [[1 5]])))
 
 (deftest test-basic-unify-3
   (is (=  (run* [q]
-                (fresh [x y]
-                       (== [x y] q)))
+            (fresh [x y]
+              (== [x y] q)))
           '[[_.0 _.1]])))
 
 ;; =============================================================================
@@ -506,8 +506,8 @@
 
 (deftest test-basic-failure
   (is (= (run* [q]
-               fail
-               (== true q))
+           fail
+           (== true q))
          [])))
 
 
@@ -524,67 +524,67 @@
 
 (defn listo [l]
   (conde
-    ((emptyo l) s#)
-    ((pairo l)
+    [(emptyo l) s#]
+    [(pairo l)
      (fresh [d]
        (resto l d)
-       (listo d)))))
+       (listo d))]))
 
 (defn flatteno [s out]
   (conde
-    ((emptyo s) (== '() out))
-    ((pairo s)
+    [(emptyo s) (== '() out)]
+    [(pairo s)
      (fresh [a d res-a res-d]
        (conso a d s)
        (flatteno a res-a)
        (flatteno d res-d)
-       (appendo res-a res-d out)))
-    ((conso s '() out))))
+       (appendo res-a res-d out))]
+    [(conso s '() out)]))
 
 (defn rembero [x l out]
   (conde
-    ((== '() l) (== '() out))
-    ((fresh [a d]
+    [(== '() l) (== '() out)]
+    [(fresh [a d]
        (conso a d l)
        (== x a)
-       (== d out)))
-    ((fresh [a d res]
+       (== d out))]
+    [(fresh [a d res]
        (conso a d l)
        (conso a res out)
-       (rembero x d res)))))
+       (rembero x d res))]))
 
 ;; =============================================================================
 ;; conde
 
 (deftest test-basic-conde
   (is (=  (run* [x]
-                (conde
-                 ((== x 'olive) succeed)
-                 (succeed succeed)
-                 ((== x 'oil) succeed)))
+            (conde
+              [(== x 'olive) succeed]
+              [succeed succeed]
+              [(== x 'oil) succeed]))
           '[olive _.0 oil])))
 
 (deftest test-basic-conde-2
   (is (= (run* [r]
-               (fresh [x y]
-                      (conde
-                       ((== 'split x) (== 'pea y))
-                       ((== 'navy x) (== 'bean y)))
-                      (== (cons x (cons y ())) r)))
+           (fresh [x y]
+             (conde
+               [(== 'split x) (== 'pea y)]
+               [(== 'navy x) (== 'bean y)])
+             (== (cons x (cons y ())) r)))
          '[(split pea) (navy bean)])))
 
 (defn teacupo [x]
   (conde
-   ((== 'tea x) s#)
-   ((== 'cup x) s#)))
+    [(== 'tea x) s#]
+    [(== 'cup x) s#]))
 
 (deftest test-basic-conde-e-3
   (is (= (run* [r]
-               (fresh [x y]
-                      (conde
-                       ((teacupo x) (== true y) s#)
-                       ((== false x) (== true y)))
-                      (== (cons x (cons y ())) r)))
+           (fresh [x y]
+             (conde
+               [(teacupo x) (== true y) s#]
+               [(== false x) (== true y)])
+             (== (cons x (cons y ())) r)))
          '((false true) (tea true) (cup true)))))
 
 ;; =============================================================================
@@ -592,42 +592,42 @@
 
 (deftest test-conso
   (is (= (run* [q]
-               (fresh [a d]
-                      (conso a d '())
-                      (== (cons a d) q))
-               []))))
+           (fresh [a d]
+             (conso a d '())
+             (== (cons a d) q))
+           []))))
 
 (deftest test-conso-1
   (let [a (lvar 'a)
         d (lvar 'd)]
     (is (= (run* [q]
-                 (conso a d q))
+             (conso a d q))
            [(lcons a d)]))))
 
 (deftest test-conso-2
   (is (= (run* [q]
-               (== [q] nil))
+           (== [q] nil))
          [])))
 
 (deftest test-conso-3
   (is (=
        (run* [q]
-             (conso 'a nil q))
+         (conso 'a nil q))
        '[(a)])))
 
 (deftest test-conso-4
   (is (= (run* [q]
-               (conso 'a '(d) q))
+           (conso 'a '(d) q))
          '[(a d)])))
 
 (deftest test-conso-empty-list
   (is (= (run* [q]
-               (conso 'a q '(a)))
+           (conso 'a q '(a)))
          '[()])))
 
 (deftest test-conso-5
   (is (= (run* [q]
-               (conso q '(b c) '(a b c)))
+           (conso q '(b c) '(a b c)))
          '[a])))
 
 ;; =============================================================================
@@ -635,7 +635,7 @@
 
 (deftest test-firsto
   (is (= (run* [q]
-               (firsto q '(1 2)))
+           (firsto q '(1 2)))
          (list (lcons '(1 2) (lvar 'x))))))
 
 ;; =============================================================================
@@ -643,22 +643,22 @@
 
 (deftest test-resto
   (is (= (run* [q]
-               (resto q '(1 2)))
+           (resto q '(1 2)))
          '[(_.0 1 2)])))
 
 (deftest test-resto-2
   (is (= (run* [q]
-               (resto q [1 2]))
+           (resto q [1 2]))
          '[(_.0 1 2)])))
 
 (deftest test-resto-3
   (is (= (run* [q]
-               (resto [1 2] q))
+           (resto [1 2] q))
          '[(2)])))
 
 (deftest test-resto-4
   (is (= (run* [q]
-               (resto [1 2 3 4 5 6 7 8] q))
+           (resto [1 2 3 4 5 6 7 8] q))
          '[(2 3 4 5 6 7 8)])))
 
 ;; =============================================================================
@@ -666,7 +666,7 @@
 
 (deftest test-flatteno
   (is (= (run* [x]
-               (flatteno '[[a b] c] x))
+           (flatteno '[[a b] c] x))
          '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
            (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
            (a b () (c)) (a b c) (a b c ()) (a b () c)
@@ -691,13 +691,13 @@
             (membero [(lvar) 'bar] q)))
          '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
              [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
- 
+
 ;; -----------------------------------------------------------------------------
 ;; rembero
 
 (deftest rembero-1
   (is (= (run 1 [q]
-              (rembero 'b '(a b c b d) q))
+           (rembero 'b '(a b c b d) q))
          '((a c b d)))))
 
 ;; -----------------------------------------------------------------------------
@@ -705,50 +705,50 @@
 
 (defn digit-1 [x]
   (conde
-   ((== 0 x))))
+    [(== 0 x)]))
 
 (defn digit-4 [x]
   (conde
-   ((== 0 x))
-   ((== 1 x))
-   ((== 2 x))
-   ((== 3 x))))
+    [(== 0 x)]
+    [(== 1 x)]
+    [(== 2 x)]
+    [(== 3 x)]))
 
 (deftest test-conde-1-clause
   (is (= (run* [q]
-               (fresh [x y]
-                      (digit-1 x)
-                      (digit-1 y)
-                      (== q [x y])))
+           (fresh [x y]
+             (digit-1 x)
+             (digit-1 y)
+             (== q [x y])))
          '([0 0]))))
 
 (deftest test-conde-4-clauses
   (is (= (run* [q]
-               (fresh [x y]
-                      (digit-4 x)
-                      (digit-4 y)
-                      (== q [x y])))
+           (fresh [x y]
+             (digit-4 x)
+             (digit-4 y)
+             (== q [x y])))
          '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
-           [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
+             [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
 
 ;; -----------------------------------------------------------------------------
 ;; anyo
 
 (defn anyo [q]
   (conde
-   (q s#)
-   ((anyo q))))
+    [q s#]
+    [(anyo q)]))
 
 (deftest test-anyo-1
   (is (= (run 1 [q]
-              (anyo s#)
-              (== true q))
+           (anyo s#)
+           (== true q))
          (list true))))
 
 (deftest test-anyo-2
   (is (= (run 5 [q]
-              (anyo s#)
-              (== true q))
+           (anyo s#)
+           (== true q))
          (list true true true true true))))
 
 ;; -----------------------------------------------------------------------------
@@ -758,25 +758,25 @@
 
 (deftest test-divergence-1
   (is (= (run 1 [q]
-            (conde
-             (f1)
-             ((== false false))))
+           (conde
+             [f1]
+             [(== false false)]))
          '(_.0))))
 
 (deftest test-divergence-2
   (is (= (run 1 [q]
-            (conde
-             (f1 (== false false))
-             ((== false false))))
+           (conde
+             [f1 (== false false)]
+             [(== false false)]))
          '(_.0))))
 
 (def f2
-     (fresh []
-            (conde
-             (f2 (conde
-                  (f2) 
-                  ((== false false))))
-             ((== false false)))))
+  (fresh []
+    (conde
+      [f2 (conde
+            [f2] 
+            [(== false false)])]
+      [(== false false)])))
 
 (deftest test-divergence-3
   (is (= (run 5 [q] f2)
@@ -787,79 +787,79 @@
 
 (deftest test-conda-1
   (is (= (run* [x]
-               (conda
-                ((== 'olive x) s#)
-                ((== 'oil x) s#)
-                (u#)))
+           (conda
+             [(== 'olive x) s#]
+             [(== 'oil x) s#]
+             [u#]))
          '(olive))))
 
 (deftest test-conda-2
   (is (= (run* [x]
-               (conda
-                ((== 'virgin x) u#)
-                ((== 'olive x) s#)
-                ((== 'oil x) s#)
-                (u#)))
+           (conda
+             [(== 'virgin x) u#]
+             [(== 'olive x) s#]
+             [(== 'oil x) s#]
+             [u#]))
          '())))
 
 (deftest test-conda-3
   (is (= (run* [x]
-               (fresh (x y)
-                      (== 'split x)
-                      (== 'pea y)
-                      (conda
-                       ((== 'split x) (== x y))
-                       (s#)))
-               (== true x))
+           (fresh (x y)
+             (== 'split x)
+             (== 'pea y)
+             (conda
+               [(== 'split x) (== x y)]
+               [s#]))
+           (== true x))
          '())))
 
 (deftest test-conda-4
   (is (= (run* [x]
-               (fresh (x y)
-                      (== 'split x)
-                      (== 'pea y)
-                      (conda
-                       ((== x y) (== 'split x))
-                       (s#)))
-               (== true x))
+           (fresh (x y)
+             (== 'split x)
+             (== 'pea y)
+             (conda
+               [(== x y) (== 'split x)]
+               [s#]))
+           (== true x))
          '(true))))
 
 (defn not-pastao [x]
-    (conda
-     ((== 'pasta x) u#)
-     (s#)))
+  (conda
+    [(== 'pasta x) u#]
+    [s#]))
 
 (deftest test-conda-5
   (is (= (run* [x]
-               (conda
-                ((not-pastao x))
-                ((== 'spaghetti x))))
+           (conda
+             [(not-pastao x)]
+             [(== 'spaghetti x)]))
          '(spaghetti))))
 
 ;; -----------------------------------------------------------------------------
 ;; condu (committed-choice)
 
 (defn onceo [g]
-    (condu
-     (g s#)))
+  (condu
+    (g s#)))
 
 (deftest test-condu-1
   (is (= (run* [x]
-               (onceo (teacupo x)))
+           (onceo (teacupo x)))
          '(tea))))
 
 (deftest test-condu-2
   (is (= (run* [r]
-               (conde
-                ((teacupo r) s#)
-                ((== false r) s#)))
+           (conde
+             [(teacupo r) s#]
+             [(== false r) s#]))
          '(false tea cup))))
 
 (deftest test-condu-3
   (is (= (run* [r]
-               (conda
-                ((teacupo r) s#)
-                ((== false r) s#)))
+           (conda
+             [(teacupo r) s#]
+             [(== false r) s#]))
          '(tea cup))))
 
 ;; -----------------------------------------------------------------------------
@@ -984,7 +984,8 @@
               (== x z)
               (!= x y)
               (== q x)))
-          ()))))
+          ())))
+ )
 
 ;; -----------------------------------------------------------------------------
 ;; tabled
@@ -995,12 +996,12 @@
   ([:b :d]))
 
 (def patho
-     (tabled [x y]
-       (conde
-         ((arco x y))
-         ((fresh [z]
-            (arco x z)
-            (patho z y))))))
+  (tabled [x y]
+    (conde
+      [(arco x y)]
+      [(fresh [z]
+         (arco x z)
+         (patho z y))])))
 
 (deftest test-tabled-1
   (is (= (run* [q] (patho :a q))
@@ -1017,17 +1018,17 @@
   ([4 5]))
 
 (def patho-2
-     (tabled [x y]
-       (conde
-         ((arco-2 x y))
-         ((fresh [z]
-            (arco-2 x z)
-            (patho-2 z y))))))
+  (tabled [x y]
+    (conde
+      [(arco-2 x y)]
+      [(fresh [z]
+         (arco-2 x z)
+         (patho-2 z y))])))
 
 (deftest test-tabled-2
   (let [r (set (run* [q] (patho-2 1 q)))]
-   (is (and (= (count r) 4)
-            (= r #{2 3 4 5})))))
+    (is (and (= (count r) 4)
+             (= r #{2 3 4 5})))))
 
 ;; -----------------------------------------------------------------------------
 ;; rel
