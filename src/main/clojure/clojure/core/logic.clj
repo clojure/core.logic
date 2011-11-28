@@ -1738,15 +1738,29 @@
     ()
     (cons (first s) (prefix (rest s) <s))))
 
-(defprotocol IDomain (-idomain-marker [_])) ;; potential marker protocol - David
+(defprotocol IDomain
+  (-idomain-marker [_]))
+
+(defn domain? [x]
+  (satisfies? IDomain x))
 
 (defprotocol IConstraint
   (proc [this])
   (rator [this])
   (rands [this])
-  (process-prefix [this p])
-  (enforcec [this])
+  (process-prefix [this p]))
+
+(defprotocol IReifiableConstraint
   (reifyc [this v r]))
+
+(defn reifiable-c? [c]
+  (satisfies? IReifiableConstraint c))
+
+(defprotocol IEnforceableConstraint
+  (-ienforceable-constraint-marker [_]))
+
+(defn enforceable-c? [c]
+  (satisfies? IEnforceableConstraint c))
 
 (defprotocol IFiniteDomain
   (lb [this])
@@ -1757,6 +1771,12 @@
   (drop-before [this n])
   (keep-before [this n])
   (expand [this]))
+
+;; these operators can't really be on the domains
+;; we don't know what they are, if something doesn't
+;; have a domain, if the user hasn't specified a domain
+;; we could default to tree constraint, but can they replace it?
+;; worry about that later
 
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
@@ -1791,8 +1811,7 @@
   (fn [^Substitutions a]
     (make-s (.s a) (ext-c (.c a) oc))))
 
-(defn ^Constraint makec [proc rator rands]
-  (Constraint. proc rator rands))
+(defmulti ^Constraint makec (fn [dt & r] dt))
 
 (defn domain-compare [a b]
   (if (and (number? a) (number? b))
@@ -1800,7 +1819,7 @@
     1))
 
 (defmacro build-oc [op & args]
-  `(makec (~op ~@args) '~(symbol op)
+  `(makec ::fd (~op ~@args) '~(symbol op)
           (sorted-set-by domain-compare ~@args)))
 
 (defn update-var [x dom]
@@ -1827,8 +1846,7 @@
         ((f (first ls)))
         ((loop (rest ls)))))))
 
-(defn domain? [x]
-  (satisfies? IDomain x))
+
 
 (defn updateg [u v]
   (fn [a]
@@ -1886,19 +1904,22 @@
     (force-ans x)
     (fn [^Substitutions a]
       (let [c (.c a)
-            constrained (reduce (fn [r oc]
-                                  (set/union r (into #{}
-                                                 (filter var? (rands oc)))))
-                                #{} c)]
+            constrained (->> c
+                             (filter enforceable-c?)
+                             (reduce (fn [r oc]
+                                       (set/union r (into #{}
+                                                      (filter var? (rands oc)))))
+                                     #{}))]
         (verify-all-bound (.s a) constrained)
         ((onceo (force-ans constrained)) a)))))
 
 (defn reify-constraints [v r]
   (fn [^Substitutions a]
     (let [c (apply concat
-                   (map (fn [oc]
-                          ((reifyc oc v r) a))
-                        (.c a)))]
+                   (-> (.c a)
+                       (filter reifiable-c?)
+                       (map (fn [oc]
+                              ((reifyc oc v r) a)))))]
       (if (empty? c)
         (choice v empty-f)
         (choice `(~v :- ~@c) empty-f)))))
@@ -1920,8 +1941,6 @@
                      rhs (rhs p)
                      ug (updateg lhs rhs)]
                  (recur (rest apl) (conj gs ug))))) a))))))
-
-(declare reify-constraints)
 
 (defn reifyg [x]
   (fn [^Substitutions a]
@@ -1948,8 +1967,19 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(defmethod make-dom :fd
+(defmethod make-dom ::fd
   [_ ns] (apply sorted-set ns))
+
+(deftype FDConstraint [proc rator rands]
+  IEnforceableConstraint
+  IConstraint
+  (proc [_] proc)
+  (rator [_] rator)
+  (rands [_] rands))
+
+(defmethod makec ::fd
+  [proc rator rands]
+  (FDConstraint. proc rator rands))
 
 (defn walk-var [a [v b]]
   `(~b (walk ~a ~v)))
@@ -2128,6 +2158,17 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
+(deftype TreeConstraint [proc rator rands]
+  IReifiableConstraint
+  IConstraint
+  (proc [_] proc)
+  (rator [_] rator)
+  (rands [_] rands))
+
+(defmethod makec ::tree
+  [proc rator rands]
+  (TreeConstraint. proc rator rands))
+
 (defn recover-vars [p]
   (if (empty? p)
     #{}
@@ -2139,14 +2180,30 @@
         (conj r x v)
         (conj r x)))))
 
-;; oc->prefix, what does that do?
+(defn oc->prefix [oc]
+  (first (rands oc)))
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-(defn normalize-store [u v]
+(defn subsumes? [s u v]
+  (when-let [sp (unify s u v)]
+    (identical? s sp)))
+
+(declare !=neq-c)
+
+(defn normalize-store [p]
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
-      )))
+      (if (empty? c) (let [cp (ext-c (build-oc !=neq-c p) cp)]
+                       (make-s (.s a) (.l a) cp))
+          (let [oc (first c)]
+            (if (= (rator oc) '!=new-c)
+              (let [pp (oc->prefix oc)]
+                (cond
+                 (subsumes? pp p) a
+                 (subsumes? p pp) (recur (rest c) cp)
+                 :else (recur (rest c) (cons oc cp))))
+              (recur (rest c) (cons oc cp))))))))
 
 (defn !=neq-c [u v]
   (fn [a]
@@ -2155,7 +2212,3 @@
         (when (not (empty? p))
           ((normalize-store p) a)))
       a)))
-
-(defn subsumes? [s u v]
-  (when-let [sp (unify s u v)]
-    (identical? s sp)))
