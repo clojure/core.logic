@@ -214,6 +214,23 @@
   )
 
 ;; =============================================================================
+;; Hanoi
+
+(defne moveo [n x y z]
+  ([1 _ _ _]
+     (trace-lvars "Move top disk from " x)
+     (trace-lvars " to " y))
+  ([_ _ _ _]
+     (pred n #(> % 1))
+     (fresh [m _] (is m n dec)
+       (moveo m x z y) (moveo 1 x y _) (moveo m z y x))))
+
+(comment
+  (run* [q]
+    (moveo 3 :left :right :center))
+  )
+
+;; =============================================================================
 ;; Quick Sort
 
 (declare partitiono)

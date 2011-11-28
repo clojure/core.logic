@@ -1060,6 +1060,19 @@
          ((fresh []
             ~@goals) ~a)))))
 
+(defmacro pred
+  "Check a predicate against the value logic var. Non-relational."
+  [v f]
+  `(project [~v]
+     (== (~f ~v) true)))
+
+(defmacro is
+  "Set the value of a var to value of another var with the operation
+   applied. Non-relational."
+  [u v op]
+  `(project [~v]
+     (== ~u (~op ~v))))
+
 ;; =============================================================================
 ;; conda (soft-cut), condu (committed-choice)
 ;;
