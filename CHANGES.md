@@ -1,3 +1,10 @@
+From 0.6.5 to 0.6.6
+====
+
+Fixes
+---
+* fix lingering reference to old namespace in all macro
+
 From 0.6.4 to 0.6.5
 ====
 
