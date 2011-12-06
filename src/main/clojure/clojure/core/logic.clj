@@ -910,7 +910,7 @@
 
 (defmacro all
   "Like fresh but does does not create logic variables."
-  ([] `clojure.core.logic.minikanren/s#)
+  ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 ;; =============================================================================
