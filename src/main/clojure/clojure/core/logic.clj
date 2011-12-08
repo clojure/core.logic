@@ -48,8 +48,12 @@
 (defprotocol IMPlus
   (mplus [a f]))
 
-(defprotocol ITake
-  (take* [a]))
+(defprotocol IUpbind
+  (upbind [this g]
+    "Unfair bind which applies 'upstream', g must not diverge."))
+
+(defprotocol IStep
+  (step [this]))
 
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
@@ -120,6 +124,7 @@
 (declare lvar?)
 (declare pair)
 (declare lcons)
+(declare bind-goal)
 
 (deftype Substitutions [s l verify cs]
   Object
@@ -202,14 +207,18 @@
   (build [this u]
     (build-term u this))
 
+  IStep
+  (step [this]
+    (choice this nil))
   IBind
   (bind [this g]
-    (g this))
+    (bind-goal g this))
   IMPlus
-  (mplus [this f]
-    (choice this f))
-  ITake
-  (take* [this] this))
+  (mplus [this a]
+    (choice this a))
+  IUpbind 
+  (upbind [this g]
+    (g this)))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -231,6 +240,16 @@
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l)))
+
+(defn ^Substitutions merge-s [sa sb]
+  ;; TODO far from complete
+  (prn  'sa(.s sa))
+  (prn 'sb (.s sb))
+  (loop [s sa uvs (.s sb)]
+    (if-let [[[u v] & uvs] (and s (seq uvs))]
+      (recur (unify s u v) uvs)
+      (doto s
+        (-> .s prn)))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -753,27 +772,31 @@
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (fn [] (mplus* ~@e-rest)))))
-
-(defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
-
-(extend-type Object
-  ITake
-  (take* [this] this))
+     `(mplus ~e (mplus* ~@e-rest))))
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 
-(deftype Choice [a f]
+(deftype Choice [x a]
   IBind
   (bind [this g]
-    (mplus (g a) (-inc (bind f g))))
+    (mplus (bind x g) (bind a g)))
   IMPlus
-  (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f))))
-  ITake
-  (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+  (mplus [this b]
+    (Choice. x (mplus a b)))
+  IUpbind
+  (upbind [this g]
+    (mplus (upbind x g) (upbind a g))))
+
+(defn choice? [x] (instance? Choice x))
+
+(defn take* [a]
+  (lazy-seq
+    (loop [a a]
+      (when-let [^Choice a (step a)]
+        (if (choice? a)
+          (cons (.x a) (let [f (.a a)]
+                         (take* f)))
+          (recur a))))))
 
 (defn ^Choice choice [a f]
   (Choice. a f))
@@ -781,38 +804,68 @@
 ;; -----------------------------------------------------------------------------
 ;; MZero
 
-(extend-protocol IBind
-  nil
-  (bind [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (mplus [_ b] b))
-
-(extend-protocol ITake
-  nil
-  (take* [_] '()))
-
-;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type Object
+(extend-type nil
+  IStep
+  (step [_] nil)
+  IBind
+  (bind [_ g] nil)
   IMPlus
-  (mplus [this f]
-    (Choice. this f)))
+  (mplus [_ b] b)
+  IUpbind 
+  (upbind [_ g] nil))
+
 
 ;; -----------------------------------------------------------------------------
-;; Inc
+;; Incs
 
-(extend-type clojure.lang.Fn
+(deftype Disjunction [a b]
+  IStep
+  (step [this]
+    (mplus (step b) a))
+  IMPlus
+  (mplus [this c]
+    (Disjunction. (mplus b c) a))
   IBind
   (bind [this g]
-    (-inc (bind (this) g)))
+    (mplus (bind a g) (bind b g)))
+  IUpbind
+  (upbind [this g]
+    (mplus (upbind a g) (upbind b g))))
+
+(deftype Conjunction [a b]
+  IStep
+  (step [this]
+    (when-let [^Choice a (step a)]
+      (if (choice? a)
+        (mplus (let [s (.x a)]
+                 (upbind b #(merge-s % s))) (Conjunction. (.a a) b))
+        (Conjunction. b a))))
   IMPlus
-  (mplus [this f]
-    (-inc (mplus (f) this)))
-  ITake
-  (take* [this] (lazy-seq (take* (this)))))
+  (mplus [this c]
+    (Disjunction. this c))
+  IBind 
+  (bind [this g]
+    (Conjunction. (bind b g) a))
+  IUpbind
+  (upbind [this g]
+    (Conjunction. (upbind a g) (upbind b g))))
+
+(deftype BoundGoal [a g]
+  IStep
+  (step [this]
+    (g a))
+  IMPlus
+  (mplus [this b]
+    (Disjunction. this b))
+  IBind 
+  (bind [this f]
+    (Conjunction. this (bind a f)))
+  IUpbind
+  (upbind [this f]
+    (bind (upbind a f) g)))
+
+(defn bind-goal [g a]
+  (BoundGoal. a g))
 
 ;; =============================================================================
 ;; Syntax
@@ -850,8 +903,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (-inc
-        (mplus* ~@(bind-conde-clauses a clauses))))))
+       (mplus* ~@(bind-conde-clauses a clauses)))))
 
 (defn- lvar-bind [sym]
   ((juxt identity
@@ -865,16 +917,14 @@
   conjunction."
   [[& lvars] & goals]
   `(fn [a#]
-     (-inc
-      (let [~@(lvar-binds lvars)]
-        (bind* a# ~@goals)))))
+     (let [~@(lvar-binds lvars)]
+       (bind* a# ~@goals))))
 
 (defmacro solve [& [n [x] & goals]]
-  `(let [xs# (take* (fn []
-                      ((fresh [~x] ~@goals
-                         (fn [a#]
-                           (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
-                       empty-s)))]
+  `(let [~@(lvar-bind x) 
+         xs# (take* (bind empty-s
+                      (fresh [] ~@goals)))
+         xs# (map (fn [a#] (-reify a# ~x)) xs#)]
      (if ~n
        (take ~n xs#)
        xs#)))
@@ -1057,8 +1107,10 @@
   (let [a (gensym "a")]
     `(fn [~a]
        (let [~@(project-bindings vars a)]
-         ((fresh []
-            ~@goals) ~a)))))
+         (bind ~a (fresh []
+                    ~@goals) )))))
+
+#_(
 
 ;; =============================================================================
 ;; conda (soft-cut), condu (committed-choice)
@@ -1141,7 +1193,7 @@
 (extend-protocol IIfU
   Choice
   (ifu [b gs c]
-       (reduce bind (.a ^Choice b) gs)))
+       (reduce bind (.x ^Choice b) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -1377,10 +1429,20 @@
 ;; =============================================================================
 ;; Rel
 
-(defn to-stream [aseq]
-  (when (seq aseq)
-    (choice (first aseq)
-            (fn [] (to-stream (next aseq))))))
+(extend-type clojure.lang.ISeq
+  IStep
+  (step [this]
+    (when-let [s (seq aseq)]
+      (choice (first s) (rest s))))
+  IBind
+  (bind [this g]
+    (bind (step this) g))
+  IMPlus
+  (mplus [this a]
+    (mplus (step this) a))
+  IUpbind
+  (upbind [this g]
+    (upbind (step this) g)))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -1514,12 +1576,11 @@
                    (let [set# (cond
                                ~@(mapcat check-lvar indexed)
                                :else (deref ~(set-sym name arity)))]
-                     (~'to-stream
-                      (->> set#
-                           (map (fn [cand#]
-                                  (when-let [~'a (~'unify ~'a [~@as] cand#)]
-                                    ~'a)))
-                           (remove nil?)))))))))))
+                     (->> set#
+                       (map (fn [cand#]
+                              (when-let [~'a (~'unify ~'a [~@as] cand#)]
+                                ~'a)))
+                       (remove nil?))))))))))
 
 ;; TODO: Should probably happen in a transaction
 
@@ -1664,12 +1725,7 @@
                     (let [a-inf (f)]
                       (if (w? a-inf)
                         (to-w (concat a-inf this))
-                        (mplus a-inf (fn [] this)))))))
-  ITake
-  (take* [this]
-         (w-check this
-                  (fn [f] (take* f))
-                  (fn [] ()))))
+                        (mplus a-inf (fn [] this))))))))
 
 (defn master [argv cache]
   (fn [a]
@@ -1961,3 +2017,5 @@
   [u v]
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
+
+)
