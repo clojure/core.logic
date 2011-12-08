@@ -243,13 +243,10 @@
 
 (defn ^Substitutions merge-s [sa sb]
   ;; TODO far from complete
-  (prn  'sa(.s sa))
-  (prn 'sb (.s sb))
   (loop [s sa uvs (.s sb)]
     (if-let [[[u v] & uvs] (and s (seq uvs))]
       (recur (unify s u v) uvs)
-      (doto s
-        (-> .s prn)))))
+      s)))
 
 ;; =============================================================================
 ;; Logic Variables
