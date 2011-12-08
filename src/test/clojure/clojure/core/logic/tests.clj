@@ -1190,3 +1190,17 @@
   (is (= (-> #'dummy meta :doc)
          "Docstring")))
 
+(defn locals-membero [x l]
+  (matche [l]
+          ([[x . tail]])
+          ([[head . tail]]
+             (membero x tail))))
+
+(deftest test-matche-with-locals
+  (is (= [true] (run* [q]
+                      (locals-membero 'foo  [1 2 3 4 5 'foo])
+                      (== q true))))
+  (is (= [] (run* [q]
+                  (locals-membero 'foo  [1 2 3 4 5])
+                  (== true q)))))
+

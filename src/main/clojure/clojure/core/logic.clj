@@ -1325,9 +1325,12 @@
 
 (declare tabled)
 
-(defn- defnm [t n & rest]
+(defn env-locals [& syms]
+  (disj (set (apply concat syms)) '_))
+
+(defmacro defnm [t n & rest]
   (let [[n [as & cs]] (name-with-attributes n rest)]
-    (binding [*locals* (disj (set as) '_)]
+    (binding [*locals* (env-locals as (keys &env))]
      (if-let [tabled? (-> n meta :tabled)]
        `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
        `(defn ~n [~@as] ~(handle-clauses t as cs))))))
@@ -1370,13 +1373,13 @@
   "Define a goal fn. Supports pattern matching. All
    patterns will be tried. See conde."
   [& rest]
-  (apply defnm `conde rest))
+  `(defnm conde ~@rest))
 
 (defmacro matche
   "Pattern matching macro. All patterns will be tried.
   See conde."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `conde xs cs)))
 
 ;; -----------------------------------------------------------------------------
@@ -1388,23 +1391,23 @@
 (defmacro defna
   "Define a soft cut goal. See conda."
   [& rest]
-  (apply defnm `conda rest))
+  `(defnm conda ~@rest))
 
 (defmacro defnu
   "Define a committed choice goal. See condu."
   [& rest]
-  (apply defnm `condu rest))
+  `(defnm condu ~@rest))
 
 (defmacro matcha
   "Define a soft cut pattern match. See conda."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `conda xs cs)))
 
 (defmacro matchu
   "Define a committed choice goal. See condu."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `condu xs cs)))
 
 ;; ==============================================================================
