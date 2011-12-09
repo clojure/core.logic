@@ -962,6 +962,11 @@
   ([] `clojure.core.logic.minikanren/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
+(defmacro all*
+  "Like all but goals are tried in order."
+  ([] `clojure.core.logic.minikanren/s#)
+  ([& goals] `(fn [a#] (reduce upbind a# [~@(reverse goals)]))))
+
 ;; =============================================================================
 ;; Debugging
 
