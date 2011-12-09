@@ -401,9 +401,9 @@
   (unify-terms [u v s]
     (unify-with-lseq v u s))
   IUnifyWithNil
-  (unify-with-nil [v u s] false)
+  (unify-with-nil [v u s] nil)
   IUnifyWithObject
-  (unify-with-object [v u s] false)
+  (unify-with-object [v u s] nil)
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext s u v))
@@ -417,15 +417,15 @@
          (and (lcons? u) (lcons? v))
            (if-let [s (unify s (lfirst u) (lfirst v))]
              (recur (lnext u) (lnext v) s)
-             false)
+             nil)
          :else (unify s u v)))))
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (unify-with-lseq u v s))
   IUnifyWithMap
-  (unify-with-map [v u s] false)
+  (unify-with-map [v u s] nil)
   IUnifyWithSet
-  (unify-with-set [v u s] false)
+  (unify-with-set [v u s] nil)
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
@@ -510,19 +510,19 @@
 
 (extend-type Object
   IUnifyWithNil
-  (unify-with-nil [v u s] false))
+  (unify-with-nil [v u s] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
 (extend-protocol IUnifyWithObject
   nil
-  (unify-with-object [v u s] false))
+  (unify-with-object [v u s] nil))
 
 (extend-type Object
   IUnifyWithObject
   (unify-with-object [v u s]
-    (if (= u v) s false)))
+    (if (= u v) s nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -541,11 +541,11 @@
 
 (extend-protocol IUnifyWithLSeq
   nil
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] nil))
 
 (extend-type Object
   IUnifyWithLSeq
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] nil))
 
 (extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
@@ -555,22 +555,22 @@
         (if (lcons? u)
           (if-let [s (unify s (lfirst u) (first v))]
             (recur (lnext u) (next v) s)
-            false)
+            nil)
           (unify s u v))
         (if (lvar? u)
           (unify s u '())
-          false)))))
+          nil)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
 (extend-protocol IUnifyWithSequential
   nil
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] nil))
 
 (extend-type Object
   IUnifyWithSequential
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] nil))
 
 (extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
@@ -580,20 +580,20 @@
         (if (seq v)
           (if-let [s (unify s (first u) (first v))]
             (recur (next u) (next v) s)
-            false)
-          false)
-        (if (seq v) false s)))))
+            nil)
+          nil)
+        (if (seq v) nil s)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
 (extend-protocol IUnifyWithMap
   nil
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] nil))
 
 (extend-type Object
   IUnifyWithMap
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] nil))
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
@@ -604,12 +604,12 @@
           (let [kf (first ks)
                 vf (get v kf ::not-found)]
             (if (= vf ::not-found)
-              false
+              nil
               (if-let [s (unify s (get u kf) vf)]
                 (recur (next ks) (dissoc u kf) (dissoc v kf) s)
-                false)))
+                nil)))
           (if (seq v)
-            false
+            nil
             s))))))
 
 ;; -----------------------------------------------------------------------------
@@ -617,11 +617,11 @@
 
 (extend-protocol IUnifyWithSet
   nil
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] nil))
 
 (extend-type Object
   IUnifyWithSet
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] nil))
 
 ;; TODO : improve speed, the following takes 890ms
 ;; 
@@ -648,7 +648,7 @@
               (if (contains? v uf)
                 (recur (disj u uf) (disj v uf) ulvars umissing)
                 (recur (disj u uf) v ulvars (conj umissing uf)))))
-          false)
+          nil)
         (if (seq v)
           (if (seq ulvars)
             (loop [v v vlvars [] vmissing []]
@@ -659,7 +659,7 @@
                     (recur (disj v vf) vlvars (conj vmissing vf))))
                 (unify s (concat ulvars umissing)
                        (concat vmissing vlvars))))
-            false)
+            nil)
           s)))))
 
 ;; =============================================================================
@@ -1237,7 +1237,7 @@
   [v]
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
-       a# nil)))
+       a# nil))))
 
 ;; =============================================================================
 ;; Pattern matching
@@ -1385,6 +1385,7 @@
   [xs & cs]
   (handle-clauses `conde xs cs))
 
+#_(
 ;; -----------------------------------------------------------------------------
 ;; defnu, defna, matcha, matchu
 
@@ -1409,7 +1410,7 @@
 (defmacro matchu
   "Define a committed choice goal. See condu."
   [xs & cs]
-  (handle-clauses `condu xs cs))
+  (handle-clauses `condu xs cs)))
 
 ;; ==============================================================================
 ;; More convenient goals
@@ -1423,6 +1424,7 @@
   ([() _ y])
   ([[?a . ?d] _ [?a . ?r]] (appendo ?d y ?r)))
 
+#_(
 ;; =============================================================================
 ;; Rel
 
