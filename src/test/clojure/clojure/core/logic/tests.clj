@@ -1194,7 +1194,7 @@
   (matche [l]
           ([[x . tail]])
           ([[head . tail]]
-             (membero x tail))))
+             (locals-membero x tail))))
 
 (deftest test-matche-with-locals
   (is (= [true] (run* [q]
