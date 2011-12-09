@@ -1,3 +1,10 @@
+From 0.6.6 to 0.6.7
+====
+
+Fixes
+---
+* repair logic variable introduction in pattern matching macros
+
 From 0.6.5 to 0.6.6
 ====
 
