@@ -55,6 +55,8 @@
 (defprotocol IStep
   (step [this]))
 
+(declare step*)
+
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
@@ -124,7 +126,9 @@
 (declare lvar?)
 (declare pair)
 (declare lcons)
-(declare bind-goal)
+(declare bind-substitutions)
+(declare disjunction)
+(declare conjunction)
 
 (deftype Substitutions [s l verify cs]
   Object
@@ -212,13 +216,13 @@
     (choice this nil))
   IBind
   (bind [this g]
-    (bind-goal g this))
+    (bind-substitutions this g))
   IMPlus
   (mplus [this a]
     (choice this a))
   IUpbind 
   (upbind [this g]
-    (g this)))
+    (step* (g this))))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -241,7 +245,7 @@
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l)))
 
-(defn ^Substitutions merge-s [sa sb]
+(defn ^Substitutions merge-s [sa ^Substitutions sb]
   ;; TODO far from complete
   (loop [s sa uvs (.s sb)]
     (if-let [[[u v] & uvs] (and s (seq uvs))]
@@ -771,29 +775,34 @@
   ([e & e-rest]
      `(mplus ~e (mplus* ~@e-rest))))
 
-;; TODO: Choice always holds a as a list, can we just remove that?
-
 (deftype Choice [x a]
+  IStep
+  (step [this]
+    this)
   IBind
   (bind [this g]
-    (mplus (bind x g) (bind a g)))
+    (disjunction (bind x g) (bind a g)))
   IMPlus
   (mplus [this b]
-    (Choice. x (mplus a b)))
+    (choice x (disjunction a b)))
   IUpbind
   (upbind [this g]
     (mplus (upbind x g) (upbind a g))))
 
-(defn choice? [x] (instance? Choice x))
+(defn thunk? [x]
+  (not (or (nil? x) (instance? Choice x))))
+
+(defn step* [a]
+  (let [a (step a)]
+    (if (thunk? a)
+      (recur a)
+      a)))
 
 (defn take* [a]
   (lazy-seq
-    (loop [a a]
-      (when-let [^Choice a (step a)]
-        (if (choice? a)
-          (cons (.x a) (let [f (.a a)]
-                         (take* f)))
-          (recur a))))))
+    (when-let [^Choice a (step* a)]
+        (cons (.x a) (let [f (.a a)]
+                       (take* f))))))
 
 (defn ^Choice choice [a f]
   (Choice. a f))
@@ -818,51 +827,71 @@
 (deftype Disjunction [a b]
   IStep
   (step [this]
-    (mplus (step b) a))
+    (let [a (step a)]
+      (if (thunk? a)
+        (disjunction b a) 
+        (mplus a b))))
   IMPlus
   (mplus [this c]
-    (Disjunction. (mplus b c) a))
+    (disjunction a (disjunction b c)))
   IBind
   (bind [this g]
-    (mplus (bind a g) (bind b g)))
+    (disjunction (bind a g) (bind b g)))
   IUpbind
   (upbind [this g]
-    (mplus (upbind a g) (upbind b g))))
+    (let [a (upbind a g)
+          b (upbind b g)]
+      (if (thunk? a)
+        (if (thunk? b)
+          (disjunction a b)
+          (mplus b a))
+        (mplus a b)))))
+
+(defn disjunction [a b] (Disjunction. a b))
 
 (deftype Conjunction [a b]
   IStep
   (step [this]
     (when-let [^Choice a (step a)]
-      (if (choice? a)
-        (mplus (let [s (.x a)]
-                 (upbind b #(merge-s % s))) (Conjunction. (.a a) b))
-        (Conjunction. b a))))
+      (if (thunk? a)
+        (conjunction b a)
+        (mplus
+          (upbind b #(merge-s % (.x a)))
+          (conjunction (.a a) b)))))
   IMPlus
   (mplus [this c]
-    (Disjunction. this c))
+    (disjunction this c))
   IBind 
   (bind [this g]
-    (Conjunction. (bind b g) a))
+    (conjunction a (bind b g)))
   IUpbind
   (upbind [this g]
-    (Conjunction. (upbind a g) (upbind b g))))
+    (when-let [a (upbind a g)]
+      (when-let [b (upbind b g)]
+        (conjunction a b)))))
 
-(deftype BoundGoal [a g]
+(defn conjunction [a b]
+  (Conjunction. a b))
+
+(deftype BoundSubstitutions [a g t]
   IStep
   (step [this]
-    (g a))
+    (let [t (if t (step t) (g a))]
+      (if (thunk? t)
+        (BoundSubstitutions. a g t)
+        t)))
   IMPlus
   (mplus [this b]
-    (Disjunction. this b))
+    (disjunction this b))
   IBind 
   (bind [this f]
-    (Conjunction. this (bind a f)))
+    (conjunction this (bind a f)))
   IUpbind
   (upbind [this f]
     (bind (upbind a f) g)))
 
-(defn bind-goal [g a]
-  (BoundGoal. a g))
+(defn bind-substitutions [a g]
+  (BoundSubstitutions. a g nil))
 
 ;; =============================================================================
 ;; Syntax
@@ -965,7 +994,9 @@
 (defmacro all*
   "Like all but goals are tried in order."
   ([] `clojure.core.logic.minikanren/s#)
-  ([& goals] `(fn [a#] (reduce upbind a# [~@(reverse goals)]))))
+  ([& goals] `(fn [a#] (reduce (fn [a# g#] 
+                                 (upbind a# (comp step* g#))) 
+                         a# [~@(reverse goals)]))))
 
 ;; =============================================================================
 ;; Debugging
