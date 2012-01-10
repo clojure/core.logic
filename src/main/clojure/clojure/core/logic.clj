@@ -49,9 +49,6 @@
 (defprotocol IMPlus
   (mplus [a f]))
 
-(defprotocol ITake
-  (take* [a]))
-
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
@@ -208,9 +205,7 @@
     (g this))
   IMPlus
   (mplus [this f]
-    (choice this f))
-  ITake
-  (take* [this] this))
+    (choice this f)))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -756,25 +751,19 @@
 (defmacro -inc [& rest]
   `(fn -inc [] ~@rest))
 
-(extend-type Object
-  ITake
-  (take* [this] this))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-
 (deftype Choice [a f]
   IBind
   (bind [this g]
     (mplus (g a) (-inc (bind f g))))
   IMPlus
   (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f))))
-  ITake
-  (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+    (Choice. a (fn [] (mplus (fp) f)))))
 
 (defn ^Choice choice [a f]
   (Choice. a f))
+
+(defn choice? [x]
+  (instance? Choice x))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -786,10 +775,6 @@
 (extend-protocol IMPlus
   nil
   (mplus [_ b] b))
-
-(extend-protocol ITake
-  nil
-  (take* [_] '()))
 
 ;; -----------------------------------------------------------------------------
 ;; Unit
@@ -808,9 +793,7 @@
     (-inc (bind (this) g)))
   IMPlus
   (mplus [this f]
-    (-inc (mplus (f) this)))
-  ITake
-  (take* [this] (lazy-seq (take* (this)))))
+    (-inc (mplus (f) this))))
 
 ;; =============================================================================
 ;; Syntax
@@ -867,12 +850,18 @@
       (let [~@(lvar-binds lvars)]
         (bind* a# ~@goals)))))
 
+(defn take* [x]
+  (lazy-seq
+    (loop [^Choice x x]
+      (cond
+        (fn? x) (recur (x))
+        (choice? x) (cons (.a x) (take* (.f x)))
+        (subst? x) (cons x nil)))))
+
 (defmacro solve [& [n [x] & goals]]
-  `(let [xs# (take* (fn []
-                      ((fresh [~x] ~@goals
-                         (fn [a#]
-                           (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
-                       empty-s)))]
+  `(let [~@(lvar-bind x)
+         ss# (take* (bind empty-s (all ~@goals)))
+         xs# (map (fn [a#] (-reify a# ~x)) ss#)]
      (if ~n
        (take ~n xs#)
        xs#)))
@@ -1720,12 +1709,7 @@
                     (let [a-inf (f)]
                       (if (w? a-inf)
                         (to-w (concat a-inf this))
-                        (mplus a-inf (fn [] this)))))))
-  ITake
-  (take* [this]
-         (w-check this
-                  (fn [f] (take* f))
-                  (fn [] ()))))
+                        (mplus a-inf (fn [] this))))))))
 
 (defn master [argv cache]
   (fn [a]
