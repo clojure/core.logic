@@ -1604,6 +1604,31 @@
   [rel & tuple]
   (facts rel [(vec tuple)]))
 
+(defn retractions
+  "Retract a series of facts. Takes a vector of vectors where each vector
+   represents a fact tuple, all with the same number of elements. It is not
+   an error to retract a fact that isn't true."
+  ([rel [f :as tuples]] (retractions rel (count f) tuples))
+  ([^Rel rel arity tuples]
+     (let [rel-ns (:ns (meta rel))
+           rel-set (var-get (ns-resolve rel-ns (set-sym (.name rel) arity)))
+           tuples (map vec tuples)]
+       (swap! rel-set (fn [s] (remove #(some #{%} tuples) s)))
+       (let [indexes (indexes-for rel arity)]
+         (doseq [[o i] indexes]
+           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+             (let [indexed-tuples (map (fn [t]
+                                         {(nth t (dec i)) #{t}})
+                                       tuples)]
+               (swap! index
+                      (fn [i]
+                        (apply merge-with set/union i indexed-tuples))))))))))
+
+(defn retraction
+  "Remove a fact from a relation defined with defrel."
+  [rel & tuple]
+  (retractions rel [(vec tuple)]))
+
 ;; =============================================================================
 ;; Tabling
 

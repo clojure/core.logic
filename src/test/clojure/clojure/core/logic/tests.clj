@@ -1067,6 +1067,15 @@
              (== q [x y])))
          '([Ricky Lucy]))))
 
+(retraction likes 'Bob 'Mary)
+
+(deftest test-rel-retract
+  (is (= (run* [q]
+           (fresh [x y]
+             (likes x y)
+             (== q [x y])))
+         '([John Martha] [Ricky Lucy]))))
+
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
 
