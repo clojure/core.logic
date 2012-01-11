@@ -1239,8 +1239,9 @@
 (defn- extract-vars
   ([p]
      (set (cond
-           (lvar-sym? p) [p]
-           (coll? p) (filter lvar-sym? (flatten p))
+           (lvar-sym? p) [p]           
+           (coll? p) (let [p (if (seq? p) (rest p) p)]
+                       (filter lvar-sym? (flatten p)))
            :else nil)))
   ([p seen]
      (set/difference (extract-vars p) (set seen))))

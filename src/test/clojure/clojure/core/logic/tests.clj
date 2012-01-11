@@ -1204,3 +1204,24 @@
                   (locals-membero 'foo  [1 2 3 4 5])
                   (== true q)))))
 
+;; -----------------------------------------------------------------------------
+;; Pattern matching inline expression support
+
+(defn s [n] (llist n []))
+
+(def zero 0)
+(def one (s zero))
+(def two (s one))
+(def three (s two))
+(def four (s three))
+(def five (s four))
+(def six  (s five))
+
+(defn natural-number [x]
+  (matche [x]
+    ([zero])
+    ([(s y)] (natural-number y))))
+
+(deftest test-matche-with-expr
+  (is (= (run* [q] (natural-number one))
+         '(_.0 _.0))))
