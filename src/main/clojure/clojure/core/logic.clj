@@ -1604,6 +1604,23 @@
   [rel & tuple]
   (facts rel [(vec tuple)]))
 
+(defn difference-with
+  "Returns a map that consists of the first map with the rest of the maps
+   removed from it. When a key is found in the first map and a later map,
+   the value from the later map will be combined with the value in the first
+   map by calling (f val-in-first val-in-later). If this function returns nil
+   then the key will be removed completely."
+  [f & maps]
+  (when (some identity maps)
+    (let [empty-is-nil (fn [s] (if (empty? s) nil s))
+          merge-entry (fn [m [k v]]
+                         (if (contains? m k)
+                           (if-let [nv (empty-is-nil (f (get m k) v))]
+                             (assoc m k nv)
+                             (dissoc m k))))
+          merge-map (fn [m1 m2] (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge-map maps))))
+
 (defn retractions
   "Retract a series of facts. Takes a vector of vectors where each vector
    represents a fact tuple, all with the same number of elements. It is not
@@ -1622,7 +1639,7 @@
                                        tuples)]
                (swap! index
                       (fn [i]
-                        (apply merge-with set/union i indexed-tuples))))))))))
+                        (apply difference-with set/difference i indexed-tuples))))))))))
 
 (defn retraction
   "Remove a fact from a relation defined with defrel."
