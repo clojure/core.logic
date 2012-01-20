@@ -49,6 +49,9 @@
 (defprotocol IMPlus
   (mplus [a f]))
 
+(defprotocol IStep
+  (step [x]))
+
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
 
@@ -205,7 +208,10 @@
     (g this))
   IMPlus
   (mplus [this f]
-    (choice this f)))
+    (choice this f))
+  IStep
+  (step [this]
+    (choice this nil)))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -757,7 +763,7 @@
     (mplus (g a) (-inc (bind f g))))
   IMPlus
   (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f)))))
+    (Choice. a (fn [] (mplus (step fp) f)))))
 
 (defn ^Choice choice [a f]
   (Choice. a f))
@@ -790,10 +796,13 @@
 (extend-type clojure.lang.Fn
   IBind
   (bind [this g]
-    (-inc (bind (this) g)))
+    (-inc (bind (step this) g)))
   IMPlus
   (mplus [this f]
-    (-inc (mplus (f) this))))
+    (-inc (mplus (step f) this)))
+  IStep
+  (step [f]
+    (f)))
 
 ;; =============================================================================
 ;; Syntax
@@ -853,10 +862,10 @@
 (defn take* [x]
   (lazy-seq
     (loop [^Choice x x]
-      (cond
-        (fn? x) (recur (x))
-        (choice? x) (cons (.a x) (take* (.f x)))
-        (subst? x) (cons x nil)))))
+      (when x
+        (if (choice? x)
+          (cons (.a x) (take* (.f x)))
+          (recur (step x)))))))
 
 (defmacro solve [& [n [x] & goals]]
   `(let [~@(lvar-bind x)
@@ -1127,12 +1136,12 @@
 (extend-type clojure.lang.Fn
   IIfA
   (ifa [b gs c]
-       (-inc (ifa (b) gs c))))
+       (-inc (ifa (step b) gs c))))
 
 (extend-type clojure.lang.Fn
   IIfU
   (ifu [b gs c]
-       (-inc (ifu (b) gs c))))
+       (-inc (ifu (step b) gs c))))
 
 (extend-protocol IIfA
   Choice
@@ -1639,6 +1648,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Extend Substitutions to support tabling
 
+#_(
 (defprotocol ITabled
   (-reify-tabled [this v])
   (reify-tabled [this v])
@@ -1737,9 +1747,9 @@
             (if (nil? cache)
               (let [cache (atom ())]
                 (swap! table assoc key cache)
-                ((fresh []
-                   (apply goal args)
-                   (master argv cache)) a))
+                (bind a (fresh []
+                          (apply goal args)
+                          (master argv cache))))
               (reuse a argv cache nil nil))))))))
 
 (defmacro tabled
@@ -1755,10 +1765,10 @@
              (if (nil? cache#)
                (let [cache# (atom ())]
                  (swap! table# assoc key# cache#)
-                 ((fresh []
-                    ~@grest
-                    (master argv# cache#)) a#))
-               (reuse a# argv# cache# nil nil))))))))
+                 (bind a# (fresh []
+                            ~@grest
+                            (master argv# cache#))))
+               (reuse a# argv# cache# nil nil)))))))))
 
 ;; =============================================================================
 ;; Disequality
