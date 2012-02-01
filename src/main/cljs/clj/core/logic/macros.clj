@@ -2,18 +2,6 @@
 
 (def ^{:dynamic true} *locals*)
 
-(defmacro umi
-  [& args]
-  (if (resolve 'unchecked-multiply-int)
-    `(unchecked-multiply-int ~@args)
-    `(unchecked-multiply ~@args)))
-
-(defmacro uai
-  [& args]
-  (if (resolve 'unchecked-add-int)
-    `(unchecked-add-int ~@args)
-    `(unchecked-add ~@args)))
-
 (defmacro llist
   "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
   The tail is improper if the last argument is a logic variable."
@@ -35,14 +23,14 @@
   (mapcat lvar-bind syms))
 
 (defmacro bind*
-  ([a g] `(bind ~a ~g))
+  ([a g] `(-bind ~a ~g))
   ([a g & g-rest]
-     `(bind* (bind ~a ~g) ~@g-rest)))
+     `(bind* (-bind ~a ~g) ~@g-rest)))
 
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (fn [] (mplus* ~@e-rest)))))
+     `(-mplus ~e (fn [] (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
   `(fn -inc [] ~@rest))
@@ -51,7 +39,7 @@
   "A goal that attempts to unify terms u and v."
   [u v]
   `(fn [a#]
-     (if-let [b# (unify a# ~u ~v)]
+     (if-let [b# (-unify a# ~u ~v)]
        b# nil)))
 
 (defmacro conde
@@ -74,7 +62,7 @@
         (bind* a# ~@goals)))))
 
 (defmacro solve [& [n [x] & goals]]
-  `(let [xs# (take* (fn []
+  `(let [xs# (-take* (fn []
                       ((fresh [~x] ~@goals
                          (fn [a#]
                            (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
@@ -116,7 +104,7 @@
 
 (defmacro all
   "Like fresh but does does not create logic variables."
-  ([] `clojure.core.logic/s#)
+  ([] `cljs.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 ;; =============================================================================
@@ -154,7 +142,7 @@
 
 (defn project-binding [s]
   (fn [var]
-    `(~var (walk* ~s ~var))))
+    `(~var (-walk* ~s ~var))))
 
 (defn project-bindings [vars s]
   (reduce concat (map (project-binding s) vars)))
@@ -215,7 +203,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (ifa* ~@(map (cond-clauses a) clauses)))))
+       (-ifa* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro condu
   "Committed choice. Once the head (first goal) of a clause 
@@ -224,7 +212,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (ifu* ~@(map (cond-clauses a) clauses)))))
+       (-ifu* ~@(map (cond-clauses a) clauses)))))
 
 ;; =============================================================================
 ;; lvar nonlvar

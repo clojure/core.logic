@@ -572,14 +572,14 @@
 
 (extend-protocol IOccursCheckTerm
   nil
-  (occurs-check-term [v x s] false)
+  (-occurs-check-term [v x s] false)
 
   default
-  (occurs-check-term [v x s]
+  (-occurs-check-term [v x s]
     (if (satisfies? ISeqable v)
       (loop [v v x x s s]
         (if (seq v)
-          (or (occurs-check s x (first v))
+          (or (-occurs-check s x (first v))
               (recur (next v) x s))
           false))
       false)))
@@ -660,11 +660,6 @@
 
 ;; =============================================================================
 ;; conda (soft-cut), condu (committed-choice)
-;;
-;; conda once a line succeeds no others are tried
-;; condu a line can succeed only one time
-
-;; TODO : conda and condu should probably understanding logging
 
 (defprotocol IIfA
   (-ifa [b gs c]))
