@@ -103,6 +103,13 @@
 (declare pair)
 (declare lcons)
 
+(defn assq [k l]
+  (loop [[[kp v] & r :as l] l]
+    (cond
+     (nil? (seq l)) nil
+     (= k kp) v
+     :else (recur r))))
+
 (deftype Substitutions [s]
   IEquiv
   (-equiv [this o]
@@ -126,12 +133,12 @@
     (Substitutions. (conj s (Pair. u v))))
   
   (-walk [this v]
-    (loop [v v [[lhs rhs] & r :as s] s]
-      (cond
-       (nil? (seq s)) nil
-       (= lhs v) (if (var? rhs)
-                   (recur rhs r))
-       :else (recur v r))))
+    (cond
+     (var? v) (let [rhs (assq v s)]
+                (if-let [vp (-walk this rhs)]
+                  vp
+                  v))
+     :else v))
   
   (-walk* [this v]
     (let [v (-walk this v)]
@@ -160,9 +167,11 @@
   IBind
   (-bind [this g]
     (g this))
+
   IMPlus
   (-mplus [this f]
     (choice this f))
+
   ITake
   (-take* [this]
     this))
