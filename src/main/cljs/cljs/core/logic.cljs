@@ -178,13 +178,13 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name hash meta]
+(deftype LVar [name meta]
   IMeta
   (-meta [this]
     meta)
   IWithMeta
   (-with-meta [this new-meta]
-    (LVar. name hash meta))
+    (LVar. name meta))
   IPrintable
   (-pr-seq [_]
     (list "<lvar:" (str name) ">"))
@@ -193,7 +193,6 @@
     (and (instance? LVar o)
          (let [o o]
            (identical? name (.-name o)))))
-  (-hash [_] hash)
   IUnifyTerms
   (-unify-terms [u v s]
     (-unify-with-lvar v u s))
@@ -229,7 +228,7 @@
 
 (defn lvar [name]
   (let [name (str name (gensym "_"))]
-    (LVar. name (goog.string/hashCode name) nil nil)))
+    (LVar. name nil nil)))
 
 (defn lvar? [x]
   (instance? LVar x))
@@ -246,13 +245,13 @@
 
 (declare lcons?)
 
-(deftype LCons [a d ^:mutable cache meta]
+(deftype LCons [a d meta]
   IMeta
   (-meta [this]
     meta)
   IWithMeta
   (-withMeta [this new-meta]
-    (LCons. a d cache new-meta))
+    (LCons. a d new-meta))
   LConsSeq
   (-lfirst [_] a)
   (-lnext [_] d)
@@ -283,13 +282,6 @@
                              (lvar? youf))
                          (recur (-lnext me) (-lnext you))))
                 :else (= me you))))))
-  IHash
-  (-hash [this]
-    (if (= cache -1)
-      (do
-        (set! cache (+ (* 31 (-hash d)) (-hash a)))
-        cache)
-      cache))
   IUnifyTerms
   (-unify-terms [u v s]
     (-unify-with-lseq v u s))
@@ -339,7 +331,7 @@
   [a d]
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
-    (LCons. a d -1 nil)))
+    (LCons. a d nil)))
 
 (defn lcons? [x]
   (instance? LCons x))
