@@ -241,9 +241,13 @@
   (-occurs-check-term [v x s]
     (= (-walk s v) x)))
 
+(def lvar-sym-counter (atom 0))
+
 (defn lvar [name]
-  (let [name (str name (gensym "_"))]
-    (LVar. name nil nil)))
+  (let [name (js* "~{} + '_' + ~{}"
+                  (.substring name 2 (.-length name))
+                  (swap! lvar-sym-counter inc))]
+    (LVar. name nil)))
 
 (defn lvar? [x]
   (instance? LVar x))
