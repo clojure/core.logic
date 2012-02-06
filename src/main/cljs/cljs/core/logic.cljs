@@ -106,15 +106,15 @@
 (defn assq
   "Similar to Scheme assq, l must be an ISeqable collection of Pairs"
   [k xs]
-  (loop [xs xs]
-    (let [xs (-seq xs)]
-      (if (identical? xs nil)
-        nil
-        (let [x (-first xs)
-              lhs (.-lhs x)]
-          (if (identical? k lhs)
-            (.-rhs x)
-            (recur (-rest xs))))))))
+  (let [xs (-seq xs)]
+   (loop [xs xs]
+     (if (identical? xs nil)
+       nil
+       (let [x (-first xs)
+             lhs (.-lhs x)]
+         (if (identical? k lhs)
+           (.-rhs x)
+           (recur (-rest xs))))))))
 
 (deftype Substitutions [s]
   IEquiv
