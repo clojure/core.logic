@@ -104,7 +104,7 @@
 (declare lcons)
 
 (defn assq
-  "Similar to Scheme assq, l must be an ISeqable collection of Pairs"
+  "Similar to Scheme assq, xs must be an ISeqable collection of Pairs"
   [k xs]
   (let [xs (-seq xs)]
    (loop [xs xs]
