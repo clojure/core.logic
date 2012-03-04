@@ -1545,6 +1545,9 @@
 
 ;; TODO: for arity greater than 20, we need to use rest args
 
+(defn contains-lvar? [x]
+  (some lvar? (tree-seq coll? seq x)))
+
 (defmacro extend-rel [name & args]
   (let [arity (count args)
         r (range 1 (clojure.core/inc arity))
@@ -1556,7 +1559,7 @@
                                   (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (clojure.core.logic/lvar? (clojure.core.logic/walk* ~'a ~a)))
+                       `((not (clojure.core.logic/contains-lvar? (clojure.core.logic/walk* ~'a ~a)))
                          ((deref ~(index-sym name arity o)) (clojure.core.logic/walk* ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
