@@ -1076,6 +1076,16 @@
              (== q [x y])))
          '([John Martha] [Ricky Lucy]))))
 
+(defrel rel1 ^:index a)
+(fact rel1 [1 2])
+
+(deftest test-rel-logic-29
+  (is (= (run* [q]
+           (fresh [a]
+             (rel1 [q a])
+             (== a 2)))
+         '(1))))
+
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
 
