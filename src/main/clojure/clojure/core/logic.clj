@@ -988,7 +988,7 @@
                       (postwalk (replace-lvar store) expr))
         :else expr))))
 
-(defn- prep
+(defn prep
   "Prep a quoted expression. All symbols preceded by ? will
   be replaced with logic vars."
   [expr]
