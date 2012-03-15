@@ -1,3 +1,16 @@
+From 0.6.7 to 0.6.8
+====
+
+Enhancments
+----
+* Allow retraction of facts
+
+Fixed
+----
+* LOGIC-32: fix unification with sets
+* LOGIC-29: fix defrel bug where we were not checking recursively for logic vars
+* LOGIC-24: fix regression, simple expression allowed in pattern matching again
+
 From 0.6.6 to 0.6.7
 ====
 
