@@ -699,7 +699,7 @@
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
   (walk-term [v s]
-    (loop [v v r {}]
+    (loop [v v r #{}]
       (if (seq v)
         (recur (next v) (conj r (walk* s (first v))))
         r))))
@@ -1001,7 +1001,6 @@
 (defn- unifier*
   "Unify the terms u and w."
   [u w]
-  
   (first
     (run* [q]
       (== u w)

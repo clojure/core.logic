@@ -1244,3 +1244,10 @@
 (deftest test-matche-with-expr
   (is (= (run* [q] (natural-number one))
          '(_.0 _.0))))
+
+;; -----------------------------------------------------------------------------
+;; Tickets
+
+(deftest test-31-unify-set
+  (is (= (run* [q] (== q #{1}))
+         '(#{1}))))
