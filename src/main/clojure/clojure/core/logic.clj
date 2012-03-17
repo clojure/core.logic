@@ -5,6 +5,7 @@
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *occurs-check* true)
+(def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
 (defprotocol IUnifyTerms
@@ -281,7 +282,9 @@
     (ext s v u))
   IReifyTerm
   (reify-term [v s]
-    (ext s v (reify-lvar-name s)))
+    (if *reify-vars*
+      (ext s v (reify-lvar-name s))
+      (ext s v (:name meta))))
   IWalkTerm
   (walk-term [v s] v)
   IOccursCheckTerm
@@ -299,13 +302,15 @@
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil nil)))
+       (LVar. name (.hashCode name) nil {:name name})))
   ([name]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil nil)))
+     (let [oname name
+           name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) nil {:name oname})))
   ([name cs]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs nil))))
+     (let [oname name
+           name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) cs {:name oname}))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
@@ -946,13 +951,10 @@
 (defn- lvarq-sym? [s]
   (and (symbol? s) (= (first (str s)) \?)))
 
-(defn- rem-? [s]
-  (symbol (apply str (drop 1 (str s)))))
-
 (defn- proc-lvar [lvar-expr store]
   (let [v (if-let [u (@store lvar-expr)]
             u
-            (lvar (rem-? lvar-expr)))]
+            (lvar lvar-expr))]
     (swap! store conj [lvar-expr v])
     v))
 
@@ -998,44 +1000,52 @@
                   (postwalk (replace-lvar lvars) expr))]
     (with-meta prepped {:lvars @lvars})))
 
-(defn- unifier*
+(defn unifier*
   "Unify the terms u and w."
-  [u w]
-  (first
-    (run* [q]
-      (== u w)
-      (== u q))))
+  ([u w]
+     (first
+      (run* [q]
+        (== u w)
+        (== u q))))
+  ([u w & ts]
+     (apply unifier* (unifier* u w) ts)))
 
-(defn- binding-map*
+(defn binding-map*
   "Return the binding map that unifies terms u and w.
   u and w should prepped terms."
-  [u w]
-  (let [lvars (merge (-> u meta :lvars)
-                     (-> w meta :lvars))
-        s (unify empty-s u w)]
-    (when s
-      (into {} (map (fn [[k v]]
-                      [k (-reify s v)])
-                    lvars)))))
+  ([u w]
+     (let [lvars (merge (-> u meta :lvars)
+                        (-> w meta :lvars))
+           s (unify empty-s u w)]
+       (when s
+         (into {} (map (fn [[k v]]
+                         [k (-reify s v)])
+                       lvars)))))
+  ([u w & ts]
+     (apply binding-map* (binding-map* u w) ts)))
 
 (defn unifier
   "Unify the terms u and w. Will prep the terms."
-  [u w]
-  {:pre [(not (lcons? u))
-         (not (lcons? w))]}
-  (let [up (prep u)
-        wp (prep w)]
-    (unifier* up wp)))
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (unifier* up wp)))
+  ([u w & ts]
+     (apply unifier (unifier u w) ts)))
 
 (defn binding-map
   "Return the binding map that unifies terms u and w.
   Will prep the terms."
-  [u w]
-  {:pre [(not (lcons? u))
-         (not (lcons? w))]}
-  (let [up (prep u)
-        wp (prep w)]
-    (binding-map* up wp)))
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (binding-map* up wp)))
+  ([u w & ts]
+     (apply binding-map (binding-map u w) ts)))
 
 ;; =============================================================================
 ;; Non-relational goals

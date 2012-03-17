@@ -1248,6 +1248,14 @@
 ;; -----------------------------------------------------------------------------
 ;; Tickets
 
-(deftest test-31-unify-set
+(deftest test-32-unify-set
   (is (= (run* [q] (== q #{1}))
          '(#{1}))))
+
+(deftest test-31-unifier-associative
+  (is (= (binding [*reify-vars* false]
+           (unifier '{:a ?x} '{:a ?y} '{:a 5}))
+         {:a 5}))
+  (is (= (binding [*reify-vars* false]
+           (unifier '{:a ?x} '{:a 5} '{:a ?y}))
+         {:a 5})))
