@@ -7,8 +7,8 @@
 (defmacro llist
   "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
   The tail is improper if the last argument is a logic variable."
-  ([f s] `(lcons ~f ~s))
-  ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
+  ([f s] `(cljs.core.logic/lcons ~f ~s))
+  ([f s & rest] `(cljs.core.logic/lcons ~f (cljs.core.logic/llist ~s ~@rest))))
 
 (defn bind-conde-clause [a]
   (fn [g-rest]
@@ -19,20 +19,20 @@
 
 (defn lvar-bind [sym]
   ((juxt identity
-         (fn [s] `(lvar '~s))) sym))
+         (fn [s] `(cljs.core.logic/lvar '~s))) sym))
 
 (defn lvar-binds [syms]
   (mapcat lvar-bind syms))
 
 (defmacro bind*
-  ([a g] `(-bind ~a ~g))
+  ([a g] `(cljs.core.logic/-bind ~a ~g))
   ([a g & g-rest]
-     `(bind* (-bind ~a ~g) ~@g-rest)))
+     `(bind* (cljs.core.logic/-bind ~a ~g) ~@g-rest)))
 
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(-mplus ~e (fn [] (mplus* ~@e-rest)))))
+     `(cljs.core.logic/-mplus ~e (fn [] (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
   `(fn [] ~@rest))
@@ -41,7 +41,7 @@
   "A goal that attempts to unify terms u and v."
   [u v]
   `(fn [a#]
-     (if-let [b# (-unify a# ~u ~v)]
+     (if-let [b# (cljs.core.logic/-unify a# ~u ~v)]
        b# nil)))
 
 (defmacro conde
@@ -64,11 +64,11 @@
         (bind* a# ~@goals)))))
 
 (defmacro solve [& [n [x] & goals]]
-  `(let [xs# (-take* (fn []
+  `(let [xs# (cljs.core.logic/-take* (fn []
                       ((fresh [~x] ~@goals
                          (fn [a#]
-                           (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
-                       empty-s)))]
+                           (cons (cljs.core.logic/-reify a# ~x) '()))) ;; TODO: do we need this?
+                       cljs.core.logic/empty-s)))]
      (if ~n
        (take ~n xs#)
        xs#)))
@@ -344,14 +344,14 @@
   "Goal to test whether a logic var is ground. Non-relational."
   [v]
   `(fn [a#]
-     (if (lvar? (walk a# ~v))
+     (if (cljs.core.logic/lvar? (cljs.core.logic/-walk a# ~v))
        a# nil)))
 
 (defmacro nonlvaro
   "Goal to test whether a logic var is ground. Non-relational."
   [v]
   `(fn [a#]
-     (if (not (lvar? (walk a# ~v)))
+     (if (not (cljs.core.logic/lvar? (cljs.core.logic/walk a# ~v)))
        a# nil)))
 
 (defn env-locals [& syms]
