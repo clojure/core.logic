@@ -1,8 +1,8 @@
 (ns cljs.core.logic
   (:refer-clojure :exclude [==])
-  (:use-macros [cljs.core.logic.macros :only
+  (:use-macros [clj.core.logic.macros :only
                 [defne defna defnu fresh == -inc]])
-  (:require-macros [cljs.core.logic.macros :as m])
+  (:require-macros [clj.core.logic.macros :as m])
   (:require [clojure.set :as set]))
 
 (def ^{:dynamic true} *occurs-check* true)
@@ -607,7 +607,7 @@
 (deftype Choice [a f]
   IBind
   (-bind [this g]
-    (-mplus (g a) (-inc (bind f g))))
+    (-mplus (g a) (-inc (-bind f g))))
   IMPlus
   (-mplus [this fp]
     (Choice. a (fn [] (-mplus (fp) f))))
@@ -649,7 +649,7 @@
   (-bind [this g]
     (-inc (-bind (this) g)))
   IMPlus
-  (mplus [this f]
+  (-mplus [this f]
     (-inc (-mplus (f) this)))
   ITake
   (-take* [this] (lazy-seq (-take* (this)))))

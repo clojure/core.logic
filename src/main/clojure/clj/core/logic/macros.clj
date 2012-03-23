@@ -35,7 +35,7 @@
      `(-mplus ~e (fn [] (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
+  `(fn [] ~@rest))
 
 (defmacro ==
   "A goal that attempts to unify terms u and v."
