@@ -243,11 +243,13 @@
 
 (def lvar-sym-counter (atom 0))
 
-(defn lvar [name]
-  (let [name (js* "~{} + '_' + ~{}"
-                  (.substring name 2 (.-length name))
-                  (swap! lvar-sym-counter inc))]
-    (LVar. name nil)))
+(defn lvar
+  ([] (lvar 'gen))
+  ([name]
+     (let [name (js* "~{} + '_' + ~{}"
+                     (.substring name 2 (.-length name))
+                     (swap! lvar-sym-counter inc))]
+       (LVar. name nil))))
 
 (defn lvar? [x]
   (instance? LVar x))
