@@ -43,16 +43,16 @@
 (defprotocol IBuildTerm
   (build-term [u s]))
 
-(defprotocol IBind
-  (bind [this g]))
+(defprotocol Search
+  (yield [a] "Returns the yielded result (if any) or nil.")
+  (step [a] "Advances the search -- returns the advanced search.")
+  (min-yield [a] "Returns a substitution which is an lower bound of all
+    substitutions yielded by this search.")
+  (restrict [a ss]
+    "Restricts the search to substitutions more precise than ss. ss must be
+     greater than or equal to (min-yield a ss). Do not call, see narrow."))
 
-(defprotocol IMPlus
-  (mplus [a f]))
-
-(defprotocol IStep
-  (step [x]))
-
-(deftype Unbound [])
+(deftype Unbound []) ; replace with reify?
 (def ^Unbound unbound (Unbound.))
 
 (defprotocol ILVar
@@ -116,11 +116,11 @@
   (build [this u]))
 
 (declare empty-s)
-(declare choice)
 (declare lvar)
 (declare lvar?)
 (declare pair)
 (declare lcons)
+(declare merge-s)
 
 (deftype Substitutions [s l verify cs]
   Object
@@ -203,19 +203,15 @@
   (build [this u]
     (build-term u this))
 
-  IBind
-  (bind [this g]
-    (g this))
-  IMPlus
-  (mplus [this f]
-    (choice this f))
-  IStep
-  (step [this]
-    (choice this nil)))
+  Search
+  (yield [this] this)
+  (step [this] nil)
+  (min-yield [this] this)
+  (restrict [this ss] (merge-s this ss)))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
-                  (cons (pair u v) (.l s))
+                  (conj (.l s) (pair u v))
                   (.verify s)
                   (.cs s)))
 
@@ -226,13 +222,20 @@
 
 (def ^Substitutions empty-s (make-s {} '()))
 
-(defn- subst? [x]
-  (instance? Substitutions x))
-
 (defn ^Substitutions to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
-        l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
+        l (reduce (fn [l [k v]] (conj l (Pair. k v))) '() v)]
     (make-s s l)))
+
+(defn merge-s [^Substitutions a ^Substitutions b]
+  (when (and a b)
+    (cond 
+      (identical? a b) a
+      (identical? a empty-s) b
+      (identical? b empty-s) a
+      (< (count (.s b)) (count (.s a)))
+        (reduce (fn [ss [u v]] (and ss (unify ss u v))) a (.s b))
+      :else (reduce (fn [ss [u v]] (and ss (unify ss u v))) b (.s a)))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -295,7 +298,7 @@
       (if (contains? m u)
         s
         (make-s (assoc m u lv)
-                (cons (Pair. u lv) l))))))
+                (conj l (Pair. u lv)))))))
 
 (defn ^LVar lvar
   ([]
@@ -387,9 +390,9 @@
   (unify-terms [u v s]
     (unify-with-lseq v u s))
   IUnifyWithNil
-  (unify-with-nil [v u s] false)
+  (unify-with-nil [v u s] nil)
   IUnifyWithObject
-  (unify-with-object [v u s] false)
+  (unify-with-object [v u s] nil)
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
@@ -398,17 +401,16 @@
         (cond
          (lvar? v) (unify s v u)
          (and (lcons? u) (lcons? v))
-           (if-let [s (unify s (lfirst u) (lfirst v))]
-             (recur (lnext u) (lnext v) s)
-             false)
+           (when-let [s (unify s (lfirst u) (lfirst v))]
+             (recur (lnext u) (lnext v) s))
          :else (unify s u v)))))
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (unify-with-lseq u v s))
   IUnifyWithMap
-  (unify-with-map [v u s] false)
+  (unify-with-map [v u s] nil)
   IUnifyWithSet
-  (unify-with-set [v u s] false)
+  (unify-with-set [v u s] nil)
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
@@ -493,19 +495,19 @@
 
 (extend-type Object
   IUnifyWithNil
-  (unify-with-nil [v u s] false))
+  (unify-with-nil [v u s] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
 (extend-protocol IUnifyWithObject
   nil
-  (unify-with-object [v u s] false))
+  (unify-with-object [v u s] nil))
 
 (extend-type Object
   IUnifyWithObject
   (unify-with-object [v u s]
-    (if (= u v) s false)))
+    (when (= u v) s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -524,11 +526,11 @@
 
 (extend-protocol IUnifyWithLSeq
   nil
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] nil))
 
 (extend-type Object
   IUnifyWithLSeq
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] nil))
 
 (extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
@@ -536,47 +538,43 @@
     (loop [u u v v s s]
       (if (seq v)
         (if (lcons? u)
-          (if-let [s (unify s (lfirst u) (first v))]
-            (recur (lnext u) (next v) s)
-            false)
+          (when-let [s (unify s (lfirst u) (first v))]
+            (recur (lnext u) (next v) s))
           (unify s u v))
-        (if (lvar? u)
-          (unify s u '())
-          false)))))
+        (when (lvar? u)
+          (unify s u '()))))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
 (extend-protocol IUnifyWithSequential
   nil
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] nil))
 
 (extend-type Object
   IUnifyWithSequential
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] nil))
 
 (extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
     (loop [u u v v s s]
       (if (seq u)
-        (if (seq v)
-          (if-let [s (unify s (first u) (first v))]
-            (recur (next u) (next v) s)
-            false)
-          false)
-        (if (seq v) false s)))))
+        (when (seq v)
+          (when-let [s (unify s (first u) (first v))]
+            (recur (next u) (next v) s)))
+        (if (seq v) nil s)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
 (extend-protocol IUnifyWithMap
   nil
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] nil))
 
 (extend-type Object
   IUnifyWithMap
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] nil))
 
 (extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
@@ -586,13 +584,10 @@
         (if (seq ks)
           (let [kf (first ks)
                 vf (get v kf ::not-found)]
-            (if (= vf ::not-found)
-              false
-              (if-let [s (unify s (get u kf) vf)]
-                (recur (next ks) (dissoc u kf) (dissoc v kf) s)
-                false)))
-          (if (seq v)
-            false
+            (when-not (= vf ::not-found)
+              (when-let [s (unify s (get u kf) vf)]
+                (recur (next ks) (dissoc u kf) (dissoc v kf) s))))
+          (when-not (seq v)
             s))))))
 
 ;; -----------------------------------------------------------------------------
@@ -600,11 +595,11 @@
 
 (extend-protocol IUnifyWithSet
   nil
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] nil))
 
 (extend-type Object
   IUnifyWithSet
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] nil))
 
 ;; TODO : improve speed, the following takes 890ms
 ;; 
@@ -624,16 +619,15 @@
   (unify-with-set [v u s]
     (loop [u u v v ulvars [] umissing []]
       (if (seq u)
-        (if (seq v)
+        (when (seq v)
           (let [uf (first u)]
             (if (lvar? uf)
               (recur (disj u uf) v (conj ulvars uf) umissing)
               (if (contains? v uf)
                 (recur (disj u uf) (disj v uf) ulvars umissing)
-                (recur (disj u uf) v ulvars (conj umissing uf)))))
-          false)
+                (recur (disj u uf) v ulvars (conj umissing uf))))))
         (if (seq v)
-          (if (seq ulvars)
+          (when (seq ulvars)
             (loop [v v vlvars [] vmissing []]
               (if (seq v)
                 (let [vf (first v)]
@@ -641,8 +635,7 @@
                     (recur (disj v vf) (conj vlvars vf) vmissing)
                     (recur (disj v vf) vlvars (conj vmissing vf))))
                 (unify s (concat ulvars umissing)
-                       (concat vmissing vlvars))))
-            false)
+                       (concat vmissing vlvars)))))
           s)))))
 
 ;; =============================================================================
@@ -757,95 +750,171 @@
 (defmacro -inc [& rest]
   `(fn -inc [] ~@rest))
 
-(deftype Choice [a f]
-  IBind
-  (bind [this g]
-    (mplus (g a) (-inc (bind f g))))
-  IMPlus
-  (mplus [this fp]
-    (Choice. a (fn [] (mplus (step fp) f)))))
-
-(defn ^Choice choice [a f]
-  (Choice. a f))
-
-(defn choice? [x]
-  (instance? Choice x))
-
 ;; -----------------------------------------------------------------------------
-;; MZero
+;; Zero for join, identity for plus
 
-(extend-protocol IBind
-  nil
-  (bind [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (mplus [_ b] b))
-
-;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type Object
-  IMPlus
-  (mplus [this f]
-    (Choice. this f)))
+(extend-type nil
+  Search
+  (yield [_] nil)
+  (step [_] nil)
+  (min-yield [_] nil)
+  (restrict [_ _] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
+(declare scons plus join narrow bind)
+
+(deftype Choice [ss a min]
+  Search
+  (yield [this] ss)
+  (step [this] a)
+  (min-yield [this] min)
+  (restrict [this oss] (scons (merge-s ss oss) (narrow a oss) oss)))
+
+(defn scons 
+  "Constructs a new Search." 
+  [ss a min]
+  (or (and ss a (Choice. ss a min)) ss a))
+
+(deftype Plus [a b min]
+  Search
+  (yield [this] nil)
+  (step [this]
+    (scons (yield a) 
+           (plus b (step a) min)
+           min))
+  (min-yield [this] min)
+  (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss)))
+
+(defn plus 
+  "Returns the union of two Searches."
+  [a b min]
+  (or (and a b (Plus. a b min)) a b))
+
+(deftype Join [a b min]
+  Search
+  (yield [this] nil)
+  (step [this]
+    (plus (narrow b (yield a))
+          (join b (step a) min)
+          min))
+  (min-yield [this] min)
+  (restrict [this ss] (join (narrow a ss) (narrow b ss) ss)))
+
+(defn join 
+  "Returns the intersection of two Searches"
+  [a b min]
+  (and a b (Join. a b min)))
+
+;; the min field of choice, plus and join may be removed and replaced by narrow
+;; instances
+(deftype Narrow [a ss]
+  Search
+  (yield [this] (merge-s (yield a) ss))
+  (step [this] (narrow (step (restrict a ss)) ss))
+  (min-yield [this] ss)
+  (restrict [this oss] (narrow a oss)))
+
+(defn narrow
+  "Restrict the search to substitutions greater than or equal to ss.
+   Semi-lazy: ss is checked to be unifiable with min-yield eagerly so as to
+   fail fast but the actual narrowing happens lazily." 
+  [a ss]
+  (let [uss (min-yield a)]
+    (when-let [nss (merge-s ss uss)]
+      (if (= nss uss)
+        a
+        (Narrow. a nss)))))
+
+(deftype Bind [a f]
+  Search
+  (yield [this] nil)
+  (step [this]
+    (plus (when-let [ss (yield a)] (f ss)) 
+          (bind (step a) f)
+          (min-yield a)))
+  (min-yield [this] (min-yield a))
+  (restrict [this ss]
+    (bind (narrow a ss) f)))
+
+(defn bind [a f]
+  (and a (Bind. a f)))
+
 (extend-type clojure.lang.Fn
-  IBind
-  (bind [this g]
-    (-inc (bind (step this) g)))
-  IMPlus
-  (mplus [this f]
-    (-inc (mplus (step f) this)))
-  IStep
-  (step [f]
-    (f)))
+  Search
+  (yield [this]
+    nil)
+  (step [this]
+    (this))
+  (min-yield [this] empty-s)
+  (restrict [this ss] this))
+
+(extend-type Object
+  Search
+  (yield [this]
+    (first this))
+  (step [this]
+    (next this))
+  (min-yield [this] empty-s)
+  (restrict [this ss] this))
 
 ;; =============================================================================
 ;; Syntax
 
-(defn succeed
-  "A goal that always succeeds."
-  [a] a)
+(defmacro goal {:arglists '([name? ss-binding yield-expr? stepexpr])} 
+  ([& args]
+    (let [[name [ss] & exprs] (if (symbol? (first args)) 
+                          args
+                          (cons (gensym "goal") args))
+          [yield-expr stepexpr] (if (next exprs)
+                                   [nil (first exprs)]
+                                   exprs)]
+      `((fn goal# [~ss]
+          (reify Search
+            (yield [~name] ~yield-expr)
+            (step [~name] ~stepexpr)
+            (min-yield [_#] ~ss)
+            (restrict [_# ss#] (goal# ss#))))
+         empty-s))))
 
-(defn fail
+(def succeed
+  "A goal that always succeeds."
+  (goal succeed [ss] ss succeed))
+
+(def fail
   "A goal that always fails."
-  [a] nil)
+  nil)
 
 (def s# succeed)
 
 (def u# fail)
 
+;; is this really better than the restrict-oblivious fn closure below?
 (defmacro ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  `(fn [a#]
-     (if-let [b# (unify a# ~u ~v)]
-       b# nil)))
+  `(goal [ss#] (unify ss# ~u ~v) nil))
 
-(defn- bind-conde-clause [a]
-  (fn [g-rest]
-    `(bind* ~a ~@g-rest)))
+#_(defmacro ==
+  "A goal that attempts to unify terms u and v."
+  [u v]
+  `(fn [] (unify empty-s ~u ~v)))
 
-(defn- bind-conde-clauses [a clauses]
-  (map (bind-conde-clause a) clauses))
+(defn- calltree [items op]
+  (reduce #(list op %1 %2 `empty-s) (reverse items)))
 
 (defmacro conde
   "Logical disjunction of the clauses. The first goal in
   a clause is considered the head of that clause. Interleaves the
   execution of the clauses."
   [& clauses]
-  (let [a (gensym "a")]
-    `(fn [~a]
-       (-inc
-        (mplus* ~@(bind-conde-clauses a clauses))))))
+  (let [clauses (map #(calltree % `join) clauses)
+        clauses (calltree clauses `plus)]
+    `(fn [] ~clauses)))
 
 (defn- lvar-bind [sym]
-  ((juxt identity
-         (fn [s] `(lvar '~s))) sym))
+  [sym `(lvar '~sym)])
 
 (defn- lvar-binds [syms]
   (mapcat lvar-bind syms))
@@ -854,23 +923,25 @@
   "Creates fresh variables. Goals occuring within form a logical 
   conjunction."
   [[& lvars] & goals]
-  `(fn [a#]
-     (-inc
-      (let [~@(lvar-binds lvars)]
-        (bind* a# ~@goals)))))
+  (if (seq goals)
+    `(fn []
+       (let [~@(lvar-binds lvars)]
+         ~(calltree goals `join)))
+    `succeed))
 
-(defn take* [x]
-  (lazy-seq
-    (loop [^Choice x x]
-      (when x
-        (if (choice? x)
-          (cons (.a x) (take* (.f x)))
-          (recur (step x)))))))
+(defn ss-seq 
+  "Returns a lazy sequence of the substitutions yielded by a." [a]
+  (lazy-seq ((fn ss-seq* [a]
+               (when a
+                 (if-let [ss (yield a)]
+                   (cons ss (lazy-seq (ss-seq* (step a))))
+                   (recur (step a))))) 
+              a)))
 
 (defmacro solve [& [n [x] & goals]]
   `(let [~@(lvar-bind x)
-         ss# (take* (bind empty-s (all ~@goals)))
-         xs# (map (fn [a#] (-reify a# ~x)) ss#)]
+         sss# (ss-seq (all ~@goals))
+         xs# (map (fn [ss#] (-reify ss# ~x)) sss#)]
      (if ~n
        (take ~n xs#)
        xs#)))
@@ -908,8 +979,7 @@
 
 (defmacro all
   "Like fresh but does does not create logic variables."
-  ([] `clojure.core.logic/s#)
-  ([& goals] `(fn [a#] (bind* a# ~@goals))))
+  [& goals] `(fresh [] ~@goals))
 
 ;; =============================================================================
 ;; Debugging
@@ -1079,80 +1149,35 @@
 
 ;; TODO : conda and condu should probably understanding logging
 
-(defprotocol IIfA
-  (ifa [b gs c]))
+(defn ifa [q then else]
+  (if q
+    (goal [s]
+      (if-let [qs (yield q)]
+        (plus (narrow then qs) (join (step q) then s) s)
+        (ifa (step q) (narrow then s) (narrow else s))))
+    else))
 
-(defprotocol IIfU
-  (ifu [b gs c]))
+(defn ifu [q then else]
+  (if q
+    (goal [s]
+      (if-let [qs (yield q)]
+        (narrow then qs)
+        (ifu (step q) (narrow then s) (narrow else s))))
+    else))
 
 ;; TODO : if -> when
 
 (defmacro ifa*
   ([])
   ([[e & gs] & grest]
-     `(ifa ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifa* ~@grest))
-              nil))))
+     `(ifa ~e (bind* ~@gs)
+           `(ifa* ~@grest))))
 
 (defmacro ifu*
   ([])
   ([[e & gs] & grest]
-     `(ifu ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifu* ~@grest))
-              nil))))
-
-(extend-protocol IIfA
-  nil
-  (ifa [b gs c]
-       (when c
-         (force c))))
-
-(extend-protocol IIfU
-  nil
-  (ifu [b gs c]
-       (when c
-         (force c))))
-
-(extend-type Substitutions
-  IIfA
-  (ifa [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type Substitutions
-  IIfU
-  (ifu [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type clojure.lang.Fn
-  IIfA
-  (ifa [b gs c]
-       (-inc (ifa (step b) gs c))))
-
-(extend-type clojure.lang.Fn
-  IIfU
-  (ifu [b gs c]
-       (-inc (ifu (step b) gs c))))
-
-(extend-protocol IIfA
-  Choice
-  (ifa [b gs c]
-       (reduce bind b gs)))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-(extend-protocol IIfU
-  Choice
-  (ifu [b gs c]
-       (reduce bind (.a ^Choice b) gs)))
+     `(ifu ~e (bind* ~@gs)
+           `(ifu* ~@grest))))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -1428,10 +1453,12 @@
 ;; =============================================================================
 ;; Rel
 
-(defn to-stream [aseq]
-  (when (seq aseq)
-    (choice (first aseq)
-            (fn [] (to-stream (next aseq))))))
+(extend-type Object
+  Search
+  (yield [this] (first this))
+  (step [this] (rest this))
+  ; TODO step this ss
+  (min-yield [this] nil))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -1495,7 +1522,7 @@
 
 ;; TODO: consider moving the set/indexes inside Rel, perf implications?
 
-(defmacro RelHelper [arity]
+#_(defmacro RelHelper [arity]
   (let [r (range 1 (+ arity 2))
         fs (map f-sym r)
         mfs (map #(with-meta % {:volatile-mutable true :tag clojure.lang.IFn})
@@ -1516,7 +1543,7 @@
            ~'meta)
          clojure.lang.IFn
          ~@(map create-sig r)
-         (~'applyTo [~'this ~'arglist]
+         (~'applyTo [~'tfhis ~'arglist]
             (~'apply-to-helper ~'this ~'arglist))
          ~'IRel
          (~'setfn [~'_ ~'arity ~'f]
@@ -1532,7 +1559,7 @@
          [~'name ~'& ~'rest]
          (defrel-helper ~'name ~arity ~'rest)))))
 
-(RelHelper 20)
+#_(RelHelper 20)
 
 (defn- index-sym [name arity o]
   (->sym name "_" arity "-" o "-index"))
@@ -1577,7 +1604,7 @@
 
 ;; TODO: Should probably happen in a transaction
 
-(defn facts
+#_(defn facts
   "Define a series of facts. Takes a vector of vectors where each vector
    represents a fact tuple, all with the same number of elements."
   ([rel [f :as tuples]] (facts rel (count f) tuples))
@@ -1596,7 +1623,7 @@
                       (fn [i]
                         (apply merge-with set/union i indexed-tuples))))))))))
 
-(defn fact
+#_(defn fact
   "Add a fact to a relation defined with defrel."
   [rel & tuple]
   (facts rel [(vec tuple)]))
@@ -1631,7 +1658,7 @@
 (defn w? [x]
   (vector? x))
 
-(defn w-check [w sk fk]
+#_(defn w-check [w sk fk]
   (loop [w w a []]
     (cond
      (nil? w) (fk)
@@ -1804,7 +1831,7 @@
       (let [u (remove-constraints u)
             v (if (lvar? v) (add-constraints v uc) v)]
         (make-s (-> (.s s) (dissoc u) (assoc u v))
-                (cons (pair u v) (.l s))
+                (conj (.l s) (pair u v))
                 constraint-verify
                 (.cs s))))))
 
