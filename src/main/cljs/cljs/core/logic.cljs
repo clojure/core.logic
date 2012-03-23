@@ -735,18 +735,18 @@
 (defn nilo
   "A relation where a is nil"
   [a]
-  (== nil a))
+  (m/== nil a))
 
 (defn emptyo
   "A relation where a is the empty list"
   [a]
-  (== '() a))
+  (m/== '() a))
 
 (defn conso
   "A relation where l is a collection, such that a is the first of l 
   and d is the rest of l"
   [a d l]
-  (== (lcons a d) l))
+  (m/== (lcons a d) l))
 
 (defn firsto
   "A relation where l is a collection, such that a is the first of l"
@@ -758,7 +758,7 @@
   "A relation where l is a collection, such that d is the rest of l"
   [l d]
   (fresh [a]
-    (== (lcons a d) l)))
+    (m/== (lcons a d) l)))
 
 ;; ==============================================================================
 ;; More convenient goals
