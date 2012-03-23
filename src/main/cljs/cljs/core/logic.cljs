@@ -560,7 +560,7 @@
       v))
 
   Vector
-  (walk-term [v s]
+  (-walk-term [v s]
     (loop [v v r []]
       (if (seq v)
         (recur (next v) (conj r (-walk* s (first v))))
