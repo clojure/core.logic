@@ -587,7 +587,7 @@
 
   default
   (-occurs-check-term [v x s]
-    (if (satisfies? ISeqable v)
+    (if (satisfies? ICollection v)
       (loop [v v x x s s]
         (if (seq v)
           (or (-occurs-check s x (first v))
