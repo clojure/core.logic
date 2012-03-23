@@ -140,7 +140,7 @@
   
   (-walk [this v]
     (cond
-     (var? v) (let [rhs (assq v s)]
+     (lvar? v) (let [rhs (assq v s)]
                 (if-let [vp (-walk this rhs)]
                   vp
                   v))
