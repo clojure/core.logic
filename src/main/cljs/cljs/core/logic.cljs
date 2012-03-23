@@ -1,8 +1,7 @@
 (ns cljs.core.logic
   (:refer-clojure :exclude [==])
-  (:use-macros [clj.core.logic.macros :only []])
-  (:require [goog.string :as gstring]
-            [goog.object :as gobject])
+  (:use-macros [cljs.core.logic.macros :only
+                [defne defna defnu fresh ==]])
   (:require [clojure.set :as set]))
 
 (def ^{:dynamic true} *occurs-check* true)
