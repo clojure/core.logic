@@ -598,7 +598,7 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(extend-type Object
+(extend-type default
   ITake
   (-take* [this] this))
 
@@ -636,7 +636,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Unit
 
-(extend-type Object
+(extend-type default
   IMPlus
   (-mplus [this f]
     (Choice. this f)))
@@ -644,7 +644,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(extend-type clojure.lang.Fn
+(extend-type function
   IBind
   (-bind [this g]
     (-inc (-bind (this) g)))
