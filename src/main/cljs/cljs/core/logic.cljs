@@ -108,7 +108,7 @@
 (declare lcons)
 
 (defn assq
-  "Similar to Scheme assq, xs must be a ISeq of Pairs"
+  "Similar to Scheme assq, xs must be a List of Pairs"
   [k xs]
   (let [xs (-seq xs)]
    (loop [xs xs]
@@ -378,8 +378,8 @@
 
   default
   (-unify-terms [u v s]
-    (if (satisfies? ISeq u)
-      (-unify-with-seq v (seq u) s)
+    (if (sequential? u)
+      (-unify-with-seq v u s)
       (-unify-with-object v u s)))
 
   ObjMap
@@ -435,7 +435,7 @@
 
   default
   (-unify-with-lseq [v u s]
-    (if (satisfies? ISeq v)
+    (if (sequential? v)
       (loop [u u v v s s]
         (if (seq v)
           (if (lcons? u)
@@ -568,7 +568,7 @@
 
   default
   (-walk-term [v s]
-    (if (satisfies? ISeq v)
+    (if (sequential? v)
       (map #(-walk* s %) v)
       v))
 
@@ -600,7 +600,7 @@
 
   default
   (-occurs-check-term [v x s]
-    (if (satisfies? ISeq v)
+    (if (sequential? v)
       (loop [v v x x s s]
         (if (seq v)
           (or (-occurs-check s x (first v))
