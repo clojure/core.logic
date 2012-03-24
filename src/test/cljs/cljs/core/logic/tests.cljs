@@ -263,4 +263,34 @@
 (assert (= (-unify empty-s [] #{}) false))
 (assert (= (-unify empty-s '() #{}) false))
 
+;; -----------------------------------------------------------------------------
+;; unify with map
+
+(assert (= (-unify empty-s {} 1) false))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x {})]
+  (assert (= (-unify empty-s {} x) os)))
+
+(let [x (lvar 'x)]
+  (assert (= (-unify empty-s {} (lcons 1 x)) false)))
+
+(assert (= (-unify empty-s {} '()) false))
+(assert (= (-unify empty-s {} {}) empty-s))
+(assert (= (-unify empty-s {1 2 3 4} {1 2 3 4}) empty-s))
+(assert (= (-unify empty-s {1 2} {1 2 3 4}) false))
+
+(let [x (lvar 'x)
+      m1 {1 2 3 4}
+      m2 {1 2 3 x}
+      os (-ext-no-check empty-s x 4)]
+  (assert (= (-unify empty-s m1 m2) os)))
+
+(let [x (lvar 'x)
+      m1 {1 2 3 4}
+      m2 {1 4 3 x}]
+  (assert (= (-unify empty-s m1 m2) false)))
+
+(assert (= (-unify empty-s {} #{}) false))
+
 (println "ok")

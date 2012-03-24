@@ -495,11 +495,11 @@
 
   ObjMap
   (-unify-with-map [v u s]
-    (-unify-with-map* v u s))
+    (unify-with-map* v u s))
 
   HashMap
   (-unify-with-map [v u s]
-    (-unify-with-map* v u s)))
+    (unify-with-map* v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentSet with X
