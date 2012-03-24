@@ -60,6 +60,10 @@
   (-rhs [this]))
 
 (deftype Pair [lhs rhs]
+  IEquiv
+  (-equiv [this other]
+    (and (= lhs (.-lhs other))
+         (= rhs (.-rhs other))))
   ICounted
   (-count [_] 2)
   IIndexed
@@ -122,6 +126,10 @@
     (or (identical? this o)
         (and (instance? Substitutions o)
              (= s (.-s o)))))
+
+  IPrintable
+  (-pr-seq [this opts]
+    (-pr-seq s opts))
 
   ISubstitutions
   (-length [this] (count l))
@@ -194,6 +202,9 @@
 ;; Logic Variables
 
 (deftype LVar [name meta]
+  Object
+  (toString [this]
+    (pr-str this))
   IMeta
   (-meta [this]
     meta)
