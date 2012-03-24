@@ -329,7 +329,7 @@
         (cond
          (lvar? v) (-unify s v u)
          (and (lcons? u) (lcons? v))
-           (if-let [s (unify s (-lfirst u) (-lfirst v))]
+           (if-let [s (-unify s (-lfirst u) (-lfirst v))]
              (recur (-lnext u) (-lnext v) s)
              false)
          :else (-unify s u v)))))
@@ -479,7 +479,7 @@
               vf (get v kf ::not-found)]
           (if (= vf ::not-found)
             false
-            (if-let [s (unify s (get u kf) vf)]
+            (if-let [s (-unify s (get u kf) vf)]
               (recur (next ks) (dissoc u kf) (dissoc v kf) s)
               false)))
         (if (seq v)
@@ -531,8 +531,8 @@
                   (if (lvar? vf)
                     (recur (disj v vf) (conj vlvars vf) vmissing)
                     (recur (disj v vf) vlvars (conj vmissing vf))))
-                (unify s (concat ulvars umissing)
-                       (concat vmissing vlvars))))
+                (-unify s (concat ulvars umissing)
+                        (concat vmissing vlvars))))
             false)
           s)))))
 
