@@ -111,3 +111,98 @@
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x #{1 2 3})]
   (assert (= (-unify empty-s x #{1 2 3}) os)))
+
+;; -----------------------------------------------------------------------------
+;; lcons
+
+(let [x (lvar 'x)]
+  (assert (= (-unify empty-s (lcons 1 x) 1) false)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      l (lcons 1 y)
+      os (-ext-no-check empty-s x l)]
+  (assert (= (-unify empty-s l x) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc1 (lcons 1 x)
+      lc2 (lcons 1 y)
+      os (-ext-no-check empty-s x y)]
+  (assert (= (-unify empty-s lc1 lc2) os)))
+
+;; NOTE: sketchy tests that makes ordering assumptions about representation
+;; - David
+
+;; START HERE
+
+(let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        lc1 (lcons 1 (lcons 2 x))
+        lc2 (lcons 1 (lcons z y))
+        os (-> empty-s
+               (-ext-no-check z 2)
+               (-ext-no-check x y))]
+    (assert (= (-unify empty-s lc1 lc2) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc1 (lcons 1 (lcons 2 x))
+      lc2 (lcons 1 (lcons 2 (lcons 3 y)))
+      os (-ext-no-check empty-s x (lcons 3 y))]
+  (assert (= (-unify empty-s lc1 lc2) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc1 (lcons 1 (lcons 2 x))
+      lc2 (lcons 1 (lcons 3 (lcons 4 y)))]
+  (assert (= (-unify empty-s lc1 lc2) false)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc2 (lcons 1 (lcons 2 x))
+      lc1 (lcons 1 (lcons 3 (lcons 4 y)))]
+  (assert (= (-unify empty-s lc1 lc2) false)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc1 (lcons 1 (lcons 2 x))
+      lc2 (lcons 1 (lcons 2 y))
+      os (-ext-no-check empty-s x y)]
+  (assert (= (-unify empty-s lc1 lc2) os)))
+
+(let [x (lvar 'x)
+      lc1 (lcons 1 (lcons 2 x))
+      l1 '(1 2 3 4)
+      os (-ext-no-check empty-s x '(3 4))]
+  (assert (= (-unify empty-s lc1 l1) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      lc1 (lcons 1 (lcons y (lcons 3 x)))
+      l1 '(1 2 3 4)
+      os (-> empty-s
+             (-ext-no-check y 2)
+             (-ext-no-check x '(4)))]
+  (assert (= (-unify empty-s lc1 l1) os)))
+
+(let [x (lvar 'x)
+      lc1 (lcons 1 (lcons 2 (lcons 3 x)))
+      l1 '(1 2 3)
+      os (-ext-no-check empty-s x '())]
+  (assert (= (-unify empty-s lc1 l1) os)))
+
+(let [x (lvar 'x)
+      lc1 (lcons 1 (lcons 3 x))
+      l1 '(1 2 3 4)]
+  (assert (= (-unify empty-s lc1 l1) false)))
+
+(let [x (lvar 'x)
+      lc1 (lcons 1 (lcons 2 x))
+      l1 '(1 3 4 5)]
+  (assert (= (-unify empty-s lc1 l1) false)))
+
+(assert (= (-unify empty-s (lcons 1 (lvar 'x)) {}) false))
+
+(assert (= (-unify empty-s (lcons 1 (lvar 'x)) #{}) false))
