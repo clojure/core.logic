@@ -113,7 +113,7 @@
   (assert (= (-unify empty-s x #{1 2 3}) os)))
 
 ;; -----------------------------------------------------------------------------
-;; lcons
+;; unify with lcons
 
 (let [x (lvar 'x)]
   (assert (= (-unify empty-s (lcons 1 x) 1) false)))
@@ -204,5 +204,63 @@
   (assert (= (-unify empty-s lc1 l1) false)))
 
 (assert (= (-unify empty-s (lcons 1 (lvar 'x)) {}) false))
-
 (assert (= (-unify empty-s (lcons 1 (lvar 'x)) #{}) false))
+
+;; -----------------------------------------------------------------------------
+;; unify with sequential
+
+(assert (= (-unify empty-s '() 1) false))
+(assert (= (-unify empty-s [] 1) false))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x [])]
+  (assert (= (-unify empty-s [] x) os)))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x [])]
+  (assert (= (-unify empty-s [] x) os)))
+
+(let [x (lvar 'x)
+      lc1 (lcons 1 (lcons 2 x))
+      l1 '(1 2 3 4)
+      os (-ext-no-check empty-s x '(3 4))]
+  (assert (= (-unify empty-s l1 lc1) os)))
+
+(assert (= (-unify empty-s [1 2 3] [1 2 3]) empty-s))
+(assert (= (-unify empty-s '(1 2 3) [1 2 3]) empty-s))
+(assert (= (-unify empty-s '(1 2 3) '(1 2 3)) empty-s))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x 2)]
+  (assert (= (-unify empty-s `(1 ~x 3) `(1 2 3)) os)))
+
+(assert (= (-unify empty-s [1 2] [1 2 3]) false))
+(assert (= (-unify empty-s '(1 2) [1 2 3]) false))
+(assert (= (-unify empty-s [1 2 3] [3 2 1]) false))
+(assert (= (-unify empty-s '() '()) empty-s))
+(assert (= (-unify empty-s '() '(1)) false))
+(assert (= (-unify empty-s '(1) '()) false))
+(assert (= (-unify empty-s [[1 2]] [[1 2]]) empty-s))
+(assert (= (-unify empty-s [[1 2]] [[2 1]]) false))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x 1)]
+  (assert (= (-unify empty-s [[x 2]] [[1 2]]) os))) ;; false
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x [1 2])]
+  (assert (= (-unify empty-s [x] [[1 2]]) os)))
+
+(let [x (lvar 'x) y (lvar 'y)
+      u (lvar 'u) v (lvar 'v)
+      os (-> empty-s
+             (-ext-no-check y 'a)
+             (-ext-no-check x 'b))]
+  (assert (= (-unify empty-s ['a x] [y 'b]) os)))
+
+(assert (= (-unify empty-s [] {}) false))
+(assert (= (-unify empty-s '() {}) false))
+(assert (= (-unify empty-s [] #{}) false))
+(assert (= (-unify empty-s '() #{}) false))
+
+(println "ok")
