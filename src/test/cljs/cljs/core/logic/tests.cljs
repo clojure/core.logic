@@ -3,7 +3,8 @@
   (:use-macros
    [clj.core.logic.macros
     :only [run run* == conde conda condu fresh defne matche all]])
-  (:require-macros [clj.core.logic.macros :as m])
+  (:require-macros [clj.core.logic.macros :as m]
+                   [clojure.tools.macro :as mu])
   (:use
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
@@ -808,21 +809,22 @@
     [(righto y x l)]))
 
 (defn zebrao [hs]
-  (all
-   (m/== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)
-   (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])
-   (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)
-   (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)
-   (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)
-   (membero [(lvar) 'kools (lvar) (lvar) 'yellow] hs)
-   (membero ['spaniard (lvar) (lvar) 'dog (lvar)] hs)
-   (membero [(lvar) (lvar) 'coffee (lvar) 'green] hs)
-   (membero ['ukrainian (lvar) 'tea (lvar) (lvar)] hs)
-   (membero [(lvar) 'lucky-strikes 'oj (lvar) (lvar)] hs)
-   (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)
-   (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)
-   (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)
-   (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
+  (mu/symbol-macrolet [_ (lvar)]
+   (all
+    (m/== [_ _ [_ _ 'milk _ _] _ _] hs)
+    (firsto hs ['norwegian _ _ _ _])
+    (nexto ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
+    (righto [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
+    (membero ['englishman _ _ _ 'red] hs)
+    (membero [_ 'kools _ _ 'yellow] hs)
+    (membero ['spaniard _ _ 'dog _] hs)
+    (membero [_ _ 'coffee _ 'green] hs)
+    (membero ['ukrainian _ 'tea _ _] hs)
+    (membero [_ 'lucky-strikes 'oj _ _] hs)
+    (membero ['japanese 'parliaments _ _ _] hs)
+    (membero [_ 'oldgolds _ 'snails _] hs)
+    (nexto [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
+    (nexto [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
 
 (println (pr-str (run 1 [q] (zebrao q))))
 (time (run 1 [q] (zebrao q)))
