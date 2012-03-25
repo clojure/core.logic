@@ -5,10 +5,8 @@
   :dependencies [[org.clojure/clojure "1.4.0-beta3"]
                  [org.clojure/tools.macro "0.1.1"]]
   :dev-dependencies [[lein-swank "1.4.3"]
-                     [lein-cljsbuild "0.1.2"]]
+                     [lein-cljsbuild "0.1.3"]]
   :cljsbuild {:builds [{:source-path "src/main/cljs"
-                        :optimizations :advanced
                         :compiler {:output-to "main.js"}}
                        {:source-path "src/test/cljs"
-                        :optimizations :advanced
                         :compiler {:output-to "tests.js"}}]})
