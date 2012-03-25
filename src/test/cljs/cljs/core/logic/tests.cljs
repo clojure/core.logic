@@ -1,10 +1,13 @@
 (ns cljs.core.logic.tests
+  (:refer-clojure :exclude [==])
   (:use-macros
    [clj.core.logic.macros
     :only [run run* == conde fresh defne matche]])
+  (:require-macros [clj.core.logic.macros :as m])
   (:use
    [cljs.core.logic
-    :only [pair lvar lcons -unify -ext-no-check -walk empty-s to-s]]))
+    :only [pair lvar lcons -unify -ext-no-check -walk -walk*
+           -reify-lvar-name empty-s to-s]]))
 
 (set! *print-fn* js/print)
 
@@ -349,17 +352,49 @@
 ;; =============================================================================
 ;; walk
 
-(assert
- (= (let [x (lvar 'x)
-          y (lvar 'y)
-          s (to-s [[x 5] [y x]])]
-      (-walk s y))
-    5))
+(assert (= (let [x (lvar 'x)
+                 y (lvar 'y)
+                 s (to-s [[x 5] [y x]])]
+             (-walk s y))
+           5))
 
-(assert
- (= (let [[x y z c b a :as s] (map lvar '[x y z c b a])
-          s (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
-      (-walk s a))
-    5))
+(assert (= (let [[x y z c b a :as s] (map lvar '[x y z c b a])
+                 s (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
+             (-walk s a))
+           5))
+
+;; =============================================================================
+;; reify
+
+(assert (= (let [x (lvar 'x)
+                 y (lvar 'y)]
+             (-reify-lvar-name (to-s [[x 5] [y x]])))
+           '_.2))
+
+;; =============================================================================
+;; walk*
+
+(assert (= (let [x (lvar 'x)
+                 y (lvar 'y)]
+             (-walk* (to-s [[x 5] [y x]]) `(~x ~y)))
+           '(5 5)))
+
+;; =============================================================================
+;; run and unify
+
+(assert (= (run* [q]
+             (m/== true q))
+           '(true)))
+
+(assert (= (run* [q]
+             (fresh [x y]
+               (m/== [x y] [1 5])
+               (m/== [x y] q)))
+           [[1 5]]))
+
+(assert (= (run* [q]
+             (fresh [x y]
+               (m/== [x y] q)))
+           '[[_.0 _.1]]))
 
 (println "ok")
