@@ -9,7 +9,7 @@
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
            -reify-lvar-name empty-s to-s succeed fail s# u# conso
-           nilo firsto resto emptyo appendo membero]]))
+           nilo firsto resto emptyo appendo membero *occurs-check*]]))
 
 (set! *print-fn* js/print)
 
@@ -827,6 +827,7 @@
     (nexto [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
 
 (println (pr-str (run 1 [q] (zebrao q))))
-(time (run 1 [q] (zebrao q)))
+(binding [*occurs-check* false]
+ (time (run 1 [q] (zebrao q))))
 
 (println "ok")
