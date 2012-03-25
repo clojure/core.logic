@@ -1,3 +1,10 @@
+From 0.6.8 to 0.6.9
+====
+
+Enhancements
+----
+* Initial support for ClojureScriopt
+
 From 0.6.7 to 0.6.8
 ====
 
