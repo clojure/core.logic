@@ -709,4 +709,90 @@
                [(m/== 'spaghetti x)]))
            '(spaghetti)))
 
+;; -----------------------------------------------------------------------------
+;; condu (committed-choice)
+
+(comment
+  (defn onceo [g]
+    (condu
+      (g s#)))
+
+  (assert (= (run* [x]
+               (onceo (teacupo x)))
+             '(tea)))
+
+  (assert (= (run* [r]
+               (conde
+                 [(teacupo r) s#]
+                 [(m/== false r) s#]))
+             '(false tea cup)))
+
+  (assert (= (run* [r]
+               (conda
+                 [(teacupo r) s#]
+                 [(m/== false r) s#]))
+             '(tea cup)))
+  )
+
+;; -----------------------------------------------------------------------------
+;; nil in collection
+
+(comment
+  (assert (= (run* [q]
+               (m/== q [nil]))
+             '([nil])))
+
+ (assert (= (run* [q]
+              (m/== q [1 nil]))
+            '([1 nil])))
+
+ (assert (= (run* [q]
+              (m/== q [nil 1]))
+            '([nil 1])))
+
+ (assert (= (run* [q]
+              (m/== q '(nil)))
+            '((nil))))
+
+ (assert (= (run* [q]
+              (m/== q {:foo nil}))
+            '({:foo nil})))
+
+ (assert (= (run* [q]
+              (m/== q {nil :foo}))
+            '({nil :foo})))
+ )
+
+;; -----------------------------------------------------------------------------
+;; Occurs Check
+
+(assert (= (run* [q]
+             (m/== q [q]))
+           ()))
+
+;; -----------------------------------------------------------------------------
+;; Unifications that should fail
+
+(assert (= (run* [p]
+             (fresh [a b]
+               (m/== b ())
+               (m/== '(0 1) (lcons a b))
+               (m/== p [a b])))
+           ()))
+
+(assert (= (run* [p]
+             (fresh [a b]
+               (m/== b '(1))
+               (m/== '(0) (lcons a b))
+               (m/== p [a b])))
+           ()))
+
+(assert (= (run* [p]
+             (fresh [a b c d]
+               (m/== () b)
+               (m/== '(1) d)
+               (m/== (lcons a b) (lcons c d))
+               (m/== p [a b c d])))
+           ()))
+
 (println "ok")
