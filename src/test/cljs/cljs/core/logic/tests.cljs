@@ -2,12 +2,13 @@
   (:refer-clojure :exclude [==])
   (:use-macros
    [clj.core.logic.macros
-    :only [run run* == conde fresh defne matche]])
+    :only [run run* == conde fresh defne matche all]])
   (:require-macros [clj.core.logic.macros :as m])
   (:use
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
-           -reify-lvar-name empty-s to-s]]))
+           -reify-lvar-name empty-s to-s succeed fail s# u# conso
+           nilo firsto resto emptyo appendo membero]]))
 
 (set! *print-fn* js/print)
 
@@ -37,7 +38,7 @@
   (assert (= (-unify empty-s nil {}) false)))
 
 (let [x (lvar 'x)]
-   (assert (= (-unify empty-s nil #{}) false)))
+  (assert (= (-unify empty-s nil #{}) false)))
 
 ;; -----------------------------------------------------------------------------
 ;; unify with object
@@ -140,14 +141,14 @@
 ;; START HERE
 
 (let [x (lvar 'x)
-        y (lvar 'y)
-        z (lvar 'z)
-        lc1 (lcons 1 (lcons 2 x))
-        lc2 (lcons 1 (lcons z y))
-        os (-> empty-s
-               (-ext-no-check z 2)
-               (-ext-no-check x y))]
-    (assert (= (-unify empty-s lc1 lc2) os)))
+      y (lvar 'y)
+      z (lvar 'z)
+      lc1 (lcons 1 (lcons 2 x))
+      lc2 (lcons 1 (lcons z y))
+      os (-> empty-s
+             (-ext-no-check z 2)
+             (-ext-no-check x y))]
+  (assert (= (-unify empty-s lc1 lc2) os)))
 
 (let [x (lvar 'x)
       y (lvar 'y)
@@ -344,10 +345,10 @@
                (= (set (map #(.-rhs %) s)) #{1 2 4 5}))))
 
 (let [a (lvar 'a)
-        b (lvar 'b)
-        c (lvar 'c)
-        d (lvar 'd)]
-    (assert (= (-unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false)))
+      b (lvar 'b)
+      c (lvar 'c)
+      d (lvar 'd)]
+  (assert (= (-unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false)))
 
 ;; =============================================================================
 ;; walk
@@ -396,5 +397,95 @@
              (fresh [x y]
                (m/== [x y] q)))
            '[[_.0 _.1]]))
+
+;; =============================================================================
+;; fail
+
+(assert (= (run* [q]
+             fail
+             (m/== true q))
+           []))
+
+;; =============================================================================
+;; Basic
+
+(assert (= (run* [q]
+             (all
+              (m/== 1 1)
+              (m/== q true)))
+           '(true)))
+
+;; =============================================================================
+;; TRS
+
+(defn pairo [p]
+  (fresh [a d]
+    (m/== (lcons a d) p)))
+
+(defn twino [p]
+  (fresh [x]
+    (conso x x p)))
+
+(defn listo [l]
+  (conde
+    [(emptyo l) s#]
+    [(pairo l)
+     (fresh [d]
+       (resto l d)
+       (listo d))]))
+
+(defn flatteno [s out]
+  (conde
+    [(emptyo s) (m/== '() out)]
+    [(pairo s)
+     (fresh [a d res-a res-d]
+       (conso a d s)
+       (flatteno a res-a)
+       (flatteno d res-d)
+       (appendo res-a res-d out))]
+    [(conso s '() out)]))
+
+(defn rembero [x l out]
+  (conde
+    [(m/== '() l) (m/== '() out)]
+    [(fresh [a d]
+       (conso a d l)
+       (m/== x a)
+       (m/== d out))]
+    [(fresh [a d res]
+       (conso a d l)
+       (conso a res out)
+       (rembero x d res))]))
+
+;; =============================================================================
+;; conde
+
+(assert (= (run* [x]
+             (conde
+               [(m/== x 'olive) succeed]
+               [succeed succeed]
+               [(m/== x 'oil) succeed]))
+           '[olive _.0 oil]))
+
+(assert (= (run* [r]
+             (fresh [x y]
+               (conde
+                 [(m/== 'split x) (m/== 'pea y)]
+                 [(m/== 'navy x) (m/== 'bean y)])
+               (m/== (cons x (cons y ())) r)))
+           '[(split pea) (navy bean)]))
+
+(defn teacupo [x]
+  (conde
+    [(m/== 'tea x) s#]
+    [(m/== 'cup x) s#]))
+
+(assert (= (run* [r]
+             (fresh [x y]
+               (conde
+                 [(teacupo x) (m/== true y) s#]
+                 [(m/== false x) (m/== true y)])
+               (m/== (cons x (cons y ())) r)))
+           '((false true) (tea true) (cup true))))
 
 (println "ok")

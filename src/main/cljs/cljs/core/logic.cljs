@@ -107,13 +107,15 @@
 (declare pair)
 (declare lcons)
 
+(def not-found (js-obj))
+
 (defn assq
   "Similar to Scheme assq, xs must be a List of Pairs"
   [k xs]
   (let [xs (-seq xs)]
    (loop [xs xs]
      (if (identical? xs nil)
-       nil
+       not-found
        (let [x (-first xs)
              lhs (.-lhs x)]
          (if (identical? k lhs)
@@ -148,10 +150,9 @@
   
   (-walk [this v]
     (cond
-     (lvar? v) (let [rhs (assq v s)]
-                (if-let [vp (-walk this rhs)]
-                  vp
-                  v))
+     (lvar? v) (let [rhs (assq v s)
+                     vp (-walk this rhs)]
+                (if (identical? not-found vp) v vp))
      :else v))
   
   (-walk* [this v]
