@@ -205,6 +205,9 @@
   Object
   (toString [this]
     (pr-str this))
+  IHash
+  (-hash []
+    (-hash name))
   IMeta
   (-meta [this]
     meta)

@@ -293,4 +293,57 @@
 
 (assert (= (-unify empty-s {} #{}) false))
 
+;; -----------------------------------------------------------------------------
+;; unify with set
+
+(assert (= (-unify empty-s #{} 1) false))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x #{})]
+  (assert (= (-unify empty-s #{} x) os)))
+
+(let [x (lvar 'x)]
+  (assert (= (-unify empty-s #{} (lcons 1 x)) false)))
+
+(assert (= (-unify empty-s #{} '()) false))
+
+(assert (= (-unify empty-s #{} {}) false))
+
+(assert (= (-unify empty-s #{} #{}) empty-s))
+
+(assert (= (-unify empty-s #{} #{1}) false))
+
+(let [x (lvar 'x)
+      os (-ext-no-check empty-s x 1)]
+  (assert (= (-unify empty-s #{x} #{1}) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      os (-> empty-s
+             (-ext-no-check x 2)
+             (-ext-no-check y 1))]
+  (assert (= (-unify empty-s #{1 x} #{2 y}) os)))
+
+(let [x (lvar 'x)
+      y (lvar 'y)
+      os (-> empty-s
+             (-ext-no-check x 2)
+             (-ext-no-check y 1))]
+  (assert (= (-unify empty-s #{x 1} #{2 y}) os)))
+
+(let [a (lvar 'a)
+      b (lvar 'b)
+      c (lvar 'c)
+      d (lvar 'd)
+      s (.-s (-unify empty-s #{a b 3 4 5} #{1 2 3 c d}))]
+  (assert (and (= (count s) 4)
+               (= (set (map #(.-lhs %) s)) #{a b c d})
+               (= (set (map #(.-rhs %) s)) #{1 2 4 5}))))
+
+(let [a (lvar 'a)
+        b (lvar 'b)
+        c (lvar 'c)
+        d (lvar 'd)]
+    (assert (= (-unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false)))
+
 (println "ok")
