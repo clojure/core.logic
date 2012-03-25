@@ -198,6 +198,12 @@
 (defn subst? [x]
   (instance? Substitutions x))
 
+(defn to-s [v]
+  (let [s (reduce (fn [l [k v]]
+                    (cons (pair k v) l))
+                  () v)]
+    (make-s s)))
+
 ;; =============================================================================
 ;; Logic Variables
 

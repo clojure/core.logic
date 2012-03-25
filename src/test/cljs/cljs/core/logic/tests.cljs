@@ -4,7 +4,7 @@
     :only [run run* == conde fresh defne matche]])
   (:use
    [cljs.core.logic
-    :only [pair lvar lcons -unify -ext-no-check empty-s]]))
+    :only [pair lvar lcons -unify -ext-no-check -walk empty-s to-s]]))
 
 (set! *print-fn* js/print)
 
@@ -345,5 +345,21 @@
         c (lvar 'c)
         d (lvar 'd)]
     (assert (= (-unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false)))
+
+;; =============================================================================
+;; walk
+
+(assert
+ (= (let [x (lvar 'x)
+          y (lvar 'y)
+          s (to-s [[x 5] [y x]])]
+      (-walk s y))
+    5))
+
+(assert
+ (= (let [[x y z c b a :as s] (map lvar '[x y z c b a])
+          s (to-s [[x 5] [y x] [z y] [c z] [b c] [a b]])]
+      (-walk s a))
+    5))
 
 (println "ok")
