@@ -8,7 +8,7 @@
   "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
   The tail is improper if the last argument is a logic variable."
   ([f s] `(cljs.core.logic/lcons ~f ~s))
-  ([f s & rest] `(cljs.core.logic/lcons ~f (cljs.core.logic/llist ~s ~@rest))))
+  ([f s & rest] `(cljs.core.logic/lcons ~f (llist ~s ~@rest))))
 
 (defn bind-conde-clause [a]
   (fn [g-rest]
@@ -239,7 +239,7 @@
 
 (defn p->term [p]
   (cond
-   (= p '_) `(lvar)
+   (= p '_) `(cljs.core.logic/lvar)
    (lcons-p? p) (p->llist p)
    (and (coll? p)
         (not= (first p) 'quote)) (cond

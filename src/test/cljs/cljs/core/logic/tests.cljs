@@ -653,7 +653,7 @@
   (fresh []
     (conde
       [f2 (conde
-            [f2] 
+            [f2]
             [(m/== false false)])]
       [(m/== false false)])))
 
@@ -794,5 +794,37 @@
                (m/== (lcons a b) (lcons c d))
                (m/== p [a b c d])))
            ()))
+
+;; =============================================================================
+;; zebrao
+
+(defne righto [x y l]
+  ([_ _ [x y . r]])
+  ([_ _ [_ . r]] (righto x y r)))
+
+(defn nexto [x y l]
+  (conde
+    [(righto x y l)]
+    [(righto y x l)]))
+
+(defn zebrao [hs]
+  (all
+   (m/== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)
+   (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])
+   (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)
+   (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)
+   (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)
+   (membero [(lvar) 'kools (lvar) (lvar) 'yellow] hs)
+   (membero ['spaniard (lvar) (lvar) 'dog (lvar)] hs)
+   (membero [(lvar) (lvar) 'coffee (lvar) 'green] hs)
+   (membero ['ukrainian (lvar) 'tea (lvar) (lvar)] hs)
+   (membero [(lvar) 'lucky-strikes 'oj (lvar) (lvar)] hs)
+   (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)
+   (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)
+   (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)
+   (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
+
+(println (pr-str (run 1 [q] (zebrao q))))
+(time (run 1 [q] (zebrao q)))
 
 (println "ok")
