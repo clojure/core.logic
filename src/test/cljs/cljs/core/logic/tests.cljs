@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [==])
   (:use-macros
    [clj.core.logic.macros
-    :only [run run* == conde fresh defne matche all]])
+    :only [run run* == conde conda condu fresh defne matche all]])
   (:require-macros [clj.core.logic.macros :as m])
   (:use
    [cljs.core.logic
@@ -600,18 +600,113 @@
     [(m/== 3 x)]))
 
 (assert (= (run* [q]
-         (fresh [x y]
-           (digit-1 x)
-           (digit-1 y)
-           (m/== q [x y])))
-       '([0 0])))
+             (fresh [x y]
+               (digit-1 x)
+               (digit-1 y)
+               (m/== q [x y])))
+           '([0 0])))
 
 (assert (= (run* [q]
-         (fresh [x y]
-           (digit-4 x)
-           (digit-4 y)
-           (m/== q [x y])))
-       '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
-           [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3])))
+             (fresh [x y]
+               (digit-4 x)
+               (digit-4 y)
+               (m/== q [x y])))
+           '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
+               [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3])))
+
+;; -----------------------------------------------------------------------------
+;; anyo
+
+(defn anyo [q]
+  (conde
+    [q s#]
+    [(anyo q)]))
+
+(assert (= (run 1 [q]
+             (anyo s#)
+             (m/== true q))
+           (list true)))
+
+(assert (= (run 5 [q]
+             (anyo s#)
+             (m/== true q))
+           (list true true true true true)))
+
+;; -----------------------------------------------------------------------------
+;; divergence
+
+(def f1 (fresh [] f1))
+
+(assert (= (run 1 [q]
+             (conde
+               [f1]
+               [(m/== false false)]))
+           '(_.0)))
+
+(assert (= (run 1 [q]
+             (conde
+               [f1 (m/== false false)]
+               [(m/== false false)]))
+           '(_.0)))
+
+(def f2
+  (fresh []
+    (conde
+      [f2 (conde
+            [f2] 
+            [(m/== false false)])]
+      [(m/== false false)])))
+
+(assert (= (run 5 [q] f2)
+           '(_.0 _.0 _.0 _.0 _.0)))
+
+;; -----------------------------------------------------------------------------
+;; conda (soft-cut)
+
+(assert (= (run* [x]
+             (conda
+               [(m/== 'olive x) s#]
+               [(m/== 'oil x) s#]
+               [u#]))
+           '(olive)))
+
+(assert (= (run* [x]
+             (conda
+               [(m/== 'virgin x) u#]
+               [(m/== 'olive x) s#]
+               [(m/== 'oil x) s#]
+               [u#]))
+           '()))
+
+(assert (= (run* [x]
+             (fresh (x y)
+               (m/== 'split x)
+               (m/== 'pea y)
+               (conda
+                 [(m/== 'split x) (m/== x y)]
+                 [s#]))
+             (m/== true x))
+           '()))
+
+(assert (= (run* [x]
+             (fresh (x y)
+               (m/== 'split x)
+               (m/== 'pea y)
+               (conda
+                 [(m/== x y) (m/== 'split x)]
+                 [s#]))
+             (m/== true x))
+           '(true)))
+
+(defn not-pastao [x]
+  (conda
+    [(m/== 'pasta x) u#]
+    [s#]))
+
+(assert (= (run* [x]
+             (conda
+               [(not-pastao x)]
+               [(m/== 'spaghetti x)]))
+           '(spaghetti)))
 
 (println "ok")

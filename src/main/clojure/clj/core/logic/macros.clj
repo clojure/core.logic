@@ -182,18 +182,18 @@
 (defmacro ifa*
   ([])
   ([[e & gs] & grest]
-     `(ifa ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifa* ~@grest))
-              nil))))
+     `(cljs.core.logic/-ifa ~e [~@gs]
+        ~(if (seq grest)
+           `(delay (ifa* ~@grest))
+           nil))))
 
 (defmacro ifu*
   ([])
   ([[e & gs] & grest]
-     `(ifu ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifu* ~@grest))
-              nil))))
+     `(cljs.core-logic/-ifu ~e [~@gs]
+        ~(if (seq grest)
+           `(delay (ifu* ~@grest))
+           nil))))
 
 (defn cond-clauses [a]
   (fn [goals]
@@ -205,7 +205,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (-ifa* ~@(map (cond-clauses a) clauses)))))
+       (ifa* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro condu
   "Committed choice. Once the head (first goal) of a clause 
@@ -214,7 +214,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (-ifu* ~@(map (cond-clauses a) clauses)))))
+       (ifu* ~@(map (cond-clauses a) clauses)))))
 
 ;; =============================================================================
 ;; lvar nonlvar
