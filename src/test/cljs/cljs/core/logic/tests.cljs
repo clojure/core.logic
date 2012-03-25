@@ -11,7 +11,12 @@
            -reify-lvar-name empty-s to-s succeed fail s# u# conso
            nilo firsto resto emptyo appendo membero *occurs-check*]]))
 
-(set! *print-fn* js/print)
+(defn js-print [& args]
+  (if (js* "typeof console != 'undefined'")
+    (.log js/console (apply str args))
+    (js/print (apply str args))))
+
+(set! *print-fn* js-print)
 
 ;; =============================================================================
 ;; unify
@@ -743,26 +748,26 @@
                (m/== q [nil]))
              '([nil])))
 
- (assert (= (run* [q]
-              (m/== q [1 nil]))
-            '([1 nil])))
+  (assert (= (run* [q]
+               (m/== q [1 nil]))
+             '([1 nil])))
 
- (assert (= (run* [q]
-              (m/== q [nil 1]))
-            '([nil 1])))
+  (assert (= (run* [q]
+               (m/== q [nil 1]))
+             '([nil 1])))
 
- (assert (= (run* [q]
-              (m/== q '(nil)))
-            '((nil))))
+  (assert (= (run* [q]
+               (m/== q '(nil)))
+             '((nil))))
 
- (assert (= (run* [q]
-              (m/== q {:foo nil}))
-            '({:foo nil})))
+  (assert (= (run* [q]
+               (m/== q {:foo nil}))
+             '({:foo nil})))
 
- (assert (= (run* [q]
-              (m/== q {nil :foo}))
-            '({nil :foo})))
- )
+  (assert (= (run* [q]
+               (m/== q {nil :foo}))
+             '({nil :foo})))
+  )
 
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
