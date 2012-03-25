@@ -488,4 +488,130 @@
                (m/== (cons x (cons y ())) r)))
            '((false true) (tea true) (cup true))))
 
+;; =============================================================================
+;; conso
+
+(assert (= (run* [q]
+             (fresh [a d]
+               (conso a d ())
+               (m/== (cons a d) q)))
+           []))
+
+(let [a (lvar 'a)
+      d (lvar 'd)]
+  (assert (= (run* [q]
+               (conso a d q))
+             [(lcons a d)])))
+
+(assert (= (run* [q]
+             (m/== [q] nil))
+           []))
+
+(assert (=
+         (run* [q]
+           (conso 'a nil q))
+         '[(a)]))
+
+(assert (= (run* [q]
+             (conso 'a '(d) q))
+           '[(a d)]))
+
+(assert (= (run* [q]
+             (conso 'a q '(a)))
+           '[()]))
+
+(assert (= (run* [q]
+             (conso q '(b c) '(a b c)))
+           '[a]))
+
+;; =============================================================================
+;; firsto
+
+(assert (= (run* [q]
+             (firsto q '(1 2)))
+           (list (lcons '(1 2) (lvar 'x)))))
+
+;; =============================================================================
+;; resto
+
+(assert (= (run* [q]
+             (resto q '(1 2)))
+           '[(_.0 1 2)]))
+
+(assert (= (run* [q]
+             (resto q [1 2]))
+           '[(_.0 1 2)]))
+
+(assert (= (run* [q]
+             (resto [1 2] q))
+           '[(2)]))
+
+(assert (= (run* [q]
+             (resto [1 2 3 4 5 6 7 8] q))
+           '[(2 3 4 5 6 7 8)]))
+
+;; =============================================================================
+;; flatteno
+
+(assert (= (run* [x]
+             (flatteno '[[a b] c] x))
+           '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
+             (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
+             (a b () (c)) (a b c) (a b c ()) (a b () c)
+             (a b () c ()))))
+
+;; =============================================================================
+;; membero
+
+(assert (= (run* [q]
+             (all
+              (m/== q [(lvar)])
+              (membero ['foo (lvar)] q)
+              (membero [(lvar) 'bar] q)))
+           '([[foo bar]])))
+
+(assert (= (run* [q]
+             (all
+              (m/== q [(lvar) (lvar)])
+              (membero ['foo (lvar)] q)
+              (membero [(lvar) 'bar] q)))
+           '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
+               [[_.0 bar] [foo _.1]] [_.0 [foo bar]])))
+
+;; -----------------------------------------------------------------------------
+;; rembero
+
+(assert (= (run 1 [q]
+             (rembero 'b '(a b c b d) q))
+           '((a c b d))))
+
+;; -----------------------------------------------------------------------------
+;; conde clause count
+
+(defn digit-1 [x]
+  (conde
+    [(m/== 0 x)]))
+
+(defn digit-4 [x]
+  (conde
+    [(m/== 0 x)]
+    [(m/== 1 x)]
+    [(m/== 2 x)]
+    [(m/== 3 x)]))
+
+(assert (= (run* [q]
+         (fresh [x y]
+           (digit-1 x)
+           (digit-1 y)
+           (m/== q [x y])))
+       '([0 0])))
+
+(assert (= (run* [q]
+         (fresh [x y]
+           (digit-4 x)
+           (digit-4 y)
+           (m/== q [x y])))
+       '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
+           [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3])))
+
 (println "ok")
