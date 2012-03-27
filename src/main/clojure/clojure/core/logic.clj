@@ -766,20 +766,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(declare scons plus join narrow bind)
-
-(deftype Choice [ss a min]
-  Search
-  (yield [this] ss)
-  (step [this] a)
-  (min-yield [this] min)
-  (restrict [this oss] (scons (merge-s ss oss) (narrow a oss) oss))
-  (sizehint [this] (sizehint a)))
-
-(defn scons 
-  "Constructs a new Search." 
-  [ss a min]
-  (or (and ss a (Choice. ss a min)) ss a))
+(declare plus join narrow bind)
 
 (def stats (atom {}))
 
@@ -795,13 +782,11 @@
         (and prob (zero? d)) (recur sx szsx false)
         :else sx))))
 
-(deftype Plus [a b min sz]
+(deftype Plus [a b y min sz]
   Search
-  (yield [this] nil)
+  (yield [this] y)
   (step [this]
-    (scons (yield a) 
-           (plus b (sstep a) min)
-           min))
+    (plus b (sstep a) min))
   (min-yield [this] min)
   (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss))
   (sizehint [this] sz))
@@ -809,7 +794,7 @@
 (defn plus 
   "Returns the union of two Searches."
   [a b min]
-  (or (and a b (Plus. a b min (+ (sizehint a) (sizehint b)))) a b))
+  (or (and a b (Plus. a b (yield a) min (+ (sizehint a) (sizehint b)))) a b))
 
 (deftype Join [a b min sz]
   Search
