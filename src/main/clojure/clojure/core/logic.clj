@@ -684,32 +684,40 @@
 (extend-protocol IWalkTerm
   clojure.lang.ISeq
   (walk-term [v s]
-    (map #(walk* s %) v)))
+    (with-meta
+      (map #(walk* s %) v)
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentVector
   (walk-term [v s]
-    (loop [v v r (transient [])]
-      (if (seq v)
-        (recur (next v) (conj! r (walk* s (first v))))
-        (persistent! r)))))
+    (with-meta
+      (loop [v v r (transient [])]
+        (if (seq v)
+          (recur (next v) (conj! r (walk* s (first v))))
+          (persistent! r)))
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
   (walk-term [v s]
-    (loop [v v r (transient {})]
-      (if (seq v)
-        (let [[vfk vfv] (first v)]
-          (recur (next v) (assoc! r vfk (walk* s vfv))))
-        (persistent! r)))))
+    (with-meta
+      (loop [v v r (transient {})]
+        (if (seq v)
+          (let [[vfk vfv] (first v)]
+            (recur (next v) (assoc! r vfk (walk* s vfv))))
+          (persistent! r)))
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
   (walk-term [v s]
-    (loop [v v r #{}]
-      (if (seq v)
-        (recur (next v) (conj r (walk* s (first v))))
-        r))))
+    (with-meta
+      (loop [v v r #{}]
+        (if (seq v)
+          (recur (next v) (conj r (walk* s (first v))))
+          r))
+      (meta v))))
 
 ;; =============================================================================
 ;; Occurs Check Term

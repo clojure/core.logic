@@ -1259,3 +1259,8 @@
   (is (= (binding [*reify-vars* false]
            (unifier '{:a ?x} '{:a 5} '{:a ?y}))
          {:a 5})))
+
+(deftest test-34-unify-with-metadata
+  (is (run* [q]
+            (== q (quote ^:haz-meta-daytuhs (form form form))))
+      '((^:haz-meta-daytuhs (form form form)))))
