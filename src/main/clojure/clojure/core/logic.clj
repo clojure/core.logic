@@ -1,9 +1,11 @@
 (ns clojure.core.logic
   (:refer-clojure :exclude [==])
-  (:use [clojure.walk :only [postwalk]])
+  (:use [clojure.walk :only [postwalk]]
+        [clojure.forkjoin :only [fjpool task task* fork join invoke run]])
   (:require [clojure.set :as set])
   (:import [java.io Writer]))
 
+(def thread-pool (fjpool))
 (def ^{:dynamic true} *occurs-check* true)
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
@@ -43,15 +45,6 @@
 
 (defprotocol IBuildTerm
   (build-term [u s]))
-
-(defprotocol IBind
-  (bind [this g]))
-
-(defprotocol IMPlus
-  (mplus [a f]))
-
-(defprotocol ITake
-  (take* [a]))
 
 (deftype Unbound [])
 (def ^Unbound unbound (Unbound.))
@@ -202,16 +195,7 @@
       (walk* (-reify* empty-s v) v)))
 
   (build [this u]
-    (build-term u this))
-
-  IBind
-  (bind [this g]
-    (g this))
-  IMPlus
-  (mplus [this f]
-    (choice this f))
-  ITake
-  (take* [this] this))
+    (build-term u this)))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -746,87 +730,21 @@
     (reduce build s u)))
 
 ;; =============================================================================
-;; Goals and Goal Constructors
-
-(defmacro bind*
-  ([a g] `(bind ~a ~g))
-  ([a g & g-rest]
-     `(bind* (bind ~a ~g) ~@g-rest)))
-
-(defmacro mplus*
-  ([e] e)
-  ([e & e-rest]
-     `(mplus ~e (fn [] (mplus* ~@e-rest)))))
-
-(defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
-
-(extend-type Object
-  ITake
-  (take* [this] this))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-
-(deftype Choice [a f]
-  IBind
-  (bind [this g]
-    (mplus (g a) (-inc (bind f g))))
-  IMPlus
-  (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f))))
-  ITake
-  (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
-
-(defn ^Choice choice [a f]
-  (Choice. a f))
-
-;; -----------------------------------------------------------------------------
-;; MZero
-
-(extend-protocol IBind
-  nil
-  (bind [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (mplus [_ b] b))
-
-(extend-protocol ITake
-  nil
-  (take* [_] '()))
-
-;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type Object
-  IMPlus
-  (mplus [this f]
-    (Choice. this f)))
-
-;; -----------------------------------------------------------------------------
-;; Inc
-
-(extend-type clojure.lang.Fn
-  IBind
-  (bind [this g]
-    (-inc (bind (this) g)))
-  IMPlus
-  (mplus [this f]
-    (-inc (mplus (f) this)))
-  ITake
-  (take* [this] (lazy-seq (take* (this)))))
-
-;; =============================================================================
 ;; Syntax
 
 (defn succeed
   "A goal that always succeeds."
-  [a] a)
+  [a]
+  (fn [c]
+    (c a)))
+
+(def failure
+  (fn [c]))
 
 (defn fail
   "A goal that always fails."
-  [a] nil)
+  [a]
+  failure)
 
 (def s# succeed)
 
@@ -837,86 +755,89 @@
   [u v]
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
-       b# nil)))
-
-(defn- bind-conde-clause [a]
-  (fn [g-rest]
-    `(bind* ~a ~@g-rest)))
-
-(defn- bind-conde-clauses [a clauses]
-  (map (bind-conde-clause a) clauses))
-
-(defmacro conde
-  "Logical disjunction of the clauses. The first goal in
-  a clause is considered the head of that clause. Interleaves the
-  execution of the clauses."
-  [& clauses]
-  (let [a (gensym "a")]
-    `(fn [~a]
-       (-inc
-        (mplus* ~@(bind-conde-clauses a clauses))))))
-
-(defn- lvar-bind [sym]
-  ((juxt identity
-         (fn [s] `(lvar '~s))) sym))
-
-(defn- lvar-binds [syms]
-  (mapcat lvar-bind syms))
+       (succeed b#)
+       failure)))
 
 (defmacro fresh
   "Creates fresh variables. Goals occuring within form a logical 
   conjunction."
   [[& lvars] & goals]
-  `(fn [a#]
-     (-inc
-      (let [~@(lvar-binds lvars)]
-        (bind* a# ~@goals)))))
-
-(defmacro solve [& [n [x] & goals]]
-  `(let [xs# (take* (fn []
-                      ((fresh [~x] ~@goals
-                         (fn [a#]
-                           (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
-                       empty-s)))]
-     (if ~n
-       (take ~n xs#)
-       xs#)))
-
-(defmacro run
-  "Executes goals until a maximum of n results are found."
-  [n & goals]
-  `(doall (solve ~n ~@goals)))
-
-(defmacro run*
-  "Executes goals until results are exhausted."
-  [& goals]
-  `(run false ~@goals))
-
-(defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not occurs-check."
-  [& [n & goals]]
-  `(binding [*occurs-check* false]
-     (run ~n ~@goals)))
-
-(defmacro run-nc*
-  "Executes goals until results are exhausted. Does not occurs-check."
-  [& goals]
-  `(run-nc false ~@goals))
-
-(defmacro lazy-run
-  "Lazily executes goals until a maximum of n results are found."
-  [& [n & goals]]
-  `(solve ~n ~@goals))
-
-(defmacro lazy-run*
-  "Lazily executes goals until results are exhausted."
-  [& goals]
-  `(solve false ~@goals))
+  (let [lvars (mapcat (fn [v]
+                        `(~v (lvar '~v)))
+                      lvars)]
+    `(let [~@lvars] 
+       (reduce (fn [chain-expr# step#]
+                 (fn [v#] 
+                   (fn [c#]
+                     ((chain-expr# v#) (fn [a#]
+                                         ((step# a#) c#))))))
+               (fn [v#]
+                 (fn [c#]
+                   (c# v#)))
+               (list ~@goals)))))
 
 (defmacro all
   "Like fresh but does does not create logic variables."
   ([] `clojure.core.logic/s#)
-  ([& goals] `(fn [a#] (bind* a# ~@goals))))
+  ([& goals]
+   `(reduce (fn [chain-expr# step#]
+              (fn [v#] 
+                (fn [c#]
+                  ((chain-expr# v#) (fn [a#]
+                                      ((step# a#) c#))))))
+            (fn [v#]
+              (fn [c#]
+                (c# v#)))
+            (list ~@goals))))
+
+(def tasks (atom []))
+
+(defmacro conde
+  "Logical disjunction of the clauses. The first goal in
+  a clause is considered the head of that clause."
+  [& clauses]
+  (let [clauses (->> clauses
+                  (map #(cons 'all %))
+                  (into []))]
+    `(fn [s#]
+       (fn [c#]
+         (let [[clause# & clauses#] ~clauses
+               fs# (doall (map #(->> ((% s#) c#) 
+                                  task 
+                                  fork) 
+                               clauses#))]
+           (doseq [f# fs#]
+             (swap! tasks conj f#))
+           ((clause# s#) c#))))))
+
+(defmacro run*
+  "Executes goals until results are exhausted."
+   [[x] & goals]
+  `(doall
+     (let [xs# (atom [])
+           leaf# (fn [s#]
+                   (swap! xs# conj s#))
+           ~x (lvar '~x)
+           solver# ((all ~@goals) empty-s)
+           task# (task (solver# leaf#))]
+       (invoke thread-pool task#) 
+       (join task#)
+
+       ;; wait for all tasks to finish
+       (loop [ts# @tasks]
+         (when (seq ts#)
+           (doseq [t# ts#]
+             (join t#)
+             (swap! tasks subvec 1))
+           (recur @tasks)))
+
+       (map #(-reify % ~x) @xs#))))
+
+(defmacro run-nc*
+  "Executes goals until results are exhausted. Does not occurs-check."
+  [& goals]
+  `(binding [*occurs-check* false]
+     (run* ~@goals)))
 
 ;; =============================================================================
 ;; Debugging
@@ -1088,94 +1009,13 @@
 ;; conda once a line succeeds no others are tried
 ;; condu a line can succeed only one time
 
-;; TODO : conda and condu should probably understanding logging
-
-(defprotocol IIfA
-  (ifa [b gs c]))
-
-(defprotocol IIfU
-  (ifu [b gs c]))
-
-;; TODO : if -> when
-
-(defmacro ifa*
-  ([])
-  ([[e & gs] & grest]
-     `(ifa ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifa* ~@grest))
-              nil))))
-
-(defmacro ifu*
-  ([])
-  ([[e & gs] & grest]
-     `(ifu ~e [~@gs]
-           ~(if (seq grest)
-              `(delay (ifu* ~@grest))
-              nil))))
-
-(extend-protocol IIfA
-  nil
-  (ifa [b gs c]
-       (when c
-         (force c))))
-
-(extend-protocol IIfU
-  nil
-  (ifu [b gs c]
-       (when c
-         (force c))))
-
-(extend-type Substitutions
-  IIfA
-  (ifa [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type Substitutions
-  IIfU
-  (ifu [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type clojure.lang.Fn
-  IIfA
-  (ifa [b gs c]
-       (-inc (ifa (b) gs c))))
-
-(extend-type clojure.lang.Fn
-  IIfU
-  (ifu [b gs c]
-       (-inc (ifu (b) gs c))))
-
-(extend-protocol IIfA
-  Choice
-  (ifa [b gs c]
-       (reduce bind b gs)))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-(extend-protocol IIfU
-  Choice
-  (ifu [b gs c]
-       (reduce bind (.a ^Choice b) gs)))
-
-(defn- cond-clauses [a]
-  (fn [goals]
-    `((~(first goals) ~a) ~@(rest goals))))
-
 (defmacro conda
   "Soft cut. Once the head of a clause has succeeded
   all other clauses will be ignored. Non-relational."
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (ifa* ~@(map (cond-clauses a) clauses)))))
+       )))
 
 (defmacro condu
   "Committed choice. Once the head (first goal) of a clause 
@@ -1184,7 +1024,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (ifu* ~@(map (cond-clauses a) clauses)))))
+       )))
 
 ;; =============================================================================
 ;; copy-term
@@ -1440,11 +1280,6 @@
 ;; =============================================================================
 ;; Rel
 
-(defn to-stream [aseq]
-  (when (seq aseq)
-    (choice (first aseq)
-            (fn [] (to-stream (next aseq))))))
-
 (defmacro def-arity-exc-helper []
   (try
     (Class/forName "clojure.lang.ArityException")
@@ -1583,12 +1418,14 @@
                    (let [set# (cond
                                ~@(mapcat check-lvar indexed)
                                :else (deref ~(set-sym name arity)))]
-                     (to-stream
-                      (->> set#
-                           (map (fn [cand#]
-                                  (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
-                                    ~'a)))
-                           (remove nil?)))))))))))
+                     (fn [c#]
+                       (->> set#
+                         (map (fn [cand#]
+                                (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
+                                  ~'a)))
+                         (remove nil?)
+                         (map c#)
+                         (doall)))))))))))
 
 ;; TODO: Should probably happen in a transaction
 
@@ -1662,47 +1499,6 @@
 ;; Tabling
 
 ;; -----------------------------------------------------------------------------
-;; Data Structures
-;; (atom []) is cache, waiting streams are PersistentVectors
-
-(defprotocol ISuspendedStream
-  (ready? [this]))
-
-(deftype SuspendedStream [cache ansv* f]
-  ISuspendedStream
-  (ready? [this]
-          (not= @cache ansv*)))
-
-(defn ^SuspendedStream make-ss [cache ansv* f]
-  {:pre [(instance? clojure.lang.Atom cache)
-         (list? ansv*)
-         (fn? f)]}
-  (SuspendedStream. cache ansv* f))
-
-(defn ss? [x]
-  (instance? SuspendedStream x))
-
-(defn to-w [s]
-  (into [] s))
-
-(defn w? [x]
-  (vector? x))
-
-(defn w-check [w sk fk]
-  (loop [w w a []]
-    (cond
-     (nil? w) (fk)
-     (ready? (first w)) (sk
-                         (fn []
-                           (let [^SuspendedStream ss (first w)
-                                 f (.f ss)
-                                 w (to-w (concat a (next w)))]
-                             (if (empty? w)
-                               (f)
-                               (mplus (f) (fn [] w))))))
-     :else (recur (next w) (conj a (first w))))))
-
-;; -----------------------------------------------------------------------------
 ;; Extend Substitutions to support tabling
 
 (defprotocol ITabled
@@ -1714,7 +1510,7 @@
 
 ;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to them
 
-(extend-type Substitutions
+#_(extend-type Substitutions
   ITabled
 
   (-reify-tabled [this v]
@@ -1757,32 +1553,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Waiting Stream
 
-(extend-type clojure.lang.IPersistentVector
-  IBind
-  (bind [this g]
-        (w-check this
-                 (fn [f] (bind f g))
-                 (fn [] (to-w
-                         (map (fn [^SuspendedStream ss]
-                                (make-ss (.cache ss) (.ansv* ss)
-                                         (fn [] (bind ((.f ss)) g))))
-                              this)))))
-  IMPlus
-  (mplus [this f]
-         (w-check this
-                  (fn [fp] (mplus fp f))
-                  (fn []
-                    (let [a-inf (f)]
-                      (if (w? a-inf)
-                        (to-w (concat a-inf this))
-                        (mplus a-inf (fn [] this)))))))
-  ITake
-  (take* [this]
-         (w-check this
-                  (fn [f] (take* f))
-                  (fn [] ()))))
-
-(defn master [argv cache]
+#_(defn master [argv cache]
   (fn [a]
     (when (every? (fn [ansv]
                     (not (alpha-equiv? a argv ansv)))
@@ -1795,7 +1566,7 @@
 
 ;; TODO: consider the concurrency implications much more closely
 
-(defn table
+#_(defn table
   "Function to table a goal. Useful when tabling should only persist
   for the duration of a run."
   [goal]
@@ -1813,7 +1584,7 @@
                    (master argv cache)) a))
               (reuse a argv cache nil nil))))))))
 
-(defmacro tabled
+#_(defmacro tabled
   "Macro for defining a tabled goal. Prefer ^:tabled with the 
   defne/a/u forms over using this directly."
   [args & grest]
@@ -2071,4 +1842,8 @@
   failure."
   [u v]
   `(fn [a#]
-     (!=-verify a# (unify a# ~u ~v))))
+     (let [s# (!=-verify a# (unify a# ~u ~v))]
+       (if s#
+         (fn [c#]
+           (c# s#))
+         failure))))
