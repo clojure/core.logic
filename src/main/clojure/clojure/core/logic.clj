@@ -129,6 +129,8 @@
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
+  (toString [_]
+    (prn-str [s l verify cs]))
 
   ISubstitutions
   (length [this] (count s))
