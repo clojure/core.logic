@@ -50,7 +50,8 @@
     substitutions yielded by this search.")
   (restrict [a ss]
     "Restricts the search to substitutions more precise than ss. ss must be
-     greater than or equal to (min-yield a ss). Do not call, see narrow."))
+     greater than or equal to (min-yield a ss). Do not call, see narrow.")
+  (sizehint [a]))
 
 (deftype Unbound []) ; replace with reify?
 (def ^Unbound unbound (Unbound.))
@@ -207,7 +208,8 @@
   (yield [this] this)
   (step [this] nil)
   (min-yield [this] this)
-  (restrict [this ss] (merge-s this ss)))
+  (restrict [this ss] (merge-s this ss))
+  (sizehint [this] 0))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
   (Substitutions. (assoc (.s s) u v)
@@ -758,7 +760,8 @@
   (yield [_] nil)
   (step [_] nil)
   (min-yield [_] nil)
-  (restrict [_ _] nil))
+  (restrict [_ _] nil)
+  (sizehint [_] 0))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
@@ -770,51 +773,69 @@
   (yield [this] ss)
   (step [this] a)
   (min-yield [this] min)
-  (restrict [this oss] (scons (merge-s ss oss) (narrow a oss) oss)))
+  (restrict [this oss] (scons (merge-s ss oss) (narrow a oss) oss))
+  (sizehint [this] (sizehint a)))
 
 (defn scons 
   "Constructs a new Search." 
   [ss a min]
   (or (and ss a (Choice. ss a min)) ss a))
 
-(deftype Plus [a b min]
+(def stats (atom {}))
+
+(defn- sstep [x]
+  (loop [x x szx (sizehint x) prob true]
+    (let [sx (step x)
+          szsx (sizehint sx)
+          d (- szsx szx)]
+      #_(when-not (zero? d) (swap! stats update-in [n] (fnil inc 0)))
+      (cond
+        (yield sx) sx
+        (neg? d) (recur sx szsx true)
+        (and prob (zero? d)) (recur sx szsx false)
+        :else sx))))
+
+(deftype Plus [a b min sz]
   Search
   (yield [this] nil)
   (step [this]
     (scons (yield a) 
-           (plus b (step a) min)
+           (plus b (sstep a) min)
            min))
   (min-yield [this] min)
-  (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss)))
+  (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss))
+  (sizehint [this] sz))
 
 (defn plus 
   "Returns the union of two Searches."
   [a b min]
-  (or (and a b (Plus. a b min)) a b))
+  (or (and a b (Plus. a b min (+ (sizehint a) (sizehint b)))) a b))
 
-(deftype Join [a b min]
+(deftype Join [a b min sz]
   Search
   (yield [this] nil)
   (step [this]
     (plus (narrow b (yield a))
-          (join b (step a) min)
+          (join b (sstep a) min)
           min))
   (min-yield [this] min)
-  (restrict [this ss] (join (narrow a ss) (narrow b ss) ss)))
+  (restrict [this ss] (join (narrow a ss) (narrow b ss) ss))
+  (sizehint [this] sz))
 
 (defn join 
   "Returns the intersection of two Searches"
   [a b min]
-  (and a b (Join. a b min)))
+  (and a b (Join. a b min (+ (sizehint a) (sizehint b)))))
 
 ;; the min field of choice, plus and join may be removed and replaced by narrow
 ;; instances
 (deftype Narrow [a ss]
   Search
   (yield [this] (merge-s (yield a) ss))
-  (step [this] (narrow (step (restrict a ss)) ss))
+  (step [this] (narrow (sstep (restrict a ss)) ss))
   (min-yield [this] ss)
-  (restrict [this oss] (narrow a oss)))
+  (restrict [this oss] (narrow a oss))
+  (sizehint [this] (sizehint a)))
 
 (defn narrow
   "Restrict the search to substitutions greater than or equal to ss.
@@ -836,7 +857,8 @@
           (min-yield a)))
   (min-yield [this] (min-yield a))
   (restrict [this ss]
-    (bind (narrow a ss) f)))
+    (bind (narrow a ss) f))
+  (sizehint [this] (sizehint a)))
 
 (defn bind [a f]
   (and a (Bind. a f)))
@@ -848,7 +870,8 @@
   (step [this]
     (this))
   (min-yield [this] empty-s)
-  (restrict [this ss] this))
+  (restrict [this ss] this)
+  (sizehint [this] 1))
 
 (extend-type Object
   Search
@@ -857,7 +880,8 @@
   (step [this]
     (next this))
   (min-yield [this] empty-s)
-  (restrict [this ss] this))
+  (restrict [this ss] this)
+  (sizehint [this] 1))
 
 ;; =============================================================================
 ;; Syntax
@@ -875,7 +899,8 @@
             (yield [~name] ~yield-expr)
             (step [~name] ~stepexpr)
             (min-yield [_#] ~ss)
-            (restrict [_# ss#] (goal# ss#))))
+            (restrict [_# ss#] (goal# ss#))
+            (sizehint [_#] 1)))
          empty-s))))
 
 (def succeed
