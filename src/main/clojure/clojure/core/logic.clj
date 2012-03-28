@@ -920,7 +920,8 @@
   [& clauses]
   (let [clauses (map #(calltree % `join) clauses)
         clauses (calltree clauses `plus)]
-    `(fn [] ~clauses)))
+    `(fn [] ~clauses)
+    clauses))
 
 (defn- lvar-bind [sym]
   [sym `(lvar '~sym)])
