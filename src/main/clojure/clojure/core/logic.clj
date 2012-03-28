@@ -794,7 +794,7 @@
 (defn plus 
   "Returns the union of two Searches."
   [a b miny]
-  (or (and a b (Plus. a b (yield a) miny (min (sizehint a) (sizehint b)))) a b))
+  (or (and a b (Plus. a b (yield a) miny (+ (sizehint a) (sizehint b)))) a b))
 
 (deftype Join [a b min sz]
   Search
