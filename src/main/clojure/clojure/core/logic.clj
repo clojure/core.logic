@@ -941,12 +941,7 @@
 
 (defn ss-seq 
   "Returns a lazy sequence of the substitutions yielded by a." [a]
-  (lazy-seq ((fn ss-seq* [a]
-               (when a
-                 (if-let [ss (yield a)]
-                   (cons ss (lazy-seq (ss-seq* (step a))))
-                   (recur (step a))))) 
-              a)))
+  (keep yield (take-while identity (iterate step+ a))))
 
 (defmacro solve [& [n [x] & goals]]
   `(let [~@(lvar-bind x)
