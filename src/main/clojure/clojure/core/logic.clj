@@ -768,14 +768,11 @@
 
 (declare plus join narrow bind)
 
-(def stats (atom {}))
-
 (defn- sstep [x]
   (loop [x x szx (sizehint x) prob true]
     (let [sx (step x)
           szsx (sizehint sx)
           d (- szsx szx)]
-      #_(when-not (zero? d) (swap! stats update-in [n] (fnil inc 0)))
       (cond
         (yield sx) sx
         (neg? d) (recur sx szsx true)
