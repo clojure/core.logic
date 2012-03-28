@@ -768,22 +768,25 @@
 
 (declare plus join narrow bind)
 
-(defn- sstep [x]
-  (loop [x x szx (sizehint x) prob true]
-    (let [sx (step x)
-          szsx (sizehint sx)
-          d (- szsx szx)]
+(defn- step+
+  "Repeatedly calls step+ as long as there's no yield and that sizehint 
+   decreases (there is allowance for short plateaux)." 
+  [a]
+  (loop [a a sza (sizehint a) prob true]
+    (let [sa (step a)
+          szsa (sizehint sa)
+          d (- szsa sza)]
       (cond
-        (yield sx) sx
-        (neg? d) (recur sx szsx true)
-        (and prob (zero? d)) (recur sx szsx false)
-        :else sx))))
+        (yield sa) sa
+        (neg? d) (recur sa szsa true)
+        (and prob (zero? d)) (recur sa szsa false)
+        :else sa))))
 
 (deftype Plus [a b y min sz]
   Search
   (yield [this] y)
   (step [this]
-    (plus b (sstep a) min))
+    (plus b (step+ a) min))
   (min-yield [this] min)
   (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss))
   (sizehint [this] sz))
@@ -798,7 +801,7 @@
   (yield [this] nil)
   (step [this]
     (plus (narrow b (yield a))
-          (join b (sstep a) min)
+          (join b (step+ a) min)
           min))
   (min-yield [this] min)
   (restrict [this ss] (join (narrow a ss) (narrow b ss) ss))
@@ -814,7 +817,7 @@
 (deftype Narrow [a ss]
   Search
   (yield [this] (merge-s (yield a) ss))
-  (step [this] (narrow (sstep (restrict a ss)) ss))
+  (step [this] (narrow (step+ (restrict a ss)) ss))
   (min-yield [this] ss)
   (restrict [this oss] (narrow a oss))
   (sizehint [this] (sizehint a)))
@@ -824,7 +827,7 @@
    Semi-lazy: ss is checked to be unifiable with min-yield eagerly so as to
    fail fast but the actual narrowing happens lazily." 
   [a ss]
-  (let [uss (min-yield a)]
+  (when-let [uss (min-yield a)]
     (when-let [nss (merge-s ss uss)]
       (if (= nss uss)
         a
@@ -849,8 +852,7 @@
   Search
   (yield [this]
     nil)
-  (step [this]
-    (this))
+  (step [this] (this))
   (min-yield [this] empty-s)
   (restrict [this ss] this)
   (sizehint [this] 1))
