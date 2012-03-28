@@ -1463,13 +1463,6 @@
 ;; =============================================================================
 ;; Rel
 
-(extend-type Object
-  Search
-  (yield [this] (first this))
-  (step [this] (rest this))
-  ; TODO step this ss
-  (min-yield [this] nil))
-
 (defmacro def-arity-exc-helper []
   (try
     (Class/forName "clojure.lang.ArityException")
