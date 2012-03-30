@@ -89,7 +89,6 @@
 ;; Substitutions
 
 (defprotocol ISubstitutions
-  (-length [this])
   (-occurs-check [this u v])
   (-ext [this u v])
   (-ext-no-check [this u v])
@@ -134,8 +133,6 @@
     (-pr-seq s opts))
 
   ISubstitutions
-  (-length [this] (count l))
-
   (-occurs-check [this u v]
     (let [v (-walk this v)]
       (-occurs-check-term v u this)))
@@ -564,11 +561,11 @@
 ;; Walk Term
 
 (defn walk-term-map* [v s]
-    (loop [v v r (transient {})]
-      (if (seq v)
-        (let [[vfk vfv] (first v)]
-          (recur (next v) (assoc! r vfk (walk* s vfv))))
-        (persistent! r))))
+  (loop [v v r {}]
+    (if (seq v)
+      (let [[vfk vfv] (first v)]
+        (recur (next v) (assoc r vfk (-walk* s vfv))))
+      r)))
 
 (extend-protocol IWalkTerm
   nil
@@ -742,13 +739,13 @@
 (extend-protocol IIfA
   Choice
   (-ifa [b gs c]
-       (reduce bind b gs)))
+       (reduce -bind b gs)))
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 (extend-protocol IIfU
   Choice
   (-ifu [b gs c]
-       (reduce bind (.-a b) gs)))
+       (reduce -bind (.-a b) gs)))
 
 ;; =============================================================================
 ;; Useful goals
