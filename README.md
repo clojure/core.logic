@@ -5,7 +5,9 @@ A Logic Programming library for Clojure & ClojureScript. At its heart is an orig
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes core.logic running under Clojure 1.3.0 less than 2s without <code>occurs-check</code>.
 
-If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
+If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](http://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
+
+If you're interested in using core.logic from ClojureScript look [here](http://github.com/clojure/core.logic/wiki/Using-core.logic-with-ClojureScript).
 
 Contributing
 ----
