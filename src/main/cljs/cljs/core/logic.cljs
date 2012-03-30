@@ -282,10 +282,14 @@
   (-lfirst [this])
   (-lnext [this]))
 
-(defprotocol LConsPrint
-  (-to-short-string [this]))
-
 (declare lcons?)
+
+(defn lcons-pr-seq [x]
+  (cond
+   (lcons? x) (lazy-seq
+               (cons (-lfirst x)
+                     (lcons-pr-seq (-lnext x))))
+   :else (list '. x)))
 
 (deftype LCons [a d meta]
   IMeta
@@ -297,15 +301,9 @@
   LConsSeq
   (-lfirst [_] a)
   (-lnext [_] d)
-  LConsPrint
-  (-to-short-string [this]
-    (cond
-     (instance? LCons d) (str a " " (-to-short-string d))
-     :else (str a " . " d )))
   IPrintable
-  (-pr-seq [this] (cond
-                   (instance? LCons d) (list "(" (str a) " " (-to-short-string d) ")")
-                   :else (list "(" (str a) " . " (str d) ")")))
+  (-pr-seq [this opts]
+    (pr-sequential pr-seq "(" " " ")" opts (lcons-pr-seq this)))
   IEquiv
   (-equiv [this o]
     (or (identical? this o)

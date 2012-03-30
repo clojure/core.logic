@@ -835,4 +835,8 @@
 (binding [*occurs-check* false]
  (time (run 1 [q] (zebrao q))))
 
+(println (pr-str
+          (run 10 [q]
+            (nexto 'dog 'cat q))))
+
 (println "ok")
