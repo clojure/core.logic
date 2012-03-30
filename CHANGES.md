@@ -1,3 +1,12 @@
+From 0.6.9 to 0.7.0
+====
+
+Fixes
+---
+* Fix project layout so core.logic can work in both Clojure and ClojureScript applications
+* fixed LConsSeq -pr-seq implementation
+
+
 From 0.6.8 to 0.6.9
 ====
 

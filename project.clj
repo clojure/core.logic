@@ -1,4 +1,4 @@
-(defproject core.logic "0.6.9-SNAPSHOT" 
+(defproject core.logic "0.7.0" 
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
   :source-path "src/main/clojure"

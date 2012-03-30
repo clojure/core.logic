@@ -1,9 +1,9 @@
 (ns cljs.core.logic.tests
   (:refer-clojure :exclude [==])
   (:use-macros
-   [clj.core.logic.macros
+   [cljs.core.logic.macros
     :only [run run* == conde conda condu fresh defne matche all]])
-  (:require-macros [clj.core.logic.macros :as m]
+  (:require-macros [cljs.core.logic.macros :as m]
                    [clojure.tools.macro :as mu])
   (:use
    [cljs.core.logic

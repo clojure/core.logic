@@ -1,4 +1,4 @@
-(ns clj.core.logic.macros
+(ns cljs.core.logic.macros
   (:refer-clojure :exclude [==])
   (:require [clojure.set :as set]))
 
