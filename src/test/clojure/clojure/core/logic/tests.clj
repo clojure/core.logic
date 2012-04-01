@@ -1246,6 +1246,29 @@
          '(_.0 _.0))))
 
 ;; -----------------------------------------------------------------------------
+;; Pattern matching other data structures
+
+(defne match-map [m o]
+  ([{:foo {:bar o}} _]))
+
+(defn test-defne-map []
+  (is (= (run* [q]
+           (match-map {:foo {:bar 1}} q))
+         '(1))))
+
+(defne match-set [s o]
+  ([#{:cat :bird :dog} _]))
+
+(defn test-defne-set []
+  (is (= (run* [q]
+           (match-set #{:cat :bird :dog} q))
+         '(_.0))))
+
+(comment
+  ;; FIXME: for some reason set #{:cat :bird} works on match-set call - David
+  )
+
+;; -----------------------------------------------------------------------------
 ;; Tickets
 
 (deftest test-32-unify-set

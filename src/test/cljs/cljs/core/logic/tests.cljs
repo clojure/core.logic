@@ -801,6 +801,27 @@
                (m/== p [a b c d])))
            ()))
 
+;; -----------------------------------------------------------------------------
+;; Pattern matching other data structures
+
+(defne match-map [m o]
+  ([{:foo {:bar o}} _]))
+
+(assert (= (run* [q]
+             (match-map {:foo {:bar 1}} q))
+           '(1)))
+
+(defne match-set [s o]
+  ([#{:cat :bird :dog} _]))
+
+(assert (= (run* [q]
+             (match-set #{:cat :bird :dog} q))
+           '(_.0)))
+
+(comment
+  ;; FIXME: for some reason set #{:cat :bird} works on match-set call - David
+  )
+
 ;; =============================================================================
 ;; zebrao
 

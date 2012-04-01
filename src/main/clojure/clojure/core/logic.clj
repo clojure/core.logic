@@ -1244,10 +1244,15 @@
   (cond
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
-   (and (coll? p)
-        (not= (first p) 'quote)) (cond
-                                  (list? p) p
-                                  :else `[~@(map p->term p)])
+   (and (coll? p) (not= (first p) 'quote))
+     (cond
+      ;; support simple expressions
+      (list? p) p
+      ;; preserve original collection type
+      :else (let [ps (map p->term p)]
+              (cond
+               (instance? clojure.lang.MapEntry p) (into [] ps)
+               :else (into (empty p) ps))))
    :else p))
 
 (defn- lvar-sym? [s]
