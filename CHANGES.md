@@ -1,3 +1,10 @@
+From 0.7.0 to 0.7.1
+====
+
+Fixes
+---
+Fix pattern matching so unification works on maps and sets
+
 From 0.6.9 to 0.7.0
 ====
 
