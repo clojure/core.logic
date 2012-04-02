@@ -740,17 +740,13 @@
 ;; Goals and Goal Constructors
 
 (defmacro bind*
-  ([a g] `(bind ~a ~g))
-  ([a g & g-rest]
-     `(bind* (bind ~a ~g) ~@g-rest)))
+  [a & gs] 
+    (reduce (fn [a g] `(bind ~a ~g)) a gs))
 
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
      `(mplus ~e (fn [] (mplus* ~@e-rest)))))
-
-(defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
 
 ;; -----------------------------------------------------------------------------
 ;; Zero for join, identity for plus
@@ -782,6 +778,8 @@
         (and prob (zero? d)) (recur sa szsa false)
         :else sa))))
 
+(def step+ step)
+
 (deftype Plus [a b y min sz]
   Search
   (yield [this] y)
@@ -790,6 +788,16 @@
   (min-yield [this] min)
   (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss))
   (sizehint [this] sz))
+
+#_(defn plus 
+  "Returns the union of two Searches."
+  [a b miny]
+  (or (and a b 
+        (goal min [a b]
+          :min miny
+          :yield (yield a)
+          :step (plus b (step+ a) (min-yield this))))
+      a b))
 
 (defn plus 
   "Returns the union of two Searches."
@@ -833,20 +841,20 @@
         a
         (Narrow. a nss)))))
 
-(deftype Bind [a f]
+(deftype Bind [a b]
   Search
   (yield [this] nil)
   (step [this]
-    (plus (when-let [ss (yield a)] (f ss)) 
-          (bind (step a) f)
+    (plus (narrow b (yield a)) 
+          (bind (step a) b)
           (min-yield a)))
   (min-yield [this] (min-yield a))
   (restrict [this ss]
-    (bind (narrow a ss) f))
+    (bind (narrow a ss) b))
   (sizehint [this] (sizehint a)))
 
-(defn bind [a f]
-  (and a (Bind. a f)))
+(defn bind [a b]
+  (and a (Bind. a b)))
 
 (extend-type clojure.lang.Fn
   Search
@@ -870,26 +878,32 @@
 ;; =============================================================================
 ;; Syntax
 
-(defmacro goal {:arglists '([name? ss-binding yield-expr? stepexpr])} 
+(defmacro goal {:arglists '([min-name? subgoals & {:keys [yield step min size]}])}
   ([& args]
-    (let [[name [ss] & exprs] (if (symbol? (first args)) 
-                          args
-                          (cons (gensym "goal") args))
-          [yield-expr stepexpr] (if (next exprs)
-                                   [nil (first exprs)]
-                                   exprs)]
-      `((fn goal# [~ss]
-          (reify Search
-            (yield [~name] ~yield-expr)
-            (step [~name] ~stepexpr)
-            (min-yield [_#] ~ss)
-            (restrict [_# ss#] (goal# ss#))
-            (sizehint [_#] 1)))
-         empty-s))))
+    (let [[min-name subgoals & {:keys [yield step min size]}]
+            (if (symbol? (first args))
+              args
+              (cons (gensym 'min) args))
+          ss (gensym "ss")]
+      `((fn goal-factory# [~min-name ~@subgoals]
+          (let [y# ~yield
+                sz# ~(or size 
+                       (when-let [[g & gs] (seq subgoals)] 
+                         (reduce (fn [s g] `(+ ~s (sizehint ~g)))
+                                 `(sizehint ~g) gs))
+                       1)]
+            (reify Search
+              (yield [_#] y#)
+              (step [_#] ~step)
+              (min-yield [_#] ~min-name)
+              (restrict [_# ~ss] (goal-factory# ~ss 
+                                   ~@(map #(list `narrow % ss) subgoals)))
+              (sizehint [_#] sz#))))
+         ~(or min `empty-s) ~@subgoals))))
 
 (def succeed
   "A goal that always succeeds."
-  (goal succeed [ss] ss succeed))
+  empty-s)
 
 (def fail
   "A goal that always fails."
@@ -903,7 +917,8 @@
 (defmacro ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  `(goal [ss#] (unify ss# ~u ~v) nil))
+  `(goal min# [] :yield (unify min# ~u ~v)
+                  :size 0))
 
 #_(defmacro ==
   "A goal that attempts to unify terms u and v."
@@ -911,16 +926,16 @@
   `(fn [] (unify empty-s ~u ~v)))
 
 (defn- calltree [items op]
-  (reduce #(list op %1 %2 `empty-s) (reverse items)))
+  (when (seq items)
+    (reduce #(list op %1 %2 `empty-s) (reverse items))))
 
 (defmacro conde
   "Logical disjunction of the clauses. The first goal in
   a clause is considered the head of that clause. Interleaves the
   execution of the clauses."
   [& clauses]
-  (let [clauses (map #(calltree % `join) clauses)
+  (let [clauses (map #(calltree (map (partial list 'fn []) %) `join) clauses)
         clauses (calltree clauses `plus)]
-    `(fn [] ~clauses)
     clauses))
 
 (defn- lvar-bind [sym]
@@ -1012,6 +1027,27 @@
        (println ~title)
        ~@(map (partial trace-lvar a) lvars)
        ~a)))
+
+(defprotocol SearchTree
+  (search-tree [x]))
+
+(def number (memoize (let [n (atom 0)]
+                       (fn [_] (swap! n inc)))))
+
+(extend-protocol SearchTree
+  nil
+  (search-tree [x] nil)
+  Object
+  (search-tree [x] (number x))
+  Plus
+  (search-tree [x] (list '+ (search-tree (.a x)) (search-tree (.b x))))
+  Join
+  (search-tree [x] (list '* (search-tree (.a x)) (search-tree (.b x))))
+  Narrow
+  (search-tree [x] (list '/ (search-tree (.a x)) (.s (.ss x))))
+  Bind
+  (search-tree [x] (list '-> (search-tree (.a x)) (search-tree (.b x)))))
+
 
 ;; =============================================================================
 ;; Easy Unification
@@ -1155,34 +1191,32 @@
 ;; TODO : conda and condu should probably understanding logging
 
 (defn ifa [q then else]
-  (if q
-    (goal [s]
-      (if-let [qs (yield q)]
-        (plus (narrow then qs) (join (step q) then s) s)
-        (ifa (step q) (narrow then s) (narrow else s))))
-    else))
+  (goal min [q then else]
+    :step (cond
+            (yield q) (join q then min)
+            q (ifa (step+ q) then else)
+            :else else)))
 
 (defn ifu [q then else]
-  (if q
-    (goal [s]
-      (if-let [qs (yield q)]
-        (narrow then qs)
-        (ifu (step q) (narrow then s) (narrow else s))))
-    else))
+  (goal [q then else]
+    :step (cond
+            (yield q) (narrow then (yield q))
+            q (ifu (step+ q) then else)
+            :else else)))
 
 ;; TODO : if -> when
 
 (defmacro ifa*
   ([])
   ([[e & gs] & grest]
-     `(ifa ~e (bind* ~@gs)
-           `(ifa* ~@grest))))
+     `(ifa ~e ~(if gs (calltree gs `join) `succeed)
+           (ifa* ~@grest))))
 
 (defmacro ifu*
   ([])
   ([[e & gs] & grest]
-     `(ifu ~e (bind* ~@gs)
-           `(ifu* ~@grest))))
+     `(ifu ~e ~(calltree gs `join)
+           (ifu* ~@grest))))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -1192,18 +1226,14 @@
   "Soft cut. Once the head of a clause has succeeded
   all other clauses will be ignored. Non-relational."
   [& clauses]
-  (let [a (gensym "a")]
-    `(fn [~a]
-       (ifa* ~@(map (cond-clauses a) clauses)))))
+  `(fn [] (ifa* ~@clauses)))
 
 (defmacro condu
   "Committed choice. Once the head (first goal) of a clause 
   has succeeded, remaining goals of the clause will only
   be run once. Non-relational."
   [& clauses]
-  (let [a (gensym "a")]
-    `(fn [~a]
-       (ifu* ~@(map (cond-clauses a) clauses)))))
+  `(fn [] (ifu* ~@clauses)))
 
 ;; =============================================================================
 ;; copy-term
@@ -2034,5 +2064,6 @@
   compound terms allowing complex conditions to require
   failure."
   [u v]
-  `(fn [a#]
-     (!=-verify a# (unify a# ~u ~v))))
+  `(goal min# [] 
+     :yield (!=-verify min# (unify min# ~u ~v))
+     :size 0))
