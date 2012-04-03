@@ -10,3 +10,17 @@ else
   echo "Testing with V8"
   ${V8_HOME}/d8 tests.js
 fi
+
+if [ "$SPIDERMONKEY_HOME" == "" ]; then
+  echo "SPIDERMONKEY_HOME not set, skipping SpiderMonkey tests"
+else
+  echo "Testing with SpiderMonkey"
+  ${SPIDERMONKEY_HOME}/js tests.js
+fi
+
+if [ "$JSC_HOME" == "" ]; then
+  echo "JSC_HOME not set, skipping JavaScriptCore tests"
+else
+  echo "Testing with JavaScriptCore"
+  ${JSC_HOME}/jsc tests.js
+fi

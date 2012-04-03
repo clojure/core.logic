@@ -9,4 +9,5 @@
   :cljsbuild {:builds [{:source-path "src/main/cljs"
                         :compiler {:output-to "main.js"}}
                        {:source-path "src/test/cljs"
-                        :compiler {:output-to "tests.js"}}]})
+                        :compiler {:optimizations :advanced
+                                   :output-to "tests.js"}}]})
