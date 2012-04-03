@@ -190,7 +190,7 @@
 (defmacro ifu*
   ([])
   ([[e & gs] & grest]
-     `(cljs.core-logic/-ifu ~e [~@gs]
+     `(cljs.core.logic/-ifu ~e [~@gs]
         ~(if (seq grest)
            `(delay (ifu* ~@grest))
            nil))))

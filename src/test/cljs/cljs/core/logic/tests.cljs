@@ -718,27 +718,26 @@
 ;; -----------------------------------------------------------------------------
 ;; condu (committed-choice)
 
-(comment
-  (defn onceo [g]
-    (condu
-      (g s#)))
+(defn onceo [g]
+  (condu
+    (g s#)))
 
-  (assert (= (run* [x]
-               (onceo (teacupo x)))
-             '(tea)))
+(assert (= (run* [x]
+             (onceo (teacupo x)))
+           '(tea)))
 
-  (assert (= (run* [r]
-               (conde
-                 [(teacupo r) s#]
-                 [(m/== false r) s#]))
-             '(false tea cup)))
+(assert (= (run* [r]
+             (conde
+               [(teacupo r) s#]
+               [(m/== false r) s#]))
+           '(false tea cup)))
 
-  (assert (= (run* [r]
-               (conda
-                 [(teacupo r) s#]
-                 [(m/== false r) s#]))
-             '(tea cup)))
-  )
+(assert (= (run* [r]
+             (conda
+               [(teacupo r) s#]
+               [(m/== false r) s#]))
+           '(tea cup)))
+
 
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
