@@ -762,7 +762,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(declare plus join narrow bind)
+(declare plus join narrow scope bind)
 
 (defn- step+
   "Repeatedly calls step+ as long as there's no yield and that sizehint 
@@ -778,60 +778,45 @@
         (and prob (zero? d)) (recur sa szsa false)
         :else sa))))
 
-(def step+ step)
-
-(deftype Plus [a b y min sz]
+(deftype Plus [a b y sz]
   Search
   (yield [this] y)
   (step [this]
-    (plus b (step+ a) min))
-  (min-yield [this] min)
-  (restrict [this ss] (plus (narrow a ss) (narrow b ss) ss))
+    (plus b (step+ a)))
+  (min-yield [this] empty-s)
+  (restrict [this ss] (plus (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
-
-#_(defn plus 
-  "Returns the union of two Searches."
-  [a b miny]
-  (or (and a b 
-        (goal min [a b]
-          :min miny
-          :yield (yield a)
-          :step (plus b (step+ a) (min-yield this))))
-      a b))
 
 (defn plus 
   "Returns the union of two Searches."
-  [a b miny]
-  (or (and a b (Plus. a b (yield a) miny (+ (sizehint a) (sizehint b)))) a b))
+  [a b]
+  (or (and a b (Plus. a b (yield a) (+ (sizehint a) (sizehint b)))) a b))
 
-(deftype Join [a b min sz]
+(deftype Join [a b sz]
   Search
   (yield [this] nil)
   (step [this]
     (plus (narrow b (yield a))
-          (join b (step+ a) min)
-          min))
-  (min-yield [this] min)
-  (restrict [this ss] (join (narrow a ss) (narrow b ss) ss))
+          (join b (step+ a))))
+  (min-yield [this] empty-s)
+  (restrict [this ss] (join (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
 
 (defn join 
   "Returns the intersection of two Searches"
-  [a b min]
-  (and a b (Join. a b min (+ (sizehint a) (sizehint b)))))
+  [a b]
+  (and a b (Join. a b (+ (sizehint a) (sizehint b)))))
 
-;; the min field of choice, plus and join may be removed and replaced by narrow
-;; instances
 (deftype Narrow [a ss]
   Search
-  (yield [this] (merge-s (yield a) ss))
-  (step [this] (narrow (step+ (restrict a ss)) ss))
+  (yield [this] nil)
+  (step [this] (scope (restrict a ss) ss))
   (min-yield [this] ss)
   (restrict [this oss] (narrow a oss))
   (sizehint [this] (sizehint a)))
 
 (defn narrow
-  "Restrict the search to substitutions greater than or equal to ss.
+  "Restricts the search to substitutions greater than or equal to ss.
    Semi-lazy: ss is checked to be unifiable with min-yield eagerly so as to
    fail fast but the actual narrowing happens lazily." 
   [a ss]
@@ -841,13 +826,31 @@
         a
         (Narrow. a nss)))))
 
+(deftype Scope [a ss]
+  Search
+  (yield [this] (yield a))
+  (step [this] (scope (step a) ss))
+  (min-yield [this] ss)
+  (restrict [this ss]
+    (narrow a ss))
+  (sizehint [this] (sizehint a)))
+
+(defn scope 
+  [a ss]
+  (when-let [uss (min-yield a)]
+    (when-let [nss (merge-s ss uss)]
+      (if (= nss uss)
+        a
+        (Scope. a nss)))))
+
 (deftype Bind [a b]
   Search
   (yield [this] nil)
   (step [this]
-    (plus (narrow b (yield a)) 
-          (bind (step a) b)
-          (min-yield a)))
+    (scope
+      (plus (narrow b (yield a)) 
+            (bind (step+ a) b))
+      (min-yield a)))
   (min-yield [this] (min-yield a))
   (restrict [this ss]
     (bind (narrow a ss) b))
@@ -862,7 +865,7 @@
     nil)
   (step [this] (this))
   (min-yield [this] empty-s)
-  (restrict [this ss] this)
+  (restrict [this ss] (scope #(narrow (this) ss) ss))
   (sizehint [this] 1))
 
 (extend-type Object
@@ -877,29 +880,6 @@
 
 ;; =============================================================================
 ;; Syntax
-
-(defmacro goal {:arglists '([min-name? subgoals & {:keys [yield step min size]}])}
-  ([& args]
-    (let [[min-name subgoals & {:keys [yield step min size]}]
-            (if (symbol? (first args))
-              args
-              (cons (gensym 'min) args))
-          ss (gensym "ss")]
-      `((fn goal-factory# [~min-name ~@subgoals]
-          (let [y# ~yield
-                sz# ~(or size 
-                       (when-let [[g & gs] (seq subgoals)] 
-                         (reduce (fn [s g] `(+ ~s (sizehint ~g)))
-                                 `(sizehint ~g) gs))
-                       1)]
-            (reify Search
-              (yield [_#] y#)
-              (step [_#] ~step)
-              (min-yield [_#] ~min-name)
-              (restrict [_# ~ss] (goal-factory# ~ss 
-                                   ~@(map #(list `narrow % ss) subgoals)))
-              (sizehint [_#] sz#))))
-         ~(or min `empty-s) ~@subgoals))))
 
 (def succeed
   "A goal that always succeeds."
@@ -917,8 +897,7 @@
 (defmacro ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  `(goal min# [] :yield (unify min# ~u ~v)
-                  :size 0))
+  `(unify empty-s ~u ~v))
 
 #_(defmacro ==
   "A goal that attempts to unify terms u and v."
@@ -927,14 +906,14 @@
 
 (defn- calltree [items op]
   (when (seq items)
-    (reduce #(list op %1 %2 `empty-s) (reverse items))))
+    (reduce #(list op %1 %2) (reverse items))))
 
 (defmacro conde
   "Logical disjunction of the clauses. The first goal in
   a clause is considered the head of that clause. Interleaves the
   execution of the clauses."
   [& clauses]
-  (let [clauses (map #(calltree (map (partial list 'fn []) %) `join) clauses)
+  (let [clauses (map #(calltree (for [x %] `(fn [] ~x)) `join) clauses)
         clauses (calltree clauses `plus)]
     clauses))
 
@@ -1028,6 +1007,7 @@
        ~@(map (partial trace-lvar a) lvars)
        ~a)))
 
+;; for debug, remove later
 (defprotocol SearchTree
   (search-tree [x]))
 
@@ -1046,7 +1026,9 @@
   Narrow
   (search-tree [x] (list '/ (search-tree (.a x)) (.s (.ss x))))
   Bind
-  (search-tree [x] (list '-> (search-tree (.a x)) (search-tree (.b x)))))
+  (search-tree [x] (list '-> (search-tree (.a x)) (search-tree (.b x))))
+  Scope
+  (search-tree [x] (list '< (search-tree (.a x)) (.s (.ss x)))))
 
 
 ;; =============================================================================
@@ -1191,18 +1173,30 @@
 ;; TODO : conda and condu should probably understanding logging
 
 (defn ifa [q then else]
-  (goal min [q then else]
-    :step (cond
-            (yield q) (join q then min)
-            q (ifa (step+ q) then else)
-            :else else)))
+  (reify Search
+    (yield [_] nil)
+    (step [_]
+      (cond
+        (yield q) (join q then)
+        q (ifa (step+ q) then else)
+        :else else))
+    (restrict [_ ss]
+      (ifa (narrow q ss) (narrow then ss) (narrow else ss)))
+    (min-yield [_] empty-s)
+    (sizehint [_] (sizehint q))))
 
 (defn ifu [q then else]
-  (goal [q then else]
-    :step (cond
-            (yield q) (narrow then (yield q))
-            q (ifu (step+ q) then else)
-            :else else)))
+  (reify Search
+    (yield [_] nil)
+    (step [_]
+      (cond
+        (yield q) (narrow then (yield q))
+        q (ifu (step+ q) then else)
+        :else else))
+    (restrict [_ ss]
+      (ifu (narrow q ss) then (narrow else ss)))
+    (min-yield [_] empty-s)
+    (sizehint [_] (sizehint q))))
 
 ;; TODO : if -> when
 
@@ -2064,6 +2058,4 @@
   compound terms allowing complex conditions to require
   failure."
   [u v]
-  `(goal min# [] 
-     :yield (!=-verify min# (unify min# ~u ~v))
-     :size 0))
+  `(!=-verify empty-s (unify empty-s ~u ~v)))
