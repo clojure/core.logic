@@ -743,31 +743,29 @@
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
 
-(comment
-  (assert (= (run* [q]
-               (m/== q [nil]))
-             '([nil])))
+(assert (= (run* [q]
+             (m/== q [nil]))
+           '([nil])))
 
-  (assert (= (run* [q]
-               (m/== q [1 nil]))
-             '([1 nil])))
+(assert (= (run* [q]
+             (m/== q [1 nil]))
+           '([1 nil])))
 
-  (assert (= (run* [q]
-               (m/== q [nil 1]))
-             '([nil 1])))
+(assert (= (run* [q]
+             (m/== q [nil 1]))
+           '([nil 1])))
 
-  (assert (= (run* [q]
-               (m/== q '(nil)))
-             '((nil))))
+(assert (= (run* [q]
+             (m/== q '(nil)))
+           '((nil))))
 
-  (assert (= (run* [q]
-               (m/== q {:foo nil}))
-             '({:foo nil})))
+(assert (= (run* [q]
+             (m/== q {:foo nil}))
+           '({:foo nil})))
 
-  (assert (= (run* [q]
-               (m/== q {nil :foo}))
-             '({nil :foo})))
-  )
+(assert (= (run* [q]
+             (m/== q {nil :foo}))
+           '({nil :foo})))
 
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
