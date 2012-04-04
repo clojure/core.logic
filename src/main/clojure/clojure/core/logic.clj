@@ -774,7 +774,7 @@
           d (- szsa sza)]
       (cond
         (yield sa) sa
-        (and (pos? d) (<= sza max)) (recur sa szsa true)
+        (and (pos? d) (<= szsa max)) (recur sa szsa true)
         (and prob (zero? d)) (recur sa szsa false)
         :else sa))))
 
