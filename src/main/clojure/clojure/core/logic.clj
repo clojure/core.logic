@@ -800,7 +800,9 @@
         (cond
           (yield sa) sa
           (neg? d) (step+ sa)
-          (and (pos? d) (<= szsa max)) (capped-step+ sa max)
+          (pos? d) (if (<= szsa max) 
+                     (capped-step+ sa max)
+                     sa)
           prob (recur sa szsa false)
           :else sa)))))
 
