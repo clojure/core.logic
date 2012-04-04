@@ -818,14 +818,14 @@
 (defn plus 
   "Returns the union of two Searches."
   [a b]
-  (or (and a b (Plus. a b (yield a) (+ (sizehint a) (sizehint b)))) a b))
+  (or (and a b (Plus. a b (yield a) (+ 1 (sizehint a) (sizehint b)))) a b))
 
 (deftype Join [a b sz]
   Search
   (yield [this] nil)
   (step [this]
     (plus (narrow b (yield a))
-          (join b (step a))))
+          (join b (step+ a (sizehint b)))))
   (min-yield [this] empty-s)
   (restrict [this ss] (join (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
