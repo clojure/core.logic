@@ -764,25 +764,51 @@
 
 (declare plus join narrow scope bind)
 
-(defn- step+
-  "Repeatedly calls step+ as long as there's no yield and that sizehint 
-   decreases (there is allowance for short plateaux)." 
-  [a]
+(defn- capped-step+
+  "Repeatedly calls step as long as there's no yield and that sizehint 
+   increases (there is allowance for short plateaux) but stay below max." 
+  [a max]
   (loop [a a sza (sizehint a) prob true]
     (let [sa (step a)
           szsa (sizehint sa)
           d (- szsa sza)]
       (cond
         (yield sa) sa
-        (neg? d) (recur sa szsa true)
+        (and (pos? d) (<= sza max)) (recur sa szsa true)
         (and prob (zero? d)) (recur sa szsa false)
         :else sa))))
+
+(defn- step+
+  "With one arg: repeatedly calls step as long as there's no yield and that 
+   sizehint decreases (there is allowance for short plateaux).
+   With two args: based on the first steps, calls either step+ or capped-step+." 
+  ([a]
+    (loop [a a sza (sizehint a) prob true]
+      (let [sa (step a)
+            szsa (sizehint sa)
+            d (- szsa sza)]
+        (cond
+          (yield sa) sa
+          (neg? d) (recur sa szsa true)
+          (and prob (zero? d)) (recur sa szsa false)
+          :else sa))))
+  ([a max]
+    (loop [a a sza (sizehint a) prob true]
+      (let [sa (step a)
+            szsa (sizehint sa)
+            d (- szsa sza)]
+        (cond
+          (yield sa) sa
+          (neg? d) (step+ sa)
+          (and (pos? d) (<= szsa max)) (capped-step+ sa max)
+          prob (recur sa szsa false)
+          :else sa)))))
 
 (deftype Plus [a b y sz]
   Search
   (yield [this] y)
   (step [this]
-    (plus b (step+ a)))
+    (plus b (step+ a (sizehint b))))
   (min-yield [this] empty-s)
   (restrict [this ss] (plus (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
@@ -797,7 +823,7 @@
   (yield [this] nil)
   (step [this]
     (plus (narrow b (yield a))
-          (join b (step+ a))))
+          (join b (step a))))
   (min-yield [this] empty-s)
   (restrict [this ss] (join (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
