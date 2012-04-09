@@ -48,7 +48,7 @@
   (step [a] "Advances the search -- returns the advanced search.")
   (min-yield [a] "Returns a substitution which is an lower bound of all
     substitutions yielded by this search.")
-  (restrict [a ss]
+  (-narrow [a ss]
     "Restricts the search to substitutions more precise than ss. ss must be
      greater than or equal to (min-yield a ss). Do not call, see narrow.")
   (sizehint [a]))
@@ -208,7 +208,7 @@
   (yield [this] this)
   (step [this] nil)
   (min-yield [this] this)
-  (restrict [this ss] (merge-s this ss))
+  (-narrow [this ss] (merge-s this ss))
   (sizehint [this] 0))
 
 (defn- ^Substitutions pass-verify [^Substitutions s u v]
@@ -756,7 +756,7 @@
   (yield [_] nil)
   (step [_] nil)
   (min-yield [_] nil)
-  (restrict [_ _] nil)
+  (-narrow [_ _] nil)
   (sizehint [_] 0))
 
 ;; -----------------------------------------------------------------------------
@@ -812,7 +812,7 @@
   (step [this]
     (plus b (step+ a (sizehint b))))
   (min-yield [this] empty-s)
-  (restrict [this ss] (plus (narrow a ss) (narrow b ss)))
+  (-narrow [this ss] (plus (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
 
 (defn plus 
@@ -827,7 +827,7 @@
     (plus (narrow b (yield a))
           (join b (step+ a (sizehint b)))))
   (min-yield [this] empty-s)
-  (restrict [this ss] (join (narrow a ss) (narrow b ss)))
+  (-narrow [this ss] (join (narrow a ss) (narrow b ss)))
   (sizehint [this] sz))
 
 (defn join 
@@ -838,9 +838,9 @@
 (deftype Narrow [a ss]
   Search
   (yield [this] nil)
-  (step [this] (scope (restrict a ss) ss))
+  (step [this] (scope (-narrow a ss) ss))
   (min-yield [this] ss)
-  (restrict [this oss] (narrow a oss))
+  (-narrow [this oss] (narrow a oss))
   (sizehint [this] (sizehint a)))
 
 (defn narrow
@@ -859,7 +859,7 @@
   (yield [this] (yield a))
   (step [this] (scope (step a) ss))
   (min-yield [this] ss)
-  (restrict [this ss]
+  (-narrow [this ss]
     (narrow a ss))
   (sizehint [this] (sizehint a)))
 
@@ -880,7 +880,7 @@
             (bind (step+ a) b))
       (min-yield a)))
   (min-yield [this] (min-yield a))
-  (restrict [this ss]
+  (-narrow [this ss]
     (bind (narrow a ss) b))
   (sizehint [this] (sizehint a)))
 
@@ -893,7 +893,7 @@
     nil)
   (step [this] (this))
   (min-yield [this] empty-s)
-  (restrict [this ss] (scope #(narrow (this) ss) ss))
+  (-narrow [this ss] (scope #(narrow (this) ss) ss))
   (sizehint [this] 1))
 
 (extend-type Object
@@ -903,7 +903,7 @@
   (step [this]
     (next this))
   (min-yield [this] empty-s)
-  (restrict [this ss] this)
+  (-narrow [this ss] this)
   (sizehint [this] 1))
 
 ;; =============================================================================
@@ -1208,7 +1208,7 @@
         (yield q) (join q then)
         q (ifa (step+ q) then else)
         :else else))
-    (restrict [_ ss]
+    (-narrow [_ ss]
       (ifa (narrow q ss) (narrow then ss) (narrow else ss)))
     (min-yield [_] empty-s)
     (sizehint [_] (sizehint q))))
@@ -1221,7 +1221,7 @@
         (yield q) (narrow then (yield q))
         q (ifu (step+ q) then else)
         :else else))
-    (restrict [_ ss]
+    (-narrow [_ ss]
       (ifu (narrow q ss) then (narrow else ss)))
     (min-yield [_] empty-s)
     (sizehint [_] (sizehint q))))
