@@ -99,29 +99,56 @@
 ;; Substitutions
 
 (defprotocol ISubstitutions
-  (length [this])
-  (occurs-check [this u v])
-  (ext [this u v])
   (ext-no-check [this u v])
   (swap [this cu])
-  (constrain [this u c])
   (get-var [this v])
   (use-verify [this f])
   (walk [this v])
-  (walk-var [this v])
-  (walk* [this v])
-  (unify [this u v])
-  (reify-lvar-name [_])
-  (-reify* [this v])
-  (-reify [this v])
-  (build [this u]))
-
+  (reify-lvar-name [_]))
+  
 (declare empty-s)
 (declare lvar)
 (declare lvar?)
 (declare pair)
 (declare lcons)
 (declare merge-s)
+
+(defn walk* [ss v]
+  (let [v (walk ss v)]
+    (walk-term v ss)))
+
+(defn occurs-check [ss u v]
+    (let [v (walk ss v)]
+      (occurs-check-term v u ss)))
+
+(defn ext [ss u v]
+  (if (and *occurs-check* (occurs-check ss u v))
+    nil
+    (ext-no-check ss u v)))
+
+(defn constrain [ss u c]
+    (let [u (walk ss u)]
+      (swap ss (add-constraint u c))))
+
+(defn unify [ss u v]
+    (if (identical? u v)
+      ss
+      (let [u (walk ss u)
+            v (walk ss v)]
+        (if (identical? u v)
+          ss
+          (unify-terms u v ss)))))
+
+(defn -reify* [ss v]
+    (let [v (walk ss v)]
+      (reify-term v ss)))
+
+(defn -reify [ss v]
+  (let [v (walk* ss v)]
+    (walk* (-reify* empty-s v) v)))
+
+(defn build [ss u]
+  (build-term u ss))
 
 (deftype Substitutions [s l verify cs]
   Object
@@ -131,16 +158,6 @@
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
 
   ISubstitutions
-  (length [this] (count s))
-
-  (occurs-check [this u v]
-    (let [v (walk this v)]
-      (occurs-check-term v u this)))
-  
-  (ext [this u v]
-    (if (and *occurs-check* (occurs-check this u v))
-      nil
-      (ext-no-check this u v)))
 
   (ext-no-check [this u v]
     (verify this u v))
@@ -150,10 +167,6 @@
       (let [v (s cu)]
         (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
       (Substitutions. (assoc s cu unbound) l verify cs)))
-
-  (constrain [this u c]
-    (let [u (walk this u)]
-      (swap this (add-constraint u c))))
 
   (get-var [this v]
     (first (find s v)))
@@ -168,41 +181,9 @@
        (identical? vp unbound) v
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
-  
-  (walk-var [this v]
-    (loop [lv v [v vp] (find s v)]
-      (cond
-       (nil? v) lv
-       (identical? vp unbound) v
-       (not (lvar? vp)) v
-       :else (recur vp (find s vp)))))
-  
-  (walk* [this v]
-    (let [v (walk this v)]
-      (walk-term v this)))
-
-  (unify [this u v]
-    (if (identical? u v)
-      this
-      (let [u (walk this u)
-            v (walk this v)]
-        (if (identical? u v)
-          this
-          (unify-terms u v this)))))
 
   (reify-lvar-name [this]
     (symbol (str "_." (count s))))
-
-  (-reify* [this v]
-    (let [v (walk this v)]
-      (reify-term v this)))
-
-  (-reify [this v]
-    (let [v (walk* this v)]
-      (walk* (-reify* empty-s v) v)))
-
-  (build [this u]
-    (build-term u this))
 
   Search
   (yield [this] this)
@@ -223,11 +204,6 @@
   ([m l f cs] (Substitutions. m l f cs)))
 
 (def ^Substitutions empty-s (make-s {} '()))
-
-(defn ^Substitutions to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
-        l (reduce (fn [l [k v]] (conj l (Pair. k v))) '() v)]
-    (make-s s l)))
 
 (defn merge-s [^Substitutions a ^Substitutions b]
   (when (and a b)
