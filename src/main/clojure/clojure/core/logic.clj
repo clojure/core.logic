@@ -809,7 +809,9 @@
 (defn join 
   "Returns the intersection of two Searches"
   [a b]
-  (and a b (Join. a b (+ (sizehint a) (sizehint b)))))
+  ; if a or b is nil then the narrowed a will be nil
+  (when-let [a (narrow a (min-yield b))]
+    (Join. a b (+ (sizehint a) (sizehint b)))))
 
 (deftype Narrow [a ss]
   Search
