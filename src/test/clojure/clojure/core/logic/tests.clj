@@ -449,6 +449,9 @@
 ;; =============================================================================
 ;; walk
 
+(defn to-s [kvs]
+  (reduce #(apply ext-no-check %1 %2) empty-s kvs))
+
 (deftest test-basic-walk
   (is (= (let [x  (lvar 'x)
                y  (lvar 'y)
