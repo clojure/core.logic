@@ -811,7 +811,7 @@
   [a b]
   ; if a or b is nil then the narrowed a will be nil
   (when-let [a (narrow a (min-yield b))]
-    (Join. a b (+ (sizehint a) (sizehint b)))))
+    (scope (Join. a b (+ (sizehint a) (sizehint b))) (min-yield a))))
 
 (deftype Narrow [a ss]
   Search
@@ -843,11 +843,11 @@
 
 (defn scope 
   [a ss]
-  (when-let [uss (min-yield a)]
-    (when-let [nss (merge-s ss uss)]
-      (if (= nss uss)
-        a
-        (Scope. a nss)))))
+  ; by construction, if min-yield returns a value other than empty-s
+  ; this value is more specific than ss.  
+  (if (= empty-s (min-yield a))
+    (Scope. a ss)
+    a))
 
 (deftype Bind [a b]
   Search
