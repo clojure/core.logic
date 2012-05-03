@@ -1,3 +1,10 @@
+From 0.7.1 to 0.7.2
+====
+
+Fixes
+---
+* LOGIC-37: The facts and retractions functions do not take the relation's namespace into account when resolving the index.
+
 From 0.7.0 to 0.7.1
 ====
 
