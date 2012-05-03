@@ -1618,7 +1618,7 @@
        (swap! rel-set (fn [s] (into s tuples)))
        (let [indexes (indexes-for rel arity)]
          (doseq [[o i] indexes]
-           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+           (let [index (var-get (ns-resolve rel-ns (index-sym (.name rel) arity o)))]
              (let [indexed-tuples (map (fn [t]
                                          {(nth t (dec i)) #{t}})
                                        tuples)]
@@ -1660,7 +1660,7 @@
        (swap! rel-set (fn [s] (remove #(some #{%} tuples) s)))
        (let [indexes (indexes-for rel arity)]
          (doseq [[o i] indexes]
-           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+           (let [index (var-get (ns-resolve rel-ns (index-sym (.name rel) arity o)))]
              (let [indexed-tuples (map (fn [t]
                                          {(nth t (dec i)) #{t}})
                                        tuples)]
