@@ -210,7 +210,7 @@
   (toString [this]
     (pr-str this))
   IHash
-  (-hash []
+  (-hash [this]
     (-hash name))
   IMeta
   (-meta [this]
@@ -219,7 +219,7 @@
   (-with-meta [this new-meta]
     (LVar. name meta))
   IPrintable
-  (-pr-seq [_]
+  (-pr-seq [_ opts]
     (list "<lvar:" (str name) ">"))
   IEquiv
   (-equiv [this o]
