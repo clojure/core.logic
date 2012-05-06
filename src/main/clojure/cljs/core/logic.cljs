@@ -391,11 +391,11 @@
   (-unify-terms [u v s]
     (-unify-with-map v u s))
   
-  HashMap
+  PersistentHashMap
   (-unify-terms [u v s]
     (-unify-with-map v u s))
   
-  Set
+  PersistentHashSet
   (-unify-terms [u v s]
     (-unify-with-set v u s)))
 
@@ -502,7 +502,7 @@
   (-unify-with-map [v u s]
     (unify-with-map* v u s))
 
-  HashMap
+  PersistentHashMap
   (-unify-with-map [v u s]
     (unify-with-map* v u s)))
 
@@ -516,7 +516,7 @@
   default
   (-unify-with-set [v u s] false)
 
-  Set
+  PersistentHashSet
   (-unify-with-set [v u s]
     (loop [u u v v ulvars [] umissing []]
       (if (seq u)
@@ -577,7 +577,7 @@
       (map #(-walk* s %) v)
       v))
 
-  Vector
+  PersistentVector
   (-walk-term [v s]
     (loop [v v r []]
       (if (seq v)
@@ -586,10 +586,11 @@
 
   ObjMap
   (-walk-term [v s] (walk-term-map* v s))
-  HashMap
+
+  PersistentHashMap
   (-walk-term [v s] (walk-term-map* v s))
 
-  Set
+  PersistentHashSet
   (-walk-term [v s]
     (loop [v v r {}]
       (if (seq v)
