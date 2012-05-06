@@ -896,24 +896,26 @@
 
 (defn zebrao [hs]
   (all
-   (m/== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)
-   (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])
-   (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)
-   (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)
-   (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)
-   (membero [(lvar) 'kools (lvar) (lvar) 'yellow] hs)
-   (membero ['spaniard (lvar) (lvar) 'dog (lvar)] hs)
-   (membero [(lvar) (lvar) 'coffee (lvar) 'green] hs)
-   (membero ['ukrainian (lvar) 'tea (lvar) (lvar)] hs)
-   (membero [(lvar) 'lucky-strikes 'oj (lvar) (lvar)] hs)
-   (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)
-   (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)
-   (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)
-   (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
+   (m/== (list (lvar) (lvar) (list (lvar) (lvar) 'milk (lvar) (lvar)) (lvar) (lvar)) hs)
+   (firsto hs (list 'norwegian (lvar) (lvar) (lvar) (lvar)))
+   (nexto (list 'norwegian (lvar) (lvar) (lvar) (lvar)) (list (lvar) (lvar) (lvar) (lvar) 'blue) hs)
+   (righto (list (lvar) (lvar) (lvar) (lvar) 'ivory) (list (lvar) (lvar) (lvar) (lvar) 'green) hs)
+   (membero (list 'englishman (lvar) (lvar) (lvar) 'red) hs)
+   (membero (list (lvar) 'kools (lvar) (lvar) 'yellow) hs)
+   (membero (list 'spaniard (lvar) (lvar) 'dog (lvar)) hs)
+   (membero (list (lvar) (lvar) 'coffee (lvar) 'green) hs)
+   (membero (list 'ukrainian (lvar) 'tea (lvar) (lvar)) hs)
+   (membero (list (lvar) 'lucky-strikes 'oj (lvar) (lvar)) hs)
+   (membero (list 'japanese 'parliaments (lvar) (lvar) (lvar)) hs)
+   (membero (list (lvar) 'oldgolds (lvar) 'snails (lvar)) hs)
+   (nexto (list (lvar) (lvar) (lvar) 'horse (lvar)) (list (lvar) 'kools (lvar) (lvar) (lvar)) hs)
+   (nexto (list (lvar) (lvar) (lvar) 'fox (lvar)) (list (lvar) 'chesterfields (lvar) (lvar) (lvar)) hs)))
 
 (println (pr-str (run 1 [q] (zebrao q))))
+
 (binding [*occurs-check* false]
- (time (run 1 [q] (zebrao q))))
+  (dotimes [_ 5]
+    (time (run 1 [q] (zebrao q)))))
 
 (println (pr-str
           (run 10 [q]
