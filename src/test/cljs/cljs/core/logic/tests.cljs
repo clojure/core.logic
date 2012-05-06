@@ -339,6 +339,7 @@
 
 (assert (= (-unify empty-s #{} #{1}) false))
 
+;; FIXME
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x 1)]
   (assert (= (-unify empty-s #{x} #{1}) os)))
