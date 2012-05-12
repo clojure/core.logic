@@ -168,14 +168,14 @@ core.logic supports disequality constraints.
 ```clj
 (run* [q]
   (fresh [x y]
-    (!= [x 2] [y 1])
+    (!= [x 2] [1 y])
     (== x 1)
     (== y 3)
     (== q [x y]))) ; ([1 3])
 
 (run* [q]
   (fresh [x y]
-    (!= [x 2] [y 1])
+    (!= [x 2] [1 y])
     (== x 1)
     (== y 2)
     (== q [x y]))) ; ()
