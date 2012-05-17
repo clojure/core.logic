@@ -1456,10 +1456,10 @@
 ;; Rel
 
 (defn to-stream [aseq]
-  (when (seq aseq)
-    (choice (first aseq)
-            (let [aseq (drop-while #(or (nil? %) (false? %)) (next aseq))]
-              (fn [] (to-stream aseq))))))
+  (let [aseq (drop-while #(or (nil? %) (false? %)) aseq)]
+    (when (seq aseq)
+      (choice (first aseq)
+              (fn [] (to-stream (next aseq)))))))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -1603,8 +1603,7 @@
                       (->> set#
                            (map (fn [cand#]
                                   (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
-                                    ~'a)))
-                           (remove nil?)))))))))))
+                                    ~'a)))))))))))))
 
 ;; TODO: Should probably happen in a transaction
 
