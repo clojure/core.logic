@@ -510,6 +510,15 @@
            (== true q))
          [])))
 
+;; =============================================================================
+;; Basic
+
+(deftest test-all
+  (is (= (run* [q]
+           (all
+            (== 1 1)
+            (== q true)))
+         '(true))))
 
 ;; =============================================================================
 ;; TRS
@@ -1060,6 +1069,25 @@
              (== q [x y])))
          '([Ricky Lucy]))))
 
+(retraction likes 'Bob 'Mary)
+
+(deftest test-rel-retract
+  (is (= (run* [q]
+           (fresh [x y]
+             (likes x y)
+             (== q [x y])))
+         '([John Martha] [Ricky Lucy]))))
+
+(defrel rel1 ^:index a)
+(fact rel1 [1 2])
+
+(deftest test-rel-logic-29
+  (is (= (run* [q]
+           (fresh [a]
+             (rel1 [q a])
+             (== a 2)))
+         '(1))))
+
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
 
@@ -1183,3 +1211,81 @@
   (is (= (-> #'dummy meta :doc)
          "Docstring")))
 
+(defn locals-membero [x l]
+  (matche [l]
+          ([[x . tail]])
+          ([[head . tail]]
+             (locals-membero x tail))))
+
+(deftest test-matche-with-locals
+  (is (= [true] (run* [q]
+                      (locals-membero 'foo  [1 2 3 4 5 'foo])
+                      (== q true))))
+  (is (= [] (run* [q]
+                  (locals-membero 'foo  [1 2 3 4 5])
+                  (== true q)))))
+
+;; -----------------------------------------------------------------------------
+;; Pattern matching inline expression support
+
+(defn s [n] (llist n []))
+
+(def zero 0)
+(def one (s zero))
+(def two (s one))
+(def three (s two))
+(def four (s three))
+(def five (s four))
+(def six  (s five))
+
+(defn natural-number [x]
+  (matche [x]
+    ([zero])
+    ([(s y)] (natural-number y))))
+
+(deftest test-matche-with-expr
+  (is (= (run* [q] (natural-number one))
+         '(_.0 _.0))))
+
+;; -----------------------------------------------------------------------------
+;; Pattern matching other data structures
+
+(defne match-map [m o]
+  ([{:foo {:bar o}} _]))
+
+(defn test-defne-map []
+  (is (= (run* [q]
+           (match-map {:foo {:bar 1}} q))
+         '(1))))
+
+(defne match-set [s o]
+  ([#{:cat :bird :dog} _]))
+
+(defn test-defne-set []
+  (is (= (run* [q]
+           (match-set #{:cat :bird :dog} q))
+         '(_.0))))
+
+(comment
+  ;; FIXME: for some reason set #{:cat :bird} works on match-set call - David
+  )
+
+;; -----------------------------------------------------------------------------
+;; Tickets
+
+(deftest test-32-unify-set
+  (is (= (run* [q] (== q #{1}))
+         '(#{1}))))
+
+(deftest test-31-unifier-associative
+  (is (= (binding [*reify-vars* false]
+           (unifier '{:a ?x} '{:a ?y} '{:a 5}))
+         {:a 5}))
+  (is (= (binding [*reify-vars* false]
+           (unifier '{:a ?x} '{:a 5} '{:a ?y}))
+         {:a 5})))
+
+(deftest test-34-unify-with-metadata
+  (is (run* [q]
+            (== q (quote ^:haz-meta-daytuhs (form form form))))
+      '((^:haz-meta-daytuhs (form form form)))))

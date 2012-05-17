@@ -1,11 +1,13 @@
 core.logic
 ====
 
-A Logic Programming library for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
+A Logic Programming library for Clojure & ClojureScript. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156). It's also described in great detail in the [The Reasoned Schemer](http://mitpress.mit.edu/catalog/item/default.asp?ttype=2&tid=10663). However, do note that the version that appears in The Reasoned Schemer is an earlier implementation and differs from the one on which this library is based.
 
 Performance is a central concern of this project. Anything that makes it slower will probably not be adopted. Anything that makes it faster without overly complicating the implementation will be considered. It would be interesting to see how we fare on the standard Prolog benchmarks. Currently, on my machine, solving the classic Zebra puzzle 1000 times takes SWI-Prolog about 6 seconds, it takes core.logic running under Clojure 1.3.0-alpha7 less then 2s without <code>occurs-check</code>.
 
-If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](https://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
+If you wish to work through The Reasoned Schemer with core.logic make sure to look over [this](http://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
+
+If you're interested in using core.logic from ClojureScript look [here](http://github.com/clojure/core.logic/wiki/Using-core.logic-with-ClojureScript).
 
 Immediate Roadmap
 ----
@@ -27,8 +29,9 @@ Examples
 A classic AI program:
 
 ```clj
-(refer '[clojure.core :exclude [==]])
-(use 'clojure.core.logic)
+(ns classic-ai-example
+   (:refer-clojure :exclude [==])
+   (:use clojure.core.logic))
 
 (defne moveo [before action after]
   ([[:middle :onbox :middle :hasnot]
@@ -72,8 +75,9 @@ The core.logic version is almost equally succinct:
 Here's a simple type inferencer for the simply typed lambda calculus based on a version originally written in Prolog:
 
 ```clj
-(refer '[clojure.core :exclude [==]])
-(use 'clojure.core.logic)
+(ns simple-typed-lambda-calculus
+   (:refer-clojure :exclude [==])
+   (:use clojure.core.logic))
 
 (defna findo [x l o]
   ([_ [[y :- o] . _] _] 
@@ -157,14 +161,14 @@ core.logic supports disequality constraints.
 ```clj
 (run* [q]
   (fresh [x y]
-    (!= [x 2] [y 1])
+    (!= [x 2] [1 y])
     (== x 1)
     (== y 3)
     (== q [x y]))) ; ([1 3])
 
 (run* [q]
   (fresh [x y]
-    (!= [x 2] [y 1])
+    (!= [x 2] [1 y])
     (== x 1)
     (== y 2)
     (== q [x y]))) ; ()
@@ -296,7 +300,7 @@ Resources
 * [cKanren](http://scheme2011.ucombinator.org/papers/Alvis2011.pdf)
 * [Efficient Constraint Propagation Engines](http://www.gecode.org/paper.html?id=SchulteStuckey:TOPLAS:2008)
 * [Techniques for Efficient Constraint Propagation](http://www.gecode.org/paper.html?id=Lagerkvist:Lic:Diss:2008)
-* [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/_)
+* [Operations Research Tools developed at Google](http://code.google.com/p/or-tools/)
 * [logilab-constraint](http://hg.logilab.org/logilab/constraint)
 * [Solving Every Sudoku Puzzle](http://norvig.com/sudoku.html)
 * [Constraint Handling Rules](http://www.informatik.uni-ulm.de/pm/fileadmin/pm/home/fruehwirth/constraint-handling-rules-book.html)

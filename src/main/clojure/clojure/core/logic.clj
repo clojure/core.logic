@@ -5,6 +5,7 @@
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *occurs-check* true)
+(def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
 (defprotocol IUnifyTerms
@@ -115,6 +116,8 @@
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
+  (toString [_]
+    (prn-str [s l verify cs]))
 
   ISubstitutions
   (length [this] (count s))
@@ -240,7 +243,9 @@
     (ext s v u))
   IReifyTerm
   (reify-term [v s]
-    (ext s v (reify-lvar-name s)))
+    (if *reify-vars*
+      (ext s v (reify-lvar-name s))
+      (ext s v (:name meta))))
   IWalkTerm
   (walk-term [v s] v)
   IOccursCheckTerm
@@ -258,10 +263,15 @@
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
+       (LVar. name (.hashCode name) nil {:name name})))
   ([name]
-     (let [name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil))))
+     (let [oname name
+           name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) nil {:name oname})))
+  ([name cs]
+     (let [oname name
+           name (str name "_" (. clojure.lang.RT (nextID)))]
+       (LVar. name (.hashCode name) cs {:name oname}))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
@@ -634,32 +644,40 @@
 (extend-protocol IWalkTerm
   clojure.lang.ISeq
   (walk-term [v s]
-    (map #(walk* s %) v)))
+    (with-meta
+      (map #(walk* s %) v)
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentVector
   (walk-term [v s]
-    (loop [v v r (transient [])]
-      (if (seq v)
-        (recur (next v) (conj! r (walk* s (first v))))
-        (persistent! r)))))
+    (with-meta
+      (loop [v v r (transient [])]
+        (if (seq v)
+          (recur (next v) (conj! r (walk* s (first v))))
+          (persistent! r)))
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
   (walk-term [v s]
-    (loop [v v r (transient {})]
-      (if (seq v)
-        (let [[vfk vfv] (first v)]
-          (recur (next v) (assoc! r vfk (walk* s vfv))))
-        (persistent! r)))))
+    (with-meta
+      (loop [v v r (transient {})]
+        (if (seq v)
+          (let [[vfk vfv] (first v)]
+            (recur (next v) (assoc! r vfk (walk* s vfv))))
+          (persistent! r)))
+      (meta v))))
 
 (extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
   (walk-term [v s]
-    (loop [v v r {}]
-      (if (seq v)
-        (recur (next v) (conj r (walk* s (first v))))
-        r))))
+    (with-meta
+      (loop [v v r #{}]
+        (if (seq v)
+          (recur (next v) (conj r (walk* s (first v))))
+          r))
+      (meta v))))
 
 ;; =============================================================================
 ;; Occurs Check Term
@@ -868,7 +886,7 @@
 
 (defmacro all
   "Like fresh but does does not create logic variables."
-  ([] `clojure.core.logic.minikanren/s#)
+  ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 ;; =============================================================================
@@ -904,13 +922,10 @@
 (defn- lvarq-sym? [s]
   (and (symbol? s) (= (first (str s)) \?)))
 
-(defn- rem-? [s]
-  (symbol (apply str (drop 1 (str s)))))
-
 (defn- proc-lvar [lvar-expr store]
   (let [v (if-let [u (@store lvar-expr)]
             u
-            (lvar (rem-? lvar-expr)))]
+            (lvar lvar-expr))]
     (swap! store conj [lvar-expr v])
     v))
 
@@ -946,7 +961,7 @@
                       (postwalk (replace-lvar store) expr))
         :else expr))))
 
-(defn- prep
+(defn prep
   "Prep a quoted expression. All symbols preceded by ? will
   be replaced with logic vars."
   [expr]
@@ -956,45 +971,52 @@
                   (postwalk (replace-lvar lvars) expr))]
     (with-meta prepped {:lvars @lvars})))
 
-(defn- unifier*
+(defn unifier*
   "Unify the terms u and w."
-  [u w]
-  
-  (first
-    (run* [q]
-      (== u w)
-      (== u q))))
+  ([u w]
+     (first
+      (run* [q]
+        (== u w)
+        (== u q))))
+  ([u w & ts]
+     (apply unifier* (unifier* u w) ts)))
 
-(defn- binding-map*
+(defn binding-map*
   "Return the binding map that unifies terms u and w.
   u and w should prepped terms."
-  [u w]
-  (let [lvars (merge (-> u meta :lvars)
-                     (-> w meta :lvars))
-        s (unify empty-s u w)]
-    (when s
-      (into {} (map (fn [[k v]]
-                      [k (-reify s v)])
-                    lvars)))))
+  ([u w]
+     (let [lvars (merge (-> u meta :lvars)
+                        (-> w meta :lvars))
+           s (unify empty-s u w)]
+       (when s
+         (into {} (map (fn [[k v]]
+                         [k (-reify s v)])
+                       lvars)))))
+  ([u w & ts]
+     (apply binding-map* (binding-map* u w) ts)))
 
 (defn unifier
   "Unify the terms u and w. Will prep the terms."
-  [u w]
-  {:pre [(not (lcons? u))
-         (not (lcons? w))]}
-  (let [up (prep u)
-        wp (prep w)]
-    (unifier* up wp)))
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (unifier* up wp)))
+  ([u w & ts]
+     (apply unifier (unifier u w) ts)))
 
 (defn binding-map
   "Return the binding map that unifies terms u and w.
   Will prep the terms."
-  [u w]
-  {:pre [(not (lcons? u))
-         (not (lcons? w))]}
-  (let [up (prep u)
-        wp (prep w)]
-    (binding-map* up wp)))
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (binding-map* up wp)))
+  ([u w & ts]
+     (apply binding-map (binding-map u w) ts)))
 
 ;; =============================================================================
 ;; Non-relational goals
@@ -1185,10 +1207,15 @@
   (cond
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
-   (and (coll? p)
-        (not= (first p) 'quote)) (cond
-                                  (list? p) p
-                                  :else `[~@(map p->term p)])
+   (and (coll? p) (not= (first p) 'quote))
+     (cond
+      ;; support simple expressions
+      (list? p) p
+      ;; preserve original collection type
+      :else (let [ps (map p->term p)]
+              (cond
+               (instance? clojure.lang.MapEntry p) (into [] ps)
+               :else (into (empty p) ps))))
    :else p))
 
 (defn- lvar-sym? [s]
@@ -1199,8 +1226,9 @@
 (defn- extract-vars
   ([p]
      (set (cond
-           (lvar-sym? p) [p]
-           (coll? p) (filter lvar-sym? (flatten p))
+           (lvar-sym? p) [p]           
+           (coll? p) (let [p (if (seq? p) (rest p) p)]
+                       (filter lvar-sym? (flatten p)))
            :else nil)))
   ([p seen]
      (set/difference (extract-vars p) (set seen))))
@@ -1285,9 +1313,12 @@
 
 (declare tabled)
 
-(defn- defnm [t n & rest]
+(defn env-locals [& syms]
+  (disj (set (apply concat syms)) '_))
+
+(defmacro defnm [t n & rest]
   (let [[n [as & cs]] (name-with-attributes n rest)]
-    (binding [*locals* (disj (set as) '_)]
+    (binding [*locals* (env-locals as (keys &env))]
      (if-let [tabled? (-> n meta :tabled)]
        `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
        `(defn ~n [~@as] ~(handle-clauses t as cs))))))
@@ -1330,13 +1361,13 @@
   "Define a goal fn. Supports pattern matching. All
    patterns will be tried. See conde."
   [& rest]
-  (apply defnm `conde rest))
+  `(defnm conde ~@rest))
 
 (defmacro matche
   "Pattern matching macro. All patterns will be tried.
   See conde."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `conde xs cs)))
 
 ;; -----------------------------------------------------------------------------
@@ -1348,23 +1379,23 @@
 (defmacro defna
   "Define a soft cut goal. See conda."
   [& rest]
-  (apply defnm `conda rest))
+  `(defnm conda ~@rest))
 
 (defmacro defnu
   "Define a committed choice goal. See condu."
   [& rest]
-  (apply defnm `condu rest))
+  `(defnm condu ~@rest))
 
 (defmacro matcha
   "Define a soft cut pattern match. See conda."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `conda xs cs)))
 
 (defmacro matchu
   "Define a committed choice goal. See condu."
   [xs & cs]
-  (binding [*locals* (disj (set xs) '_)]
+  (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `condu xs cs)))
 
 ;; =============================================================================
@@ -1390,7 +1421,8 @@
 (defn to-stream [aseq]
   (when (seq aseq)
     (choice (first aseq)
-            (fn [] (to-stream (next aseq))))))
+            (let [aseq (drop-while #(or (nil? %) (false? %)) (next aseq))]
+              (fn [] (to-stream aseq))))))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -1506,6 +1538,9 @@
 
 ;; TODO: for arity greater than 20, we need to use rest args
 
+(defn contains-lvar? [x]
+  (some lvar? (tree-seq coll? seq x)))
+
 (defmacro extend-rel [name & args]
   (let [arity (count args)
         r (range 1 (clojure.core/inc arity))
@@ -1517,10 +1552,8 @@
                                   (range 1 (clojure.core/inc arity)))))
         check-lvar (fn [[o i]]
                      (let [a (a-sym i)]
-                       `((not (clojure.core.logic/lvar?
-                               (clojure.core.logic/walk* ~'a ~a)))
-                         ((deref ~(index-sym name arity o))
-                          (clojure.core.logic/walk* ~'a ~a)))))
+                       `((not (clojure.core.logic/contains-lvar? (clojure.core.logic/walk* ~'a ~a)))
+                         ((deref ~(index-sym name arity o)) (clojure.core.logic/walk* ~'a ~a)))))
         indexed-set (fn [[o i]]
                       `(def ~(index-sym name arity o) (atom {})))]
     (if (<= arity 20)
@@ -1555,7 +1588,7 @@
        (swap! rel-set (fn [s] (into s tuples)))
        (let [indexes (indexes-for rel arity)]
          (doseq [[o i] indexes]
-           (let [index (var-get (resolve (index-sym (.name rel) arity o)))]
+           (let [index (var-get (ns-resolve rel-ns (index-sym (.name rel) arity o)))]
              (let [indexed-tuples (map (fn [t]
                                          {(nth t (dec i)) #{t}})
                                        tuples)]
@@ -1567,6 +1600,48 @@
   "Add a fact to a relation defined with defrel."
   [rel & tuple]
   (facts rel [(vec tuple)]))
+
+(defn difference-with
+  "Returns a map that consists of the first map with the rest of the maps
+   removed from it. When a key is found in the first map and a later map,
+   the value from the later map will be combined with the value in the first
+   map by calling (f val-in-first val-in-later). If this function returns nil
+   then the key will be removed completely."
+  [f & maps]
+  (when (some identity maps)
+    (let [empty-is-nil (fn [s] (if (empty? s) nil s))
+          merge-entry (fn [m [k v]]
+                         (if (contains? m k)
+                           (if-let [nv (empty-is-nil (f (get m k) v))]
+                             (assoc m k nv)
+                             (dissoc m k))))
+          merge-map (fn [m1 m2] (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge-map maps))))
+
+(defn retractions
+  "Retract a series of facts. Takes a vector of vectors where each vector
+   represents a fact tuple, all with the same number of elements. It is not
+   an error to retract a fact that isn't true."
+  ([rel [f :as tuples]] (retractions rel (count f) tuples))
+  ([^Rel rel arity tuples]
+     (let [rel-ns (:ns (meta rel))
+           rel-set (var-get (ns-resolve rel-ns (set-sym (.name rel) arity)))
+           tuples (map vec tuples)]
+       (swap! rel-set (fn [s] (remove #(some #{%} tuples) s)))
+       (let [indexes (indexes-for rel arity)]
+         (doseq [[o i] indexes]
+           (let [index (var-get (ns-resolve rel-ns (index-sym (.name rel) arity o)))]
+             (let [indexed-tuples (map (fn [t]
+                                         {(nth t (dec i)) #{t}})
+                                       tuples)]
+               (swap! index
+                      (fn [i]
+                        (apply difference-with set/difference i indexed-tuples))))))))))
+
+(defn retraction
+  "Remove a fact from a relation defined with defrel."
+  [rel & tuple]
+  (retractions rel [(vec tuple)]))
 
 ;; =============================================================================
 ;; Tabling
