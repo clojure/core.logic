@@ -1457,8 +1457,9 @@
 
 (defn to-stream [aseq]
   (when (seq aseq)
-    (choice (first aseq)
-            (fn [] (to-stream (next aseq))))))
+    (let [aseq (remove #(or (nil? %) (false? %)) aseq)]
+      (choice (first aseq)
+              (fn [] (to-stream (next aseq)))))))
 
 (defmacro def-arity-exc-helper []
   (try
