@@ -1,3 +1,10 @@
+From 0.7.2 to 0.7.3
+====
+
+Fixes
+---
+* users of to-stream should not have to remove failures themselves
+
 From 0.7.1 to 0.7.2
 ====
 
