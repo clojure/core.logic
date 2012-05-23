@@ -18,7 +18,7 @@
   (run 1 [q]
     (fresh [x y]
       (appendo x y q)))
-  
+
   ;; 1.4s
   (dotimes [_ 10]
     (time
@@ -71,18 +71,19 @@
 
 (defn zebrao [hs]
   (all
-   (== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)                          (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])                         
-   (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)       
-   (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)         
-   (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)                    
-   (membero [(lvar) 'kools (lvar) (lvar) 'yellow] hs)                      
-   (membero ['spaniard (lvar) (lvar) 'dog (lvar)] hs)                      
-   (membero [(lvar) (lvar) 'coffee (lvar) 'green] hs)                      
-   (membero ['ukrainian (lvar) 'tea (lvar) (lvar)] hs)                     
-   (membero [(lvar) 'lucky-strikes 'oj (lvar) (lvar)] hs)                  
-   (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)              
-   (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)                   
-   (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)          
+   (== [(lvar) (lvar) [(lvar) (lvar) 'milk (lvar) (lvar)] (lvar) (lvar)] hs)
+   (firsto hs ['norwegian (lvar) (lvar) (lvar) (lvar)])
+   (nexto ['norwegian (lvar) (lvar) (lvar) (lvar)] [(lvar) (lvar) (lvar) (lvar) 'blue] hs)
+   (righto [(lvar) (lvar) (lvar) (lvar) 'ivory] [(lvar) (lvar) (lvar) (lvar) 'green] hs)
+   (membero ['englishman (lvar) (lvar) (lvar) 'red] hs)
+   (membero [(lvar) 'kools (lvar) (lvar) 'yellow] hs)
+   (membero ['spaniard (lvar) (lvar) 'dog (lvar)] hs)
+   (membero [(lvar) (lvar) 'coffee (lvar) 'green] hs)
+   (membero ['ukrainian (lvar) 'tea (lvar) (lvar)] hs)
+   (membero [(lvar) 'lucky-strikes 'oj (lvar) (lvar)] hs)
+   (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)
+   (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)
+   (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)
    (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
 
 (comment
@@ -168,10 +169,10 @@
 (defne takeouto [x l y]
   ([_ [x . y] _])
   ([_ [h . t] [h . r]] (takeouto x t r)))
- 
+
 (defn digito [x l y]
   (takeouto x l y))
-  
+
 (defn first-digito [x l y]
   (all
    (digito x l y)
