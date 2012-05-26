@@ -111,15 +111,14 @@
 (defn assq
   "Similar to Scheme assq, xs must be a List of Pairs"
   [k xs]
-  (let [xs (-seq xs)]
-   (loop [xs xs]
-     (if (identical? xs nil)
-       not-found
-       (let [x (-first xs)
-             lhs (.-lhs x)]
-         (if (identical? k lhs)
-           (.-rhs x)
-           (recur (-rest xs))))))))
+  (loop [xs (-seq xs)]
+    (if (nil? xs)
+      not-found
+      (let [x (-first xs)
+            lhs (.-lhs x)]
+        (if (identical? k lhs)
+          (.-rhs x)
+          (recur (-next xs)))))))
 
 (deftype Substitutions [s]
   IEquiv
