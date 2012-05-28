@@ -192,7 +192,7 @@
 
 (def empty-s (make-s '()))
 
-(defn subst? [x]
+(defn ^boolean subst? [x]
   (instance? Substitutions x))
 
 (defn to-s [v]
@@ -268,7 +268,7 @@
                      (swap! lvar-sym-counter inc))]
        (LVar. name nil))))
 
-(defn lvar? [x]
+(defn ^boolean lvar? [x]
   (instance? LVar x))
 
 ;; =============================================================================
@@ -369,7 +369,7 @@
     (cons a (seq d))
     (LCons. a d nil)))
 
-(defn lcons? [x]
+(defn ^boolean lcons? [x]
   (instance? LCons x))
 
 ;; =============================================================================
