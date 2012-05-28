@@ -10,8 +10,10 @@
                      [lein-cljsbuild "0.1.10"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
                                    :compiler {:optimizations :simple
+                                              :pretty-print true
                                               :static-fns true
                                               :output-to "tests_simple.js"}}
                        :test-adv {:source-path "src/test/cljs"
                                   :compiler {:optimizations :advanced
+                                             :pretty-print true
                                              :output-to "tests.js"}}}})
