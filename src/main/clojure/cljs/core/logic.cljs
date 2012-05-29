@@ -622,13 +622,15 @@
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 
+(declare Inc)
+
 (deftype Choice [a f]
   IBind
   (-bind [this g]
     (-mplus (g a) (-inc (-bind f g))))
   IMPlus
   (-mplus [this fp]
-    (Choice. a (fn [] (-mplus (fp) f))))
+    (Choice. a (-inc (-mplus (fp) f))))
   ITake
   (-take* [this]
     (lazy-seq (cons (first a) (lazy-seq (-take* f))))))
@@ -662,15 +664,17 @@
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(extend-type function
+(deftype Inc [f]
+  IFn
+  (-invoke [_] (f))
   IBind
   (-bind [this g]
-    (-inc (-bind (this) g)))
+    (-inc (-bind (f) g)))
   IMPlus
-  (-mplus [this f]
-    (-inc (-mplus (f) this)))
+  (-mplus [this fp]
+    (-inc (-mplus (fp) this)))
   ITake
-  (-take* [this] (lazy-seq (-take* (this)))))
+  (-take* [this] (lazy-seq (-take* (f)))))
 
 ;; =============================================================================
 ;; Syntax
@@ -726,12 +730,10 @@
              (recur b gr))
            b))))
 
-(extend-type function
+(extend-type Inc
   IIfA
   (-ifa [b gs c]
-       (-inc (-ifa (b) gs c))))
-
-(extend-type function
+       (-inc (-ifa (b) gs c)))
   IIfU
   (-ifu [b gs c]
        (-inc (-ifu (b) gs c))))

@@ -32,10 +32,10 @@
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(cljs.core.logic/-mplus ~e (fn [] (mplus* ~@e-rest)))))
+     `(cljs.core.logic/-mplus ~e (-inc (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
-  `(fn [] ~@rest))
+  `(cljs.core.logic/Inc. (fn [] ~@rest)))
 
 (defmacro ==
   "A goal that attempts to unify terms u and v."
@@ -64,7 +64,7 @@
         (bind* a# ~@goals)))))
 
 (defmacro solve [& [n [x] & goals]]
-  `(let [xs# (cljs.core.logic/-take* (fn []
+  `(let [xs# (cljs.core.logic/-take* (-inc
                       ((fresh [~x] ~@goals
                          (fn [a#]
                            (cons (cljs.core.logic/-reify a# ~x) '()))) ;; TODO: do we need this?
