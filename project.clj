@@ -12,7 +12,7 @@
                                    :compiler {:optimizations :simple
                                               :pretty-print true
                                               :static-fns true
-                                              :output-to "tests_simple.js"}}
+                                              :output-to "tests.js"}}
                        :test-adv {:source-path "src/test/cljs"
                                   :compiler {:optimizations :advanced
                                              :pretty-print true
