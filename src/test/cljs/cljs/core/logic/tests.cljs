@@ -911,6 +911,10 @@
    (nexto (list (lvar) (lvar) (lvar) 'horse (lvar)) (list (lvar) 'kools (lvar) (lvar) (lvar)) hs)
    (nexto (list (lvar) (lvar) (lvar) 'fox (lvar)) (list (lvar) 'chesterfields (lvar) (lvar) (lvar)) hs)))
 
+(defn ^:export run_zebra []
+  (binding [*occurs-check* false]
+    (doall (run 1 [q] (zebrao q)))))
+
 (println (pr-str (run 1 [q] (zebrao q))))
 
 (binding [*occurs-check* false]
