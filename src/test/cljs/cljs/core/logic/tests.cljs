@@ -895,21 +895,22 @@
     [(righto y x l)]))
 
 (defn zebrao [hs]
-  (all
-   (m/== (list (lvar) (lvar) (list (lvar) (lvar) 'milk (lvar) (lvar)) (lvar) (lvar)) hs)
-   (firsto hs (list 'norwegian (lvar) (lvar) (lvar) (lvar)))
-   (nexto (list 'norwegian (lvar) (lvar) (lvar) (lvar)) (list (lvar) (lvar) (lvar) (lvar) 'blue) hs)
-   (righto (list (lvar) (lvar) (lvar) (lvar) 'ivory) (list (lvar) (lvar) (lvar) (lvar) 'green) hs)
-   (membero (list 'englishman (lvar) (lvar) (lvar) 'red) hs)
-   (membero (list (lvar) 'kools (lvar) (lvar) 'yellow) hs)
-   (membero (list 'spaniard (lvar) (lvar) 'dog (lvar)) hs)
-   (membero (list (lvar) (lvar) 'coffee (lvar) 'green) hs)
-   (membero (list 'ukrainian (lvar) 'tea (lvar) (lvar)) hs)
-   (membero (list (lvar) 'lucky-strikes 'oj (lvar) (lvar)) hs)
-   (membero (list 'japanese 'parliaments (lvar) (lvar) (lvar)) hs)
-   (membero (list (lvar) 'oldgolds (lvar) 'snails (lvar)) hs)
-   (nexto (list (lvar) (lvar) (lvar) 'horse (lvar)) (list (lvar) 'kools (lvar) (lvar) (lvar)) hs)
-   (nexto (list (lvar) (lvar) (lvar) 'fox (lvar)) (list (lvar) 'chesterfields (lvar) (lvar) (lvar)) hs)))
+  (mu/symbol-macrolet [_ (lvar)]
+   (all
+    (m/== (list _ _ (list _ _ 'milk _ _) _ _) hs)
+    (firsto hs (list 'norwegian _ _ _ _))
+    (nexto (list 'norwegian _ _ _ _) (list _ _ _ _ 'blue) hs)
+    (righto (list _ _ _ _ 'ivory) (list _ _ _ _ 'green) hs)
+    (membero (list 'englishman _ _ _ 'red) hs)
+    (membero (list _ 'kools _ _ 'yellow) hs)
+    (membero (list 'spaniard _ _ 'dog _) hs)
+    (membero (list _ _ 'coffee _ 'green) hs)
+    (membero (list 'ukrainian _ 'tea _ _) hs)
+    (membero (list _ 'lucky-strikes 'oj _ _) hs)
+    (membero (list 'japanese 'parliaments _ _ _) hs)
+    (membero (list _ 'oldgolds _ 'snails _) hs)
+    (nexto (list _ _ _ 'horse _) (list _ 'kools _ _ _) hs)
+    (nexto (list _ _ _ 'fox _) (list _ 'chesterfields _ _ _) hs))))
 
 (defn ^:export run_zebra []
   (binding [*occurs-check* false]
