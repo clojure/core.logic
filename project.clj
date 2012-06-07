@@ -1,4 +1,4 @@
-(defproject core.logic "0.7.4" 
+(defproject core.logic "0.7.5" 
   :description "A logic/relational programming library for Clojure"
   :extra-classpath-dirs ["checkouts/clojurescript/src/clj"
                          "checkouts/clojurescript/src/cljs"]
