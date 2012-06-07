@@ -302,8 +302,7 @@
 (assert (= (-unify empty-s {1 2 3 4} {1 2 3 4}) empty-s))
 (assert (= (-unify empty-s {1 2} {1 2 3 4}) false))
 
-;; FIXME
-#_(let [x (lvar 'x)
+(let [x (lvar 'x)
       m1 {1 2 3 4}
       m2 {1 2 3 x}
       os (-ext-no-check empty-s x 4)]

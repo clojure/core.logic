@@ -390,6 +390,10 @@
   (-unify-terms [u v s]
     (-unify-with-map v u s))
   
+  PersistentArrayMap
+  (-unify-terms [u v s]
+    (-unify-with-map v u s))
+
   PersistentHashMap
   (-unify-terms [u v s]
     (-unify-with-map v u s))
@@ -475,20 +479,21 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
+(def not-found (js-obj))
+
 (defn unify-with-map* [v u s]
-  (let [ks (keys u)]
-    (loop [ks ks u u v v s s]
-      (if (seq ks)
+  (if-not (cljs.core/== (count v) (count u))
+    false
+    (loop [ks (seq (keys u)) s s]
+      (if ks
         (let [kf (first ks)
-              vf (get v kf ::not-found)]
-          (if (= vf ::not-found)
+              vf (get v kf not-found)]
+          (if (identical? vf not-found)
             false
             (if-let [s (-unify s (get u kf) vf)]
-              (recur (next ks) (dissoc u kf) (dissoc v kf) s)
+              (recur (next ks) s)
               false)))
-        (if (seq v)
-          false
-          s)))))
+        s))))
 
 (extend-protocol IUnifyWithMap
   nil
@@ -498,6 +503,10 @@
   (-unify-with-map [v u s] false)
 
   ObjMap
+  (-unify-with-map [v u s]
+    (unify-with-map* v u s))
+
+  PersistentArrayMap
   (-unify-with-map [v u s]
     (unify-with-map* v u s))
 
