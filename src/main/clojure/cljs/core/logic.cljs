@@ -110,11 +110,12 @@
 
 (defn assq
   "Similar to Scheme assq, xs must be a List of Pairs"
-  [k xs]
+  [k ^cljs.core/List xs]
   (loop [xs (-seq xs)]
     (if (nil? xs)
       not-found
-      (let [x (-first xs)
+      (let [^cljs.core/List xs xs
+            x (-first xs)
             lhs (.-lhs x)]
         (if (identical? k lhs)
           (.-rhs x)
@@ -197,7 +198,7 @@
 
 (defn to-s [v]
   (let [s (reduce (fn [l [k v]]
-                    (cons (pair k v) l))
+                    (conj l (pair k v)))
                   () v)]
     (make-s s)))
 
@@ -810,4 +811,4 @@
 (defn prefix [s <s]
   (if (= s <s)
     ()
-    (cons (first s) (prefix (rest s) <s))))
+    (conj (prefix (rest s) <s) (first s))))
