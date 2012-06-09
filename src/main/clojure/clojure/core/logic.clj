@@ -116,8 +116,7 @@
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
-  (toString [_]
-    (prn-str [s l verify cs]))
+  (toString [_] (prn s))
 
   ISubstitutions
   (length [this] (count s))
@@ -263,15 +262,15 @@
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil {:name name})))
+       (LVar. name (.hashCode name) nil)))
   ([name]
      (let [oname name
            name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil {:name oname})))
+       (LVar. name (.hashCode name) nil)))
   ([name cs]
      (let [oname name
            name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs {:name oname}))))
+       (LVar. name (.hashCode name) cs))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
