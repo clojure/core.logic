@@ -1866,6 +1866,9 @@
   (keep-before [this n])
   (expand [this]))
 
+(defprotocol IDomainIntersection
+  (intersection [this that]))
+
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
 
@@ -1877,18 +1880,6 @@
   (<c [u v])
   (<=c [u v])
   (+c [u v w]))
-
-(defn intersection [this that]
-  (let [s (set/intersection (expand this) (expand that))]
-    (when (not (empty? s))
-      s)))
-
-(defn difference [this that]
-  (let [s (set/difference (expand this) (expand that))]
-    (when (not (empty? s))
-      s)))
-
-(deftype Constraint [proc rator rands])
 
 (defn ext-c [c oc]
   (if (some var? (rands oc))
@@ -2179,7 +2170,13 @@
      (~'disjoint? [this# that#]
        (if (number? that#)
          (not= this# that#)
-         (disjoint? (expand this#) (expand that#))))))
+         (disjoint? (expand this#) (expand that#))))
+     IDomainIntersection
+     (~'intersection [this# that#]
+       (if (number? that#)
+         (when (= this# that#)
+           this#)
+         (intersection that# this#)))))
 
 (extend-to-fd java.lang.Byte)
 (extend-to-fd java.lang.Short)
@@ -2214,6 +2211,20 @@
      (< n lb) nil
      :else (RangeFD. lb n)))
   (expand [this] (apply sorted-set (range lb ub)))
+  IDomainIntersection
+  (intersection [this that]
+    (cond
+     (instance? RangeFD that)
+     (let [^RangeFD that that
+            lb (max lb (.lb that))
+            ub (max ub (.ub that))]
+        (cond
+         (= lb ub) lb
+         (< lb ub) (RangeFD. lb ub)
+         :else nil))
+     (number? that) (when (and (>= that lb) (<= that ub))
+                      that)
+     :else (set/intersection (expand this) (expand that))))
   IDisequalityConstrain
   (!=c [this that]))
 
