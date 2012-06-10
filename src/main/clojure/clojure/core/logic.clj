@@ -1826,35 +1826,25 @@
 ;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
 ;; "cKanren - miniKanren with Constraints"
 
-;; TODO: change to lazy-seq
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
+(defprotocol IConstraintStore
+  (addc [this c])
+  (updatec [this c]))
 
 (defprotocol IDomain
   (-idomain-marker [_]))
-
-(defn domain? [x]
-  (satisfies? IDomain x))
 
 (defprotocol IConstraint
   (proc [this])
   (rator [this])
   (rands [this])
+  (var-rands [this])
   (process-prefix [this p]))
 
 (defprotocol IReifiableConstraint
   (reifyc [this v r]))
 
-(defn reifiable-c? [c]
-  (satisfies? IReifiableConstraint c))
-
 (defprotocol IEnforceableConstraint
   (-ienforceable-constraint-marker [_]))
-
-(defn enforceable-c? [c]
-  (satisfies? IEnforceableConstraint c))
 
 (defprotocol IFiniteDomain
   (lb [this])
@@ -1881,6 +1871,79 @@
   (<=c [u v])
   (+c [u v w]))
 
+(defn constraint? [x]
+  (satisfies? IConstraint x))
+
+(defn vardiff [oc c]
+  (let [ocr (rands oc)
+        cr (rands c)]
+    (reduce (fn [v i]
+              (let [or (nth ocr i)
+                    r (nth cr i)]
+                (if (and (var? or) (not (var? r)))
+                  (conj v or)
+                  v)))
+            [] (range (count (rands oc))))))
+
+(deftype ConstraintStore [km cm cid]
+  IConstraintStore
+  (addc [this c]
+    (let [vars (var-rands c)
+          cid (inc cid)
+          c (vary-meta c assoc :id cid)
+          ^ConstraintStore cs (reduce (fn [m v] (assoc this v c)) this vars)]
+      (ConstraintStore. (.km cs) (.cm cs) cid)))
+  (updatec [this c]
+    (let [id (-> c meta :id)
+          oc (get cm cid)
+          vs (vardiff oc c)
+          nkm (reduce (fn [m v]
+                        (let [s (disj (get km v) id)]
+                          (if (empty? s)
+                            (dissoc km v)
+                            (assoc km v s))))
+                      km vs)
+          ncm (if (zero? (count (var-rands c)))
+                (dissoc cm id)
+                cm)]
+      (ConstraintStore. km cm cid)))
+  clojure.lang.Associative
+  (assoc [this k v]
+    (when-not (var? k)
+      (throw (Error. (str "constraint store assoc expected logic var key: " k))))
+    (when-not (constraint? v)
+      (throw (Error. (str "constraint store assoc expected constraint value: " v))))
+    (when-not (-> v meta :id)
+      (throw (Error. (str "constraint has no id " v))))
+    (let [nkm (assoc-in km k (fnil (fn [s] (assoc s cid v)) #{}))
+          ncm (assoc cm cid (with-meta v {:id cid}))]
+      (ConstraintStore. nkm ncm cid)))
+  clojure.lang.ILookup
+  (valAt [this k]
+    (when-not (var? k)
+      (throw (Error. (str "constraint store lookup expected logic var key: " k))))
+    (let [ids (get km k)]
+      (map cm ids)))
+  (valAt [this k not-found]
+    (if-let [v (.valAt this k)]
+      v
+      not-found)))
+
+;; TODO: change to lazy-seq
+(defn prefix [s <s]
+  (if (= s <s)
+    ()
+    (cons (first s) (prefix (rest s) <s))))
+
+(defn domain? [x]
+  (satisfies? IDomain x))
+
+(defn reifiable-c? [c]
+  (satisfies? IReifiableConstraint c))
+
+(defn enforceable-c? [c]
+  (satisfies? IEnforceableConstraint c))
+
 (defn ext-c [c oc]
   (if (some var? (rands oc))
     (conj c oc)
@@ -1890,7 +1953,7 @@
   (fn [^Substitutions a]
     (make-s (.s a) (ext-c (.c a) oc))))
 
-(defmulti ^Constraint makec (fn [dt & r] dt))
+(defmulti ^IConstraint makec (fn [dt & r] dt))
 
 (defn domain-compare [a b]
   (if (and (number? a) (number? b))
@@ -1902,7 +1965,7 @@
           (sorted-set-by domain-compare ~@args)))
 
 (defn update-var [x dom]
-  (fn [^Substitutions a]
+  (fn [a]
     (let [xdom (walk a x)]
       (if (domain? xdom)
         (let [new-dom (intersection xdom dom)]
@@ -1911,7 +1974,7 @@
         (ext-no-check a x dom)))))
 
 (defn process [v dom]
-  (fn [^Substitutions a]
+  (fn [a]
     (cond
      (var? v) ((update-var v dom) a)
      (member? dom v) a
@@ -2075,6 +2138,8 @@
          (if (and ~@(map (fn [d] `(domain? ~d)) ds))
            ((composeg (update-c oc#) ~@body) a#)
            ((update-c oc#) a#)))))))
+
+(declare difference)
 
 (defn exclude-from [dom1 a xs]
   (loop [xs xs gs []]
