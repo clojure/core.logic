@@ -110,7 +110,7 @@
 (declare lcons)
 (declare run-constraints)
 
-(deftype Substitutions [s l c]
+(deftype Substitutions [s l cs]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -133,7 +133,7 @@
   (ext-no-check [this u v]
     (Substitutions. (assoc s u v)
                     (cons (pair u v) l)
-                    c))
+                    cs))
 
   (walk [this v]
     (loop [lv v [v vp] (find s v)]
@@ -158,7 +158,7 @@
   (update [this x v]
     (let [sp (ext this x v)]
       ((run-constraints (if (var? v) #{x v} #{x}))
-       (Substitutions. sp l c))))
+       (Substitutions. sp l cs))))
 
   (reify-lvar-name [this]
     (symbol (str "_." (count s))))
@@ -187,7 +187,7 @@
   ([] (Substitutions. {} () []))
   ([m] (Substitutions. m () []))
   ([m l] (Substitutions. m l []))
-  ([m l c] (Substitutions. m l c)))
+  ([m l cs] (Substitutions. m l cs)))
 
 (def ^Substitutions empty-s (make-s))
 (def empty-f (fn []))
@@ -1828,7 +1828,9 @@
 
 (defprotocol IConstraintStore
   (addc [this c])
-  (updatec [this c]))
+  (updatec [this c])
+  (containsc? [this c])
+  (runningc [this c]))
 
 (defprotocol IDomain
   (-idomain-marker [_]))
@@ -1837,7 +1839,6 @@
   (proc [this])
   (rator [this])
   (rands [this])
-  (var-rands [this])
   (process-prefix [this p]))
 
 (defprotocol IReifiableConstraint
@@ -1854,10 +1855,9 @@
   (disjoint? [this that])
   (drop-before [this n])
   (keep-before [this n])
-  (expand [this]))
-
-(defprotocol IDomainIntersection
-  (intersection [this that]))
+  (expand [this])
+  (intersection [this that])
+  (difference [this that]))
 
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
@@ -1870,6 +1870,9 @@
   (<c [u v])
   (<=c [u v])
   (+c [u v w]))
+
+(defn var-rands [c]
+  (into [] (filter var? (rands c))))
 
 (defn constraint? [x]
   (satisfies? IConstraint x))
@@ -1907,6 +1910,13 @@
                 (dissoc cm id)
                 cm)]
       (ConstraintStore. km cm cid)))
+  (containsc? [this c]
+    (if (contains? cm (-> c meta :id))
+      true
+      false))
+  clojure.lang.Counted
+  (count [this]
+    (count cm))
   clojure.lang.Associative
   (assoc [this k v]
     (when-not (var? k)
@@ -1915,7 +1925,7 @@
       (throw (Error. (str "constraint store assoc expected constraint value: " v))))
     (when-not (-> v meta :id)
       (throw (Error. (str "constraint has no id " v))))
-    (let [nkm (assoc-in km k (fnil (fn [s] (assoc s cid v)) #{}))
+    (let [nkm (assoc-in km [k] (fnil (fn [s] (assoc s cid v)) #{}))
           ncm (assoc cm cid (with-meta v {:id cid}))]
       (ConstraintStore. nkm ncm cid)))
   clojure.lang.ILookup
@@ -1928,6 +1938,9 @@
     (if-let [v (.valAt this k)]
       v
       not-found)))
+
+(defn ^ConstraintStore make-cs []
+  (ConstraintStore. {} {} 0))
 
 ;; TODO: change to lazy-seq
 (defn prefix [s <s]
@@ -1944,14 +1957,14 @@
 (defn enforceable-c? [c]
   (satisfies? IEnforceableConstraint c))
 
-(defn ext-c [c oc]
+(defn ext-cs [cs oc]
   (if (some var? (rands oc))
-    (conj c oc)
-    c))
+    (addc cs oc)
+    cs))
 
-(defn ^Substitutions update-c [oc]
+(defn ^Substitutions update-cs [oc]
   (fn [^Substitutions a]
-    (make-s (.s a) (ext-c (.c a) oc))))
+    (make-s (.s a) (ext-cs (.cs a) oc))))
 
 (defmulti ^IConstraint makec (fn [dt & r] dt))
 
@@ -1997,10 +2010,10 @@
     (let [x (walk a x)]
       ((cond
         (domain? x) (map-sum (fn [v] (updateg x v)))
-        ;; FIXME: x may be a lot of types - David
-        (seq? x) (fresh []
-                   (force-ans (first x))
-                   (force-ans (rest x)))
+        ;; FIXME: x can be many types - David
+        (seq? x) (all
+                  (force-ans (first x))
+                  (force-ans (rest x)))
         :else identity)
        a))))
 
@@ -2010,27 +2023,31 @@
       (and a
            (g1 a)))))
 
-(defn rem-run [oc]
+(defn run [c]
   (fn [^Substitutions a]
-    (let [c (.c a)]
-      (if (contains? c oc)
-        (let [ocp (dissoc oc c)]
-          ((proc c) (make-s (.s a) (.l a) ocp)))
+    (let [cs (.cs a)]
+      (if (containsc? cs c)
+        ((proc c) (make-s (.s a) (.l a) cs))
         a))))
 
-(defn run-constraints [xs c]
-  (letfn [(any-relevant-var? [t xs]
-            (if (var? t)
-              (contains? xs t)
-              (not (empty? (set/intersection t xs)))))]
-    (if (nil? c)
-      identity
-      (let [f (first c)]
-        (if (any-relevant-var? (rands f) xs)
-          (composeg
-           (rem-run f)
-           (run-constraints xs (next c)))
-          (run-constraints xs (next c)))) )))
+(defn run-constraints [x xcs]
+  (if xcs
+    (composeg
+     (run (first xcs))
+     (run-constraints x (next xcs)))
+    identity))
+
+(defn run-constraints* [xs cs]
+  (cond
+   (or (zero? (count cs))
+       (nil? (seq xs))) identity
+   :else (let [x (first xs)
+               xcs (get cs x)]
+           (if (seq xcs)
+             (composeg
+              (run-constraints x xcs)
+              (run-constraints* (next xs) cs))
+             (run-constraints* (next xs) cs))) ))
 
 (defn verify-all-bound [a constrained]
   (when (seq constrained)
@@ -2040,23 +2057,19 @@
         (recur a (rest constrained))))))
 
 (defn enforce-constraints [x]
-  (fresh []
+  (all
     (force-ans x)
     (fn [^Substitutions a]
-      (let [c (.c a)
-            constrained (->> c
-                             (filter enforceable-c?)
-                             (reduce (fn [r oc]
-                                       (set/union r (into #{}
-                                                      (filter var? (rands oc)))))
-                                     #{}))]
-        (verify-all-bound (.s a) constrained)
+      (let [^ConstraintStore cs (.cs a)
+            constrained (keys (.km cs))]
+        (verify-all-bound a constrained)
         ((onceo (force-ans constrained)) a)))))
 
 (defn reify-constraints [v r]
   (fn [^Substitutions a]
-    (let [c (apply concat
-                   (-> (.c a)
+    (let [^ConstraintStore cs (.cs a)
+          c (apply concat
+                   (-> (vals (.cm cs))
                        (filter reifiable-c?)
                        (map (fn [oc]
                               ((reifyc oc v r) a)))))]
@@ -2136,8 +2149,8 @@
      (let-dom a# ~vars
        (let [oc# (build-oc ~op ~@vs)]
          (if (and ~@(map (fn [d] `(domain? ~d)) ds))
-           ((composeg (update-c oc#) ~@body) a#)
-           ((update-c oc#) a#)))))))
+           ((composeg (update-cs oc#) ~@body) a#)
+           ((update-cs oc#) a#)))))))
 
 (declare difference)
 
@@ -2158,11 +2171,11 @@
           dv (walk s v)]
       (cond
        (or (not (domain? du))
-           (not (domain? dv))) ((update-c (build-oc !=fd-c u v)) a)
+           (not (domain? dv))) ((update-cs (build-oc !=fd-c u v)) a)
        (= u v) false
        (disjoint? u v) a
        :else (let [oc (build-oc !=fd-c u v)]
-               ((update-c oc) a))))))
+               ((update-cs oc) a))))))
 
 (defn =fd-c [u v]
   (c-op =c [u ud v vd]
@@ -2197,7 +2210,7 @@
        (if (empty? ys)
          (let [oc (build-oc all-difffd-c* xs ns)]
            ((composeg
-             (update-c oc)
+             (update-cs oc)
              (exclude-from ns a xs))
             a))
          (let [y (walk a (first ys))]
@@ -2211,7 +2224,7 @@
     (let [v* (walk a v*)]
       (cond
        (var? v*) (let [oc (build-oc all-difffd-c v*)]
-                   ((update-c oc) a))
+                   ((update-cs oc) a))
        :else (let [{x* true n* false} (group-by var? v*)]
                ((all-difffd-c* x* n*) a))))))
 
@@ -2222,7 +2235,7 @@
      (~'lb [this#] this#)
      (~'ub [this#] this#)
      (~'bounds [this#] (pair this# this#))
-     (~'member? [this# v#] (== this# v#))
+     (~'member? [this# v#] (= this# v#))
      (~'expand [this#] (sorted-set this#))
      (~'drop-before [this# n#]
        (if (= this# n#)
@@ -2236,8 +2249,12 @@
        (if (number? that#)
          (not= this# that#)
          (disjoint? (expand this#) (expand that#))))
-     IDomainIntersection
      (~'intersection [this# that#]
+       (if (number? that#)
+         (when (= this# that#)
+           this#)
+         (intersection that# this#)))
+     (~'difference [this# that#]
        (if (number? that#)
          (when (= this# that#)
            this#)
@@ -2276,7 +2293,6 @@
      (< n lb) nil
      :else (RangeFD. lb n)))
   (expand [this] (apply sorted-set (range lb ub)))
-  IDomainIntersection
   (intersection [this that]
     (cond
      (instance? RangeFD that)
@@ -2287,14 +2303,12 @@
          (= lb ub) lb
          (< lb ub) (RangeFD. lb ub)
          :else nil))
+     (instance? clojure.lang.PersistentTreeSet that) (intersection that this)
      (number? that) (when (and (>= that lb) (<= that ub))
                       that)
      :else (set/intersection (expand this) (expand that))))
   IDisequalityConstrain
   (!=c [this that]))
-
-;; TODO: BigRangeFD, perhaps just replace RangeFD and sorted-set
-;; implementations. Question if reification should then change. - David
 
 (defn ^RangeFD rangefd
   ([ub] (RangeFD. 0 ub))
@@ -2315,7 +2329,13 @@
     (apply sorted-set (drop-while #(< % n)) this))
   (keep-before [this n]
     (apply sorted-set (take-while #(< % n)) this))
-  (expand [this] this))
+  (expand [this] this)
+  (intersection [this that]
+    (into (sorted-set)
+      (filter #(member? that %) this)))
+  (difference [this that]
+    (into (sorted-set)
+      (filter #(not (member? that %)) this))))
 
 ;; =============================================================================
 ;; CLP(Tree)
@@ -2357,7 +2377,7 @@
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
       (if (empty? c)
-        (let [cp (ext-c (build-oc !=neq-c p) cp)]
+        (let [cp (ext-cs (build-oc !=neq-c p) cp)]
           (make-s (.s a) (.l a) cp))
         (let [oc (first c)]
           (if (= (rator oc) '!=new-c)
