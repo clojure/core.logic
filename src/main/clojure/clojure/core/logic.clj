@@ -1966,15 +1966,13 @@
   (fn [^Substitutions a]
     (make-s (.s a) (ext-cs (.cs a) oc))))
 
-(defmulti ^IConstraint makec (fn [dt & r] dt))
-
 (defn domain-compare [a b]
   (if (and (number? a) (number? b))
     (compare a b)
     1))
 
 (defmacro build-oc [op & args]
-  `(makec ::fd (~op ~@args) '~(symbol op)
+  `(makec clpfd (~op ~@args) '~(symbol op)
           (sorted-set-by domain-compare ~@args)))
 
 (defn update-var [x dom]
@@ -2068,14 +2066,14 @@
 (defn reify-constraints [v r]
   (fn [^Substitutions a]
     (let [^ConstraintStore cs (.cs a)
-          c (apply concat
-                   (-> (vals (.cm cs))
-                       (filter reifiable-c?)
-                       (map (fn [oc]
-                              ((reifyc oc v r) a)))))]
-      (if (empty? c)
+          rcs (apply concat
+                     (-> (get cs v)
+                         (filter reifiable-c?)
+                         (map (fn [oc]
+                                ((reifyc oc v r) a)))))]
+      (if (empty? rcs)
         (choice v empty-f)
-        (choice `(~v :- ~@c) empty-f)))))
+        (choice `(~v :- ~@rcs) empty-f)))))
 
 ;; NOTE: do we need this?
 (defn goal-construct [f]
@@ -2113,15 +2111,16 @@
                  `(domfd ~x dom#))
                xs)))))
 
-(defmulti make-dom (fn [x & r] x))
+(defprotocol IMakeDomain
+  (make-dom [this xs]))
+
+(defprotocol IMakeConstraint
+  (makec [this proc rator rands]))
 
 ;; =============================================================================
 ;; CLP(FD)
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
-
-(defmethod make-dom ::fd
-  [_ ns] (apply sorted-set ns))
 
 (deftype FDConstraint [proc rator rands]
   IEnforceableConstraint
@@ -2130,9 +2129,15 @@
   (rator [_] rator)
   (rands [_] rands))
 
-(defmethod makec ::fd
-  [proc rator rands]
-  (FDConstraint. proc rator rands))
+(deftype CLPFD []
+  IMakeDomain
+  (make-dom [this xs]
+    (apply sorted-set xs))
+  IMakeConstraint
+  (makec [this proc rator rands]
+    (FDConstraint. proc rator rands)))
+
+(def clpfd (CLPFD.))
 
 (defn walk-var [a [v b]]
   `(~b (walk ~a ~v)))
@@ -2205,7 +2210,7 @@
 
 (defn all-difffd-c* [ys ns]
   (fn [a]
-    (let [ns (make-dom :fd ns)]
+    (let [ns (make-dom clpfd ns)]
      (loop [ys ys ns ns xs ()]
        (if (empty? ys)
          (let [oc (build-oc all-difffd-c* xs ns)]
@@ -2347,9 +2352,12 @@
   (rator [_] rator)
   (rands [_] rands))
 
-(defmethod makec ::tree
-  [proc rator rands]
-  (TreeConstraint. proc rator rands))
+(deftype CLPTree []
+  IMakeConstraint
+  (makec [this proc rator rands]
+    (TreeConstraint. proc rator rands)))
+
+(def clptree (CLPTree.))
 
 (defn recover-vars [p]
   (if (empty? p)
