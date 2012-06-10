@@ -1829,8 +1829,7 @@
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c])
-  (containsc? [this c])
-  (runningc [this c]))
+  (containsc? [this c]))
 
 (defprotocol IDomain
   (-idomain-marker [_]))
