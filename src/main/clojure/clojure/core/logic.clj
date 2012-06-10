@@ -1870,6 +1870,9 @@
   (<=c [u v])
   (+c [u v w]))
 
+(defprotocol IForceAnswerTerm
+  (-force-ans [x]))
+
 (defn var-rands [c]
   (into [] (filter var? (rands c))))
 
@@ -1973,6 +1976,8 @@
 (defmacro build-oc [op & args]
   `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
 
+;; NOTE: can we avoid the intersection call here?
+
 (defn update-var [x dom]
   (fn [a]
     (let [xdom (walk a x)]
@@ -2001,17 +2006,29 @@
   (fn [a]
     (update a u v)))
 
+(extend-protocol IForceAnswerTerm
+  Object
+  (-force-ans [x]
+    identity)
+
+  clojure.core.logic.IDomain
+  (-force-ans [x]
+    (map-sum (fn [v] (updateg x v))))
+
+  clojure.lang.Sequential
+  (-force-ans [x]
+    (all
+     (force-ans (first x))
+     (force-ans (rest x))))
+
+  ;; clojure.lang.IPersistentMap
+  ;; clojure.lang.IPersistentSet
+  )
+
 (defn force-ans [x]
   (fn [a]
     (let [x (walk a x)]
-      ((cond
-        (domain? x) (map-sum (fn [v] (updateg x v)))
-        ;; FIXME: x can be many types - David
-        (seq? x) (all
-                  (force-ans (first x))
-                  (force-ans (rest x)))
-        :else identity)
-       a))))
+      ((-force-ans x) a))))
 
 (defn composeg [g0 g1]
   (fn [a]
