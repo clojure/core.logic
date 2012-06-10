@@ -2156,8 +2156,6 @@
            ((composeg (update-cs oc#) ~@body) a#)
            ((update-cs oc#) a#)))))))
 
-(declare difference)
-
 (defn exclude-from [dom1 a xs]
   (loop [xs xs gs []]
     (if (empty? xs)
@@ -2302,7 +2300,7 @@
      (instance? RangeFD that)
      (let [^RangeFD that that
             lb (max lb (.lb that))
-            ub (max ub (.ub that))]
+            ub (min ub (.ub that))]
         (cond
          (= lb ub) lb
          (< lb ub) (RangeFD. lb ub)
