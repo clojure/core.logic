@@ -1971,8 +1971,7 @@
     1))
 
 (defmacro build-oc [op & args]
-  `(makec clpfd (~op ~@args) '~(symbol op)
-          (sorted-set-by domain-compare ~@args)))
+  `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
 
 (defn update-var [x dom]
   (fn [a]
@@ -2149,12 +2148,12 @@
   (let [ps (partition 2 vars)
         vs (map first ps)
         ds (map second ps)]
-   `(fn [a#]
-     (let-dom a# ~vars
-       (let [oc# (build-oc ~op ~@vs)]
-         (if (and ~@(map (fn [d] `(domain? ~d)) ds))
-           ((composeg (update-cs oc#) ~@body) a#)
-           ((update-cs oc#) a#)))))))
+    `(fn [a#]
+       (let-dom a# ~vars
+         (let [oc# (build-oc ~op ~@vs)]
+           (if (and ~@(map (fn [d] `(domain? ~d)) ds))
+             ((composeg (update-cs oc#) ~@body) a#)
+             ((update-cs oc#) a#)))))))
 
 (defn exclude-from [dom1 a xs]
   (loop [xs xs gs []]
@@ -2305,10 +2304,15 @@
          (= lb ub) lb
          (< lb ub) (RangeFD. lb ub)
          :else nil))
-     (instance? clojure.lang.PersistentTreeSet that) (intersection that this)
+     (instance? clojure.lang.PersistentTreeSet that)
+     (let [s (intersection that this)]
+       (when-not (empty? s)
+         s))
      (number? that) (when (and (>= that lb) (<= that ub))
                       that)
-     :else (set/intersection (expand this) (expand that))))
+     :else (let [s (set/intersection (expand this) (expand that))]
+             (when-not (empty? s)
+               s))))
   IDisequalityConstrain
   (!=c [this that]))
 
@@ -2333,11 +2337,15 @@
     (apply sorted-set (take-while #(< % n)) this))
   (expand [this] this)
   (intersection [this that]
-    (into (sorted-set)
-      (filter #(member? that %) this)))
+    (let [s (into (sorted-set)
+              (filter #(member? that %) this))]
+      (when-not (empty? s)
+        s)))
   (difference [this that]
-    (into (sorted-set)
-      (filter #(not (member? that %)) this))))
+    (let [s (into (sorted-set)
+              (filter #(not (member? that %)) this))]
+      (when-not (empty? s)
+        s))))
 
 ;; =============================================================================
 ;; CLP(Tree)
