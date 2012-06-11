@@ -157,7 +157,7 @@
 
   (update [this x v]
     (let [sp (ext this x v)]
-      ((run-constraints (if (var? v) #{x v} #{x}))
+      ((run-constraints (if (lvar? v) #{x v} #{x}))
        (Substitutions. sp l cs))))
 
   (reify-lvar-name [this]
@@ -1885,7 +1885,7 @@
     (reduce (fn [v i]
               (let [or (nth ocr i)
                     r (nth cr i)]
-                (if (and (var? or) (not (var? r)))
+                (if (and (lvar? or) (not (lvar? r)))
                   (conj v or)
                   v)))
             [] (range (count (rands oc))))))
@@ -1921,7 +1921,7 @@
     (count cm))
   clojure.lang.Associative
   (assoc [this k v]
-    (when-not (var? k)
+    (when-not (lvar? k)
       (throw (Error. (str "constraint store assoc expected logic var key: " k))))
     (when-not (constraint? v)
       (throw (Error. (str "constraint store assoc expected constraint value: " v))))
@@ -1932,7 +1932,7 @@
       (ConstraintStore. nkm ncm cid)))
   clojure.lang.ILookup
   (valAt [this k]
-    (when-not (var? k)
+    (when-not (lvar? k)
       (throw (Error. (str "constraint store lookup expected logic var key: " k))))
     (let [ids (get km k)]
       (map cm ids)))
@@ -1990,7 +1990,7 @@
 (defn process-dom [v dom]
   (fn [a]
     (cond
-     (var? v) ((update-var-dom v dom) a)
+     (lvar? v) ((update-var-dom v dom) a)
      (member? dom v) a
      :else nil)))
 
@@ -2245,7 +2245,7 @@
             a))
          (let [y (walk a (first ys))]
            (cond
-            (var? y) (recur (rest ys) ns (cons y xs))
+            (lvar? y) (recur (rest ys) ns (cons y xs))
             (member? y ns) nil
             :else (recur (rest ys) (conj ns y) xs))))))))
 
@@ -2253,7 +2253,7 @@
   (fn [a]
     (let [v* (walk a v*)]
       (cond
-       (var? v*) (let [oc (build-oc all-difffd-c v*)]
+       (lvar? v*) (let [oc (build-oc all-difffd-c v*)]
                    ((update-cs oc) a))
        :else (let [{x* true n* false} (group-by var? v*)]
                ((all-difffd-c* x* n*) a))))))
@@ -2436,7 +2436,7 @@
           x (lhs f)
           v (rhs f)
           r (recover-vars (rest p))]
-      (if (var? v)
+      (if (lvar? v)
         (conj r x v)
         (conj r x)))))
 
@@ -2486,5 +2486,5 @@
 
 (comment
   (run* [q]
-    (infd q (rangefd )))
+    (domfd q (rangefd 1 10)))
   )
