@@ -1996,12 +1996,6 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-;; TODO: change to lazy-seq
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
-
 (defn reifiable-c? [c]
   (satisfies? IReifiableConstraint c))
 
@@ -2512,6 +2506,12 @@
                (subsumes? a p pp) (recur (rest c) cp)
                :else (recur (rest c) (cons oc cp))))
             (recur (rest c) (cons oc cp))))))))
+
+;; TODO: change to lazy-seq
+(defn prefix [s <s]
+  (if (= s <s)
+    ()
+    (cons (first s) (prefix (rest s) <s))))
 
 (defn !=neq-c [u v]
   (fn [a]
