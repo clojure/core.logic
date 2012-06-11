@@ -8,6 +8,12 @@
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
+(defprotocol IDomain
+  (-idomain-marker [_]))
+
+(defn domain? [x]
+  (satisfies? IDomain x))
+
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
 
@@ -31,6 +37,9 @@
 
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
+
+(defprotocol IUnifyWithDomain
+  (unify-with-dom [v u s]))
 
 (defprotocol IReifyTerm
   (reify-term [v s]))
@@ -471,7 +480,10 @@
 (extend-type Object
   IUnifyWithObject
   (unify-with-object [v u s]
-    (if (= u v) s false)))
+    (cond
+     (= u v) s
+     (domain? u) (unify-with-dom v u s)
+     :else false)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -484,6 +496,20 @@
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext s u v)))
+
+;; -----------------------------------------------------------------------------
+;; Unify Domain with X
+
+(extend-protocol IUnifyWithDomain
+  nil
+  (unify-with-dom [v u s] false)
+
+  Object
+  (unify-with-dom [v u s]
+    (if (domain? v)
+      (if-let [i (intersection v u)]
+        s)
+      false)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
@@ -1837,9 +1863,6 @@
   (updatec [this c])
   (containsc? [this c]))
 
-(defprotocol IDomain
-  (-idomain-marker [_]))
-
 (defprotocol IConstraint
   (proc [this])
   (rator [this])
@@ -1955,9 +1978,6 @@
   (if (= s <s)
     ()
     (cons (first s) (prefix (rest s) <s))))
-
-(defn domain? [x]
-  (satisfies? IDomain x))
 
 (defn reifiable-c? [c]
   (satisfies? IReifiableConstraint c))
@@ -2125,7 +2145,6 @@
         (list v)
         (let [v (walk* r v)]
           (reify-constraints a r v))))))
-
 
 (defprotocol IMakeDomain
   (make-dom [this xs]))
