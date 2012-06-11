@@ -2006,6 +2006,8 @@
   (fn [a]
     (update a u v)))
 
+(declare force-ans)
+
 (extend-protocol IForceAnswerTerm
   Object
   (-force-ans [x]
@@ -2330,12 +2332,43 @@
      :else (let [s (set/intersection (expand this) (expand that))]
              (when-not (empty? s)
                s))))
+  (difference [this that]
+    )
   IDisequalityConstrain
   (!=c [this that]))
+
+(deftype IntervalFD [ub lb rs]
+  IDomain
+  IFiniteDomain
+  (lb [_] lb)
+  (ub [_] ub)
+  (bounds [this] (pair lb ub))
+  (member? [_ v] (some #(member? % v) rs))
+  (disjoint? [this that] (every? #(disjoint? % that) rs))
+  (drop-before [_ n]
+    (let [rs (drop-while #(< (ub %) n) rs)
+          rs (cons (RangeFD. n (ub (first rs))) (rest rs))
+          lb (reduce min (map lb rs))
+          ub (reduce max (map ub rs))]
+      (IntervalFD. lb ub rs)))
+  (keep-before [_ n]
+    (let [rs (take-while #(< (ub %) n) rs)
+          l (last rs)
+          rs (concat (butlast rs) (RangeFD. (lb l) (ub l)))
+          lb (reduce min (map lb rs))
+          ub (reduce max (map ub rs))]
+      (IntervalFD. lb ub (cons (RangeFD. n (ub (first rs))) (rest rs)))))
+  (expand [this] (into sorted-set (mapcat expand rs)))
+  ;; intersection
+  ;; difference
+  )
 
 (defn ^RangeFD rangefd
   ([ub] (RangeFD. 0 ub))
   ([lb ub] (RangeFD. lb ub)))
+
+(defn ^IntervalFD intervalfd
+  ([rs] (IntervalFD. (reduce min (map lb rs)) (reduce max (map ub rs)) rs)))
 
 (extend-type clojure.lang.PersistentTreeSet
   IDomain
