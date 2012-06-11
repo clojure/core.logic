@@ -2133,9 +2133,11 @@
            (loop (rest lp)))))) (.l ap))))
 
 (defn ==-c [u v]
-  (fn [a]
+  (fn [^Substitutions a]
     (when-let [ap (unify a u v)]
-      ((update-prefix a ap) a))))
+      (if (pos? (count (.cs a)))
+        ((update-prefix a ap) a)
+        ap))))
 
 (defn reifyg [x]
   (fn [^Substitutions a]
