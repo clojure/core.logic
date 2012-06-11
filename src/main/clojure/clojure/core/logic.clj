@@ -2342,7 +2342,7 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
-(deftype RangeFD [_lb _ub]
+(deftype IntervalFD [_lb _ub]
   IDomain
   IFiniteDomain
   (lb [_] _lb)
@@ -2351,7 +2351,7 @@
   (member? [this v]
     (and (>= v _lb) (<= v _ub)))
   (disjoint? [this that]
-    (if (instance? RangeFD that)
+    (if (instance? IntervalFD that)
       (or (< (ub this) (lb that))
           (< (lb this) (ub that)))
       (disjoint? (expand this) (expand that))))
@@ -2360,26 +2360,26 @@
      (= n _ub) n
      (< n _lb) this
      (> n _ub) nil
-     :else (RangeFD. n _ub)))
+     :else (IntervalFD. n _ub)))
   (keep-before [this n]
     (cond
      (= n _lb) n
      (> n _ub) this
      (< n _lb) nil
-     :else (RangeFD. _lb n)))
+     :else (IntervalFD. _lb n)))
   (expand [this] (apply sorted-set (range _lb _ub)))
   (super? [this that]
     (and (<= _lb (lb that))
          (>= _ub (ub that))))
   (intersection [this that]
     (cond
-     (instance? RangeFD that)
-     (let [^RangeFD that that
+     (instance? IntervalFD that)
+     (let [^IntervalFD that that
            lb (max _lb (.lb that))
            ub (min _ub (.ub that))]
         (cond
          (= lb ub) lb
-         (< lb ub) (RangeFD. lb ub)
+         (< lb ub) (IntervalFD. lb ub)
          :else nil))
      (instance? clojure.lang.PersistentTreeSet that)
      (let [s (intersection that this)]
@@ -2395,38 +2395,9 @@
   IDisequalityConstrain
   (!=c [this that]))
 
-(deftype IntervalFD [ub lb rs]
-  IDomain
-  IFiniteDomain
-  (lb [_] lb)
-  (ub [_] ub)
-  (bounds [this] (pair lb ub))
-  (member? [_ v] (some #(member? % v) rs))
-  (disjoint? [this that] (every? #(disjoint? % that) rs))
-  (drop-before [_ n]
-    (let [rs (drop-while #(< (ub %) n) rs)
-          rs (cons (RangeFD. n (ub (first rs))) (rest rs))
-          lb (reduce min (map lb rs))
-          ub (reduce max (map ub rs))]
-      (IntervalFD. lb ub rs)))
-  (keep-before [_ n]
-    (let [rs (take-while #(< (ub %) n) rs)
-          l (last rs)
-          rs (concat (butlast rs) (RangeFD. (lb l) (ub l)))
-          lb (reduce min (map lb rs))
-          ub (reduce max (map ub rs))]
-      (IntervalFD. lb ub (cons (RangeFD. n (ub (first rs))) (rest rs)))))
-  (expand [this] (into sorted-set (mapcat expand rs)))
-  ;; intersection
-  ;; difference
-  )
-
-(defn ^RangeFD rangefd
-  ([ub] (RangeFD. 0 ub))
-  ([lb ub] (RangeFD. lb ub)))
-
-(defn ^IntervalFD intervalfd
-  ([rs] (IntervalFD. (reduce min (map lb rs)) (reduce max (map ub rs)) rs)))
+(defn ^IntervalFD interval
+  ([ub] (IntervalFD. 0 ub))
+  ([lb ub] (IntervalFD. lb ub)))
 
 (extend-type clojure.lang.PersistentTreeSet
   IDomain
@@ -2554,24 +2525,24 @@
          (== q 1)))))
 
   (let [x 50
-        d (RangeFD. 1 100)]
+        d (IntervalFD. 1 100)]
     (intersection d x))
   
   ;; ~20ms
   (let [x 50
-        d (RangeFD. 1 100)]
+        d (IntervalFD. 1 100)]
     (dotimes [_ 10]
       (time
        (dotimes [_ 1e6] 
          (intersection d x)))))
 
   (let [s (sorted-set 1 2 3)
-        d (RangeFD. 1 100)]
+        d (IntervalFD. 1 100)]
     (intersection d s))
 
   ;; 210ms
   (let [s (sorted-set 1 2 3)
-        d (RangeFD. 1 100)]
+        d (IntervalFD. 1 100)]
     (dotimes [_ 10]
       (time
        (dotimes [_ 1e6] 
