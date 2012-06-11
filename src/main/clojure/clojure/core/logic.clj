@@ -337,7 +337,7 @@
 (defn ^Substitutions to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
-    (make-s s l [])))
+    (make-s s l (make-cs))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -390,13 +390,16 @@
   (occurs-check-term [v x s] (= (walk s v) x))
   IBuildTerm
   (build-term [u s]
-    (let [m (.s ^Substitutions s)
-          l (.l ^Substitutions s)
+    (let [^Substitutions s s
+          m (.s s)
+          l (.l s)
+          cs (.cs s)
           lv (lvar 'ignore) ]
       (if (contains? m u)
         s
         (make-s (assoc m u lv)
-                (cons (Pair. u lv) l))))))
+                (cons (Pair. u lv) l)
+                cs)))))
 
 (defn ^LVar lvar
   ([]
@@ -2002,13 +2005,13 @@
   (satisfies? IEnforceableConstraint c))
 
 (defn ext-cs [cs oc]
-  (if (some var? (rands oc))
-    (addc cs oc)
-    cs))
+  (if (-> oc meta :id)
+    (updatec cs oc)
+    (addc cs oc)))
 
 (defn ^Substitutions update-cs [oc]
   (fn [^Substitutions a]
-    (make-s (.s a) (ext-cs (.cs a) oc))))
+    (make-s (.s a) (.l a) (ext-cs (.cs a) oc))))
 
 (defn domain-compare [a b]
   (if (and (number? a) (number? b))
