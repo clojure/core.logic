@@ -1978,7 +1978,7 @@
 
 ;; NOTE: can we avoid the intersection call here?
 
-(defn update-var [x dom]
+(defn update-var-dom [x dom]
   (fn [a]
     (let [xdom (walk a x)]
       (if (domain? xdom)
@@ -1987,10 +1987,10 @@
             (ext-no-check a x new-dom)))
         (ext-no-check a x dom)))))
 
-(defn process [v dom]
+(defn process-dom [v dom]
   (fn [a]
     (cond
-     (var? v) ((update-var v dom) a)
+     (var? v) ((update-var-dom v dom) a)
      (member? dom v) a
      :else nil)))
 
@@ -2038,7 +2038,7 @@
       (and a
            (g1 a)))))
 
-(defn run [c]
+(defn run-constraint [c]
   (fn [^Substitutions a]
     (let [cs (.cs a)]
       (if (containsc? cs c)
@@ -2048,7 +2048,7 @@
 (defn run-constraints [x xcs]
   (if xcs
     (composeg
-     (run (first xcs))
+     (run-constraint (first xcs))
      (run-constraints x (next xcs)))
     identity))
 
@@ -2119,14 +2119,6 @@
         (let [v (walk* r v)]
           (reify-constraints a r v))))))
 
-(defmacro infd [& xs-and-dom]
-  (let [xs (butlast xs-and-dom)
-        dom (last xs-and-dom)]
-    `(let [dom# ~dom]
-      (fresh []
-        ~@(map (fn [x]
-                 `(domfd ~x dom#))
-               xs)))))
 
 (defprotocol IMakeDomain
   (make-dom [this xs]))
@@ -2156,6 +2148,19 @@
 
 (def clpfd (CLPFD.))
 
+(defmacro infd [& xs-and-dom]
+  (let [xs (butlast xs-and-dom)
+        dom (last xs-and-dom)]
+    `(let [dom# ~dom]
+      (fresh []
+        ~@(map (fn [x]
+                 `(domfd ~x dom#))
+               xs)))))
+
+(defn domfd [x dom]
+  (fn [a]
+    ((process-dom (walk a x) dom) a)))
+
 (defn walk-var [a [v b]]
   `(~b (walk ~a ~v)))
 
@@ -2181,7 +2186,7 @@
       (let [x (first xs)
             dom2 (walk a x)]
         (if (domain? dom2)
-          (recur (rest xs) (conj gs (process x (difference dom2 dom1))))
+          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
           (recur (rest xs) gs))))))
 
 (defn !=fd-c [u v]
@@ -2201,16 +2206,16 @@
   (c-op =c [u ud v vd]
     (let [i (intersection ud vd)]
       (composeg
-       (process u i)
-       (process v i)))))
+       (process-dom u i)
+       (process-dom v i)))))
 
 (defn <=fd-c [u v]
   (c-op <=c [u ud v vd]
     (let [[ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
       (composeg
-        (process u (keep-before ud vub))
-        (process v (drop-before vd ulb))))))
+        (process-dom u (keep-before ud vub))
+        (process-dom v (drop-before vd ulb))))))
 
 (defn +fd-c [u v w]
   (c-op +c [u ud v vd w wd]
@@ -2218,10 +2223,10 @@
           [ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
       (composeg
-        (process w (range (+ ulb vlb) (+ uub vub)))
+        (process-dom w (range (+ ulb vlb) (+ uub vub)))
         (composeg
-          (process u (range (- wlb vub) (- wub vlb)))
-          (process v (range (- wlb uub) (- wub ulb))))))))
+          (process-dom u (range (- wlb vub) (- wub vlb)))
+          (process-dom v (range (- wlb uub) (- wub ulb))))))))
 
 (defn all-difffd-c* [ys ns]
   (fn [a]
@@ -2468,3 +2473,8 @@
       (!=c a ad)
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
+
+(comment
+  (run* [q]
+    (infd q (rangefd )))
+  )
