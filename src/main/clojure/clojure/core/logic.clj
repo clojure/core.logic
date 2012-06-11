@@ -323,9 +323,9 @@
   (take* [this] this))
 
 (defn- ^Substitutions make-s
-  ([] (Substitutions. {} () []))
-  ([m] (Substitutions. m () []))
-  ([m l] (Substitutions. m l []))
+  ([] (Substitutions. {} () (make-cs)))
+  ([m] (Substitutions. m () (make-cs)))
+  ([m l] (Substitutions. m l (make-cs)))
   ([m l cs] (Substitutions. m l cs)))
 
 (def ^Substitutions empty-s (make-s))
