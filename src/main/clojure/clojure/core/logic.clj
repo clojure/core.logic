@@ -2098,15 +2098,19 @@
         (choice v empty-f)
         (choice `(~v :- ~@rcs) empty-f)))))
 
+;; NOTE: not sure this is necessary for us, we must make
+;; unification work on domains anyhow since we store
+;; domains directly in the subst map
+
 (defn update-prefix [^Substitutions a ^Substitutions ap]
   (let [l (.l a)]
     ((fn loop [lp]
        (if (identical? l lp)
          s#
-         (let [[[lhs rhs] & rlp] lp]
+         (let [[lhs rhs] (first lp)]
           (composeg
            (updateg lhs rhs)
-           (loop rlp))))) (.l ap))))
+           (loop (rest lp)))))) (.l ap))))
 
 (defn ==-c [u v]
   (fn [a]
