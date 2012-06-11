@@ -234,18 +234,10 @@
 ;; Substitutions
 
 (defprotocol ISubstitutions
-  (length [this])
   (occurs-check [this u v])
-  (ext [this u v])
   (ext-no-check [this u v])
   (walk [this v])
-  (walk* [this v])
-  (unify [this u v])
-  (update [this x v])
-  (reify-lvar-name [_])
-  (-reify* [this v])
-  (-reify [this v])
-  (build [this u]))
+  (update [this x v]))
 
 (declare empty-s)
 (declare choice)
@@ -255,6 +247,38 @@
 (declare lcons)
 (declare run-constraints*)
 
+(defn ext [s u v]
+  (if (and *occurs-check* (occurs-check s u v))
+    nil
+    (ext-no-check s u v)))
+
+(defn walk* [s v]
+  (let [v (walk s v)]
+    (walk-term v s)))
+
+(defn unify [s u v]
+  (if (identical? u v)
+    s
+    (let [u (walk s u)
+          v (walk s v)]
+      (if (identical? u v)
+        s
+        (unify-terms u v s)))))
+
+(defn reify-lvar-name [s]
+  (symbol (str "_." (count s))))
+
+(defn -reify* [s v]
+  (let [v (walk s v)]
+    (reify-term v s)))
+
+(defn -reify [s v]
+  (let [v (walk* s v)]
+    (walk* (-reify* empty-s v) v)))
+
+(defn build [s u]
+  (build-term u s))
+
 (deftype Substitutions [s l cs]
   Object
   (equals [this o]
@@ -263,17 +287,13 @@
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
   (toString [_] (prn s))
 
-  ISubstitutions
-  (length [this] (count s))
+  clojure.lang.Counted
+  (count [this] (count s))
 
+  ISubstitutions
   (occurs-check [this u v]
     (let [v (walk this v)]
       (occurs-check-term v u this)))
-  
-  (ext [this u v]
-    (if (and *occurs-check* (occurs-check this u v))
-      nil
-      (ext-no-check this u v)))
 
   (ext-no-check [this u v]
     (Substitutions. (assoc s u v)
@@ -286,39 +306,12 @@
        (nil? v) lv
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
-  
-  (walk* [this v]
-    (let [v (walk this v)]
-      (walk-term v this)))
-
-  (unify [this u v]
-    (if (identical? u v)
-      this
-      (let [u (walk this u)
-            v (walk this v)]
-        (if (identical? u v)
-          this
-          (unify-terms u v this)))))
 
   (update [this x v]
     ((run-constraints* (if (lvar? v) [x v] [x]) cs)
      (if *occurs-check*
        (ext this x v)
        (ext-no-check this x v))))
-
-  (reify-lvar-name [this]
-    (symbol (str "_." (count s))))
-
-  (-reify* [this v]
-    (let [v (walk this v)]
-      (reify-term v this)))
-
-  (-reify [this v]
-    (let [v (walk* this v)]
-      (walk* (-reify* empty-s v) v)))
-
-  (build [this u]
-    (build-term u this))
 
   IBind
   (bind [this g]
