@@ -2513,4 +2513,10 @@
 (comment
   (run* [q]
     (== q 1))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+         (== q 1)))))
   )
