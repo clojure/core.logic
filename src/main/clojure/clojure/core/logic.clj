@@ -2131,7 +2131,12 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(deftype FDConstraint [proc rator rands]
+(deftype FDConstraint [proc rator rands meta]
+  clojure.lang.IObj
+  (meta [this]
+    meta)
+  (withMeta [this new-meta]
+    (FDConstraint. proc rator rands meta))
   IEnforceableConstraint
   IConstraint
   (proc [_] proc)
@@ -2144,7 +2149,7 @@
     (apply sorted-set xs))
   IMakeConstraint
   (makec [this proc rator rands]
-    (FDConstraint. proc rator rands)))
+    (FDConstraint. proc rator rands nil)))
 
 (def clpfd (CLPFD.))
 
@@ -2405,7 +2410,12 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
-(deftype TreeConstraint [proc rator rands]
+(deftype TreeConstraint [proc rator rands meta]
+  clojure.lang.IObj
+  (meta [this]
+    meta)
+  (withMeta [this new-meta]
+    (TreeConstraint. proc rator rands meta))
   IReifiableConstraint
   IConstraint
   (proc [_] proc)
@@ -2415,7 +2425,7 @@
 (deftype CLPTree []
   IMakeConstraint
   (makec [this proc rator rands]
-    (TreeConstraint. proc rator rands)))
+    (TreeConstraint. proc rator rands nil)))
 
 (def clptree (CLPTree.))
 
