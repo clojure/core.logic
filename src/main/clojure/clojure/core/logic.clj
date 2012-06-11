@@ -108,7 +108,7 @@
 (declare lvar?)
 (declare pair)
 (declare lcons)
-(declare run-constraints)
+(declare run-constraints*)
 
 (deftype Substitutions [s l cs]
   Object
@@ -156,8 +156,10 @@
           (unify-terms u v this)))))
 
   (update [this x v]
-    ((run-constraints (if (lvar? v) [x v] [x]))
-     (ext this x v)))
+    ((run-constraints* (if (lvar? v) [x v] [x]) cs)
+     (if *occurs-check*
+       (ext this x v)
+       (ext-no-check this x v))))
 
   (reify-lvar-name [this]
     (symbol (str "_." (count s))))
@@ -800,12 +802,17 @@
 
 (def u# fail)
 
-(defmacro ==
+#_(defmacro ==
   "A goal that attempts to unify terms u and v."
   [u v]
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
+
+(defn ==
+  "A goal that attempts to unify terms u and v."
+  [u v]
+  (==-c u v))
 
 (defn- bind-conde-clause [a]
   (fn [g-rest]
@@ -2009,12 +2016,10 @@
 
 (extend-protocol IForceAnswerTerm
   nil
-  (-force-ans [u]
-    identity)
+  (-force-ans [u] s#)
 
   Object
-  (-force-ans [u]
-    identity)
+  (-force-ans [u] s#)
 
   clojure.lang.Sequential
   (-force-ans [u]
@@ -2051,19 +2056,19 @@
     (composeg
      (run-constraint (first xcs))
      (run-constraints x (next xcs)))
-    identity))
+    s#))
 
 (defn run-constraints* [xs cs]
-  (cond
-   (or (zero? (count cs))
-       (nil? (seq xs))) identity
-   :else (let [x (first xs)
-               xcs (get cs x)]
-           (if (seq xcs)
-             (composeg
-              (run-constraints x xcs)
-              (run-constraints* (next xs) cs))
-             (run-constraints* (next xs) cs))) ))
+  (if (or (zero? (count cs))
+          (nil? (seq xs)))
+    s#
+    (let [x (first xs)
+          xcs (get cs x)]
+      (if (seq xcs)
+        (composeg
+         (run-constraints x xcs)
+         (run-constraints* (next xs) cs))
+        (run-constraints* (next xs) cs))) ))
 
 (defn verify-all-bound [a constrained]
   (when (seq constrained)
@@ -2093,23 +2098,20 @@
         (choice v empty-f)
         (choice `(~v :- ~@rcs) empty-f)))))
 
-;; NOTE: do we need this?
-(defn goal-construct [f]
-  (fn [a] (f a)))
+(defn update-prefix [^Substitutions a ^Substitutions ap]
+  (let [l (.l a)]
+    ((fn loop [lp]
+       (if (identical? l lp)
+         s#
+         (let [[[lhs rhs] & rlp] lp]
+          (composeg
+           (updateg lhs rhs)
+           (loop rlp))))) (.l ap))))
 
 (defn ==-c [u v]
-  (fn [^Substitutions a]
-    (when-let [a (unify a u v)]
-      (let [al (.l a)]
-        (fn [^Substitutions ap]
-          ((loop [apl (.l ap) gs []]
-             (if (identical? apl al)
-               (reduce composeg gs)
-               (let [p (first apl)
-                     lhs (lhs p)
-                     rhs (rhs p)
-                     ug (updateg lhs rhs)]
-                 (recur (rest apl) (conj gs ug))))) a))))))
+  (fn [a]
+    (when-let [ap (unify a u v)]
+      ((update-prefix a ap) a))))
 
 (defn reifyg [x]
   (fn [^Substitutions a]
@@ -2487,5 +2489,5 @@
 
 (comment
   (run* [q]
-    (domfd q (rangefd 1 10)))
+    (== q 1))
   )
