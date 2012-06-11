@@ -66,6 +66,9 @@
 (defprotocol IDomain
   (-idomain-marker [_]))
 
+(defprotocol ISingletonDomain
+  (-isingleton-domian-marker [_]))
+
 (defn domain? [x]
   (satisfies? IDomain x))
 
