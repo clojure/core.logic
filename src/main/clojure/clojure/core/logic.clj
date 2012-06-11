@@ -2341,14 +2341,14 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
-(deftype RangeFD [lb ub]
+(deftype RangeFD [_lb _ub]
   IDomain
   IFiniteDomain
-  (lb [_] lb)
-  (ub [_] ub)
-  (bounds [_] (pair lb ub))
+  (lb [_] _lb)
+  (ub [_] _ub)
+  (bounds [_] (pair _lb _ub))
   (member? [this v]
-    (and (>= v lb) (<= v ub)))
+    (and (>= v _lb) (<= v _ub)))
   (disjoint? [this that]
     (if (instance? RangeFD that)
       (or (< (ub this) (lb that))
@@ -2356,23 +2356,26 @@
       (disjoint? (expand this) (expand that))))
   (drop-before [this n]
     (cond
-     (= n ub) n
-     (< n lb) this
-     (> n ub) nil
-     :else (RangeFD. n ub)))
+     (= n _ub) n
+     (< n _lb) this
+     (> n _ub) nil
+     :else (RangeFD. n _ub)))
   (keep-before [this n]
     (cond
-     (= n lb) n
-     (> n ub) this
-     (< n lb) nil
-     :else (RangeFD. lb n)))
-  (expand [this] (apply sorted-set (range lb ub)))
+     (= n _lb) n
+     (> n _ub) this
+     (< n _lb) nil
+     :else (RangeFD. _lb n)))
+  (expand [this] (apply sorted-set (range _lb _ub)))
+  (super? [this that]
+    (and (<= _lb (lb that))
+         (>= _ub (ub that))))
   (intersection [this that]
     (cond
      (instance? RangeFD that)
      (let [^RangeFD that that
-            lb (max lb (.lb that))
-            ub (min ub (.ub that))]
+           lb (max _lb (.lb that))
+           ub (min _ub (.ub that))]
         (cond
          (= lb ub) lb
          (< lb ub) (RangeFD. lb ub)
@@ -2381,7 +2384,7 @@
      (let [s (intersection that this)]
        (when-not (empty? s)
          s))
-     (number? that) (when (and (>= that lb) (<= that ub))
+     (number? that) (when (and (>= that _lb) (<= that _ub))
                       that)
      :else (let [s (set/intersection (expand this) (expand that))]
              (when-not (empty? s)
@@ -2441,13 +2444,15 @@
     (apply sorted-set (take-while #(< % n)) this))
   (expand [this] this)
   (intersection [this that]
-    (if (number? that)
-      (when (member? this that)
-        that)
-      (let [s (into (sorted-set)
-                (filter #(member? that %) this))]
-        (when-not (empty? s)
-          s))))
+    (cond
+     (number? that)
+     (when (member? this that)
+       that)
+     (super? that this) this
+     :else (let [s (into (sorted-set)
+                     (filter #(member? that %) this))]
+             (when-not (empty? s)
+               s))))
   (difference [this that]
     (let [s (into (sorted-set)
               (filter #(not (member? that %)) this))]
@@ -2563,7 +2568,7 @@
         d (RangeFD. 1 100)]
     (intersection d s))
 
-  ;; 1s
+  ;; 210ms
   (let [s (sorted-set 1 2 3)
         d (RangeFD. 1 100)]
     (dotimes [_ 10]
