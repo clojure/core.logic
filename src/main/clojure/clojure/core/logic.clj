@@ -1811,8 +1811,10 @@
 ;; =============================================================================
 ;; Tabling
 
-;; See - William Byrd “Relational Programming in miniKanren:
-;; Techniques, Applications, and Implementations”
+;; See - William Byrd "Relational Programming in miniKanren:
+;; Techniques, Applications, and Implementations"
+;; http://scholarworks.iu.edu/dspace/bitstream/handle/2022/8777/Byrd_indiana_0093A_10344.pdf?sequence=1
+;; http://code.google.com/p/iucs-relational-research/
 
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
@@ -1991,6 +1993,8 @@
 
 ;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
 ;; "cKanren - miniKanren with Constraints"
+;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
+;; http://github.com/calvis/cKanren
 
 ;; TODO: change to lazy-seq
 (defn prefix [s <s]
