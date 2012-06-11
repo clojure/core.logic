@@ -8,11 +8,11 @@
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
-(defprotocol IDomain
-  (-idomain-marker [_]))
+;; =============================================================================
+;; Core Protocols
 
-(defn domain? [x]
-  (satisfies? IDomain x))
+;; -----------------------------------------------------------------------------
+;; miniKanren Protocols
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -38,9 +38,6 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
-(defprotocol IUnifyWithDomain
-  (unify-with-dom [v u s]))
-
 (defprotocol IReifyTerm
   (reify-term [v s]))
 
@@ -61,6 +58,65 @@
 
 (defprotocol ITake
   (take* [a]))
+
+;; -----------------------------------------------------------------------------
+;; cKanren protocols
+
+(defprotocol IDomain
+  (-idomain-marker [_]))
+
+(defn domain? [x]
+  (satisfies? IDomain x))
+
+(defprotocol IUnifyWithDomain
+  (unify-with-dom [v u s]))
+
+(defprotocol IConstraintStore
+  (addc [this c])
+  (updatec [this c])
+  (containsc? [this c]))
+
+(defprotocol IConstraint
+  (proc [this])
+  (rator [this])
+  (rands [this])
+  (process-prefix [this p]))
+
+(defn constraint? [x]
+  (satisfies? IConstraint x))
+
+(defprotocol IReifiableConstraint
+  (reifyc [this v r]))
+
+(defprotocol IEnforceableConstraint
+  (-ienforceable-constraint-marker [_]))
+
+(defprotocol IFiniteDomain
+  (lb [this])
+  (ub [this])
+  (bounds [this])
+  (member? [this v])
+  (disjoint? [this that])
+  (drop-before [this n])
+  (keep-before [this n])
+  (expand [this])
+  (intersection [this that])
+  (difference [this that]))
+
+(defprotocol IDisequalityConstrain
+  (!=c [u v]))
+
+(defprotocol IAllDiffConstrain
+  (all-diffc [u v]))
+
+(defprotocol IFDConstrain
+  (=c [u v])
+  (<c [u v])
+  (<=c [u v])
+  (+c [u v w]))
+
+(defprotocol IForceAnswerTerm
+  (-force-ans [u]))
 
 ;; =============================================================================
 ;; Pair
@@ -93,6 +149,79 @@
 
 (defn- ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
+
+;; =============================================================================
+;; Constraint Store
+
+(declare lvar?)
+
+(defn var-rands [c]
+  (into [] (filter lvar? (rands c))))
+
+(defn vardiff [oc c]
+  (let [ocr (rands oc)
+        cr (rands c)]
+    (reduce (fn [v i]
+              (let [or (nth ocr i)
+                    r (nth cr i)]
+                (if (and (lvar? or) (not (lvar? r)))
+                  (conj v or)
+                  v)))
+            [] (range (count (rands oc))))))
+
+(deftype ConstraintStore [km cm cid]
+  IConstraintStore
+  (addc [this c]
+    (let [vars (var-rands c)
+          cid (inc cid)
+          c (vary-meta c assoc :id cid)
+          ^ConstraintStore cs (reduce (fn [m v] (assoc this v c)) this vars)]
+      (ConstraintStore. (.km cs) (.cm cs) cid)))
+  (updatec [this c]
+    (let [id (-> c meta :id)
+          oc (get cm cid)
+          vs (vardiff oc c)
+          nkm (reduce (fn [m v]
+                        (let [s (disj (get km v) id)]
+                          (if (empty? s)
+                            (dissoc km v)
+                            (assoc km v s))))
+                      km vs)
+          ncm (if (zero? (count (var-rands c)))
+                (dissoc cm id)
+                cm)]
+      (ConstraintStore. km cm cid)))
+  (containsc? [this c]
+    (if (contains? cm (-> c meta :id))
+      true
+      false))
+  clojure.lang.Counted
+  (count [this]
+    (count cm))
+  clojure.lang.Associative
+  (assoc [this k v]
+    (when-not (lvar? k)
+      (throw (Error. (str "constraint store assoc expected logic var key: " k))))
+    (when-not (constraint? v)
+      (throw (Error. (str "constraint store assoc expected constraint value: " v))))
+    (when-not (-> v meta :id)
+      (throw (Error. (str "constraint has no id " v))))
+    (let [nkm (assoc-in km [k] (fnil (fn [s] (assoc s cid v)) #{}))
+          ncm (assoc cm cid (with-meta v {:id cid}))]
+      (ConstraintStore. nkm ncm cid)))
+  clojure.lang.ILookup
+  (valAt [this k]
+    (when-not (lvar? k)
+      (throw (Error. (str "constraint store lookup expected logic var key: " k))))
+    (let [ids (get km k)]
+      (map cm ids)))
+  (valAt [this k not-found]
+    (if-let [v (.valAt this k)]
+      v
+      not-found)))
+
+(defn ^ConstraintStore make-cs []
+  (ConstraintStore. {} {} 0))
 
 ;; =============================================================================
 ;; Substitutions
@@ -834,6 +963,8 @@
   `(fn [a#]
      (if-let [b# (unify a# ~u ~v)]
        b# nil)))
+
+(declare ==-c)
 
 (defn ==
   "A goal that attempts to unify terms u and v."
@@ -1857,121 +1988,6 @@
 
 ;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
 ;; "cKanren - miniKanren with Constraints"
-
-(defprotocol IConstraintStore
-  (addc [this c])
-  (updatec [this c])
-  (containsc? [this c]))
-
-(defprotocol IConstraint
-  (proc [this])
-  (rator [this])
-  (rands [this])
-  (process-prefix [this p]))
-
-(defprotocol IReifiableConstraint
-  (reifyc [this v r]))
-
-(defprotocol IEnforceableConstraint
-  (-ienforceable-constraint-marker [_]))
-
-(defprotocol IFiniteDomain
-  (lb [this])
-  (ub [this])
-  (bounds [this])
-  (member? [this v])
-  (disjoint? [this that])
-  (drop-before [this n])
-  (keep-before [this n])
-  (expand [this])
-  (intersection [this that])
-  (difference [this that]))
-
-(defprotocol IDisequalityConstrain
-  (!=c [u v]))
-
-(defprotocol IAllDiffConstrain
-  (all-diffc [u v]))
-
-(defprotocol IFDConstrain
-  (=c [u v])
-  (<c [u v])
-  (<=c [u v])
-  (+c [u v w]))
-
-(defprotocol IForceAnswerTerm
-  (-force-ans [u]))
-
-(defn var-rands [c]
-  (into [] (filter var? (rands c))))
-
-(defn constraint? [x]
-  (satisfies? IConstraint x))
-
-(defn vardiff [oc c]
-  (let [ocr (rands oc)
-        cr (rands c)]
-    (reduce (fn [v i]
-              (let [or (nth ocr i)
-                    r (nth cr i)]
-                (if (and (lvar? or) (not (lvar? r)))
-                  (conj v or)
-                  v)))
-            [] (range (count (rands oc))))))
-
-(deftype ConstraintStore [km cm cid]
-  IConstraintStore
-  (addc [this c]
-    (let [vars (var-rands c)
-          cid (inc cid)
-          c (vary-meta c assoc :id cid)
-          ^ConstraintStore cs (reduce (fn [m v] (assoc this v c)) this vars)]
-      (ConstraintStore. (.km cs) (.cm cs) cid)))
-  (updatec [this c]
-    (let [id (-> c meta :id)
-          oc (get cm cid)
-          vs (vardiff oc c)
-          nkm (reduce (fn [m v]
-                        (let [s (disj (get km v) id)]
-                          (if (empty? s)
-                            (dissoc km v)
-                            (assoc km v s))))
-                      km vs)
-          ncm (if (zero? (count (var-rands c)))
-                (dissoc cm id)
-                cm)]
-      (ConstraintStore. km cm cid)))
-  (containsc? [this c]
-    (if (contains? cm (-> c meta :id))
-      true
-      false))
-  clojure.lang.Counted
-  (count [this]
-    (count cm))
-  clojure.lang.Associative
-  (assoc [this k v]
-    (when-not (lvar? k)
-      (throw (Error. (str "constraint store assoc expected logic var key: " k))))
-    (when-not (constraint? v)
-      (throw (Error. (str "constraint store assoc expected constraint value: " v))))
-    (when-not (-> v meta :id)
-      (throw (Error. (str "constraint has no id " v))))
-    (let [nkm (assoc-in km [k] (fnil (fn [s] (assoc s cid v)) #{}))
-          ncm (assoc cm cid (with-meta v {:id cid}))]
-      (ConstraintStore. nkm ncm cid)))
-  clojure.lang.ILookup
-  (valAt [this k]
-    (when-not (lvar? k)
-      (throw (Error. (str "constraint store lookup expected logic var key: " k))))
-    (let [ids (get km k)]
-      (map cm ids)))
-  (valAt [this k not-found]
-    (if-let [v (.valAt this k)]
-      v
-      not-found)))
-
-(defn ^ConstraintStore make-cs []
-  (ConstraintStore. {} {} 0))
 
 ;; TODO: change to lazy-seq
 (defn prefix [s <s]
