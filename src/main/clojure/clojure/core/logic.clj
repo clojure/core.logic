@@ -156,9 +156,8 @@
           (unify-terms u v this)))))
 
   (update [this x v]
-    (let [sp (ext this x v)]
-      ((run-constraints (if (lvar? v) #{x v} #{x}))
-       (Substitutions. sp l cs))))
+    ((run-constraints (if (lvar? v) [x v] [x]))
+     (ext this x v)))
 
   (reify-lvar-name [this]
     (symbol (str "_." (count s))))
@@ -1871,7 +1870,7 @@
   (+c [u v w]))
 
 (defprotocol IForceAnswerTerm
-  (-force-ans [x]))
+  (-force-ans [u]))
 
 (defn var-rands [c]
   (into [] (filter var? (rands c))))
@@ -2009,28 +2008,30 @@
 (declare force-ans)
 
 (extend-protocol IForceAnswerTerm
-  Object
-  (-force-ans [x]
+  nil
+  (-force-ans [u]
     identity)
 
-  clojure.core.logic.IDomain
-  (-force-ans [x]
-    (map-sum (fn [v] (updateg x v))))
+  Object
+  (-force-ans [u]
+    identity)
 
   clojure.lang.Sequential
-  (-force-ans [x]
+  (-force-ans [u]
     (all
-     (force-ans (first x))
-     (force-ans (rest x))))
+     (force-ans (first u))
+     (force-ans (rest u))))
 
   ;; clojure.lang.IPersistentMap
   ;; clojure.lang.IPersistentSet
   )
 
-(defn force-ans [x]
+(defn force-ans [u]
   (fn [a]
-    (let [x (walk a x)]
-      ((-force-ans x) a))))
+    (let [v (walk a u)]
+      (if (domain? v)
+        ((map-sum (fn [v] (updateg u v))) (expand v))
+        (-force-ans v)))))
 
 (defn composeg [g0 g1]
   (fn [a]
