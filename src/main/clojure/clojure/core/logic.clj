@@ -97,6 +97,9 @@
   (bounds [this])
   (member? [this v])
   (disjoint? [this that])
+  (intersects? [this that])
+  (sub? [this that])
+  (super? [this that])
   (drop-before [this n])
   (keep-before [this n])
   (expand [this])
@@ -2438,10 +2441,13 @@
     (apply sorted-set (take-while #(< % n)) this))
   (expand [this] this)
   (intersection [this that]
-    (let [s (into (sorted-set)
-              (filter #(member? that %) this))]
-      (when-not (empty? s)
-        s)))
+    (if (number? that)
+      (when (member? this that)
+        that)
+      (let [s (into (sorted-set)
+                (filter #(member? that %) this))]
+        (when-not (empty? s)
+          s))))
   (difference [this that]
     (let [s (into (sorted-set)
               (filter #(not (member? that %)) this))]
@@ -2540,4 +2546,36 @@
      (dotimes [_ 1e6]
        (run* [q]
          (== q 1)))))
+
+  (let [x 50
+        d (RangeFD. 1 100)]
+    (intersection d x))
+  
+  ;; ~20ms
+  (let [x 50
+        d (RangeFD. 1 100)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6] 
+         (intersection d x)))))
+
+  (let [s (sorted-set 1 2 3)
+        d (RangeFD. 1 100)]
+    (intersection d s))
+
+  ;; 1s
+  (let [s (sorted-set 1 2 3)
+        d (RangeFD. 1 100)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6] 
+         (intersection s d)))))
+
+  ;; 60-80ms
+  (let [n 1
+        s (sorted-set 1 2 3)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6] 
+         (intersection s n)))))
   )
