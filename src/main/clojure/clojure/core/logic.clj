@@ -234,9 +234,10 @@
 ;; Substitutions
 
 (defprotocol ISubstitutions
-  (occurs-check [this u v])
   (ext-no-check [this u v])
-  (walk [this v])
+  (walk [this v]))
+
+(defprotocol ISubstitutionsCLP
   (update [this x v]))
 
 (declare empty-s)
@@ -246,6 +247,10 @@
 (declare pair)
 (declare lcons)
 (declare run-constraints*)
+
+(defn occurs-check [s u v]
+  (let [v (walk s v)]
+    (occurs-check-term v u s)))
 
 (defn ext [s u v]
   (if (and *occurs-check* (occurs-check s u v))
@@ -291,10 +296,6 @@
   (count [this] (count s))
 
   ISubstitutions
-  (occurs-check [this u v]
-    (let [v (walk this v)]
-      (occurs-check-term v u this)))
-
   (ext-no-check [this u v]
     (Substitutions. (assoc s u v)
                     (cons (pair u v) l)
@@ -307,6 +308,7 @@
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
+  ISubstitutionsCLP
   (update [this x v]
     ((run-constraints* (if (lvar? v) [x v] [x]) cs)
      (if *occurs-check*
@@ -2194,111 +2196,6 @@
 
 (def clpfd (CLPFD.))
 
-(defmacro infd [& xs-and-dom]
-  (let [xs (butlast xs-and-dom)
-        dom (last xs-and-dom)]
-    `(let [dom# ~dom]
-      (fresh []
-        ~@(map (fn [x]
-                 `(domfd ~x dom#))
-               xs)))))
-
-(defn domfd [x dom]
-  (fn [a]
-    ((process-dom (walk a x) dom) a)))
-
-(defn walk-var [a [v b]]
-  `(~b (walk ~a ~v)))
-
-(defmacro let-dom [a vars & body]
-  `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
-     ~@body))
-
-(defmacro c-op [op vars & body]
-  (let [ps (partition 2 vars)
-        vs (map first ps)
-        ds (map second ps)]
-    `(fn [a#]
-       (let-dom a# ~vars
-         (let [oc# (build-oc ~op ~@vs)]
-           (if (and ~@(map (fn [d] `(domain? ~d)) ds))
-             ((composeg (update-cs oc#) ~@body) a#)
-             ((update-cs oc#) a#)))))))
-
-(defn exclude-from [dom1 a xs]
-  (loop [xs xs gs []]
-    (if (empty? xs)
-      (reduce composeg gs)
-      (let [x (first xs)
-            dom2 (walk a x)]
-        (if (domain? dom2)
-          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
-          (recur (rest xs) gs))))))
-
-(defn !=fd-c [u v]
-  (fn [^Substitutions a]
-    (let [s (.s a)
-          du (walk s u)
-          dv (walk s v)]
-      (cond
-       (or (not (domain? du))
-           (not (domain? dv))) ((update-cs (build-oc !=fd-c u v)) a)
-       (= u v) false
-       (disjoint? u v) a
-       :else (let [oc (build-oc !=fd-c u v)]
-               ((update-cs oc) a))))))
-
-(defn =fd-c [u v]
-  (c-op =c [u ud v vd]
-    (let [i (intersection ud vd)]
-      (composeg
-       (process-dom u i)
-       (process-dom v i)))))
-
-(defn <=fd-c [u v]
-  (c-op <=c [u ud v vd]
-    (let [[ulb uub] (bounds ud)
-          [vlb vub] (bounds vd)]
-      (composeg
-        (process-dom u (keep-before ud vub))
-        (process-dom v (drop-before vd ulb))))))
-
-(defn +fd-c [u v w]
-  (c-op +c [u ud v vd w wd]
-    (let [[wlb wub] (bounds wd)
-          [ulb uub] (bounds ud)
-          [vlb vub] (bounds vd)]
-      (composeg
-        (process-dom w (range (+ ulb vlb) (+ uub vub)))
-        (composeg
-          (process-dom u (range (- wlb vub) (- wub vlb)))
-          (process-dom v (range (- wlb uub) (- wub ulb))))))))
-
-(defn all-difffd-c* [ys ns]
-  (fn [a]
-    (let [ns (make-dom clpfd ns)]
-     (loop [ys ys ns ns xs ()]
-       (if (empty? ys)
-         (let [oc (build-oc all-difffd-c* xs ns)]
-           ((composeg
-             (update-cs oc)
-             (exclude-from ns a xs))
-            a))
-         (let [y (walk a (first ys))]
-           (cond
-            (lvar? y) (recur (rest ys) ns (cons y xs))
-            (member? y ns) nil
-            :else (recur (rest ys) (conj ns y) xs))))))))
-
-(defn all-difffd-c [v*]
-  (fn [a]
-    (let [v* (walk a v*)]
-      (cond
-       (lvar? v*) (let [oc (build-oc all-difffd-c v*)]
-                   ((update-cs oc) a))
-       :else (let [{x* true n* false} (group-by var? v*)]
-               ((all-difffd-c* x* n*) a))))))
-
 (defmacro extend-to-fd [t]
   `(extend-type ~t
      IDomain
@@ -2426,6 +2323,111 @@
               (filter #(not (member? that %)) this))]
       (when-not (empty? s)
         s))))
+
+(defmacro infd [& xs-and-dom]
+  (let [xs (butlast xs-and-dom)
+        dom (last xs-and-dom)]
+    `(let [dom# ~dom]
+      (fresh []
+        ~@(map (fn [x]
+                 `(domfd ~x dom#))
+               xs)))))
+
+(defn domfd [x dom]
+  (fn [a]
+    ((process-dom (walk a x) dom) a)))
+
+(defn walk-var [a [v b]]
+  `(~b (walk ~a ~v)))
+
+(defmacro let-dom [a vars & body]
+  `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
+     ~@body))
+
+(defmacro c-op [op vars & body]
+  (let [ps (partition 2 vars)
+        vs (map first ps)
+        ds (map second ps)]
+    `(fn [a#]
+       (let-dom a# ~vars
+         (let [oc# (build-oc ~op ~@vs)]
+           (if (and ~@(map (fn [d] `(domain? ~d)) ds))
+             ((composeg (update-cs oc#) ~@body) a#)
+             ((update-cs oc#) a#)))))))
+
+(defn exclude-from [dom1 a xs]
+  (loop [xs xs gs []]
+    (if (empty? xs)
+      (reduce composeg gs)
+      (let [x (first xs)
+            dom2 (walk a x)]
+        (if (domain? dom2)
+          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
+          (recur (rest xs) gs))))))
+
+(defn !=fd-c [u v]
+  (fn [^Substitutions a]
+    (let [s (.s a)
+          du (walk s u)
+          dv (walk s v)]
+      (cond
+       (or (not (domain? du))
+           (not (domain? dv))) ((update-cs (build-oc !=fd-c u v)) a)
+       (= u v) false
+       (disjoint? u v) a
+       :else (let [oc (build-oc !=fd-c u v)]
+               ((update-cs oc) a))))))
+
+(defn =fd-c [u v]
+  (c-op =c [u ud v vd]
+    (let [i (intersection ud vd)]
+      (composeg
+       (process-dom u i)
+       (process-dom v i)))))
+
+(defn <=fd-c [u v]
+  (c-op <=c [u ud v vd]
+    (let [[ulb uub] (bounds ud)
+          [vlb vub] (bounds vd)]
+      (composeg
+        (process-dom u (keep-before ud vub))
+        (process-dom v (drop-before vd ulb))))))
+
+(defn +fd-c [u v w]
+  (c-op +c [u ud v vd w wd]
+    (let [[wlb wub] (bounds wd)
+          [ulb uub] (bounds ud)
+          [vlb vub] (bounds vd)]
+      (composeg
+        (process-dom w (interval (+ ulb vlb) (+ uub vub)))
+        (composeg
+          (process-dom u (interval (- wlb vub) (- wub vlb)))
+          (process-dom v (interval (- wlb uub) (- wub ulb))))))))
+
+(defn all-difffd-c* [ys ns]
+  (fn [a]
+    (let [ns (make-dom clpfd ns)]
+     (loop [ys ys ns ns xs ()]
+       (if (empty? ys)
+         (let [oc (build-oc all-difffd-c* xs ns)]
+           ((composeg
+             (update-cs oc)
+             (exclude-from ns a xs))
+            a))
+         (let [y (walk a (first ys))]
+           (cond
+            (lvar? y) (recur (rest ys) ns (cons y xs))
+            (member? y ns) nil
+            :else (recur (rest ys) (conj ns y) xs))))))))
+
+(defn all-difffd-c [v*]
+  (fn [a]
+    (let [v* (walk a v*)]
+      (cond
+       (lvar? v*) (let [oc (build-oc all-difffd-c v*)]
+                   ((update-cs oc) a))
+       :else (let [{x* true n* false} (group-by var? v*)]
+               ((all-difffd-c* x* n*) a))))))
 
 ;; =============================================================================
 ;; CLP(Tree)
