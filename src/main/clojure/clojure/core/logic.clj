@@ -63,6 +63,12 @@
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
 
+(defprotocol IRefineable
+  (-irefinable-marker [_]))
+
+(defn refineable? [x]
+  (satisfies? IRefineable x))
+
 (defprotocol IDomain
   (-idomain-marker [_]))
 
@@ -238,7 +244,8 @@
   (walk [this v]))
 
 (defprotocol ISubstitutionsCLP
-  (update [this x v]))
+  (update [this x v])
+  (walk-var [this v]))
 
 (declare empty-s)
 (declare choice)
