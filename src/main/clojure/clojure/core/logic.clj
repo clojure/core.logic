@@ -64,19 +64,21 @@
 ;; cKanren protocols
 
 (defprotocol IRefineable
-  (-irefinable-marker [_]))
+  (refineable? [x]))
 
-(defn refineable? [x]
-  (satisfies? IRefineable x))
+(extend-type Object
+  IRefineable
+  (refineable? [_] false))
 
 (defprotocol IDomain
-  (-idomain-marker [_]))
+  (domain? [x]))
+
+(extend-type Object
+  IDomain
+  (domain? [x] false))
 
 (defprotocol ISingletonDomain
   (-isingleton-domian-marker [_]))
-
-(defn domain? [x]
-  (satisfies? IDomain x))
 
 (defprotocol IUnifyWithDomain
   (unify-with-dom [v u s]))
@@ -87,19 +89,30 @@
   (containsc? [this c]))
 
 (defprotocol IConstraint
+  (constraint? [this])
   (proc [this])
   (rator [this])
   (rands [this])
   (process-prefix [this p]))
 
-(defn constraint? [x]
-  (satisfies? IConstraint x))
+(extend-type Object
+  IConstraint
+  (constraint? [x] false))
 
 (defprotocol IReifiableConstraint
+  (reifiable? [this])
   (reifyc [this v r]))
 
+(extend-type Object
+  IReifiableConstraint
+  (reifiable? [this] false))
+
 (defprotocol IEnforceableConstraint
-  (-ienforceable-constraint-marker [_]))
+  (enforceable? [c]))
+
+(extend-type Object
+  IEnforceableConstraint
+  (enforceable? [x] false))
 
 (defprotocol IFiniteDomain
   (lb [this])
@@ -2005,12 +2018,6 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn reifiable-c? [c]
-  (satisfies? IReifiableConstraint c))
-
-(defn enforceable-c? [c]
-  (satisfies? IEnforceableConstraint c))
-
 (defn ext-cs [cs oc]
   (if (-> oc meta :id)
     (updatec cs oc)
@@ -2137,7 +2144,7 @@
     (let [^ConstraintStore cs (.cs a)
           rcs (apply concat
                      (-> (get cs v)
-                         (filter reifiable-c?)
+                         (filter reifiable?)
                          (map (fn [oc]
                                 ((reifyc oc v r) a)))))]
       (if (empty? rcs)
@@ -2560,4 +2567,9 @@
       (time
        (dotimes [_ 1e6] 
          (intersection s n)))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6] 
+       (refineable? 1))))
   )
