@@ -67,7 +67,17 @@
 ;; cKanren protocols
 
 (defprotocol IRefineable
-  (refineable? [x]))
+  (refineable? [x])
+  (refine [x v]))
+
+(extend-protocol IRefineable
+  nil
+  (refine [_ _] nil)
+
+  Object
+  (refine [x o]
+    (when (refineable? o)
+      (refine o x))))
 
 (extend-type Object
   IRefineable
@@ -79,9 +89,6 @@
 (extend-type Object
   IDomain
   (domain? [x] false))
-
-(defprotocol IUnifyWithDomain
-  (unify-with-dom [v u s]))
 
 (defprotocol IConstraintStore
   (addc [this c])
@@ -303,7 +310,7 @@
 (defn build [s u]
   (build-term u s))
 
-(deftype Refineable [v u])
+(deftype Refineable [v lvar])
 
 (deftype Substitutions [s l cs]
   Object
@@ -634,10 +641,7 @@
 
   Object
   (unify-with-object [v u s]
-    (cond
-     (= u v) s
-     (domain? u) (unify-with-dom v u s)
-     :else false)))
+    (if (= u v) s false)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -649,20 +653,6 @@
   Object
   (unify-with-lvar [v u s]
     (ext s u v)))
-
-;; -----------------------------------------------------------------------------
-;; Unify Domain with X
-
-(extend-protocol IUnifyWithDomain
-  nil
-  (unify-with-dom [v u s] false)
-
-  Object
-  (unify-with-dom [v u s]
-    (if (domain? v)
-      (if-let [i (intersection v u)]
-        s)
-      false)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
@@ -783,6 +773,25 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IRefineable with X
+
+(extend-protocol IUnifyWithRefineable
+  nil
+  (unify-with-refineable [v u s] false)
+
+  Object
+  (unify-with-refineable [v u s]
+    (let [^Refineable u u
+          r (refine (.v u) v)]
+      (update s (.lvar u) r)))
+
+  Refineable
+  (unify-with-refineable [v u s]
+    (let [^Refineable u u
+          ^Refineable v v
+          r (refine (.v u) (.v v))
+          s (update s (.lvar u) r)]
+      (when s
+        (ext-no-check s (.lvar v) (.lvar u))))))
 
 ;; =============================================================================
 ;; Reification
