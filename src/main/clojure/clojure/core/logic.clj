@@ -2019,21 +2019,10 @@
 (defmacro build-oc [op & args]
   `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
 
-;; NOTE: can we avoid the intersection call here?
-
-(defn update-var-dom [x dom]
-  (fn [a]
-    (let [xdom (walk a x)]
-      (if (domain? xdom)
-        (let [new-dom (intersection xdom dom)]
-          (when new-dom
-            (ext-no-check a x new-dom)))
-        (ext-no-check a x dom)))))
-
 (defn process-dom [v dom]
   (fn [a]
     (cond
-     (lvar? v) ((update-var-dom v dom) a)
+     (lvar? v) (unify a v dom)
      (member? dom v) a
      :else nil)))
 
