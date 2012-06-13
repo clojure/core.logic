@@ -2235,6 +2235,7 @@
 (extend-to-fd clojure.lang.BigInt)
 
 (deftype IntervalFD [_lb _ub]
+  IRefineable
   IDomain
   IFiniteDomain
   (lb [_] _lb)
@@ -2290,6 +2291,10 @@
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
   ([lb ub] (IntervalFD. lb ub)))
+
+;; NOTE: probably need a wrapper type, we want simple sets of things to
+;; be IRefineable but we don't want it to apply to PersistentTreeSet
+;; in general
 
 (extend-type clojure.lang.PersistentTreeSet
   IDomain
