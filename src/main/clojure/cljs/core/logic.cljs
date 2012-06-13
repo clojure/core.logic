@@ -110,16 +110,16 @@
 
 (defn assq
   "Similar to Scheme assq, xs must be a List of Pairs"
-  [k xs]
-  (let [xs (-seq xs)]
-   (loop [xs xs]
-     (if (identical? xs nil)
-       not-found
-       (let [x (-first xs)
-             lhs (.-lhs x)]
-         (if (identical? k lhs)
-           (.-rhs x)
-           (recur (-rest xs))))))))
+  [k ^cljs.core/List xs]
+  (loop [xs (-seq xs)]
+    (if (nil? xs)
+      not-found
+      (let [^cljs.core/List xs xs
+            x (-first xs)
+            lhs (.-lhs x)]
+        (if (identical? k lhs)
+          (.-rhs x)
+          (recur (-next xs)))))))
 
 (deftype Substitutions [s]
   IEquiv
@@ -193,12 +193,12 @@
 
 (def empty-s (make-s '()))
 
-(defn subst? [x]
+(defn ^boolean subst? [x]
   (instance? Substitutions x))
 
 (defn to-s [v]
   (let [s (reduce (fn [l [k v]]
-                    (cons (pair k v) l))
+                    (conj l (pair k v)))
                   () v)]
     (make-s s)))
 
@@ -210,7 +210,7 @@
   (toString [this]
     (pr-str this))
   IHash
-  (-hash []
+  (-hash [this]
     (-hash name))
   IMeta
   (-meta [this]
@@ -219,7 +219,7 @@
   (-with-meta [this new-meta]
     (LVar. name meta))
   IPrintable
-  (-pr-seq [_]
+  (-pr-seq [_ opts]
     (list "<lvar:" (str name) ">"))
   IEquiv
   (-equiv [this o]
@@ -269,7 +269,7 @@
                      (swap! lvar-sym-counter inc))]
        (LVar. name nil))))
 
-(defn lvar? [x]
+(defn ^boolean lvar? [x]
   (instance? LVar x))
 
 ;; =============================================================================
@@ -370,7 +370,7 @@
     (cons a (seq d))
     (LCons. a d nil)))
 
-(defn lcons? [x]
+(defn ^boolean lcons? [x]
   (instance? LCons x))
 
 ;; =============================================================================
@@ -391,11 +391,15 @@
   (-unify-terms [u v s]
     (-unify-with-map v u s))
   
-  HashMap
+  PersistentArrayMap
+  (-unify-terms [u v s]
+    (-unify-with-map v u s))
+
+  PersistentHashMap
   (-unify-terms [u v s]
     (-unify-with-map v u s))
   
-  Set
+  PersistentHashSet
   (-unify-terms [u v s]
     (-unify-with-set v u s)))
 
@@ -476,20 +480,21 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
+(def not-found (js-obj))
+
 (defn unify-with-map* [v u s]
-  (let [ks (keys u)]
-    (loop [ks ks u u v v s s]
-      (if (seq ks)
+  (if-not (cljs.core/== (count v) (count u))
+    false
+    (loop [ks (seq (keys u)) s s]
+      (if ks
         (let [kf (first ks)
-              vf (get v kf ::not-found)]
-          (if (= vf ::not-found)
+              vf (get v kf not-found)]
+          (if (identical? vf not-found)
             false
             (if-let [s (-unify s (get u kf) vf)]
-              (recur (next ks) (dissoc u kf) (dissoc v kf) s)
+              (recur (next ks) s)
               false)))
-        (if (seq v)
-          false
-          s)))))
+        s))))
 
 (extend-protocol IUnifyWithMap
   nil
@@ -502,7 +507,11 @@
   (-unify-with-map [v u s]
     (unify-with-map* v u s))
 
-  HashMap
+  PersistentArrayMap
+  (-unify-with-map [v u s]
+    (unify-with-map* v u s))
+
+  PersistentHashMap
   (-unify-with-map [v u s]
     (unify-with-map* v u s)))
 
@@ -516,7 +525,7 @@
   default
   (-unify-with-set [v u s] false)
 
-  Set
+  PersistentHashSet
   (-unify-with-set [v u s]
     (loop [u u v v ulvars [] umissing []]
       (if (seq u)
@@ -577,7 +586,7 @@
       (map #(-walk* s %) v)
       v))
 
-  Vector
+  PersistentVector
   (-walk-term [v s]
     (loop [v v r []]
       (if (seq v)
@@ -586,10 +595,11 @@
 
   ObjMap
   (-walk-term [v s] (walk-term-map* v s))
-  HashMap
+
+  PersistentHashMap
   (-walk-term [v s] (walk-term-map* v s))
 
-  Set
+  PersistentHashSet
   (-walk-term [v s]
     (loop [v v r {}]
       (if (seq v)
@@ -622,13 +632,15 @@
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 
+(declare Inc)
+
 (deftype Choice [a f]
   IBind
   (-bind [this g]
     (-mplus (g a) (-inc (-bind f g))))
   IMPlus
   (-mplus [this fp]
-    (Choice. a (fn [] (-mplus (fp) f))))
+    (Choice. a (-inc (-mplus (fp) f))))
   ITake
   (-take* [this]
     (lazy-seq (cons (first a) (lazy-seq (-take* f))))))
@@ -662,15 +674,17 @@
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(extend-type function
+(deftype Inc [f]
+  IFn
+  (-invoke [_] (f))
   IBind
   (-bind [this g]
-    (-inc (-bind (this) g)))
+    (-inc (-bind (f) g)))
   IMPlus
-  (-mplus [this f]
-    (-inc (-mplus (f) this)))
+  (-mplus [this fp]
+    (-inc (-mplus (fp) this)))
   ITake
-  (-take* [this] (lazy-seq (-take* (this)))))
+  (-take* [this] (lazy-seq (-take* (f)))))
 
 ;; =============================================================================
 ;; Syntax
@@ -726,12 +740,10 @@
              (recur b gr))
            b))))
 
-(extend-type function
+(extend-type Inc
   IIfA
   (-ifa [b gs c]
-       (-inc (-ifa (b) gs c))))
-
-(extend-type function
+       (-inc (-ifa (b) gs c)))
   IIfU
   (-ifu [b gs c]
        (-inc (-ifu (b) gs c))))
@@ -799,4 +811,4 @@
 (defn prefix [s <s]
   (if (= s <s)
     ()
-    (cons (first s) (prefix (rest s) <s))))
+    (conj (prefix (rest s) <s) (first s))))

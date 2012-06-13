@@ -1591,10 +1591,10 @@
 ;; Rel
 
 (defn to-stream [aseq]
-  (when (seq aseq)
-    (choice (first aseq)
-            (let [aseq (drop-while #(or (nil? %) (false? %)) (next aseq))]
-              (fn [] (to-stream aseq))))))
+  (let [aseq (drop-while #(or (nil? %) (false? %)) aseq)]
+    (when (seq aseq)
+      (choice (first aseq)
+              (fn [] (to-stream (next aseq)))))))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -1742,10 +1742,8 @@
                      (to-stream
                       (->> set#
                            (map (fn [cand#]
-                                  (when-let [~'a (clojure.core.logic/unify
-                                                  ~'a [~@as] cand#)]
-                                    ~'a)))
-                           (remove nil?)))))))))))
+                                  (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
+                                    ~'a)))))))))))))
 
 ;; TODO: Should probably happen in a transaction
 
@@ -1794,7 +1792,8 @@
   "Retract a series of facts. Takes a vector of vectors where each vector
    represents a fact tuple, all with the same number of elements. It is not
    an error to retract a fact that isn't true."
-  ([rel [f :as tuples]] (retractions rel (count f) tuples))
+  ([rel [f :as tuples]]
+     (when f (retractions rel (count f) tuples)))
   ([^Rel rel arity tuples]
      (let [rel-ns (:ns (meta rel))
            rel-set (var-get (ns-resolve rel-ns (set-sym (.name rel) arity)))

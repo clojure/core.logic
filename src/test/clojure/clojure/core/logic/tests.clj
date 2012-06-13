@@ -1289,3 +1289,10 @@
   (is (run* [q]
             (== q (quote ^:haz-meta-daytuhs (form form form))))
       '((^:haz-meta-daytuhs (form form form)))))
+
+;; =============================================================================
+;; nil & false to-stream
+
+(deftest nil-or-false-in-stream []
+  (is (= (take 1 (take* (to-stream [nil false (cons empty-s nil)])))
+         (cons empty-s nil))))

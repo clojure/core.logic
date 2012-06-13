@@ -24,6 +24,8 @@
 ;; -----------------------------------------------------------------------------
 ;; unify with nil
 
+(println "unify with nil")
+
 (let [x (lvar 'x)]
   (assert (= (pair x nil) (pair x nil))))
 
@@ -48,6 +50,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; unify with object
+
+(println "unify with object")
 
 (assert (= (-unify empty-s 1 nil) false))
 (assert (= (-unify empty-s 1 1) empty-s))
@@ -74,6 +78,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; unify with lvar
+
+(println "unify with lvar")
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x 1)]
@@ -124,6 +130,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; unify with lcons
+
+(println "unify with lcons")
 
 (let [x (lvar 'x)]
   (assert (= (-unify empty-s (lcons 1 x) 1) false)))
@@ -219,6 +227,8 @@
 ;; -----------------------------------------------------------------------------
 ;; unify with sequential
 
+(println "unify with sequential")
+
 (assert (= (-unify empty-s '() 1) false))
 (assert (= (-unify empty-s [] 1) false))
 
@@ -276,6 +286,8 @@
 ;; -----------------------------------------------------------------------------
 ;; unify with map
 
+(println "unify with map")
+
 (assert (= (-unify empty-s {} 1) false))
 
 (let [x (lvar 'x)
@@ -305,6 +317,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; unify with set
+
+(println "unify with set")
 
 (assert (= (-unify empty-s #{} 1) false))
 
@@ -359,6 +373,8 @@
 ;; =============================================================================
 ;; walk
 
+(println "walk")
+
 (assert (= (let [x (lvar 'x)
                  y (lvar 'y)
                  s (to-s [[x 5] [y x]])]
@@ -373,6 +389,8 @@
 ;; =============================================================================
 ;; reify
 
+(println "reify")
+
 (assert (= (let [x (lvar 'x)
                  y (lvar 'y)]
              (-reify-lvar-name (to-s [[x 5] [y x]])))
@@ -381,6 +399,8 @@
 ;; =============================================================================
 ;; walk*
 
+(println "walk*")
+
 (assert (= (let [x (lvar 'x)
                  y (lvar 'y)]
              (-walk* (to-s [[x 5] [y x]]) `(~x ~y)))
@@ -388,6 +408,8 @@
 
 ;; =============================================================================
 ;; run and unify
+
+(println "run and unify")
 
 (assert (= (run* [q]
              (m/== true q))
@@ -407,6 +429,8 @@
 ;; =============================================================================
 ;; fail
 
+(println "fail")
+
 (assert (= (run* [q]
              fail
              (m/== true q))
@@ -414,6 +438,8 @@
 
 ;; =============================================================================
 ;; Basic
+
+(println "basic")
 
 (assert (= (run* [q]
              (all
@@ -423,6 +449,8 @@
 
 ;; =============================================================================
 ;; TRS
+
+(println "trs")
 
 (defn pairo [p]
   (fresh [a d]
@@ -466,6 +494,8 @@
 ;; =============================================================================
 ;; conde
 
+(println "conde")
+
 (assert (= (run* [x]
              (conde
                [(m/== x 'olive) succeed]
@@ -496,6 +526,8 @@
 
 ;; =============================================================================
 ;; conso
+
+(println "conso")
 
 (assert (= (run* [q]
              (fresh [a d]
@@ -533,12 +565,16 @@
 ;; =============================================================================
 ;; firsto
 
+(println "firsto")
+
 (assert (= (run* [q]
              (firsto q '(1 2)))
            (list (lcons '(1 2) (lvar 'x)))))
 
 ;; =============================================================================
 ;; resto
+
+(println "resto")
 
 (assert (= (run* [q]
              (resto q '(1 2)))
@@ -559,6 +595,8 @@
 ;; =============================================================================
 ;; flatteno
 
+(println "flatteno")
+
 (assert (= (run* [x]
              (flatteno '[[a b] c] x))
            '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
@@ -568,6 +606,8 @@
 
 ;; =============================================================================
 ;; membero
+
+(println "membero")
 
 (assert (= (run* [q]
              (all
@@ -587,12 +627,16 @@
 ;; -----------------------------------------------------------------------------
 ;; rembero
 
+(println "rembero")
+
 (assert (= (run 1 [q]
              (rembero 'b '(a b c b d) q))
            '((a c b d))))
 
 ;; -----------------------------------------------------------------------------
 ;; conde clause count
+
+(println "conde clause count")
 
 (defn digit-1 [x]
   (conde
@@ -623,6 +667,8 @@
 ;; -----------------------------------------------------------------------------
 ;; anyo
 
+(println "anyo")
+
 (defn anyo [q]
   (conde
     [q s#]
@@ -640,6 +686,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; divergence
+
+(println "divergence")
 
 (def f1 (fresh [] f1))
 
@@ -668,6 +716,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; conda (soft-cut)
+
+(println "conda")
 
 (assert (= (run* [x]
              (conda
@@ -718,6 +768,8 @@
 ;; -----------------------------------------------------------------------------
 ;; condu (committed-choice)
 
+(println "condu")
+
 (defn onceo [g]
   (condu
     (g s#)))
@@ -741,6 +793,8 @@
 
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
+
+(println "nil in collection")
 
 (assert (= (run* [q]
              (m/== q [nil]))
@@ -769,12 +823,16 @@
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
 
+(println "occurs check")
+
 (assert (= (run* [q]
              (m/== q [q]))
            ()))
 
 ;; -----------------------------------------------------------------------------
 ;; Unifications that should fail
+
+(println "unifications that sould fail")
 
 (assert (= (run* [p]
              (fresh [a b]
@@ -801,6 +859,8 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures
 
+(println "pattern matching")
+
 (defne match-map [m o]
   ([{:foo {:bar o}} _]))
 
@@ -822,6 +882,8 @@
 ;; =============================================================================
 ;; zebrao
 
+(println "zebrao")
+
 (defne righto [x y l]
   ([_ _ [x y . r]])
   ([_ _ [_ . r]] (righto x y r)))
@@ -834,24 +896,30 @@
 (defn zebrao [hs]
   (mu/symbol-macrolet [_ (lvar)]
    (all
-    (m/== [_ _ [_ _ 'milk _ _] _ _] hs)
-    (firsto hs ['norwegian _ _ _ _])
-    (nexto ['norwegian _ _ _ _] [_ _ _ _ 'blue] hs)
-    (righto [_ _ _ _ 'ivory] [_ _ _ _ 'green] hs)
-    (membero ['englishman _ _ _ 'red] hs)
-    (membero [_ 'kools _ _ 'yellow] hs)
-    (membero ['spaniard _ _ 'dog _] hs)
-    (membero [_ _ 'coffee _ 'green] hs)
-    (membero ['ukrainian _ 'tea _ _] hs)
-    (membero [_ 'lucky-strikes 'oj _ _] hs)
-    (membero ['japanese 'parliaments _ _ _] hs)
-    (membero [_ 'oldgolds _ 'snails _] hs)
-    (nexto [_ _ _ 'horse _] [_ 'kools _ _ _] hs)
-    (nexto [_ _ _ 'fox _] [_ 'chesterfields _ _ _] hs))))
+    (m/== (list _ _ (list _ _ 'milk _ _) _ _) hs)
+    (firsto hs (list 'norwegian _ _ _ _))
+    (nexto (list 'norwegian _ _ _ _) (list _ _ _ _ 'blue) hs)
+    (righto (list _ _ _ _ 'ivory) (list _ _ _ _ 'green) hs)
+    (membero (list 'englishman _ _ _ 'red) hs)
+    (membero (list _ 'kools _ _ 'yellow) hs)
+    (membero (list 'spaniard _ _ 'dog _) hs)
+    (membero (list _ _ 'coffee _ 'green) hs)
+    (membero (list 'ukrainian _ 'tea _ _) hs)
+    (membero (list _ 'lucky-strikes 'oj _ _) hs)
+    (membero (list 'japanese 'parliaments _ _ _) hs)
+    (membero (list _ 'oldgolds _ 'snails _) hs)
+    (nexto (list _ _ _ 'horse _) (list _ 'kools _ _ _) hs)
+    (nexto (list _ _ _ 'fox _) (list _ 'chesterfields _ _ _) hs))))
+
+(defn ^:export run_zebra []
+  (binding [*occurs-check* false]
+    (doall (run 1 [q] (zebrao q)))))
 
 (println (pr-str (run 1 [q] (zebrao q))))
+
 (binding [*occurs-check* false]
- (time (run 1 [q] (zebrao q))))
+  (dotimes [_ 5]
+    (time (run 1 [q] (zebrao q)))))
 
 (println (pr-str
           (run 10 [q]
