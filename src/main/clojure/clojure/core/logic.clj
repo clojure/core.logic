@@ -39,6 +39,9 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
+(defprotocol IUnifyWithRefineable
+  (unify-with-refineable [v u s]))
+
 (defprotocol IReifyTerm
   (reify-term [v s]))
 
@@ -254,8 +257,7 @@
   (walk [this v]))
 
 (defprotocol ISubstitutionsCLP
-  (update [this x v])
-  (walk-var [this v]))
+  (update [this x v]))
 
 (declare empty-s)
 (declare choice)
@@ -301,6 +303,8 @@
 (defn build [s u]
   (build-term u s))
 
+(deftype Refineable [v u])
+
 (deftype Substitutions [s l cs]
   Object
   (equals [this o]
@@ -322,6 +326,7 @@
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
+       (refineable? v) (if (var? lv) (Refineable. v lv) v)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
