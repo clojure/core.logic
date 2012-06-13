@@ -77,9 +77,6 @@
   IDomain
   (domain? [x] false))
 
-(defprotocol ISingletonDomain
-  (-isingleton-domian-marker [_]))
-
 (defprotocol IUnifyWithDomain
   (unify-with-dom [v u s]))
 
