@@ -83,13 +83,6 @@
   IRefinable
   (refinable? [_] false))
 
-(defprotocol IDomain
-  (domain? [x]))
-
-(extend-type Object
-  IDomain
-  (domain? [x] false))
-
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c])
@@ -122,6 +115,7 @@
   (enforceable? [x] false))
 
 (defprotocol IFiniteDomain
+  (domain? [this])
   (lb [this])
   (ub [this])
   (bounds [this])
@@ -135,6 +129,10 @@
   (expand [this])
   (intersection [this that])
   (difference [this that]))
+
+(extend-type Object
+  IFiniteDomain
+  (domain? [x] false))
 
 (defprotocol IDisequalityConstrain
   (!=c [u v]))
@@ -150,6 +148,12 @@
 
 (defprotocol IForceAnswerTerm
   (-force-ans [u]))
+
+(defprotocol IMakeDomain
+  (make-dom [this xs]))
+
+(defprotocol IMakeConstraint
+  (makec [this proc rator rands]))
 
 ;; =============================================================================
 ;; Pair
@@ -2035,6 +2039,7 @@
 
 (declare force-ans)
 
+;; TODO: handle all Clojure tree types
 (extend-protocol IForceAnswerTerm
   nil
   (-force-ans [u] s#)
@@ -2145,12 +2150,6 @@
         (let [v (walk* r v)]
           (reify-constraints a r v))))))
 
-(defprotocol IMakeDomain
-  (make-dom [this xs]))
-
-(defprotocol IMakeConstraint
-  (makec [this proc rator rands]))
-
 ;; =============================================================================
 ;; CLP(FD)
 
@@ -2180,8 +2179,8 @@
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
-     IDomain
      IFiniteDomain
+     (~'domain? [this#] true)
      (~'lb [this#] this#)
      (~'ub [this#] this#)
      (~'bounds [this#] (pair this# this#))
@@ -2219,8 +2218,10 @@
 
 (deftype IntervalFD [_lb _ub]
   IRefinable
-  IDomain
+  (refinable? [_] true)
+  (refine [this other] (intersection this other))
   IFiniteDomain
+  (domain? [_] true)
   (lb [_] _lb)
   (ub [_] _ub)
   (bounds [_] (pair _lb _ub))
@@ -2280,8 +2281,8 @@
 ;; in general
 
 (extend-type clojure.lang.PersistentTreeSet
-  IDomain
   IFiniteDomain
+  (domain? [this] true)
   (lb [this]
     (first this))
   (ub [this]
@@ -2545,4 +2546,10 @@
     (time
      (dotimes [_ 1e6] 
        (refinable? 1))))
+
+  (let [x (interval 1 10)]
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6] 
+         (refinable? x)))))
   )
