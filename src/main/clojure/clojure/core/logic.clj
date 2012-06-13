@@ -39,8 +39,8 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
-(defprotocol IUnifyWithRefineable
-  (unify-with-refineable [v u s]))
+(defprotocol IUnifyWithRefinable
+  (unify-with-refinable [v u s]))
 
 (defprotocol IReifyTerm
   (reify-term [v s]))
@@ -66,22 +66,22 @@
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
 
-(defprotocol IRefineable
-  (refineable? [x])
+(defprotocol IRefinable
+  (refinable? [x])
   (refine [x v]))
 
-(extend-protocol IRefineable
+(extend-protocol IRefinable
   nil
   (refine [_ _] nil)
 
   Object
   (refine [x o]
-    (when (refineable? o)
+    (when (refinable? o)
       (refine o x))))
 
 (extend-type Object
-  IRefineable
-  (refineable? [_] false))
+  IRefinable
+  (refinable? [_] false))
 
 (defprotocol IDomain
   (domain? [x]))
@@ -310,7 +310,7 @@
 (defn build [s u]
   (build-term u s))
 
-(deftype Refineable [v lvar])
+(deftype Refinable [v lvar])
 
 (deftype Substitutions [s l cs]
   Object
@@ -333,7 +333,7 @@
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
-       (refineable? v) (if (var? lv) (Refineable. v lv) v)
+       (refinable? v) (if (var? lv) (Refinable. v lv) v)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
@@ -618,9 +618,9 @@
   (unify-terms [u v s]
     (unify-with-set v u s))
 
-  Refineable
+  Refinable
   (unify-terms [u v s]
-    (unify-with-refineable v u s)))
+    (unify-with-refinable v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
@@ -772,22 +772,22 @@
           s)))))
 
 ;; -----------------------------------------------------------------------------
-;; Unify IRefineable with X
+;; Unify IRefinable with X
 
-(extend-protocol IUnifyWithRefineable
+(extend-protocol IUnifyWithRefinable
   nil
-  (unify-with-refineable [v u s] false)
+  (unify-with-refinable [v u s] false)
 
   Object
-  (unify-with-refineable [v u s]
-    (let [^Refineable u u
+  (unify-with-refinable [v u s]
+    (let [^Refinable u u
           r (refine (.v u) v)]
       (update s (.lvar u) r)))
 
-  Refineable
-  (unify-with-refineable [v u s]
-    (let [^Refineable u u
-          ^Refineable v v
+  Refinable
+  (unify-with-refinable [v u s]
+    (let [^Refinable u u
+          ^Refinable v v
           r (refine (.v u) (.v v))
           s (update s (.lvar u) r)]
       (when s
@@ -2234,7 +2234,7 @@
 (extend-to-fd clojure.lang.BigInt)
 
 (deftype IntervalFD [_lb _ub]
-  IRefineable
+  IRefinable
   IDomain
   IFiniteDomain
   (lb [_] _lb)
@@ -2292,7 +2292,7 @@
   ([lb ub] (IntervalFD. lb ub)))
 
 ;; NOTE: probably need a wrapper type, we want simple sets of things to
-;; be IRefineable but we don't want it to apply to PersistentTreeSet
+;; be IRefinable but we don't want it to apply to PersistentTreeSet
 ;; in general
 
 (extend-type clojure.lang.PersistentTreeSet
@@ -2560,5 +2560,5 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6] 
-       (refineable? 1))))
+       (refinable? 1))))
   )
