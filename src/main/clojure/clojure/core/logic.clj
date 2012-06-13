@@ -2011,11 +2011,6 @@
   (fn [^Substitutions a]
     (make-s (.s a) (.l a) (ext-cs (.cs a) oc))))
 
-(defn domain-compare [a b]
-  (if (and (number? a) (number? b))
-    (compare a b)
-    1))
-
 (defmacro build-oc [op & args]
   `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
 
