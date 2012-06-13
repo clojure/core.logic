@@ -593,37 +593,36 @@
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
-    (unify-with-nil v u s)))
+    (unify-with-nil v u s))
 
-(extend-type Object
-  IUnifyTerms
+  Object
   (unify-terms [u v s]
-    (unify-with-object v u s)))
+    (unify-with-object v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.Sequential
   (unify-terms [u v s]
-    (unify-with-seq v u s)))
+    (unify-with-seq v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
-    (unify-with-map v u s)))
+    (unify-with-map v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.IPersistentSet
   (unify-terms [u v s]
-    (unify-with-set v u s)))
+    (unify-with-set v u s))
+
+  Refineable
+  (unify-terms [u v s]
+    (unify-with-refineable v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
 
 (extend-protocol IUnifyWithNil
   nil
-  (unify-with-nil [v u s] s))
+  (unify-with-nil [v u s] s)
 
-(extend-type Object
-  IUnifyWithNil
+  Object
   (unify-with-nil [v u s] false))
 
 ;; -----------------------------------------------------------------------------
@@ -631,10 +630,9 @@
 
 (extend-protocol IUnifyWithObject
   nil
-  (unify-with-object [v u s] false))
+  (unify-with-object [v u s] false)
 
-(extend-type Object
-  IUnifyWithObject
+  Object
   (unify-with-object [v u s]
     (cond
      (= u v) s
@@ -646,10 +644,9 @@
 
 (extend-protocol IUnifyWithLVar
   nil
-  (unify-with-lvar [v u s] (ext-no-check s u v)))
+  (unify-with-lvar [v u s] (ext-no-check s u v))
 
-(extend-type Object
-  IUnifyWithLVar
+  Object
   (unify-with-lvar [v u s]
     (ext s u v)))
 
@@ -672,13 +669,11 @@
 
 (extend-protocol IUnifyWithLSeq
   nil
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] false)
 
-(extend-type Object
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s] false))
+  Object
+  (unify-with-lseq [v u s] false)
 
-(extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
@@ -697,13 +692,11 @@
 
 (extend-protocol IUnifyWithSequential
   nil
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] false)
 
-(extend-type Object
-  IUnifyWithSequential
-  (unify-with-seq [v u s] false))
+  Object
+  (unify-with-seq [v u s] false)
 
-(extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
     (loop [u u v v s s]
@@ -720,13 +713,11 @@
 
 (extend-protocol IUnifyWithMap
   nil
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] false)
 
-(extend-type Object
-  IUnifyWithMap
-  (unify-with-map [v u s] false))
+  Object
+  (unify-with-map [v u s] false)
 
-(extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
     (let [ks (keys u)]
@@ -748,26 +739,23 @@
 
 (extend-protocol IUnifyWithSet
   nil
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] false)
 
-(extend-type Object
-  IUnifyWithSet
-  (unify-with-set [v u s] false))
+  Object
+  (unify-with-set [v u s] false)
 
-;; TODO : improve speed, the following takes 890ms
-;; 
-;; (let [a (lvar 'a)
-;;       b (lvar 'b)
-;;       c (lvar 'c)
-;;       d (lvar 'd)
-;;       s1 #{a b 3 4 5}
-;;       s2 #{1 2 3 c d}]
-;;     (dotimes [_ 10]
-;;       (time
-;;        (dotimes [_ 1e5]
-;;          (.s (unify empty-s s1 s2))))))
-
-(extend-protocol IUnifyWithSet
+  ;; TODO : improve speed, the following takes 890ms
+  ;; 
+  ;; (let [a (lvar 'a)
+  ;;       b (lvar 'b)
+  ;;       c (lvar 'c)
+  ;;       d (lvar 'd)
+  ;;       s1 #{a b 3 4 5}
+  ;;       s2 #{1 2 3 c d}]
+  ;;     (dotimes [_ 10]
+  ;;       (time
+  ;;        (dotimes [_ 1e5]
+  ;;          (.s (unify empty-s s1 s2))))))
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
     (loop [u u v v ulvars [] umissing []]
@@ -793,18 +781,19 @@
             false)
           s)))))
 
+;; -----------------------------------------------------------------------------
+;; Unify IRefineable with X
+
 ;; =============================================================================
 ;; Reification
 
 (extend-protocol IReifyTerm
   nil
-  (reify-term [v s] s))
+  (reify-term [v s] s)
 
-(extend-type Object
-  IReifyTerm
-  (reify-term [v s] s))
+  Object
+  (reify-term [v s] s)
 
-(extend-protocol IReifyTerm
   clojure.lang.IPersistentCollection
   (reify-term [v s]
     (loop [v v s s]
@@ -817,20 +806,17 @@
 
 (extend-protocol IWalkTerm
   nil
-  (walk-term [v s] nil))
+  (walk-term [v s] nil)
 
-(extend-type Object
-  IWalkTerm
-  (walk-term [v s] v))
+  Object
+  (walk-term [v s] v)
 
-(extend-protocol IWalkTerm
   clojure.lang.ISeq
   (walk-term [v s]
     (with-meta
       (map #(walk* s %) v)
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentVector
   (walk-term [v s]
     (with-meta
@@ -838,9 +824,8 @@
         (if (seq v)
           (recur (next v) (conj! r (walk* s (first v))))
           (persistent! r)))
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
   (walk-term [v s]
     (with-meta
@@ -849,9 +834,8 @@
           (let [[vfk vfv] (first v)]
             (recur (next v) (assoc! r vfk (walk* s vfv))))
           (persistent! r)))
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
   (walk-term [v s]
     (with-meta
@@ -866,13 +850,11 @@
 
 (extend-protocol IOccursCheckTerm
   nil
-  (occurs-check-term [v x s] false))
+  (occurs-check-term [v x s] false)
 
-(extend-type Object
-  IOccursCheckTerm
-  (occurs-check-term [v x s] false))
+  Object
+  (occurs-check-term [v x s] false)
 
-(extend-protocol IOccursCheckTerm
   clojure.lang.IPersistentCollection
   (occurs-check-term [v x s]
     (loop [v v x x s s]
@@ -886,13 +868,11 @@
 
 (extend-protocol IBuildTerm
   nil
-  (build-term [u s] s))
+  (build-term [u s] s)
 
-(extend-type Object
-  IBuildTerm
-  (build-term [u s] s))
+  Object
+  (build-term [u s] s)
 
-(extend-protocol IBuildTerm
   clojure.lang.ISeq
   (build-term [u s]
     (reduce build s u)))
@@ -1278,52 +1258,46 @@
   nil
   (ifa [b gs c]
        (when c
-         (force c))))
+         (force c)))
+
+  Substitutions
+  (ifa [b gs c]
+       (loop [b b [g0 & gr] gs]
+         (if g0
+           (when-let [b (g0 b)]
+             (recur b gr))
+           b)))
+
+  clojure.lang.Fn
+  (ifa [b gs c]
+       (-inc (ifa (b) gs c)))
+
+  Choice
+  (ifa [b gs c]
+    (reduce bind b gs)))
 
 (extend-protocol IIfU
   nil
   (ifu [b gs c]
        (when c
-         (force c))))
+         (force c)))
 
-(extend-type Substitutions
-  IIfA
-  (ifa [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type Substitutions
-  IIfU
+  Substitutions
   (ifu [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
+    (loop [b b [g0 & gr] gs]
+      (if g0
+        (when-let [b (g0 b)]
+          (recur b gr))
+        b)))
 
-(extend-type clojure.lang.Fn
-  IIfA
-  (ifa [b gs c]
-       (-inc (ifa (b) gs c))))
-
-(extend-type clojure.lang.Fn
-  IIfU
+  clojure.lang.Fn
   (ifu [b gs c]
-       (-inc (ifu (b) gs c))))
+    (-inc (ifu (b) gs c)))
 
-(extend-protocol IIfA
-  Choice
-  (ifa [b gs c]
-       (reduce bind b gs)))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-(extend-protocol IIfU
+  ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
-       (reduce bind (.a ^Choice b) gs)))
+    (reduce bind (.a ^Choice b) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
