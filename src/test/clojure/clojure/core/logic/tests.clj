@@ -1288,6 +1288,12 @@
             (== q (quote ^:haz-meta-daytuhs (form form form))))
       '((^:haz-meta-daytuhs (form form form)))))
 
+(deftest test-42-multiple-run-parameters
+  (is (= '[[3 _.0 [3 _.0]]]
+         (run* [x y z]
+               (== z [x y])
+               (== [x] [3])))))
+
 ;; =============================================================================
 ;; nil & false to-stream
 

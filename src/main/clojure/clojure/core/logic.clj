@@ -882,15 +882,17 @@
       (let [~@(lvar-binds lvars)]
         (bind* a# ~@goals)))))
 
-(defmacro solve [& [n [x] & goals]]
-  `(let [xs# (take* (fn []
-                      ((fresh [~x] ~@goals
-                         (fn [a#]
-                           (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
-                       empty-s)))]
-     (if ~n
-       (take ~n xs#)
-       xs#)))
+(defmacro solve [& [n [x :as bindings] & goals]]
+  (if (> (count bindings) 1)
+    `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
+    `(let [xs# (take* (fn []
+                        ((fresh [~x] ~@goals
+                                (fn [a#]
+                                  (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
+                         empty-s)))]
+       (if ~n
+         (take ~n xs#)
+         xs#))))
 
 (defmacro run
   "Executes goals until a maximum of n results are found."
