@@ -2506,6 +2506,11 @@
   (run* [q]
     (== q 1))
 
+  ;; FIXME
+  (run* [q]
+    (== q (interval 1 10))
+    (== q 1))
+
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
