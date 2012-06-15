@@ -979,6 +979,11 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify Refinable with X
 
+(defn unify-with-refinable* [u v s]
+  (let [^Refinable u u
+        r (refine (.v u) v)]
+      (update s (.lvar u) r)))
+
 (extend-protocol IUnifyWithRefinable
   nil
   (unify-with-refinable [v u s] false)
@@ -988,7 +993,7 @@
 
   IntervalFD
   (unify-with-refinable [v u s]
-    (unify-with-interval u v s))
+    (unify-with-refinable* u v s))
 
   Refinable
   (unify-with-refinable [v u s]
@@ -998,6 +1003,24 @@
           s (update s (.lvar u) r)]
       (when s
         (ext-no-check s (.lvar v) (.lvar u))))))
+
+(defn extend-type-to-unify-with-refinable [t]
+  `(extend-type ~t
+     IUnifyWithRefinable
+     (~'unify-with-refinable [~'v ~'u ~'s]
+       (~'unify-with-refinable* ~'u ~'v ~'s))))
+
+(defmacro extend-to-unify-with-refinable [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-refinable ts)))
+
+(extend-to-unify-with-refinable
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Interval with X
@@ -1011,9 +1034,7 @@
 
   Refinable
   (unify-with-interval [v u s]
-    (let [^Refinable u u
-          r (refine (.v u) v)]
-      (update s (.lvar u) r)))
+    (unify-with-refinable* v u s))
 
   IntervalFD
   (unify-with-interval [v u s]
@@ -2594,7 +2615,7 @@
   (run* [q]
     (== q 1))
 
-  ;; fixme
+  ;; works
   (run* [q]
     (== q (interval 1 10))
     (== q 1))
