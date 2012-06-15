@@ -2663,11 +2663,16 @@
        (run* [q]
          (== 1 1)))))
 
-  ;; 1ms
+  ;; 50ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
        (unify empty-s 1 2))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (unify empty-s 'foo 'bar))))
 
   (let [v1 [1]
         v2 [2]]
