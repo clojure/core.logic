@@ -943,40 +943,6 @@
           s)))))
 
 ;; -----------------------------------------------------------------------------
-;; Unify Integer with X
-
-(extend-protocol IUnifyWithInteger
-  nil
-  (unify-with-integer [v u s] false)
-
-  Object
-  (unify-with-integer [v u s] false)
-
-  java.lang.Byte
-  (unify-with-integer [v u s]
-    (when (= u v) s))
-
-  java.lang.Short
-  (unify-with-integer [v u s]
-    (when (= u v) s))
-
-  java.lang.Integer
-  (unify-with-integer [v u s]
-    (when (= u v) s))
-
-  java.lang.Long
-  (unify-with-integer [v u s]
-    (when (= u v) s))
-
-  java.math.BigInteger
-  (unify-with-integer [v u s]
-    (when (= u v) s))
-
-  clojure.lang.BigInt
-  (unify-with-integer [v u s]
-    (when (= u v) s)))
-
-;; -----------------------------------------------------------------------------
 ;; Unify Refinable with X
 
 (defn unify-with-refinable* [u v s]
@@ -1040,6 +1006,68 @@
   (unify-with-interval [v u s]
     (when (refine u v)
       s)))
+
+(defn extend-type-to-unify-with-interval [t]
+  `(extend-type ~t
+     IUnifyWithIntervalFD
+     (~'unify-with-interval [~'v ~'u ~'s]
+       (when (refine ~'u ~'v)
+         ~'s))))
+
+(defmacro extend-to-unify-with-interval [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-refinable ts)))
+
+(extend-to-unify-with-interval
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
+;; Unify Integer with X
+
+(extend-protocol IUnifyWithInteger
+  nil
+  (unify-with-integer [v u s] false)
+
+  Object
+  (unify-with-integer [v u s] false)
+
+  java.lang.Byte
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Short
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Integer
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Long
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.math.BigInteger
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  clojure.lang.BigInt
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  IntervalFD
+  (unify-with-integer [v u s]
+    (when (refine v u)
+      s))
+
+  Refinable
+  (unify-with-integer [v u s]
+    (unify-with-refinable* v u s)))
 
 ;; =============================================================================
 ;; Reification
@@ -2615,12 +2643,10 @@
   (run* [q]
     (== q 1))
 
-  ;; works
   (run* [q]
     (== q (interval 1 10))
     (== q 1))
 
-  ;; fixme
   (run* [q]
     (== q 1)
     (== q (interval 1 10)))
@@ -2630,6 +2656,12 @@
      (dotimes [_ 1e6]
        (run* [q]
          (== q 1)))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6] 
+       (run* [q]
+         (== q (interval 1 10))))))
 
   (let [x 50
         d (IntervalFD. 1 100)]
