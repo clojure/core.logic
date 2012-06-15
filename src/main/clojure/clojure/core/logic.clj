@@ -67,17 +67,10 @@
 ;; cKanren protocols
 
 (defprotocol IRefinable
-  (refinable? [x])
+  (refinable? [x]))
+
+(defprotocol IRefine
   (refine [x v]))
-
-(extend-protocol IRefinable
-  nil
-  (refine [_ _] nil)
-
-  Object
-  (refine [x o]
-    (when (refinable? o)
-      (refine o x))))
 
 (extend-type Object
   IRefinable
@@ -645,7 +638,11 @@
 
   Object
   (unify-with-object [v u s]
-    (if (= u v) s false)))
+    (if (= u v) s false))
+
+  Refinable
+  (unify-with-object [v u s]
+    (unify-with-refinable u v s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
@@ -776,7 +773,7 @@
           s)))))
 
 ;; -----------------------------------------------------------------------------
-;; Unify IRefinable with X
+;; Unify Refinable with X
 
 (extend-protocol IUnifyWithRefinable
   nil
@@ -2221,6 +2218,7 @@
 (deftype IntervalFD [_lb _ub]
   IRefinable
   (refinable? [_] true)
+  IRefine
   (refine [this other] (intersection this other))
   IFiniteDomain
   (domain? [_] true)
