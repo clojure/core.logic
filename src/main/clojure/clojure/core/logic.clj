@@ -39,9 +39,6 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
-(defprotocol IUnifyWithRefinable
-  (unify-with-refinable [v u s]))
-
 (defprotocol IReifyTerm
   (reify-term [v s]))
 
@@ -65,6 +62,12 @@
 
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
+
+(defprotocol IUnifyWithRefinable
+  (unify-with-refinable [v u s]))
+
+(defprotocol IUnifyWithIntervalFD
+  (unify-with-interval [v u s]))
 
 (defprotocol IRefinable
   (refinable? [x]))
@@ -184,6 +187,142 @@
 ;; Constraint Store
 
 (declare lvar?)
+
+(defmacro extend-to-fd [t]
+  `(extend-type ~t
+     IFiniteDomain
+     (~'domain? [this#] true)
+     (~'lb [this#] this#)
+     (~'ub [this#] this#)
+     (~'bounds [this#] (pair this# this#))
+     (~'member? [this# v#] (= this# v#))
+     (~'expand [this#] (sorted-set this#))
+     (~'drop-before [this# n#]
+       (if (= this# n#)
+         n#
+         nil))
+     (~'keep-before [this# n#]
+       (if (= this# n#)
+         n#
+         nil))
+     (~'disjoint? [this# that#]
+       (if (number? that#)
+         (not= this# that#)
+         (disjoint? (expand this#) (expand that#))))
+     (~'intersection [this# that#]
+       (if (number? that#)
+         (when (= this# that#)
+           this#)
+         (intersection that# this#)))
+     (~'difference [this# that#]
+       (if (number? that#)
+         (when (= this# that#)
+           this#)
+         (intersection that# this#)))))
+
+(extend-to-fd java.lang.Byte)
+(extend-to-fd java.lang.Short)
+(extend-to-fd java.lang.Integer)
+(extend-to-fd java.lang.Long)
+(extend-to-fd java.math.BigInteger)
+(extend-to-fd clojure.lang.BigInt)
+
+(deftype IntervalFD [_lb _ub]
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
+  IFiniteDomain
+  (domain? [_] true)
+  (lb [_] _lb)
+  (ub [_] _ub)
+  (bounds [_] (pair _lb _ub))
+  (member? [this v]
+    (and (>= v _lb) (<= v _ub)))
+  (disjoint? [this that]
+    (if (instance? IntervalFD that)
+      (or (< (ub this) (lb that))
+          (< (lb this) (ub that)))
+      (disjoint? (expand this) (expand that))))
+  (drop-before [this n]
+    (cond
+     (= n _ub) n
+     (< n _lb) this
+     (> n _ub) nil
+     :else (IntervalFD. n _ub)))
+  (keep-before [this n]
+    (cond
+     (= n _lb) n
+     (> n _ub) this
+     (< n _lb) nil
+     :else (IntervalFD. _lb n)))
+  (expand [this] (apply sorted-set (range _lb _ub)))
+  (super? [this that]
+    (and (<= _lb (lb that))
+         (>= _ub (ub that))))
+  (intersection [this that]
+    (cond
+     (instance? IntervalFD that)
+     (let [^IntervalFD that that
+           lb (max _lb (.lb that))
+           ub (min _ub (.ub that))]
+        (cond
+         (= lb ub) lb
+         (< lb ub) (IntervalFD. lb ub)
+         :else nil))
+     (instance? clojure.lang.PersistentTreeSet that)
+     (let [s (intersection that this)]
+       (when-not (empty? s)
+         s))
+     (number? that) (when (and (>= that _lb) (<= that _ub))
+                      that)
+     :else (let [s (set/intersection (expand this) (expand that))]
+             (when-not (empty? s)
+               s))))
+  (difference [this that]
+    )
+  IDisequalityConstrain
+  (!=c [this that]))
+
+(defn ^IntervalFD interval
+  ([ub] (IntervalFD. 0 ub))
+  ([lb ub] (IntervalFD. lb ub)))
+
+;; NOTE: probably need a wrapper type, we want simple sets of things to
+;; be IRefinable but we don't want it to apply to PersistentTreeSet
+;; in general
+
+(extend-type clojure.lang.PersistentTreeSet
+  IFiniteDomain
+  (domain? [this] true)
+  (lb [this]
+    (first this))
+  (ub [this]
+    (first (rseq this)))
+  (member? [this v]
+    (contains? this v))
+  (disjoint? [this that]
+    (empty? (set/intersection this (expand that))))
+  (drop-before [this n]
+    (apply sorted-set (drop-while #(< % n)) this))
+  (keep-before [this n]
+    (apply sorted-set (take-while #(< % n)) this))
+  (expand [this] this)
+  (intersection [this that]
+    (cond
+     (number? that)
+     (when (member? this that)
+       that)
+     (super? that this) this
+     :else (let [s (into (sorted-set)
+                     (filter #(member? that %) this))]
+             (when-not (empty? s)
+               s))))
+  (difference [this that]
+    (let [s (into (sorted-set)
+              (filter #(not (member? that %)) this))]
+      (when-not (empty? s)
+        s))))
 
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
@@ -617,7 +756,11 @@
 
   Refinable
   (unify-terms [u v s]
-    (unify-with-refinable v u s)))
+    (unify-with-refinable v u s))
+
+  IntervalFD
+  (unify-terms [u v s]
+    (unify-with-interval v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
@@ -780,10 +923,11 @@
   (unify-with-refinable [v u s] false)
 
   Object
+  (unify-with-refinable [v u s] false)
+
+  IntervalFD
   (unify-with-refinable [v u s]
-    (let [^Refinable u u
-          r (refine (.v u) v)]
-      (update s (.lvar u) r)))
+    (unify-with-interval u v s))
 
   Refinable
   (unify-with-refinable [v u s]
@@ -793,6 +937,27 @@
           s (update s (.lvar u) r)]
       (when s
         (ext-no-check s (.lvar v) (.lvar u))))))
+
+;; -----------------------------------------------------------------------------
+;; Unify Interval with X
+
+(extend-protocol IUnifyWithIntervalFD
+  nil
+  (unify-with-interval [v u s] false)
+
+  Object
+  (unify-with-interval [v u s] false)
+
+  Refinable
+  (unify-with-interval [v u s]
+    (let [^Refinable u u
+          r (refine (.v u) v)]
+      (update s (.lvar u) r)))
+
+  IntervalFD
+  (unify-with-interval [v u s]
+    (when (refine u v)
+      s)))
 
 ;; =============================================================================
 ;; Reification
@@ -2176,142 +2341,6 @@
 
 (def clpfd (CLPFD.))
 
-(defmacro extend-to-fd [t]
-  `(extend-type ~t
-     IFiniteDomain
-     (~'domain? [this#] true)
-     (~'lb [this#] this#)
-     (~'ub [this#] this#)
-     (~'bounds [this#] (pair this# this#))
-     (~'member? [this# v#] (= this# v#))
-     (~'expand [this#] (sorted-set this#))
-     (~'drop-before [this# n#]
-       (if (= this# n#)
-         n#
-         nil))
-     (~'keep-before [this# n#]
-       (if (= this# n#)
-         n#
-         nil))
-     (~'disjoint? [this# that#]
-       (if (number? that#)
-         (not= this# that#)
-         (disjoint? (expand this#) (expand that#))))
-     (~'intersection [this# that#]
-       (if (number? that#)
-         (when (= this# that#)
-           this#)
-         (intersection that# this#)))
-     (~'difference [this# that#]
-       (if (number? that#)
-         (when (= this# that#)
-           this#)
-         (intersection that# this#)))))
-
-(extend-to-fd java.lang.Byte)
-(extend-to-fd java.lang.Short)
-(extend-to-fd java.lang.Integer)
-(extend-to-fd java.lang.Long)
-(extend-to-fd java.math.BigInteger)
-(extend-to-fd clojure.lang.BigInt)
-
-(deftype IntervalFD [_lb _ub]
-  IRefinable
-  (refinable? [_] true)
-  IRefine
-  (refine [this other] (intersection this other))
-  IFiniteDomain
-  (domain? [_] true)
-  (lb [_] _lb)
-  (ub [_] _ub)
-  (bounds [_] (pair _lb _ub))
-  (member? [this v]
-    (and (>= v _lb) (<= v _ub)))
-  (disjoint? [this that]
-    (if (instance? IntervalFD that)
-      (or (< (ub this) (lb that))
-          (< (lb this) (ub that)))
-      (disjoint? (expand this) (expand that))))
-  (drop-before [this n]
-    (cond
-     (= n _ub) n
-     (< n _lb) this
-     (> n _ub) nil
-     :else (IntervalFD. n _ub)))
-  (keep-before [this n]
-    (cond
-     (= n _lb) n
-     (> n _ub) this
-     (< n _lb) nil
-     :else (IntervalFD. _lb n)))
-  (expand [this] (apply sorted-set (range _lb _ub)))
-  (super? [this that]
-    (and (<= _lb (lb that))
-         (>= _ub (ub that))))
-  (intersection [this that]
-    (cond
-     (instance? IntervalFD that)
-     (let [^IntervalFD that that
-           lb (max _lb (.lb that))
-           ub (min _ub (.ub that))]
-        (cond
-         (= lb ub) lb
-         (< lb ub) (IntervalFD. lb ub)
-         :else nil))
-     (instance? clojure.lang.PersistentTreeSet that)
-     (let [s (intersection that this)]
-       (when-not (empty? s)
-         s))
-     (number? that) (when (and (>= that _lb) (<= that _ub))
-                      that)
-     :else (let [s (set/intersection (expand this) (expand that))]
-             (when-not (empty? s)
-               s))))
-  (difference [this that]
-    )
-  IDisequalityConstrain
-  (!=c [this that]))
-
-(defn ^IntervalFD interval
-  ([ub] (IntervalFD. 0 ub))
-  ([lb ub] (IntervalFD. lb ub)))
-
-;; NOTE: probably need a wrapper type, we want simple sets of things to
-;; be IRefinable but we don't want it to apply to PersistentTreeSet
-;; in general
-
-(extend-type clojure.lang.PersistentTreeSet
-  IFiniteDomain
-  (domain? [this] true)
-  (lb [this]
-    (first this))
-  (ub [this]
-    (first (rseq this)))
-  (member? [this v]
-    (contains? this v))
-  (disjoint? [this that]
-    (empty? (set/intersection this (expand that))))
-  (drop-before [this n]
-    (apply sorted-set (drop-while #(< % n)) this))
-  (keep-before [this n]
-    (apply sorted-set (take-while #(< % n)) this))
-  (expand [this] this)
-  (intersection [this that]
-    (cond
-     (number? that)
-     (when (member? this that)
-       that)
-     (super? that this) this
-     :else (let [s (into (sorted-set)
-                     (filter #(member? that %) this))]
-             (when-not (empty? s)
-               s))))
-  (difference [this that]
-    (let [s (into (sorted-set)
-              (filter #(not (member? that %)) this))]
-      (when-not (empty? s)
-        s))))
-
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
         dom (last xs-and-dom)]
@@ -2504,7 +2533,7 @@
   (run* [q]
     (== q 1))
 
-  ;; works
+  ;; fixme
   (run* [q]
     (== q (interval 1 10))
     (== q 1))
