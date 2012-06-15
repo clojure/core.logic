@@ -2651,13 +2651,14 @@
     (== q 1)
     (== q (interval 1 10)))
 
-  ;; 1.4s
+  ;; 1.3s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
        (run* [q]
          (== 1 1)))))
 
+  ;; 800ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
