@@ -63,6 +63,9 @@
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
 
+(defprotocol IUnifyWithInteger
+  (unify-with-integer [v u s]))
+
 (defprotocol IUnifyWithRefinable
   (unify-with-refinable [v u s]))
 
@@ -760,7 +763,31 @@
 
   IntervalFD
   (unify-terms [u v s]
-    (unify-with-interval v u s)))
+    (unify-with-interval v u s))
+
+  java.lang.Byte
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Short
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Integer
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Long
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.math.BigInteger
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  clojure.lang.BigInt
+  (unify-terms [u v s]
+    (unify-with-integer v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
@@ -914,6 +941,40 @@
                        (concat vmissing vlvars))))
             false)
           s)))))
+
+;; -----------------------------------------------------------------------------
+;; Unify Integer with X
+
+(extend-protocol IUnifyWithInteger
+  nil
+  (unify-with-integer [v u s] false)
+
+  Object
+  (unify-with-integer [v u s] false)
+
+  java.lang.Byte
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Short
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Integer
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.lang.Long
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  java.math.BigInteger
+  (unify-with-integer [v u s]
+    (when (= u v) s))
+
+  clojure.lang.BigInt
+  (unify-with-integer [v u s]
+    (when (= u v) s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Refinable with X
