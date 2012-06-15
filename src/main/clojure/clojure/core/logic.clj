@@ -337,7 +337,7 @@
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
-       (refinable? v) (if (var? lv) (Refinable. v lv) v)
+       (refinable? vp) (if (lvar? lv) (Refinable. vp lv) vp)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
@@ -2506,10 +2506,15 @@
   (run* [q]
     (== q 1))
 
-  ;; FIXME
+  ;; works
   (run* [q]
     (== q (interval 1 10))
     (== q 1))
+
+  ;; fixme
+  (run* [q]
+    (== q 1)
+    (== q (interval 1 10)))
 
   (dotimes [_ 10]
     (time
