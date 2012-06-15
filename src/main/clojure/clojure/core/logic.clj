@@ -2656,6 +2656,13 @@
     (== q 1)
     (== q (interval 1 10)))
 
+  ;; fun
+  (run* [q]
+    (== q (interval 1 100))
+    (== q (interval 30 60))
+    (== q (interval 50 55))
+    (== q 51))
+
   ;; 1.3s
   (dotimes [_ 10]
     (time
