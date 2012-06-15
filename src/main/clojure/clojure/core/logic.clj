@@ -946,9 +946,10 @@
 ;; Unify Refinable with X
 
 (defn unify-with-refinable* [u v s]
-  (let [^Refinable u u
-        r (refine (.v u) v)]
-      (update s (.lvar u) r)))
+  (let [^Refinable u u]
+    (if-let [r (refine (.v u) v)]
+      (update s (.lvar u) r)
+      false)))
 
 (extend-protocol IUnifyWithRefinable
   nil
@@ -964,11 +965,12 @@
   Refinable
   (unify-with-refinable [v u s]
     (let [^Refinable u u
-          ^Refinable v v
-          r (refine (.v u) (.v v))
-          s (update s (.lvar u) r)]
-      (when s
-        (ext-no-check s (.lvar v) (.lvar u))))))
+          ^Refinable v v]
+      (if-let [r (refine (.v u) (.v v))]
+        (if-let [s (update s (.lvar u) r)]
+          (ext-no-check s (.lvar v) (.lvar u))
+          false)
+        false))))
 
 (defn extend-type-to-unify-with-refinable [t]
   `(extend-type ~t
@@ -1004,15 +1006,17 @@
 
   IntervalFD
   (unify-with-interval [v u s]
-    (when (refine u v)
-      s)))
+    (if (refine u v)
+      s
+      false)))
 
 (defn extend-type-to-unify-with-interval [t]
   `(extend-type ~t
      IUnifyWithIntervalFD
      (~'unify-with-interval [~'v ~'u ~'s]
-       (when (refine ~'u ~'v)
-         ~'s))))
+       (if (refine ~'u ~'v)
+         ~'s
+         false))))
 
 (defmacro extend-to-unify-with-interval [& ts]
   `(do
@@ -1062,8 +1066,9 @@
 
   IntervalFD
   (unify-with-integer [v u s]
-    (when (refine v u)
-      s))
+    (if (refine v u)
+      s
+      false))
 
   Refinable
   (unify-with-integer [v u s]
@@ -2657,6 +2662,30 @@
      (dotimes [_ 1e6]
        (run* [q]
          (== 1 1)))))
+
+  ;; 1ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (unify empty-s 1 2))))
+
+  (let [v1 [1]
+        v2 [2]]
+   (dotimes [_ 10]
+     (time
+      (dotimes [_ 1e6]
+        (unify empty-s v1 v2)))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (unify empty-s nil 1))))
+  
+  ;; 70ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (unify empty-s 1 (interval 1 10)))))
 
   ;; 800ms
   (dotimes [_ 10]
