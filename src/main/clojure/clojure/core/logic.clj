@@ -113,6 +113,8 @@
   IEnforceableConstraint
   (enforceable? [x] false))
 
+;; TODO: ICLPSet, half the below could be moved into this
+
 (defprotocol IFiniteDomain
   (domain? [this])
   (lb [this])
@@ -2431,10 +2433,15 @@
   (withMeta [this new-meta]
     (FDConstraint. proc rator rands meta))
   IEnforceableConstraint
+  (enforceable? [_] true)
   IConstraint
+  (constraint? [_] true)
   (proc [_] proc)
   (rator [_] rator)
-  (rands [_] rands))
+  (rands [_] rands)
+  (process-prefix [_ p]
+    ;; TODO
+    ))
 
 (deftype CLPFD []
   IMakeDomain
@@ -2643,9 +2650,6 @@
     (== q 1))
 
   (run* [q]
-    (== 1 1))
-
-  (run* [q]
     (== q (interval 1 10))
     (== q 1))
 
@@ -2660,7 +2664,7 @@
     (== q (interval 50 55))
     (== q 51))
 
-  ;; 1.3s
+  ;; 1s now, w/ unbound names optimization
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
@@ -2670,10 +2674,10 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
-       (run* [q]
+       (run 1 [q]
          (== q 1)))))
 
-  ;; 50ms
+  ;; 50ms, it's curious why run* so much slower
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
