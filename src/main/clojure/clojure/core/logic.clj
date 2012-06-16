@@ -430,14 +430,14 @@
         s
         (unify-terms u v s)))))
 
-(def unreified-names
+(def unbound-names
   (let [r (range 100)]
     (zipmap r (map (comp symbol str) (repeat "_.") r))))
 
 (defn reify-lvar-name [s]
   (let [c (count s)]
     (if (< c 100)
-      (unreified-names c)
+      (unbound-names c)
       (symbol (str "_." (count s))))))
 
 (defn -reify* [s v]
