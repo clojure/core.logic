@@ -231,6 +231,13 @@
 (extend-to-fd clojure.lang.BigInt)
 
 (deftype IntervalFD [_lb _ub]
+  Object
+  (equals [_ o]
+    (if (instance? IntervalFD o)
+      (let [^IntervalFD o o]
+        (and (= _lb (._lb o))
+             (= _ub (._ub o))))
+      false))
   IRefinable
   (refinable? [_] true)
   IRefine
@@ -2511,14 +2518,14 @@
                ((update-cs oc) a))))))
 
 (defn =fd-c [u v]
-  (c-op =c [u ud v vd]
+  (c-op =fd-c [u ud v vd]
     (let [i (intersection ud vd)]
       (composeg
        (process-dom u i)
        (process-dom v i)))))
 
 (defn <=fd-c [u v]
-  (c-op <=c [u ud v vd]
+  (c-op <=fd-c [u ud v vd]
     (let [[ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
       (composeg
@@ -2526,7 +2533,7 @@
         (process-dom v (drop-before vd ulb))))))
 
 (defn +fd-c [u v w]
-  (c-op +c [u ud v vd w wd]
+  (c-op +fd-c [u ud v vd w wd]
     (let [[wlb wub] (bounds wd)
           [ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
@@ -2645,6 +2652,10 @@
       (all-diffo (llist ad dd)))]))
 
 (comment
+  (let [x (lvar 'x)
+        y (lvar 'y)]
+    (+fd-c x 1 y))
+  
   (run* [q]
     (== q 1))
 
