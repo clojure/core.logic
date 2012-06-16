@@ -133,18 +133,6 @@
   IFiniteDomain
   (domain? [x] false))
 
-(defprotocol IDisequalityConstrain
-  (!=c [u v]))
-
-(defprotocol IAllDiffConstrain
-  (all-diffc [u v]))
-
-(defprotocol IFDConstrain
-  (=c [u v])
-  (<c [u v])
-  (<=c [u v])
-  (+c [u v w]))
-
 (defprotocol IForceAnswerTerm
   (-force-ans [u]))
 
@@ -290,9 +278,7 @@
              (when-not (empty? s)
                s))))
   (difference [this that]
-    )
-  IDisequalityConstrain
-  (!=c [this that]))
+    ))
 
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
@@ -1177,6 +1163,12 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
+(defn composeg [g0 g1]
+  (fn [a]
+    (let [a (g0 a)]
+      (and a
+           (g1 a)))))
+
 (defmacro bind*
   ([a g] `(bind ~a ~g))
   ([a g & g-rest]
@@ -1261,19 +1253,30 @@
 
 (def u# fail)
 
-#_(defmacro ==
-  "A goal that attempts to unify terms u and v."
-  [u v]
-  `(fn [a#]
-     (if-let [b# (unify a# ~u ~v)]
-       b# nil)))
+(defn updateg [u v]
+  (fn [a]
+    (update a u v)))
 
-(declare ==-c)
+(defn update-prefix [^Substitutions a ^Substitutions ap]
+  (let [l (.l a)]
+    ((fn loop [lp]
+       (if (identical? l lp)
+         s#
+         (let [[lhs rhs] (first lp)]
+          (composeg
+           (updateg lhs rhs)
+           (loop (rest lp)))))) (.l ap))))
+
+;; NOTE: we could inline like we did before
 
 (defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  (==-c u v))
+  (fn [^Substitutions a]
+    (when-let [ap (unify a u v)]
+      (if (pos? (count (.cs a)))
+        ((update-prefix a ap) a)
+        ap))))
 
 (defn- bind-conde-clause [a]
   (fn [g-rest]
@@ -2319,10 +2322,6 @@
         [(f (first ls))]
         [(loop (rest ls))]))))
 
-(defn updateg [u v]
-  (fn [a]
-    (update a u v)))
-
 (declare force-ans)
 
 ;; TODO: handle all Clojure tree types
@@ -2349,12 +2348,6 @@
       (if (domain? v)
         ((map-sum (fn [v] (updateg u v))) (expand v))
         (-force-ans v)))))
-
-(defn composeg [g0 g1]
-  (fn [a]
-    (let [a (g0 a)]
-      (and a
-           (g1 a)))))
 
 (defn run-constraint [c]
   (fn [^Substitutions a]
@@ -2409,23 +2402,6 @@
       (if (empty? rcs)
         (choice v empty-f)
         (choice `(~v :- ~@rcs) empty-f)))))
-
-(defn update-prefix [^Substitutions a ^Substitutions ap]
-  (let [l (.l a)]
-    ((fn loop [lp]
-       (if (identical? l lp)
-         s#
-         (let [[lhs rhs] (first lp)]
-          (composeg
-           (updateg lhs rhs)
-           (loop (rest lp)))))) (.l ap))))
-
-(defn ==-c [u v]
-  (fn [^Substitutions a]
-    (when-let [ap (unify a u v)]
-      (if (pos? (count (.cs a)))
-        ((update-prefix a ap) a)
-        ap))))
 
 (defn reifyg [x]
   (fn [^Substitutions a]
@@ -2504,36 +2480,36 @@
           (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
           (recur (rest xs) gs))))))
 
-(defn !=fd-c [u v]
+(defn !=fd [u v]
   (fn [^Substitutions a]
     (let [s (.s a)
           du (walk s u)
           dv (walk s v)]
       (cond
        (or (not (domain? du))
-           (not (domain? dv))) ((update-cs (build-oc !=fd-c u v)) a)
+           (not (domain? dv))) ((update-cs (build-oc !=fd u v)) a)
        (= u v) false
        (disjoint? u v) a
-       :else (let [oc (build-oc !=fd-c u v)]
+       :else (let [oc (build-oc !=fd u v)]
                ((update-cs oc) a))))))
 
-(defn =fd-c [u v]
-  (c-op =fd-c [u ud v vd]
+(defn =fd [u v]
+  (c-op =fd [u ud v vd]
     (let [i (intersection ud vd)]
       (composeg
        (process-dom u i)
        (process-dom v i)))))
 
-(defn <=fd-c [u v]
-  (c-op <=fd-c [u ud v vd]
+(defn <=fd [u v]
+  (c-op <=fd [u ud v vd]
     (let [[ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
       (composeg
         (process-dom u (keep-before ud vub))
         (process-dom v (drop-before vd ulb))))))
 
-(defn +fd-c [u v w]
-  (c-op +fd-c [u ud v vd w wd]
+(defn +fd [u v w]
+  (c-op +fd [u ud v vd w wd]
     (let [[wlb wub] (bounds wd)
           [ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
@@ -2543,12 +2519,12 @@
           (process-dom u (interval (- wlb vub) (- wub vlb)))
           (process-dom v (interval (- wlb uub) (- wub ulb))))))))
 
-(defn all-difffd-c* [ys ns]
+(defn all-difffd* [ys ns]
   (fn [a]
     (let [ns (make-dom clpfd ns)]
      (loop [ys ys ns ns xs ()]
        (if (empty? ys)
-         (let [oc (build-oc all-difffd-c* xs ns)]
+         (let [oc (build-oc all-difffd* xs ns)]
            ((composeg
              (update-cs oc)
              (exclude-from ns a xs))
@@ -2559,14 +2535,14 @@
             (member? y ns) nil
             :else (recur (rest ys) (conj ns y) xs))))))))
 
-(defn all-difffd-c [v*]
+(defn all-difffd [v*]
   (fn [a]
     (let [v* (walk a v*)]
       (cond
-       (lvar? v*) (let [oc (build-oc all-difffd-c v*)]
+       (lvar? v*) (let [oc (build-oc all-difffd v*)]
                    ((update-cs oc) a))
        :else (let [{x* true n* false} (group-by var? v*)]
-               ((all-difffd-c* x* n*) a))))))
+               ((all-difffd* x* n*) a))))))
 
 ;; =============================================================================
 ;; CLP(Tree)
@@ -2610,16 +2586,16 @@
   (when-let [sp (unify s p pp)]
     (identical? s sp)))
 
-(declare !=neq-c)
+(declare !=neq)
 
 (defn normalize-store [p]
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
       (if (empty? c)
-        (let [cp (ext-cs (build-oc !=neq-c p) cp)]
+        (let [cp (ext-cs (build-oc !=neq p) cp)]
           (make-s (.s a) (.l a) cp))
         (let [oc (first c)]
-          (if (= (rator oc) '!=new-c)
+          (if (= (rator oc) '!=new)
             (let [pp (oc->prefix oc)]
               (cond
                (subsumes? a pp p) a
@@ -2633,7 +2609,7 @@
     ()
     (cons (first s) (prefix (rest s) <s))))
 
-(defn !=neq-c [u v]
+(defn !=neq [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
       (let [p (prefix a ap)]
@@ -2641,7 +2617,7 @@
           ((normalize-store p) a)))
       a)))
 
-(defn all-diffo [l]
+#_(defn all-diffo [l]
   (conde
     [(== l ())]
     [(fresh (a) (== l [a]))]
@@ -2654,7 +2630,7 @@
 (comment
   (let [x (lvar 'x)
         y (lvar 'y)]
-    (+fd-c x 1 y))
+    (+fd x 1 y))
   
   (run* [q]
     (== q 1))
