@@ -1267,8 +1267,6 @@
            (updateg lhs rhs)
            (loop (rest lp)))))) (.l ap))))
 
-;; NOTE: we could inline like we did before
-
 (defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
