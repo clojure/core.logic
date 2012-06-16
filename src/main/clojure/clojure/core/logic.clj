@@ -493,7 +493,7 @@
   (take* [this] this))
 
 (defn- ^Substitutions make-s
-  ([] (Substitutions. {} () (make-cs)))
+  ([] (Substitutions. clojure.lang.PersistentHashMap/EMPTY () (make-cs)))
   ([m] (Substitutions. m () (make-cs)))
   ([m l] (Substitutions. m l (make-cs)))
   ([m l cs] (Substitutions. m l cs)))
