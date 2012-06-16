@@ -386,7 +386,9 @@
       not-found)))
 
 (defn ^ConstraintStore make-cs []
-  (ConstraintStore. {} {} 0))
+  (ConstraintStore.
+   clojure.lang.PersistentHashMap/EMPTY
+   clojure.lang.PersistentHashMap/EMPTY 0))
 
 ;; =============================================================================
 ;; Substitutions
@@ -498,7 +500,7 @@
   (instance? Substitutions x))
 
 (defn ^Substitutions to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) clojure.lang.PersistentHashMap/EMPTY v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l (make-cs))))
 
