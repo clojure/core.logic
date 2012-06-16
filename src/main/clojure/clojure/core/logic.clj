@@ -430,8 +430,15 @@
         s
         (unify-terms u v s)))))
 
+(def unreified-names
+  (let [r (range 100)]
+    (zipmap r (map (comp symbol str) (repeat "_.") r))))
+
 (defn reify-lvar-name [s]
-  (symbol (str "_." (count s))))
+  (let [c (count s)]
+    (if (< c 100)
+      (unreified-names c)
+      (symbol (str "_." (count s))))))
 
 (defn -reify* [s v]
   (let [v (walk s v)]
@@ -2636,6 +2643,9 @@
     (== q 1))
 
   (run* [q]
+    (== 1 1))
+
+  (run* [q]
     (== q (interval 1 10))
     (== q 1))
 
@@ -2656,6 +2666,12 @@
      (dotimes [_ 1e6]
        (run* [q]
          (== 1 1)))))
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e6]
+       (run* [q]
+         (== q 1)))))
 
   ;; 50ms
   (dotimes [_ 10]
