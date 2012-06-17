@@ -2442,12 +2442,12 @@
   (rator [_] rator)
   (rands [_] rands)
   (process-prefix [this p]
-    (if (nil? p)
+    (if (empty? p)
       identity
-      (let [[lhs rhs] (first p)]
+      (let [[x v] (first p)]
         (composeg
-         (run-constraints* [lhs] this)
-         (process-prefix this (next p)))))))
+         (run-constraints* [x] this)
+         (process-prefix this (rest p)))))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x]
@@ -2598,10 +2598,8 @@
 
 (defn recover-vars [p]
   (if (empty? p)
-    #{}
-    (let [f (first p)
-          x (lhs f)
-          v (rhs f)
+    []
+    (let [[x v] (first p)
           r (recover-vars (rest p))]
       (if (lvar? v)
         (conj r x v)
@@ -2634,10 +2632,12 @@
             (recur (rest c) (cons oc cp))))))))
 
 ;; TODO: change to lazy-seq
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
+(defn prefix [^Substitutions s ^Substitutions <s]
+  (letfn [(prefix* [s <s]
+           (if (identical? s <s)
+             nil
+             (cons (first s) (prefix* (rest s) <s))))]
+    (prefix* (.l s) (.l <s))))
 
 (defn !=neq [u v]
   (fn [a]
@@ -2658,6 +2658,24 @@
       (all-diffo (llist ad dd)))]))
 
 (comment
+  ;; works
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s empty-s
+        sp (-> s
+               (ext-no-check x 1)
+               (ext-no-check y 2))]
+    (prefix sp s))
+
+  ;; works
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (ext-no-check x 1)
+              (ext-no-check y 2))]
+   (recover-vars (.l s)))
+
+  ;; works
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)]
