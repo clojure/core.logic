@@ -2439,9 +2439,13 @@
   (proc [_] proc)
   (rator [_] rator)
   (rands [_] rands)
-  (process-prefix [_ p]
-    ;; TODO
-    ))
+  (process-prefix [this p]
+    (if (nil? p)
+      identity
+      (let [[lhs rhs] (first p)]
+        (composeg
+         (run-constraints* [lhs] this)
+         (process-prefix this (next p)))))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x]
