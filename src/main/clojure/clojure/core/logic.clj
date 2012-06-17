@@ -2434,6 +2434,8 @@
     (FDConstraint. proc rator rands meta))
   IEnforceableConstraint
   (enforceable? [_] true)
+  IReifiableConstraint
+  (reifiable? [_] false)
   IConstraint
   (constraint? [_] true)
   (proc [_] proc)
@@ -2575,11 +2577,17 @@
     meta)
   (withMeta [this new-meta]
     (TreeConstraint. proc rator rands meta))
+  IEnforceableConstraint
+  (enforceable? [_] true)
   IReifiableConstraint
+  (reifiable? [_] true)
   IConstraint
+  (constraint? [_] true)
   (proc [_] proc)
   (rator [_] rator)
-  (rands [_] rands))
+  (rands [_] rands)
+  (process-prefix [this p]
+    (run-constraints* (recover-vars p) this)))
 
 (deftype CLPTree []
   IMakeConstraint
