@@ -176,6 +176,10 @@
 (defn- ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
 
+(defmethod print-method Pair [x ^Writer writer]
+  (let [^Pair x x]
+   (.write writer (str "(" (.lhs x) " . " (.rhs x) ")"))))
+
 ;; =============================================================================
 ;; Constraint Store
 
