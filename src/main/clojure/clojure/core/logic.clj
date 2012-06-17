@@ -209,16 +209,16 @@
          n#
          nil))
      (~'disjoint? [this# that#]
-       (if (number? that#)
+       (if (integer? that#)
          (not= this# that#)
          (disjoint? (expand this#) (expand that#))))
      (~'intersection [this# that#]
-       (if (number? that#)
+       (if (integer? that#)
          (when (= this# that#)
            this#)
          (intersection that# this#)))
      (~'difference [this# that#]
-       (if (number? that#)
+       (if (integer? that#)
          (when (= this# that#)
            this#)
          (intersection that# this#)))))
@@ -280,12 +280,12 @@
          (= lb ub) lb
          (< lb ub) (IntervalFD. lb ub)
          :else nil))
+     (integer? that) (when (and (>= that _lb) (<= that _ub))
+                       that)
      (instance? clojure.lang.PersistentTreeSet that)
      (let [s (intersection that this)]
        (when-not (empty? s)
          s))
-     (number? that) (when (and (>= that _lb) (<= that _ub))
-                      that)
      :else (let [s (set/intersection (expand this) (expand that))]
              (when-not (empty? s)
                s))))
@@ -318,7 +318,7 @@
   (expand [this] this)
   (intersection [this that]
     (cond
-     (number? that)
+     (integer? that)
      (when (member? this that)
        that)
      (super? that this) this
