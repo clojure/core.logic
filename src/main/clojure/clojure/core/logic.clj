@@ -338,7 +338,7 @@
 (defn vars-to-remove [c s]
   (filter (fn [x]
             (let [x (walk s x)]
-              (and (not (lvar? x)) (refinable? x))))
+              (and (not (lvar? x)) (not (refinable? x)))))
           (rands c)))
 
 (deftype ConstraintStore [km cm cid]
