@@ -178,7 +178,7 @@
 
 (defmethod print-method Pair [x ^Writer writer]
   (let [^Pair x x]
-   (.write writer (str "(" (.lhs x) " . " (.rhs x) ")"))))
+    (.write writer (str "(" (.lhs x) " . " (.rhs x) ")"))))
 
 ;; =============================================================================
 ;; Constraint Store
@@ -2430,12 +2430,12 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(deftype FDConstraint [proc rator rands meta]
+(deftype FDConstraint [proc rator rands _meta]
   clojure.lang.IObj
   (meta [this]
-    meta)
+    _meta)
   (withMeta [this new-meta]
-    (FDConstraint. proc rator rands meta))
+    (FDConstraint. proc rator rands new-meta))
   IEnforceableConstraint
   (enforceable? [_] true)
   IReifiableConstraint
@@ -2454,8 +2454,11 @@
          (process-prefix this (rest p)))))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
-  (let [^FDConstraint x x]
-   (.write writer (str "(" (.rator x) " " (apply str (interpose " " (.rands x))) ")"))))
+  (let [^FDConstraint x x
+        id (if-let [id (-> x meta :id)]
+             (str id ":")
+             "")]
+    (.write writer (str "(" id (.rator x) " " (apply str (interpose " " (.rands x))) ")"))))
 
 (deftype CLPFD []
   IMakeDomain
@@ -2575,12 +2578,12 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
-(deftype TreeConstraint [proc rator rands meta]
+(deftype TreeConstraint [proc rator rands _meta]
   clojure.lang.IObj
   (meta [this]
-    meta)
+    _meta)
   (withMeta [this new-meta]
-    (TreeConstraint. proc rator rands meta))
+    (TreeConstraint. proc rator rands new-meta))
   IEnforceableConstraint
   (enforceable? [_] true)
   IReifiableConstraint
@@ -2684,6 +2687,19 @@
         v 1
         w (lvar 'w)]
    (makec clpfd (+fd u v w) '+fd [u v w]))
+
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])]
+    (vary-meta c assoc :id 0))
+
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        cs (make-cs)]
+    (addc cs c))
 
   (let [x (lvar 'x)
         y (lvar 'y)]
