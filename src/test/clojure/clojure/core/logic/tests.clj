@@ -1304,3 +1304,29 @@
 (deftest nil-or-false-in-stream []
   (is (= (take 1 (take* (to-stream [nil false (cons empty-s nil)])))
          (cons empty-s nil))))
+
+;; =============================================================================
+;; cKanren
+
+(deftest test-pair []
+  (is (= (pair 1 2)
+         (pair 1 2))))
+
+(deftest test-prefix []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s empty-s
+        sp (-> s
+             (ext-no-check x 1)
+             (ext-no-check y 2))]
+    (is (= (prefix sp s)
+           (list (pair y 2) (pair x 1))))))
+
+(deftest test-recover-vars []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+            (ext-no-check x 1)
+            (ext-no-check y 2))]
+    (is (= (recover-vars (.l s))
+           [x y]))))

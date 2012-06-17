@@ -171,7 +171,13 @@
   (getValue [_] rhs)
   Object
   (toString [_]
-    (str "(" lhs " . " rhs ")")))
+    (str "(" lhs " . " rhs ")"))
+  (equals [_ o]
+    (if (instance? Pair o)
+      (let [^Pair o o]
+        (and (= lhs (.lhs o))
+             (= rhs (.rhs o))))
+      false)))
 
 (defn- ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
