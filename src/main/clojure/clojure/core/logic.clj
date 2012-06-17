@@ -344,10 +344,9 @@
   IConstraintStore
   (addc [this c]
     (let [vars (var-rands c)
-          cid (inc cid)
           c (vary-meta c assoc :id cid)
-          ^ConstraintStore cs (reduce (fn [m v] (assoc this v c)) this vars)]
-      (ConstraintStore. (.km cs) (.cm cs) cid)))
+          ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
+      (ConstraintStore. (.km cs) (.cm cs) (inc cid))))
   (updatec [this c]
     (let [id (-> c meta :id)
           oc (get cm cid)
@@ -375,10 +374,8 @@
       (throw (Error. (str "constraint store assoc expected logic var key: " k))))
     (when-not (constraint? v)
       (throw (Error. (str "constraint store assoc expected constraint value: " v))))
-    (when-not (-> v meta :id)
-      (throw (Error. (str "constraint has no id " v))))
-    (let [nkm (assoc-in km [k] (fnil (fn [s] (assoc s cid v)) #{}))
-          ncm (assoc cm cid (with-meta v {:id cid}))]
+    (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
+          ncm (assoc cm cid v)]
       (ConstraintStore. nkm ncm cid)))
   clojure.lang.ILookup
   (valAt [this k]
@@ -2692,14 +2689,53 @@
         v 1
         w (lvar 'w)
         c (makec clpfd (+fd u v w) '+fd [u v w])]
+    (var-rands c))
+
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])]
     (vary-meta c assoc :id 0))
 
+  ;; works
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        cs (make-cs)
+        csp (addc cs c)]
+    [(.km csp) (.cm csp)])
+
+  ;; works
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        cs (make-cs)
+        csp (addc cs c)]
+    (get csp w))
+
+  ;; 2.5-2.7s not bad
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
         c (makec clpfd (+fd u v w) '+fd [u v w])
         cs (make-cs)]
-    (addc cs c))
+    (dotimes [_ 10]
+      (time
+       (dotimes [_ 1e6] 
+         (addc cs c)))))
+
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c0 (makec clpfd (+fd u v w) '+fd [u v w])
+        x (lvar 'x)
+        c1 (makec clpfd (+fd w v x) '+fd [w v x])
+        cs (make-cs)]
+    (-> cs
+        (addc c0)
+        (addc c1)))
 
   (let [x (lvar 'x)
         y (lvar 'y)]
