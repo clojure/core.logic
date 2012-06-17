@@ -2443,6 +2443,10 @@
     ;; TODO
     ))
 
+(defmethod print-method FDConstraint [x ^Writer writer]
+  (let [^FDConstraint x x]
+   (.write writer (str "(" (.rator x) " " (apply str (interpose " " (.rands x))) ")"))))
+
 (deftype CLPFD []
   IMakeDomain
   (make-dom [this xs]
@@ -2642,6 +2646,11 @@
       (all-diffo (llist ad dd)))]))
 
 (comment
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)]
+   (makec clpfd (+fd u v w) '+fd [u v w]))
+
   (let [x (lvar 'x)
         y (lvar 'y)]
     (+fd x 1 y))
