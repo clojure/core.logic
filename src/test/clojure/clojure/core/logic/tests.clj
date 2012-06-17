@@ -1347,15 +1347,66 @@
         c1 (makec clpfd (+fd u v w) '+fd [u v w])]
     (is (= c0 c1))))
 
-(deftest test-addc
+(deftest test-addc-1
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
         c (makec clpfd (+fd u v w) '+fd [u v w])
-        cs (make-cs)
-        ^clojure.core.logic.ConstraintStore csp (addc cs c)
+        ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
         sc (first (get csp u))]
     (is (= c sc))
     (is (= (-> sc meta :id) 0))
     (is (= (count (.km csp)) 2))
-    (is (= (count (.cm csp)) 1)))
+    (is (= (count (.cm csp)) 1))))
+
+(deftest test-addc-2
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c0 (makec clpfd (+fd u v w) '+fd [u v w])
+        x (lvar 'x)
+        c1 (makec clpfd (+fd w v x) '+fd [w v x])
+        ^clojure.core.logic.ConstraintStore cs  (-> (make-cs )
+                                                    (addc c0)
+                                                    (addc c1))
+        sc0 (get (.cm cs) 0)
+        sc1 (get (.cm cs) 1)]
+    (is (= sc0 c0)) (is (= (-> sc0 meta :id) 0))
+    (is (= sc1 c1)) (is (= (-> sc1 meta :id) 1))
+    (is (= (-> sc0 meta :id) 0))
+    (is (= (count (.km cs)) 3))
+    (is (= (count (.cm cs)) 2))))
+
+(deftest test-unify-interval-and-number-1
+  (is (= (run* [q]
+           (== q (interval 1 10))
+           (== q 1))
+         '(1)))
+  (is (= (run* [q]
+           (== q 1)
+           (== q (interval 1 10)))
+         '(1))))
+
+(deftest test-unify-interval-and-number-2
+  (is (= (run* [q]
+           (== q (interval 1 10))
+           (== q 11))
+         '()))
+  (is (= (run* [q]
+           (== q 11)
+           (== q (interval 1 10)))
+         '())))
+
+(deftest test-unify-many-intervals-1
+  (is (= (run* [q]
+           (== q (interval 1 100))
+           (== q (interval 30 60))
+           (== q (interval 50 55))
+           (== q 51))
+         '(51)))
+  (is (= (run* [q]
+           (== q (interval 1 100))
+           (== q (interval 30 60))
+           (== q (interval 50 55))
+           (== q 56))
+         '())))
