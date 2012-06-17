@@ -2575,6 +2575,15 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
+(defn recover-vars [p]
+  (if (empty? p)
+    []
+    (let [[x v] (first p)
+          r (recover-vars (rest p))]
+      (if (lvar? v)
+        (conj r x v)
+        (conj r x)))))
+
 (deftype TreeConstraint [proc rator rands _meta]
   clojure.lang.IObj
   (meta [this]
@@ -2599,15 +2608,6 @@
     (TreeConstraint. proc rator rands nil)))
 
 (def clptree (CLPTree.))
-
-(defn recover-vars [p]
-  (if (empty? p)
-    []
-    (let [[x v] (first p)
-          r (recover-vars (rest p))]
-      (if (lvar? v)
-        (conj r x v)
-        (conj r x)))))
 
 (defn oc->prefix [oc]
   (first (rands oc)))
