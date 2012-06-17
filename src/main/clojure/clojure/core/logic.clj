@@ -2434,6 +2434,13 @@
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
 (deftype FDConstraint [proc rator rands _meta]
+  Object
+  (equals [_ o]
+    (if (instance? FDConstraint o)
+      (let [^FDConstraint o o]
+        (and (= rator (.rator o))
+             (= rands (.rands o))))
+      false))
   clojure.lang.IObj
   (meta [this]
     _meta)
@@ -2668,35 +2675,6 @@
       (all-diffo (llist ad dd)))]))
 
 (comment
-  ;; works
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s empty-s
-        sp (-> s
-               (ext-no-check x 1)
-               (ext-no-check y 2))]
-    (prefix sp s))
-
-  ;; works
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              (ext-no-check x 1)
-              (ext-no-check y 2))]
-   (recover-vars (.l s)))
-
-  ;; works
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)]
-   (makec clpfd (+fd u v w) '+fd [u v w]))
-
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])]
-    (var-rands c))
-
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)

@@ -1330,3 +1330,32 @@
             (ext-no-check y 2))]
     (is (= (recover-vars (.l s))
            [x y]))))
+
+(deftest test-make-clpfdc
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])]
+    (is (= (var-rands c)
+           [u w]))))
+
+(deftest test-c-eq
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c0 (makec clpfd (+fd u v w) '+fd [u v w])
+        c1 (makec clpfd (+fd u v w) '+fd [u v w])]
+    (is (= c0 c1))))
+
+(deftest test-addc
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        cs (make-cs)
+        ^clojure.core.logic.ConstraintStore csp (addc cs c)
+        sc (first (get csp u))]
+    (is (= c sc))
+    (is (= (-> sc meta :id) 0))
+    (is (= (count (.km csp)) 2))
+    (is (= (count (.cm csp)) 1)))
