@@ -84,7 +84,7 @@
 
 (defprotocol IConstraintStore
   (addc [this c])
-  (updatec [this c])
+  (updatec [this c s])
   (containsc? [this c]))
 
 (defprotocol IConstraint
@@ -335,16 +335,11 @@
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
 
-(defn vardiff [oc c]
-  (let [ocr (rands oc)
-        cr (rands c)]
-    (reduce (fn [v i]
-              (let [or (nth ocr i)
-                    r (nth cr i)]
-                (if (and (lvar? or) (not (lvar? r)))
-                  (conj v or)
-                  v)))
-            [] (range (count (rands oc))))))
+(defn vars-to-remove [c s]
+  (filter (fn [x]
+            (let [x (walk s x)]
+              (and (not (lvar? x)) (refinable? x))))
+          (rands c)))
 
 (deftype ConstraintStore [km cm cid]
   IConstraintStore
@@ -353,20 +348,20 @@
           c (vary-meta c assoc :id cid)
           ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
       (ConstraintStore. (.km cs) (.cm cs) (inc cid))))
-  (updatec [this c]
+  (updatec [this c s]
     (let [id (-> c meta :id)
           oc (get cm cid)
-          vs (vardiff oc c)
+          vs (vars-to-remove c s)
           nkm (reduce (fn [m v]
-                        (let [s (disj (get km v) id)]
-                          (if (empty? s)
+                        (let [kcs (disj (get km v) id)]
+                          (if (empty? kcs)
                             (dissoc km v)
-                            (assoc km v s))))
+                            (assoc km v kcs))))
                       km vs)
-          ncm (if (zero? (count (var-rands c)))
+          ncm (if (empty? vs)
                 (dissoc cm id)
                 cm)]
-      (ConstraintStore. km cm cid)))
+      (ConstraintStore. nkm ncm cid)))
   (containsc? [this c]
     (if (contains? cm (-> c meta :id))
       true
@@ -2311,14 +2306,14 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn ext-cs [cs oc]
+(defn ext-cs [cs oc s]
   (if (-> oc meta :id)
-    (updatec cs oc)
+    (updatec cs oc s)
     (addc cs oc)))
 
 (defn ^Substitutions update-cs [oc]
   (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (ext-cs (.cs a) oc))))
+    (make-s (.s a) (.l a) (ext-cs (.cs a) oc a))))
 
 (defmacro build-oc [op & args]
   `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
@@ -2673,6 +2668,3 @@
       (!=c a ad)
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
-
-(comment
-  )
