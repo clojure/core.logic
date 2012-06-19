@@ -60,6 +60,13 @@
 (defprotocol ITake
   (take* [a]))
 
+(defprotocol ISubstitutions
+  (ext-no-check [this u v])
+  (walk [this v]))
+
+(defprotocol ISubstitutionsCLP
+  (update [this x v]))
+
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
 
@@ -335,8 +342,6 @@
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
 
-(declare walk)
-
 (defn vars-to-remove [c s]
   (let [purge (atom true)
         vs (doall
@@ -405,13 +410,6 @@
 
 ;; =============================================================================
 ;; Substitutions
-
-(defprotocol ISubstitutions
-  (ext-no-check [this u v])
-  (walk [this v]))
-
-(defprotocol ISubstitutionsCLP
-  (update [this x v]))
 
 (declare empty-s)
 (declare choice)
