@@ -1430,4 +1430,18 @@
     (is (= (count (.km (.cs s))) 2))
     (is (= (count (.cm (.cs s))) 1))))
 
+(deftest test-purge-c
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        s ((update-cs c) empty-s)
+        c (first (get (.cs s) u))
+        s (-> s
+              (ext-no-check u 1)
+              (ext-no-check w 2))
+        s ((update-cs c) s)]
+    (is (zero? (count (.km (.cs s)))))
+    (is (zero? (count (.cm (.cs s)))))))
+
 ;; +fd constraint test

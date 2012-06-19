@@ -338,10 +338,17 @@
 (declare walk)
 
 (defn vars-to-remove [c s]
-  (filter (fn [x]
-            (let [x (walk s x)]
-              (and (not (lvar? x)) (not (refinable? x)))))
-          (rands c)))
+  (let [purge (atom true)
+        vs (doall
+            (filter (fn [x]
+                      (when (lvar? x)
+                        (let [v (walk s x)
+                              remove? (and (not (lvar? v)) (not (refinable? v)))]
+                          (when-not remove?
+                            (swap! purge false))
+                          remove?)))
+                    (rands c)))]
+    (pair @purge vs)))
 
 (deftype ConstraintStore [km cm cid]
   IConstraintStore
@@ -353,14 +360,14 @@
   (updatec [this c s]
     (let [id (-> c meta :id)
           oc (get cm cid)
-          vs (vars-to-remove c s)
+          [purge? vs] (vars-to-remove c s)
           nkm (reduce (fn [m v]
-                        (let [kcs (disj (get km v) id)]
+                        (let [kcs (disj (get m v) id)]
                           (if (empty? kcs)
-                            (dissoc km v)
-                            (assoc km v kcs))))
+                            (dissoc m v)
+                            (assoc m v kcs))))
                       km vs)
-          ncm (if (empty? vs)
+          ncm (if purge?
                 (dissoc cm id)
                 cm)]
       (ConstraintStore. nkm ncm cid)))
