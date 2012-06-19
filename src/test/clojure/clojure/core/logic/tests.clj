@@ -1410,3 +1410,24 @@
            (== q (interval 50 55))
            (== q 56))
          '())))
+
+(deftest test-ext-cs
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        s empty-s
+        cs (ext-cs (.cs s) c s)]
+    (is (= (count (.km cs)) 2))
+    (is (= (count (.cm cs)) 1))))
+
+(deftest test-update-cs
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (makec clpfd (+fd u v w) '+fd [u v w])
+        s ((update-cs c) empty-s)]
+    (is (= (count (.km (.cs s))) 2))
+    (is (= (count (.cm (.cs s))) 1))))
+
+;; +fd constraint test
