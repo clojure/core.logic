@@ -1444,4 +1444,29 @@
     (is (zero? (count (.km (.cs s)))))
     (is (zero? (count (.cm (.cs s)))))))
 
+(deftest test-process-dom-1
+  (let [x (lvar 'x)
+        s ((process-dom x 1) empty-s)]
+    (is (= (walk s x) 1))))
+
+(deftest test-process-dom-2
+  (let [x (lvar 'x)
+        s ((process-dom x (interval 1 10)) empty-s)]
+    (is (= (.v (walk s x)) (interval 1 10)))))
+
+(deftest test-process-dom-3
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x (interval 1 10))
+        s ((process-dom x 1) s)]
+    (is (= (walk s x) 1))))
+
+(deftest test-process-dom-4
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x 1)
+        s ((process-dom x (interval 1 10)) s)]
+    (is (= (walk s x) 1))))
+
+(comment
+  )
+
 ;; +fd constraint test
