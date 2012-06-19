@@ -335,6 +335,8 @@
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
 
+(declare walk)
+
 (defn vars-to-remove [c s]
   (filter (fn [x]
             (let [x (walk s x)]
