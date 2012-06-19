@@ -198,6 +198,39 @@
 
 (declare lvar?)
 
+(deftype FiniteDomain [s]
+  IFiniteDomain
+  (domain? [_] true)
+  (lb [_]
+    (first s))
+  (ub [_]
+    (first (rseq s)))
+  (member? [this v]
+    (contains? s v))
+  (disjoint? [_ that]
+    (empty? (set/intersection s (expand that))))
+  (drop-before [_ n]
+    (apply sorted-set (drop-while #(< % n)) s))
+  (keep-before [this n]
+    (apply sorted-set (take-while #(< % n)) s))
+  (expand [this] s)
+  (intersection [this that]
+    (cond
+     (integer? that) (when (member? this that) that)
+     (super? that this) this
+     :else (let [s (into (sorted-set)
+                     (filter #(member? that %) s))]
+             (when-not (empty? s)
+               (FiniteDomain. s)))))
+  (difference [this that]
+    (let [s (into (sorted-set)
+              (filter #(not (member? that %)) s))]
+      (when-not (empty? s)
+        (FiniteDomain. s)))))
+
+(defn domain [& args]
+  (FiniteDomain. (into sorted-set args)))
+
 (defmacro extend-to-fd [t]
   `(extend-type ~t
      IFiniteDomain
@@ -289,7 +322,7 @@
          :else nil))
      (integer? that) (when (and (>= that _lb) (<= that _ub))
                        that)
-     (instance? clojure.lang.PersistentTreeSet that)
+     (instance? FiniteDomain that)
      (let [s (intersection that this)]
        (when-not (empty? s)
          s))
@@ -302,42 +335,6 @@
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
   ([lb ub] (IntervalFD. lb ub)))
-
-;; NOTE: probably need a wrapper type, we want simple sets of things to
-;; be IRefinable but we don't want it to apply to PersistentTreeSet
-;; in general
-
-(extend-type clojure.lang.PersistentTreeSet
-  IFiniteDomain
-  (domain? [this] true)
-  (lb [this]
-    (first this))
-  (ub [this]
-    (first (rseq this)))
-  (member? [this v]
-    (contains? this v))
-  (disjoint? [this that]
-    (empty? (set/intersection this (expand that))))
-  (drop-before [this n]
-    (apply sorted-set (drop-while #(< % n)) this))
-  (keep-before [this n]
-    (apply sorted-set (take-while #(< % n)) this))
-  (expand [this] this)
-  (intersection [this that]
-    (cond
-     (integer? that)
-     (when (member? this that)
-       that)
-     (super? that this) this
-     :else (let [s (into (sorted-set)
-                     (filter #(member? that %) this))]
-             (when-not (empty? s)
-               s))))
-  (difference [this that]
-    (let [s (into (sorted-set)
-              (filter #(not (member? that %)) this))]
-      (when-not (empty? s)
-        s))))
 
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
