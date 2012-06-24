@@ -2506,6 +2506,10 @@
   `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
      ~@body))
 
+;; NOTE: only add constraint after the body has run
+;; but the stored constraint doesn't need to construct the constraint
+;; - David
+
 (defmacro c-op [op vars & body]
   (let [ps (partition 2 vars)
         vs (map first ps)
@@ -2514,7 +2518,7 @@
        (let-dom a# ~vars
          (let [oc# (build-oc ~op ~@vs)]
            (if (and ~@(map (fn [d] `(domain? ~d)) ds))
-             ((composeg (update-cs oc#) ~@body) a#)
+             ((composeg ~@body (update-cs oc#)) a#)
              ((update-cs oc#) a#)))))))
 
 (defn exclude-from [dom1 a xs]
