@@ -332,6 +332,9 @@
   (difference [this that]
     ))
 
+(defmethod print-method IntervalFD [x ^Writer writer]
+  (.write writer (str "<interval " (lb x) ".." (ub x) ">")))
+
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
   ([lb ub] (IntervalFD. lb ub)))
