@@ -2481,11 +2481,12 @@
 
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
-        dom (last xs-and-dom)]
-    `(let [dom# ~dom]
+        dom (last xs-and-dom)
+        domsym (gensym "dom_")]
+    `(let [~domsym ~dom]
       (fresh []
         ~@(map (fn [x]
-                 `(domfd ~x dom#))
+                 `(domfd ~x ~domsym))
                xs)))))
 
 (defn domfd [x dom]

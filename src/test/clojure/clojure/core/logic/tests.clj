@@ -1466,6 +1466,19 @@
         s ((process-dom x (interval 1 10)) s)]
     (is (= (walk s x) 1))))
 
+(deftest test-domfd-1
+  (let [x (lvar 'x)
+        s ((domfd x (interval 1 10)) empty-s)]
+    (is (= (.v (walk s x)) (interval 1 10)))))
+
+(deftest test-infd-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        f ((infd x y (interval 1 10)) empty-s)
+        s (f)]
+    (is (= (.v (walk s x)) (interval 1 10)))
+    (is (= (.v (walk s y)) (interval 1 10)))))
+
 (comment
   )
 
