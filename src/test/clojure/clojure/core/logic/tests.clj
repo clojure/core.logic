@@ -1479,7 +1479,7 @@
     (is (= (walk s x) (interval 1 10)))
     (is (= (walk s y) (interval 1 10)))))
 
-#_(deftest test-=fd-1
+(deftest test-=fd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
@@ -1488,29 +1488,8 @@
         s ((=fd x y) s)]
     (is (= 2 (count (.km (.cs s)))))
     (is (= 1 (count (.cm (.cs s)))))
-    #_(is (= (.v (walk s x)) (interval 5 6)))
-    #_(is (= (.v (walk s y)) (interval 5 6)))))
-
-(comment
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 6))
-              (unify y (interval 5 10)))
-        s ((=fd x y) s)]
-    s)
-  )
-
-#_(deftest test-=fd-2
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-            (unify x (interval 1 6))
-            (unify y (interval 5 10)))
-        s ((=fd x y) s)]
-    #_(.v (walk s x))
-    #_(is (= (.v (walk s x)) (interval 5 6)))
-    #_(is (= (.v (walk s y)) (interval 5 6)))))
+    (is (= (walk s x) (interval 5 6)))
+    (is (= (walk s y) (interval 5 6)))))
 
 (comment
   )
