@@ -1452,7 +1452,7 @@
 (deftest test-process-dom-2
   (let [x (lvar 'x)
         s ((process-dom x (interval 1 10)) empty-s)]
-    (is (= (.v (walk s x)) (interval 1 10)))))
+    (is (= (walk s x) (interval 1 10)))))
 
 (deftest test-process-dom-3
   (let [x (lvar 'x)
@@ -1469,15 +1469,48 @@
 (deftest test-domfd-1
   (let [x (lvar 'x)
         s ((domfd x (interval 1 10)) empty-s)]
-    (is (= (.v (walk s x)) (interval 1 10)))))
+    (is (= (walk s x) (interval 1 10)))))
 
 (deftest test-infd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         f ((infd x y (interval 1 10)) empty-s)
         s (f)]
-    (is (= (.v (walk s x)) (interval 1 10)))
-    (is (= (.v (walk s y)) (interval 1 10)))))
+    (is (= (walk s x) (interval 1 10)))
+    (is (= (walk s y) (interval 1 10)))))
+
+#_(deftest test-=fd-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+            (unify x (interval 1 6))
+            (unify y (interval 5 10)))
+        s ((=fd x y) s)]
+    (is (= 2 (count (.km (.cs s)))))
+    (is (= 1 (count (.cm (.cs s)))))
+    #_(is (= (.v (walk s x)) (interval 5 6)))
+    #_(is (= (.v (walk s y)) (interval 5 6)))))
+
+(comment
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (unify x (interval 1 6))
+              (unify y (interval 5 10)))
+        s ((=fd x y) s)]
+    s)
+  )
+
+#_(deftest test-=fd-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+            (unify x (interval 1 6))
+            (unify y (interval 5 10)))
+        s ((=fd x y) s)]
+    #_(.v (walk s x))
+    #_(is (= (.v (walk s x)) (interval 5 6)))
+    #_(is (= (.v (walk s y)) (interval 5 6)))))
 
 (comment
   )
