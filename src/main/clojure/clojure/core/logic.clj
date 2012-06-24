@@ -333,7 +333,7 @@
     ))
 
 (defmethod print-method IntervalFD [x ^Writer writer]
-  (.write writer (str "<interval " (lb x) ".." (ub x) ">")))
+  (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
 
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
@@ -2527,6 +2527,13 @@
           (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
           (recur (rest xs) gs))))))
 
+(defn =fd [u v]
+  (c-op =fd [u ud v vd]
+    (let [i (intersection ud vd)]
+      (composeg
+       (process-dom u i)
+       (process-dom v i)))))
+
 (defn !=fd [u v]
   (fn [^Substitutions a]
     (let [s (.s a)
@@ -2539,13 +2546,6 @@
        (disjoint? u v) a
        :else (let [oc (build-oc !=fd u v)]
                ((update-cs oc) a))))))
-
-(defn =fd [u v]
-  (c-op =fd [u ud v vd]
-    (let [i (intersection ud vd)]
-      (composeg
-       (process-dom u i)
-       (process-dom v i)))))
 
 (defn <=fd [u v]
   (c-op <=fd [u ud v vd]
