@@ -61,8 +61,8 @@
   (take* [a]))
 
 (defprotocol ISubstitutions
-  (ext-no-check [this u v])
-  (walk [this v]))
+  (ext-no-check [this x v])
+  (walk [this x] [this x wrap?]))
 
 (defprotocol ISubstitutionsCLP
   (update [this x v]))
@@ -432,8 +432,8 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [u (walk s u)
-          v (walk s v)]
+    (let [u (walk s u true)
+          v (walk s v true)]
       (if (identical? u v)
         s
         (unify-terms u v s)))))
@@ -479,10 +479,13 @@
                     cs))
 
   (walk [this v]
+    (walk this v false))
+
+  (walk [this v wrap?]
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
-       (refinable? vp) (if (lvar? lv) (Refinable. vp lv) vp)
+       (and wrap? (refinable? vp)) (if (lvar? lv) (Refinable. vp lv) vp)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
