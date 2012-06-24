@@ -19,8 +19,8 @@
     (fresh [x y]
       (appendo x y q)))
 
-  ;; 1.4s
-  (dotimes [_ 10]
+  ;; 453ms
+  (dotimes [_ 5]
     (time
      (dotimes [_ 1]
        (run 700 [q]
@@ -44,7 +44,7 @@
   (run 1 [q] (nrevo q (range 30)))
 
   ;; SWI-Prolog 0.06-0.08s
-  ;; ~4.1s
+  ;; ~3.7s
   (let [data (into [] (range 30))]
     (binding [*occurs-check* false]
       (dotimes [_ 5]
@@ -97,7 +97,7 @@
        (dotimes [_ 1e3]
          (run 1 [q] (zebrao q))))))
 
-  ;; < 3s
+  ;; ~3.7s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
