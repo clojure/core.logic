@@ -94,16 +94,25 @@
   (updatec [this c s])
   (containsc? [this c]))
 
-(defprotocol IConstraint
-  (constraint? [this])
+(defprotocol IStorableConstraint
   (proc [this])
-  (rator [this])
-  (rands [this])
   (process-prefix [this p]))
 
+(defprotocol IConstraintGoal
+  (proc [this])
+  (rator [this])
+  (rands [this]))
+
+(defprotocol IRelevant
+  (relevant? [this s] [this x s]))
+
+(defprotocol IRunnable
+  (runnable? [this s]))
+
 (extend-type Object
-  IConstraint
-  (constraint? [x] false))
+  IConstraintGoal
+  (relevant? [this x s]
+    (refinable? x)))
 
 (defprotocol IReifiableConstraint
   (reifiable? [this])
@@ -149,7 +158,7 @@
   (make-dom [this xs]))
 
 (defprotocol IMakeConstraint
-  (makec [this proc rator rands]))
+  (makec [this proc]))
 
 ;; =============================================================================
 ;; Pair
@@ -342,6 +351,8 @@
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
 
+;; TODO: refinable? -> relevant? (passing s & c)
+
 (defn vars-to-remove [c s]
   (let [purge (atom true)
         vs (doall
@@ -387,8 +398,6 @@
   (assoc [this k v]
     (when-not (lvar? k)
       (throw (Error. (str "constraint store assoc expected logic var key: " k))))
-    (when-not (constraint? v)
-      (throw (Error. (str "constraint store assoc expected constraint value: " v))))
     (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
           ncm (assoc cm cid v)]
       (ConstraintStore. nkm ncm cid)))
@@ -2325,9 +2334,6 @@
   (fn [^Substitutions a]
     (make-s (.s a) (.l a) (ext-cs (.cs a) oc a))))
 
-(defmacro build-oc [op & args]
-  `(makec clpfd (~op ~@args) '~(symbol op) [~@args]))
-
 (defn process-dom [v dom]
   (fn [a]
     (cond
@@ -2438,28 +2444,42 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(deftype FDConstraint [proc rator rands _meta]
+(defn fdcg [g]
+  (fn [a]
+    (if-let [a (if (runnable? g a) (g a) a)]
+      (if (relevant? g a)
+        ((update-cs g) a)
+        a)
+      false)))
+
+(deftype FDConstraint [proc _meta]
   Object
   (equals [_ o]
     (if (instance? FDConstraint o)
       (let [^FDConstraint o o]
-        (and (= rator (.rator o))
-             (= rands (.rands o))))
+        (and (= (rator proc) (rator (proc o)))
+             (= (rands proc) (rands (proc o)))))
       false))
   clojure.lang.IObj
   (meta [this]
     _meta)
   (withMeta [this new-meta]
-    (FDConstraint. proc rator rands new-meta))
+    (FDConstraint. proc new-meta))
+  clojure.lang.IFn
+  (invoke [_ s]
+    (proc s))
   IEnforceableConstraint
   (enforceable? [_] true)
   IReifiableConstraint
   (reifiable? [_] false)
-  IConstraint
-  (constraint? [_] true)
-  (proc [_] proc)
-  (rator [_] rator)
-  (rands [_] rands)
+  IRelevant
+  (relevant? [this s]
+    (relevant? proc s))
+  IRunnable
+  (runnable? [this s]
+    (every? domain? (map #(walk s %)) (rands proc)))
+  IStorableConstraint
+  (proc [this] proc)
   (process-prefix [this p]
     (if (empty? p)
       identity
@@ -2473,15 +2493,15 @@
         id (if-let [id (-> x meta :id)]
              (str id ":")
              "")]
-    (.write writer (str "(" id (.rator x) " " (apply str (interpose " " (.rands x))) ")"))))
+    (.write writer (str "(" id (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
 
 (deftype CLPFD []
   IMakeDomain
   (make-dom [this xs]
     (apply sorted-set xs))
   IMakeConstraint
-  (makec [this proc rator rands]
-    (FDConstraint. proc rator rands nil)))
+  (makec [this proc]
+    (FDConstraint. proc nil)))
 
 (def clpfd (CLPFD.))
 
@@ -2510,17 +2530,6 @@
 ;; but the stored constraint doesn't need to construct the constraint
 ;; - David
 
-(defmacro c-op [op vars & body]
-  (let [ps (partition 2 vars)
-        vs (map first ps)
-        ds (map second ps)]
-    `(fn [a#]
-       (let-dom a# ~vars
-         (let [oc# (build-oc ~op ~@vs)]
-           (if (and ~@(map (fn [d] `(domain? ~d)) ds))
-             ((composeg ~@body (update-cs oc#)) a#)
-             ((update-cs oc#) a#)))))))
-
 (defn exclude-from [dom1 a xs]
   (loop [xs xs gs []]
     (if (empty? xs)
@@ -2531,27 +2540,71 @@
           (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
           (recur (rest xs) gs))))))
 
+(defn =fdc [u v]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+        (let [i (intersection du dv)]
+          ((composeg
+            (process-dom u i)
+            (process-dom v i)) s))))
+    IConstraintGoal
+    (rator [_] `=fdc)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv]
+        (cond
+         (refinable? du) true
+         (refinable? dv) true
+         :else false)))
+    (relevant? [this x s]
+      (refinable? x))))
+
 (defn =fd [u v]
-  (c-op =fd [u ud v vd]
-    (let [i (intersection ud vd)]
-      (composeg
-       (process-dom u i)
-       (process-dom v i)))))
+  (fdcg (=fdc u v)))
 
-(defn !=fd [u v]
+(defn !=fdc [u v]
   (fn [^Substitutions a]
-    (let [s (.s a)
-          du (walk s u)
-          dv (walk s v)]
+    (let [du (walk a u)
+          dv (walk a v)]
       (cond
-       (or (not (domain? du))
-           (not (domain? dv))) ((update-cs (build-oc !=fd u v)) a)
-       (= u v) false
+       (and (not (refinable? u))
+            (not (refinable? v))
+            (= u v)) false
        (disjoint? u v) a
-       :else (let [oc (build-oc !=fd u v)]
-               ((update-cs oc) a))))))
+       :else a))))
 
-(defn <=fd [u v]
+(comment
+  (defn !=fdc [u v]
+    (reify 
+      clojure.lang.IFn
+      (invoke [this s]
+        (let [du (walk s u)
+              dv (walk s v)]
+         (if (and (not (refinable? du))
+                  (not (refinable? dv))
+                  (= du dv))
+           false
+           s)))
+      IConstraintGoal
+      (rator [_] `!=fd)
+      (rands [_] [u v])
+      IRelevant
+      (relevant? [this s]
+        (let [du (walk s u)
+              dv (walk s v)]
+          (cond
+           (disjoint? u v) false
+           (refinable? u) true
+           (refinable? v) true
+           :else (not= u v))))
+      (relevant? [this x s]
+        (relevant? this s))))
+  )
+
+#_(defn <=fdc [u v]
   (c-op <=fd [u ud v vd]
     (let [[ulb uub] (bounds ud)
           [vlb vub] (bounds vd)]
@@ -2559,7 +2612,10 @@
         (process-dom u (keep-before ud vub))
         (process-dom v (drop-before vd ulb))))))
 
-(defn +fd [u v w]
+#_(defn <=fd [u v]
+  (fdcg (<=fdc u v)))
+
+#_(defn +fdc [u v w]
   (c-op +fd [u ud v vd w wd]
     (let [[wlb wub] (bounds wd)
           [ulb uub] (bounds ud)
@@ -2570,7 +2626,12 @@
           (process-dom u (interval (- wlb vub) (- wub vlb)))
           (process-dom v (interval (- wlb uub) (- wub ulb))))))))
 
-(defn all-difffd* [ys ns]
+#_(defn +fd [u v w]
+  (fdcg (+fdc u v w)))
+
+;; NOTE: how can we move build-oc out of here?
+
+#_(defn all-difffd* [ys ns]
   (fn [a]
     (let [ns (make-dom clpfd ns)]
      (loop [ys ys ns ns xs ()]
@@ -2586,7 +2647,9 @@
             (member? y ns) nil
             :else (recur (rest ys) (conj ns y) xs))))))))
 
-(defn all-difffd [v*]
+;; NOTE: how can we move build-oc out of here?
+
+#_(defn all-difffd [v*]
   (fn [a]
     (let [v* (walk a v*)]
       (cond
@@ -2607,28 +2670,24 @@
         (conj r x v)
         (conj r x)))))
 
-(deftype TreeConstraint [proc rator rands _meta]
+(deftype TreeConstraint [proc _meta]
   clojure.lang.IObj
   (meta [this]
     _meta)
   (withMeta [this new-meta]
-    (TreeConstraint. proc rator rands new-meta))
+    (TreeConstraint. proc new-meta))
   IEnforceableConstraint
   (enforceable? [_] true)
   IReifiableConstraint
   (reifiable? [_] true)
-  IConstraint
-  (constraint? [_] true)
-  (proc [_] proc)
-  (rator [_] rator)
-  (rands [_] rands)
+  IStorableConstraint
   (process-prefix [this p]
     (run-constraints* (recover-vars p) this)))
 
 (deftype CLPTree []
   IMakeConstraint
-  (makec [this proc rator rands]
-    (TreeConstraint. proc rator rands nil)))
+  (makec [this proc]
+    (TreeConstraint. proc nil)))
 
 (def clptree (CLPTree.))
 
@@ -2643,7 +2702,7 @@
 
 (declare !=neq)
 
-(defn normalize-store [p]
+#_(defn normalize-store [p]
   (fn [^Substitutions a]
     (loop [c (.c a) cp ()]
       (if (empty? c)
@@ -2666,7 +2725,7 @@
              (cons (first s) (prefix* (rest s) <s))))]
     (prefix* (.l s) (.l <s))))
 
-(defn !=neq [u v]
+#_(defn !=neq [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
       (let [p (prefix a ap)]
