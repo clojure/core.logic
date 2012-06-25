@@ -2616,11 +2616,11 @@
         (let [[wlb wub] (bounds dw)
               [ulb uub] (bounds du)
               [vlb vub] (bounds dv)]
-          (composeg
-            (process-dom w (interval (+ ulb vlb) (+ uub vub)))
-            (composeg
-              (process-dom u (interval (- wlb vub) (- wub vlb)))
-              (process-dom v (interval (- wlb uub) (- wub ulb))))))))
+          ((composeg
+             (process-dom w (interval (+ ulb vlb) (+ uub vub)))
+             (composeg
+               (process-dom u (interval (- wlb vub) (- wub vlb)))
+               (process-dom v (interval (- wlb uub) (- wub ulb))))) s))))
     IConstraintGoal
     (rator [_] `+fd)
     (rands [_] [u v w])
