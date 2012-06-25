@@ -156,9 +156,6 @@
 (defprotocol IMakeDomain
   (make-dom [this xs]))
 
-(defprotocol IMakeConstraint
-  (makec [this proc]))
-
 ;; =============================================================================
 ;; Pair
 
@@ -2498,10 +2495,7 @@
 (deftype CLPFD []
   IMakeDomain
   (make-dom [this xs]
-    (apply sorted-set xs))
-  IMakeConstraint
-  (makec [this proc]
-    (FDConstraint. proc nil)))
+    (apply sorted-set xs))  )
 
 (def clpfd (CLPFD.))
 
@@ -2676,10 +2670,7 @@
   (process-prefix [this p]
     (run-constraints* (recover-vars p) this)))
 
-(deftype CLPTree []
-  IMakeConstraint
-  (makec [this proc]
-    (TreeConstraint. proc nil)))
+(deftype CLPTree [])
 
 (def clptree (CLPTree.))
 
