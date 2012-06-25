@@ -99,7 +99,6 @@
   (process-prefix [this p]))
 
 (defprotocol IConstraintGoal
-  (proc [this])
   (rator [this])
   (rands [this]))
 
@@ -2444,14 +2443,6 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(defn fdcg [g]
-  (fn [a]
-    (if-let [a (if (runnable? g a) (g a) a)]
-      (if (relevant? g a)
-        ((update-cs g) a)
-        a)
-      false)))
-
 (deftype FDConstraint [proc _meta]
   Object
   (equals [_ o]
@@ -2487,6 +2478,15 @@
         (composeg
          (run-constraints* [x] this)
          (process-prefix this (rest p)))))))
+
+(defn fdcg [g]
+  (let [c (FDConstraint. g nil)]
+    (fn [a]
+      (if-let [a (if (runnable? c a) (c a) a)]
+        (if (relevant? c a)
+          ((update-cs c) a)
+          a)
+        false))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
@@ -2526,20 +2526,6 @@
   `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
      ~@body))
 
-;; NOTE: only add constraint after the body has run
-;; but the stored constraint doesn't need to construct the constraint
-;; - David
-
-(defn exclude-from [dom1 a xs]
-  (loop [xs xs gs []]
-    (if (empty? xs)
-      (reduce composeg gs)
-      (let [x (first xs)
-            dom2 (walk a x)]
-        (if (domain? dom2)
-          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
-          (recur (rest xs) gs))))))
-
 (defn =fdc [u v]
   (reify
     clojure.lang.IFn
@@ -2550,7 +2536,7 @@
             (process-dom u i)
             (process-dom v i)) s))))
     IConstraintGoal
-    (rator [_] `=fdc)
+    (rator [_] `=fd)
     (rands [_] [u v])
     IRelevant
     (relevant? [this s]
@@ -2566,97 +2552,103 @@
   (fdcg (=fdc u v)))
 
 (defn !=fdc [u v]
-  (fn [^Substitutions a]
-    (let [du (walk a u)
-          dv (walk a v)]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+        (if (and (not (refinable? du))
+                 (not (refinable? dv))
+                 (= du dv))
+          false
+          s)))
+    IConstraintGoal
+    (rator [_] `!=fd)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv]
+        (cond
+         (disjoint? du dv) false
+         (refinable? du) true
+         (refinable? dv) true
+         :else (not= du dv))))
+    (relevant? [this x s]
+      (let-dom s [u du v dv]
+        (cond
+         (disjoint? du dv) false
+         :else (if (= x u)
+                 (refinable? du)
+                 (refinable? dv)))))))
+
+(defn !=fd [u v]
+  (fdcg (!=fdc u v)))
+
+(defn <=fdc [u v]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+       (let [[ulb uub] (bounds du)
+             [vlb vub] (bounds dv)]
+         ((composeg
+           (process-dom u (keep-before du vub))
+           (process-dom v (drop-before dv ulb))) s))))
+    IConstraintGoal
+    (rator [_] `<=fd)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
       (cond
-       (and (not (refinable? u))
-            (not (refinable? v))
-            (= u v)) false
-       (disjoint? u v) a
-       :else a))))
+       (refinable? (walk s u)) true
+       (refinable? (walk s v)) true
+       :else false))
+    (relevant? [this x s]
+      (refinable? (walk s x)))))
 
-(comment
-  (defn !=fdc [u v]
-    (reify 
-      clojure.lang.IFn
-      (invoke [this s]
-        (let [du (walk s u)
-              dv (walk s v)]
-         (if (and (not (refinable? du))
-                  (not (refinable? dv))
-                  (= du dv))
-           false
-           s)))
-      IConstraintGoal
-      (rator [_] `!=fd)
-      (rands [_] [u v])
-      IRelevant
-      (relevant? [this s]
-        (let [du (walk s u)
-              dv (walk s v)]
-          (cond
-           (disjoint? u v) false
-           (refinable? u) true
-           (refinable? v) true
-           :else (not= u v))))
-      (relevant? [this x s]
-        (relevant? this s))))
-  )
-
-#_(defn <=fdc [u v]
-  (c-op <=fd [u ud v vd]
-    (let [[ulb uub] (bounds ud)
-          [vlb vub] (bounds vd)]
-      (composeg
-        (process-dom u (keep-before ud vub))
-        (process-dom v (drop-before vd ulb))))))
-
-#_(defn <=fd [u v]
+(defn <=fd [u v]
   (fdcg (<=fdc u v)))
 
-#_(defn +fdc [u v w]
-  (c-op +fd [u ud v vd w wd]
-    (let [[wlb wub] (bounds wd)
-          [ulb uub] (bounds ud)
-          [vlb vub] (bounds vd)]
-      (composeg
-        (process-dom w (interval (+ ulb vlb) (+ uub vub)))
-        (composeg
-          (process-dom u (interval (- wlb vub) (- wub vlb)))
-          (process-dom v (interval (- wlb uub) (- wub ulb))))))))
-
-#_(defn +fd [u v w]
-  (fdcg (+fdc u v w)))
-
-;; NOTE: how can we move build-oc out of here?
-
-#_(defn all-difffd* [ys ns]
-  (fn [a]
-    (let [ns (make-dom clpfd ns)]
-     (loop [ys ys ns ns xs ()]
-       (if (empty? ys)
-         (let [oc (build-oc all-difffd* xs ns)]
-           ((composeg
-             (update-cs oc)
-             (exclude-from ns a xs))
-            a))
-         (let [y (walk a (first ys))]
-           (cond
-            (lvar? y) (recur (rest ys) ns (cons y xs))
-            (member? y ns) nil
-            :else (recur (rest ys) (conj ns y) xs))))))))
-
-;; NOTE: how can we move build-oc out of here?
-
-#_(defn all-difffd [v*]
-  (fn [a]
-    (let [v* (walk a v*)]
+(defn +fdc [u v w]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv w dw]
+        (let [[wlb wub] (bounds dw)
+              [ulb uub] (bounds du)
+              [vlb vub] (bounds dv)]
+          (composeg
+            (process-dom w (interval (+ ulb vlb) (+ uub vub)))
+            (composeg
+              (process-dom u (interval (- wlb vub) (- wub vlb)))
+              (process-dom v (interval (- wlb uub) (- wub ulb))))))))
+    IConstraintGoal
+    (rator [_] `+fd)
+    (rands [_] [u v w])
+    IRelevant
+    (relevant? [this s]
       (cond
-       (lvar? v*) (let [oc (build-oc all-difffd v*)]
-                   ((update-cs oc) a))
-       :else (let [{x* true n* false} (group-by var? v*)]
-               ((all-difffd* x* n*) a))))))
+       (refinable? (walk s u)) true
+       (refinable? (walk s v)) true
+       (refinable? (walk s w)) true
+       :else false))
+    (relevant? [this x s]
+      (refinable? (walk s x)))))
+
+(defn +fd [u v w]
+  (fdcg (+fd u v w)))
+
+(defn exclude-from [dom1 a xs]
+  (loop [xs xs gs []]
+    (if (empty? xs)
+      (reduce composeg gs)
+      (let [x (first xs)
+            dom2 (walk a x)]
+        (if (domain? dom2)
+          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
+          (recur (rest xs) gs))))))
+
+;; TODO: distinctfdc
+;; TODO: distinctfd
 
 ;; =============================================================================
 ;; CLP(Tree)
