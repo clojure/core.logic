@@ -92,7 +92,8 @@
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c s])
-  (containsc? [this c]))
+  (runc [this c])
+  (running? [this c]))
 
 (defprotocol IStorableConstraint
   (proc [this])
@@ -352,13 +353,13 @@
                     (rands c)))]
     (pair @purge vs)))
 
-(deftype ConstraintStore [km cm cid]
+(deftype ConstraintStore [km cm cid running]
   IConstraintStore
   (addc [this c]
     (let [vars (var-rands c)
           c (vary-meta c assoc :id cid)
           ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
-      (ConstraintStore. (.km cs) (.cm cs) (inc cid))))
+      (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
   (updatec [this c s]
     (let [id (-> c meta :id)
           oc (get cm cid)
@@ -372,11 +373,11 @@
           ncm (if purge?
                 (dissoc cm id)
                 cm)]
-      (ConstraintStore. nkm ncm cid)))
-  (containsc? [this c]
-    (if (contains? cm (-> c meta :id))
-      true
-      false))
+      (ConstraintStore. nkm ncm cid (disj running id))))
+  (runc [this c]
+    (ConstraintStore. km cm cid (conj running (-> c meta :id))))
+  (running? [this c]
+    (running (-> c meta :id)))
   clojure.lang.Counted
   (count [this]
     (count cm))
@@ -386,7 +387,7 @@
       (throw (Error. (str "constraint store assoc expected logic var key: " k))))
     (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
           ncm (assoc cm cid v)]
-      (ConstraintStore. nkm ncm cid)))
+      (ConstraintStore. nkm ncm cid running)))
   clojure.lang.ILookup
   (valAt [this k]
     (when-not (lvar? k)
@@ -401,7 +402,8 @@
 (defn ^ConstraintStore make-cs []
   (ConstraintStore.
    clojure.lang.PersistentHashMap/EMPTY
-   clojure.lang.PersistentHashMap/EMPTY 0))
+   clojure.lang.PersistentHashMap/EMPTY 0
+   #{}))
 
 ;; =============================================================================
 ;; Substitutions
@@ -2362,11 +2364,17 @@
         ((map-sum (fn [v] (updateg u v))) (expand v))
         (-force-ans v)))))
 
+(defn running [^Substitutions a c]
+  (make-s (.s a) (.l a) (runc (.cs a) c)))
+
+(declare runnable?)
+
 (defn run-constraint [c]
   (fn [^Substitutions a]
-    (if (and (runnable? c a)
+    (if (and (not (running? (.cs a) c))
+             (runnable? c a)
              (relevant? c a))
-      ((composeg c (update-cs c)) a)
+      ((composeg c (update-cs c)) (running a c))
       a)))
 
 (defn run-constraints [x xcs]
