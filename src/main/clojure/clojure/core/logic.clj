@@ -98,20 +98,12 @@
   (proc [this])
   (process-prefix [this p]))
 
-(defprotocol IConstraintGoal
+(defprotocol IConstraintOp
   (rator [this])
   (rands [this]))
 
 (defprotocol IRelevant
   (relevant? [this s] [this x s]))
-
-(defprotocol IRunnable
-  (runnable? [this s]))
-
-(extend-type Object
-  IConstraintGoal
-  (relevant? [this x s]
-    (refinable? x)))
 
 (defprotocol IReifiableConstraint
   (reifiable? [this])
@@ -2440,13 +2432,16 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
+(defn runnable? [c s]
+  (every? domain? (map #(walk s %) (rands c))))
+
 (deftype FDConstraint [proc _meta]
   Object
-  (equals [_ o]
+  (equals [this o]
     (if (instance? FDConstraint o)
       (let [^FDConstraint o o]
-        (and (= (rator proc) (rator (proc o)))
-             (= (rands proc) (rands (proc o)))))
+        (and (= (rator this) (rator o))
+             (= (rands this) (rands o))))
       false))
   clojure.lang.IObj
   (meta [this]
@@ -2460,12 +2455,12 @@
   (enforceable? [_] true)
   IReifiableConstraint
   (reifiable? [_] false)
+  IConstraintOp
+  (rator [_] (rator proc))
+  (rands [_] (rands proc))
   IRelevant
   (relevant? [this s]
     (relevant? proc s))
-  IRunnable
-  (runnable? [this s]
-    (every? domain? (map #(walk s %)) (rands proc)))
   IStorableConstraint
   (proc [this] proc)
   (process-prefix [this p]
@@ -2476,14 +2471,17 @@
          (run-constraints* [x] this)
          (process-prefix this (rest p)))))))
 
+(defn fdc
+  ([proc] (fdc proc nil))
+  ([proc meta] (FDConstraint. proc meta)))
+
 (defn fdcg [g]
-  (let [c (FDConstraint. g nil)]
-    (fn [a]
-      (if-let [a (if (runnable? c a) (c a) a)]
-        (if (relevant? c a)
-          ((update-cs c) a)
-          a)
-        false))))
+  (fn [a]
+    (if-let [a (if (runnable? g a) (g a) a)]
+      (if (relevant? g a)
+        ((update-cs (FDConstraint. g nil)) a)
+        a)
+      false)))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
@@ -2520,6 +2518,10 @@
   `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
      ~@body))
 
+(defn singleton-dom? [x]
+  (and (not (lvar? x))
+       (not (refinable? x))))
+
 (defn =fdc [u v]
   (reify
     clojure.lang.IFn
@@ -2529,18 +2531,18 @@
           ((composeg
             (process-dom u i)
             (process-dom v i)) s))))
-    IConstraintGoal
+    IConstraintOp
     (rator [_] `=fd)
     (rands [_] [u v])
     IRelevant
     (relevant? [this s]
       (let-dom s [u du v dv]
         (cond
-         (refinable? du) true
-         (refinable? dv) true
+         (not (singleton-dom? du)) true
+         (not (singleton-dom? dv)) true
          :else false)))
     (relevant? [this x s]
-      (refinable? x))))
+      (not (singleton-dom? x)))))
 
 (defn =fd [u v]
   (fdcg (=fdc u v)))
@@ -2550,12 +2552,12 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
-        (if (and (not (refinable? du))
-                 (not (refinable? dv))
+        (if (and (singleton-dom? du)
+                 (singleton-dom? dv)
                  (= du dv))
           false
           s)))
-    IConstraintGoal
+    IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
     IRelevant
@@ -2563,16 +2565,16 @@
       (let-dom s [u du v dv]
         (cond
          (disjoint? du dv) false
-         (refinable? du) true
-         (refinable? dv) true
+         (not (singleton-dom? du)) true
+         (not (singleton-dom? dv)) true
          :else (not= du dv))))
     (relevant? [this x s]
       (let-dom s [u du v dv]
         (cond
          (disjoint? du dv) false
          :else (if (= x u)
-                 (refinable? du)
-                 (refinable? dv)))))))
+                 (not (singleton-dom? du))
+                 (not (singleton-dom? dv))))))))
 
 (defn !=fd [u v]
   (fdcg (!=fdc u v)))
@@ -2587,17 +2589,17 @@
          ((composeg
            (process-dom u (keep-before du vub))
            (process-dom v (drop-before dv ulb))) s))))
-    IConstraintGoal
+    IConstraintOp
     (rator [_] `<=fd)
     (rands [_] [u v])
     IRelevant
     (relevant? [this s]
       (cond
-       (refinable? (walk s u)) true
-       (refinable? (walk s v)) true
+       (not (singleton-dom? (walk s u))) true
+       (not (singleton-dom? (walk s v))) true
        :else false))
     (relevant? [this x s]
-      (refinable? (walk s x)))))
+      (not (singleton-dom? (walk s x))))))
 
 (defn <=fd [u v]
   (fdcg (<=fdc u v)))
@@ -2615,21 +2617,21 @@
              (composeg
                (process-dom u (interval (- wlb vub) (- wub vlb)))
                (process-dom v (interval (- wlb uub) (- wub ulb))))) s))))
-    IConstraintGoal
+    IConstraintOp
     (rator [_] `+fd)
     (rands [_] [u v w])
     IRelevant
     (relevant? [this s]
       (cond
-       (refinable? (walk s u)) true
-       (refinable? (walk s v)) true
-       (refinable? (walk s w)) true
+       (not (singleton-dom? (walk s u))) true
+       (not (singleton-dom? (walk s v))) true
+       (not (singleton-dom? (walk s w))) true
        :else false))
     (relevant? [this x s]
-      (refinable? (walk s x)))))
+      (not (singleton-dom? (walk s x))))))
 
 (defn +fd [u v w]
-  (fdcg (+fd u v w)))
+  (fdcg (+fdc u v w)))
 
 (defn exclude-from [dom1 a xs]
   (loop [xs xs gs []]
