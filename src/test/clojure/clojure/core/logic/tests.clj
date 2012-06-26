@@ -1510,4 +1510,18 @@
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
 
+(deftest test-=fd-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((=fd x y) empty-s)
+        s ((== x (interval 1 6)) s)
+        s ((== y (interval 5 6)) s)]
+    (is (= 2 (count (.km (.cs s)))))
+    (is (= 1 (count (.cm (.cs s)))))
+    (is (= (walk s x) (interval 5 6)))
+    (is (= (walk s y) (interval 5 6)))))
+
+(deftest test-run-constraints*
+  (is (= (run-constraints* [] []) s#)))
+
 ;; +fd constraint test
