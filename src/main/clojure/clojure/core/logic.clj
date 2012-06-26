@@ -348,7 +348,7 @@
                         (let [v (walk s x)
                               remove? (not (relevant? c v s))]
                           (when-not remove?
-                            (swap! purge false))
+                            (reset! purge false))
                           remove?)))
                     (rands c)))]
     (pair @purge vs)))
@@ -393,7 +393,7 @@
     (when-not (lvar? k)
       (throw (Error. (str "constraint store lookup expected logic var key: " k))))
     (let [ids (get km k)]
-      (map cm ids)))
+      (map cm (remove running ids))))
   (valAt [this k not-found]
     (if-let [v (.valAt this k)]
       v
