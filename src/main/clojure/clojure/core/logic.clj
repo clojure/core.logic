@@ -2487,11 +2487,10 @@
 
 (defn fdcg [g]
   (fn [a]
-    (if-let [a (if (runnable? g a) (g a) a)]
+    (when-let [a (if (runnable? g a) (g a) a)]
       (if (relevant? g a)
         ((update-cs (FDConstraint. g nil)) a)
-        a)
-      false)))
+        a))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
@@ -2562,10 +2561,9 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
-        (if (and (singleton-dom? du)
-                 (singleton-dom? dv)
-                 (= du dv))
-          false
+        (when-not (and (singleton-dom? du)
+                       (singleton-dom? dv)
+                       (= du dv))
           s)))
     IConstraintOp
     (rator [_] `!=fd)
