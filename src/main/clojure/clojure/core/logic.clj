@@ -2364,10 +2364,10 @@
 
 (defn run-constraint [c]
   (fn [^Substitutions a]
-    (let [cs (.cs a)]
-      (if (containsc? cs c)
-        ((proc c) (make-s (.s a) (.l a) cs))
-        a))))
+    (if (and (runnable? c a)
+             (relevant? c a))
+      ((composeg c (update-cs c)) a)
+      a)))
 
 (defn run-constraints [x xcs]
   (if xcs
