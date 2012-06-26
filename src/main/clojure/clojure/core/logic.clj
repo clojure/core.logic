@@ -339,15 +339,13 @@
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
 
-;; TODO: refinable? -> relevant? (passing s & c)
-
 (defn vars-to-remove [c s]
   (let [purge (atom true)
         vs (doall
             (filter (fn [x]
                       (when (lvar? x)
                         (let [v (walk s x)
-                              remove? (and (not (lvar? v)) (not (refinable? v)))]
+                              remove? (not (relevant? c v s))]
                           (when-not remove?
                             (swap! purge false))
                           remove?)))
@@ -2461,6 +2459,8 @@
   IRelevant
   (relevant? [this s]
     (relevant? proc s))
+  (relevant? [this x s]
+    (relevant? proc x s))
   IStorableConstraint
   (proc [this] proc)
   (process-prefix [this p]
