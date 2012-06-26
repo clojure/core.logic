@@ -2371,7 +2371,7 @@
 
 (defn run-constraint [c]
   (fn [^Substitutions a]
-    (if (and (not (running? (.cs a) c)))
+    (if (not (running? (.cs a) c))
       (if (runnable? c a)
         (if (relevant? c a)
           ((composeg c (update-cs c)) (running a c))
