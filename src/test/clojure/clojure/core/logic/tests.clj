@@ -1331,52 +1331,6 @@
     (is (= (recover-vars (.l s))
            [x y]))))
 
-(deftest test-make-clpfdc
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])]
-    (is (= (var-rands c)
-           [u w]))))
-
-(deftest test-c-eq
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c0 (makec clpfd (+fd u v w) '+fd [u v w])
-        c1 (makec clpfd (+fd u v w) '+fd [u v w])]
-    (is (= c0 c1))))
-
-(deftest test-addc-1
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])
-        ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
-        sc (first (get csp u))]
-    (is (= c sc))
-    (is (= (-> sc meta :id) 0))
-    (is (= (count (.km csp)) 2))
-    (is (= (count (.cm csp)) 1))))
-
-(deftest test-addc-2
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c0 (makec clpfd (+fd u v w) '+fd [u v w])
-        x (lvar 'x)
-        c1 (makec clpfd (+fd w v x) '+fd [w v x])
-        ^clojure.core.logic.ConstraintStore cs  (-> (make-cs )
-                                                    (addc c0)
-                                                    (addc c1))
-        sc0 (get (.cm cs) 0)
-        sc1 (get (.cm cs) 1)]
-    (is (= sc0 c0)) (is (= (-> sc0 meta :id) 0))
-    (is (= sc1 c1)) (is (= (-> sc1 meta :id) 1))
-    (is (= (-> sc0 meta :id) 0))
-    (is (= (count (.km cs)) 3))
-    (is (= (count (.cm cs)) 2))))
-
 (deftest test-unify-interval-and-number-1
   (is (= (run* [q]
            (== q (interval 1 10))
@@ -1410,39 +1364,6 @@
            (== q (interval 50 55))
            (== q 56))
          '())))
-
-(deftest test-ext-cs
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])
-        s empty-s
-        cs (ext-cs (.cs s) c s)]
-    (is (= (count (.km cs)) 2))
-    (is (= (count (.cm cs)) 1))))
-
-(deftest test-update-cs
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])
-        s ((update-cs c) empty-s)]
-    (is (= (count (.km (.cs s))) 2))
-    (is (= (count (.cm (.cs s))) 1))))
-
-(deftest test-purge-c
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (makec clpfd (+fd u v w) '+fd [u v w])
-        s ((update-cs c) empty-s)
-        c (first (get (.cs s) u))
-        s (-> s
-              (ext-no-check u 1)
-              (ext-no-check w 2))
-        s ((update-cs c) s)]
-    (is (zero? (count (.km (.cs s)))))
-    (is (zero? (count (.cm (.cs s)))))))
 
 (deftest test-process-dom-1
   (let [x (lvar 'x)
@@ -1479,19 +1400,114 @@
     (is (= (walk s x) (interval 1 10)))
     (is (= (walk s y) (interval 1 10)))))
 
+(deftest test-make-fdc-prim-1
+  (let [u (lvar 'u)
+        w (lvar 'w)
+        c (=fdc u w)]
+    (is (= (var-rands c)
+           [u w]))
+    (is (= (rator c)
+           `=fd))
+    (is (false? (runnable? c empty-s)))
+    (is (true? (relevant? c empty-s)))))
+
+(deftest test-make-fdc-prim-2
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (+fdc u v w)]
+    (is (= (var-rands c)
+           [u w]))
+    (is (= (rator c)
+           `+fd))
+    (is (false? (runnable? c empty-s)))
+    (is (true? (relevant? c empty-s)))))
+
+(deftest test-make-fdc-1
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (fdc (+fdc u v w))]
+    (is (= (var-rands c)
+           [u w]))
+    (is (= (rator c)
+           `+fd))
+    (is (false? (runnable? c empty-s)))
+    (is (true? (relevant? c empty-s)))))
+
+(deftest test-addc-1
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (fdc (+fdc u v w))
+        ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
+        sc (first (get csp u))]
+    (is (= c sc))
+    (is (= (-> sc meta :id) 0))
+    (is (= (count (.km csp)) 2))
+    (is (= (count (.cm csp)) 1))))
+
+(deftest test-addc-2
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c0 (fdc (+fdc u v w))
+         x (lvar 'x)
+         c1 (fdc (+fdc w v x))
+         ^clojure.core.logic.ConstraintStore cs  (-> (make-cs )
+                                                     (addc c0)
+                                                     (addc c1))
+         sc0 (get (.cm cs) 0)
+         sc1 (get (.cm cs) 1)]
+     (is (= sc0 c0)) (is (= (-> sc0 meta :id) 0))
+     (is (= sc1 c1)) (is (= (-> sc1 meta :id) 1))
+     (is (= (-> sc0 meta :id) 0))
+     (is (= (count (.km cs)) 3))
+     (is (= (count (.cm cs)) 2))))
+
+(deftest test-ext-cs
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (fdc (+fdc u v w))
+        s empty-s
+        cs (ext-cs (.cs s) c s)]
+    (is (= (count (.km cs)) 2))
+    (is (= (count (.cm cs)) 1))))
+
+(deftest test-update-cs
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (fdc (+fdc u v w))
+        s ((update-cs c) empty-s)]
+    (is (= (count (.km (.cs s))) 2))
+    (is (= (count (.cm (.cs s))) 1))))
+
+(deftest test-purge-c
+  (let [u (lvar 'u)
+        v 1
+        w (lvar 'w)
+        c (fdc (+fdc u v w))
+        s ((update-cs c) empty-s)
+        c (first (get (.cs s) u))
+        s (-> s
+              (ext-no-check u 1)
+              (ext-no-check w 2))
+        s ((update-cs c) s)]
+    (is (zero? (count (.km (.cs s)))))
+    (is (zero? (count (.cm (.cs s)))))))
+
 (deftest test-=fd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
-            (unify x (interval 1 6))
-            (unify y (interval 5 10)))
+              (unify x (interval 1 6))
+              (unify y (interval 5 10)))
         s ((=fd x y) s)]
     (is (= 2 (count (.km (.cs s)))))
     (is (= 1 (count (.cm (.cs s)))))
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
-
-(comment
-  )
 
 ;; +fd constraint test
