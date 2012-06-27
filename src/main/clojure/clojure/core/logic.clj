@@ -257,7 +257,8 @@
          (intersection that# this#)))
      (~'difference [this# that#]
        (if (integer? that#)
-         (when (= this# that#)
+         (if (= this# that#)
+           nil
            this#)
          (intersection that# this#)))))
 
@@ -337,9 +338,9 @@
        (cond
         (> jmin imax) this
         (and (<= jmin imin) (>= jmax imax)) nil
-        (and (< imin jmin) (> imax jmax)) (interval imin (dec jmin) (inc jmax) imax)
-        (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
-        (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax)
+        ;; (and (< imin jmin) (> imax jmax)) (IntervalFD. imin (dec jmin) (inc jmax) imax)
+        (and (< imin jmin) (<= jmin imax)) (IntervalFD. imin (dec jmin))
+        (and (> imax jmax) (<= jmin imin)) (IntervalFD. (inc jmax) imax)
         :else (throw (Error. (str "Not defined " this that)))))
      :else (throw (Error. (str "Not defined " this that))))))
 
@@ -2574,10 +2575,11 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
-        (when-not (and (singleton-dom? du)
-                       (singleton-dom? dv)
-                       (= du dv))
-          s)))
+        (cond
+         (and (singleton-dom? du)
+              (singleton-dom? dv)
+              (= du dv)) nil
+         :else s)))
     IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
