@@ -1567,32 +1567,16 @@
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
 
-#_(deftest test-!=fd-1
+(deftest test-!=fd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!=fd x y) empty-s)
         s ((== x (interval 1 6)) s)
         s ((== y (interval 5 10)) s)]
-    (is (= 2 (count (.km (.cs s)))))
-    (is (= 1 (count (.cm (.cs s)))))
+    (is (= 0 (count (.km (.cs s)))))
+    (is (= 0 (count (.cm (.cs s)))))
     (is (= (walk s x) (interval 1 4)))
     (is (= (walk s y) (interval 7 10)))))
-
-(comment
-  ;; fixme
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (ext-no-check empty-s x 1)
-        s (ext-no-check s y 2)
-        s ((=fd x y) s)]
-    s)
-
-  (run* [q]
-    (fresh [x y]
-      (== x 1)
-      (== y 2)
-      (=fd x y)))
-  )
 
 (deftest test-run-constraints*
   (is (= (run-constraints* [] []) s#)))

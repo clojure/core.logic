@@ -291,7 +291,7 @@
   (disjoint? [this that]
     (if (instance? IntervalFD that)
       (or (< (ub this) (lb that))
-          (< (lb this) (ub that)))
+          (> (lb this) (ub that)))
       (disjoint? (expand this) (expand that))))
   (drop-before [this n]
     (cond
@@ -2578,10 +2578,12 @@
     (invoke [this s]
       (let-dom s [u du v dv]
         (cond
-         (and (singleton-dom? du)
-              (singleton-dom? dv)
-              (= du dv)) nil
-         :else s)))
+         (disjoint? du dv) s
+         :else (when-let [udiff (difference du dv)]
+                 (let [vdiff (difference dv du)]
+                   ((composeg
+                     (process-dom u udiff)
+                     (process-dom v vdiff)) s))))))
     IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
