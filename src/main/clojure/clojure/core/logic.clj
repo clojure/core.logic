@@ -123,18 +123,22 @@
 
 ;; TODO: ICLPSet, half the below could be moved into this
 
-(defprotocol IFiniteDomain
-  (domain? [this])
+(defprotocol IBounded
   (lb [this])
   (ub [this])
-  (bounds [this])
+  (bounds [this]))
+
+(defprotocol ISortedDomain
+  (drop-before [this n])
+  (keep-before [this n]))
+
+(defprotocol IFiniteDomain
+  (domain? [this])
   (member? [this v])
   (disjoint? [this that])
   (intersects? [this that])
   (sub? [this that])
   (super? [this that])
-  (drop-before [this n])
-  (keep-before [this n])
   (expand [this])
   (intersection [this that])
   (difference [this that]))
@@ -197,20 +201,22 @@
 (declare lvar?)
 
 (deftype FiniteDomain [s]
-  IFiniteDomain
-  (domain? [_] true)
+  IBounded
   (lb [_]
     (first s))
   (ub [_]
     (first (rseq s)))
-  (member? [this v]
-    (contains? s v))
-  (disjoint? [_ that]
-    (empty? (set/intersection s (expand that))))
+  ISortedDomain
   (drop-before [_ n]
     (apply sorted-set (drop-while #(< % n)) s))
   (keep-before [this n]
     (apply sorted-set (take-while #(< % n)) s))
+  IFiniteDomain
+  (domain? [_] true)
+  (member? [this v]
+    (contains? s v))
+  (disjoint? [_ that]
+    (empty? (set/intersection s (expand that))))
   (expand [this] s)
   (intersection [this that]
     (cond
@@ -231,13 +237,11 @@
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
-     IFiniteDomain
-     (~'domain? [this#] true)
+     IBounded
      (~'lb [this#] this#)
      (~'ub [this#] this#)
      (~'bounds [this#] (pair this# this#))
-     (~'member? [this# v#] (= this# v#))
-     (~'expand [this#] (sorted-set this#))
+     ISortedDomain
      (~'drop-before [this# n#]
        (if (= this# n#)
          n#
@@ -246,6 +250,10 @@
        (if (= this# n#)
          n#
          nil))
+     IFiniteDomain
+     (~'domain? [this#] true)
+     (~'member? [this# v#] (= this# v#))
+     (~'expand [this#] (sorted-set this#))
      (~'disjoint? [this# that#]
        (if (integer? that#)
          (not= this# that#)
@@ -269,6 +277,8 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
+(declare multi-interval)
+
 (deftype IntervalFD [_lb _ub]
   Object
   (equals [_ o]
@@ -281,18 +291,11 @@
   (refinable? [_] true)
   IRefine
   (refine [this other] (intersection this other))
-  IFiniteDomain
-  (domain? [_] true)
+  IBounded
   (lb [_] _lb)
   (ub [_] _ub)
   (bounds [_] (pair _lb _ub))
-  (member? [this v]
-    (and (>= v _lb) (<= v _ub)))
-  (disjoint? [this that]
-    (if (instance? IntervalFD that)
-      (or (< (ub this) (lb that))
-          (> (lb this) (ub that)))
-      (disjoint? (expand this) (expand that))))
+  ISortedDomain
   (drop-before [this n]
     (cond
      (= n _ub) n
@@ -305,6 +308,15 @@
      (> n _ub) this
      (< n _lb) nil
      :else (IntervalFD. _lb n)))
+  IFiniteDomain
+  (domain? [_] true)
+  (member? [this v]
+    (and (>= v _lb) (<= v _ub)))
+  (disjoint? [this that]
+    (if (instance? IntervalFD that)
+      (or (< (ub this) (lb that))
+          (> (lb this) (ub that)))
+      (disjoint? (expand this) (expand that))))
   (expand [this] (apply sorted-set (range _lb _ub)))
   (super? [this that]
     (and (<= _lb (lb that))
@@ -338,7 +350,8 @@
        (cond
         (> jmin imax) this
         (and (<= jmin imin) (>= jmax imax)) nil
-        ;; (and (< imin jmin) (> imax jmax)) (IntervalFD. imin (dec jmin) (inc jmax) imax)
+        (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
+                                                          (interval (inc jmax) imax))
         (and (< imin jmin) (<= jmin imax)) (IntervalFD. imin (dec jmin))
         (and (> imax jmax) (<= jmin imin)) (IntervalFD. (inc jmax) imax)
         :else (throw (Error. (str "Not defined " this that)))))
@@ -350,6 +363,14 @@
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
   ([lb ub] (IntervalFD. lb ub)))
+
+(deftype MultiIntervalFD [min max rs]
+  IBounded
+  (lb [_] min)
+  (ub [_] max))
+
+(defn multi-interval [& is]
+  (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))
 
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))

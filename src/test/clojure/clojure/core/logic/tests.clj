@@ -1578,6 +1578,11 @@
     (is (= (walk s x) (interval 1 4)))
     (is (= (walk s y) (interval 7 10)))))
 
+(deftest test-multi-interval-1
+  (let [mi (multi-interval (interval 1 3) (interval 7 10))]
+    (is (= 1 (lb mi)))
+    (is (= 10 (ub mi)))))
+
 (deftest test-run-constraints*
   (is (= (run-constraints* [] []) s#)))
 
