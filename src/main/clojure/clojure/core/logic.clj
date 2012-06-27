@@ -328,7 +328,20 @@
              (when-not (empty? s)
                s))))
   (difference [this that]
-    ))
+    (cond
+     (instance? IntervalFD that)
+     (let [imin _lb
+           imax _ub
+           jmin (lb that)
+           jmax (ub that)]
+       (cond
+        (> jmin imax) this
+        (and (<= jmin imin) (>= jmax imax)) nil
+        (and (< imin jmin) (> imax jmax)) (interval imin (dec jmin) (inc jmax) imax)
+        (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
+        (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax)
+        :else (throw (Error. (str "Not defined " this that)))))
+     :else (throw (Error. (str "Not defined " this that))))))
 
 (defmethod print-method IntervalFD [x ^Writer writer]
   (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))

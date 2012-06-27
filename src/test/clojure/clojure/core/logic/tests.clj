@@ -1322,6 +1322,30 @@
     (is (= (prefix sp s)
            (list (pair y 2) (pair x 1))))))
 
+(deftest test-interval-intersection-1
+  (is (= (intersection (interval 1 6) (interval 5 10))
+         (interval 5 6))))
+
+(deftest test-interval-difference-1
+  (is (= (difference (interval 1 6) (interval 5 10))
+         (interval 1 4))))
+
+(deftest test-interval-difference-2
+  (is (= (difference (interval 1 4) (interval 5 10))
+         (interval 1 4))))
+
+(deftest test-interval-difference-3
+  (is (= (difference (interval 5 10) (interval 1 4))
+         (interval 5 10))))
+
+(deftest test-interval-difference-4
+  (is (= (difference (interval 1 10) (interval 1 10))
+         nil)))
+
+(deftest test-interval-difference-5
+  (is (= (difference (interval 2 9) (interval 1 10))
+         nil)))
+
 (deftest test-recover-vars []
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -1515,11 +1539,38 @@
         y (lvar 'y)
         s ((=fd x y) empty-s)
         s ((== x (interval 1 6)) s)
-        s ((== y (interval 5 6)) s)]
+        s ((== y (interval 5 10)) s)]
     (is (= 2 (count (.km (.cs s)))))
     (is (= 1 (count (.cm (.cs s)))))
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
+
+(deftest test-!=fd-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!=fd x y) empty-s)
+        s ((== x (interval 1 6)) s)
+        s ((== y (interval 5 10)) s)]
+    (is (= 2 (count (.km (.cs s)))))
+    (is (= 1 (count (.cm (.cs s)))))
+    (is (= (walk s x) (interval 1 4)))
+    (is (= (walk s y) (interval 7 10)))))
+
+(comment
+  ;; fixme
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (ext-no-check empty-s x 1)
+        s (ext-no-check s y 2)
+        s ((=fd x y) s)]
+    s)
+
+  (run* [q]
+    (fresh [x y]
+      (== x 1)
+      (== y 2)
+      (=fd x y)))
+  )
 
 (deftest test-run-constraints*
   (is (= (run-constraints* [] []) s#)))
