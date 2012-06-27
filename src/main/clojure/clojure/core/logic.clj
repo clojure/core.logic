@@ -2501,10 +2501,12 @@
 
 (defn fdcg [g]
   (fn [a]
-    (when-let [a (if (runnable? g a) (g a) a)]
-      (if (relevant? g a)
-        ((update-cs (FDConstraint. g nil)) a)
-        a))))
+    (if (runnable? g a)
+      (let [a (g a)]
+        (if (relevant? g a)
+          ((update-cs (FDConstraint. g nil)) a)
+          a))
+      ((update-cs (FDConstraint. g nil)) a))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
