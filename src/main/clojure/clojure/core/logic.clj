@@ -2732,7 +2732,7 @@
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-(defn subsumes? [s p pp]
+(defn prefix-subsumes? [s p pp]
   (when-let [sp (unify s p pp)]
     (identical? s sp)))
 
@@ -2748,8 +2748,8 @@
           (if (= (rator oc) '!=new)
             (let [pp (oc->prefix oc)]
               (cond
-               (subsumes? a pp p) a
-               (subsumes? a p pp) (recur (rest c) cp)
+               (prefix-subsumes? a pp p) a
+               (prefix-subsumes? a p pp) (recur (rest c) cp)
                :else (recur (rest c) (cons oc cp))))
             (recur (rest c) (cons oc cp))))))))
 
