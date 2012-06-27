@@ -123,7 +123,7 @@
 
 ;; TODO: ICLPSet, half the below could be moved into this
 
-(defprotocol IBounded
+(defprotocol IInterval
   (lb [this])
   (ub [this])
   (bounds [this]))
@@ -132,16 +132,12 @@
   (drop-before [this n])
   (keep-before [this n]))
 
-(defprotocol ICompoundDomain
-  (compound? [this]))
-
 (defprotocol IFiniteDomain
   (domain? [this])
   (member? [this v])
   (disjoint? [this that])
   (intersects? [this that])
-  (sub? [this that])
-  (super? [this that])
+  (subsumes? [this that])
   (expand [this])
   (intersection [this that])
   (difference [this that]))
@@ -204,7 +200,7 @@
 (declare lvar?)
 
 (deftype FiniteDomain [s]
-  IBounded
+  IInterval
   (lb [_]
     (first s))
   (ub [_]
@@ -224,7 +220,7 @@
   (intersection [this that]
     (cond
      (integer? that) (when (member? this that) that)
-     (super? that this) this
+     (subsumes? that this) this
      :else (let [s (into (sorted-set)
                      (filter #(member? that %) s))]
              (when-not (empty? s)
@@ -240,7 +236,7 @@
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
-     IBounded
+     IInterval
      (~'lb [this#] this#)
      (~'ub [this#] this#)
      (~'bounds [this#] (pair this# this#))
@@ -290,11 +286,13 @@
         (and (= _lb (._lb o))
              (= _ub (._ub o))))
       false))
+  clojure.lang.Seqable
+  (seq [this] (list this))
   IRefinable
   (refinable? [_] true)
   IRefine
   (refine [this other] (intersection this other))
-  IBounded
+  IInterval
   (lb [_] _lb)
   (ub [_] _ub)
   (bounds [_] (pair _lb _ub))
@@ -321,7 +319,7 @@
           (> (lb this) (ub that)))
       (disjoint? (expand this) (expand that))))
   (expand [this] (apply sorted-set (range _lb _ub)))
-  (super? [this that]
+  (subsumes? [this that]
     (and (<= _lb (lb that))
          (>= _ub (ub that))))
   (intersection [this that]
@@ -368,11 +366,18 @@
   ([lb ub] (IntervalFD. lb ub)))
 
 (deftype MultiIntervalFD [min max rs]
-  IBounded
+  clojure.lang.Seqable
+  (seq [_] rs)
+  IInterval
   (lb [_] min)
   (ub [_] max))
 
-(defn multi-interval [& is]
+;; union where possible
+(defn normalize-intervals [is]
+  )
+
+(defn multi-interval
+  [i0 i1 & is]
   (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))
 
 (defn var-rands [c]
