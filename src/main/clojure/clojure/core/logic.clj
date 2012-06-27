@@ -132,8 +132,8 @@
   (drop-before [this n])
   (keep-before [this n]))
 
-(defprotocol IContinuousDomain
-  (continuous? [this]))
+(defprotocol ICompoundDomain
+  (compound? [this]))
 
 (defprotocol IFiniteDomain
   (domain? [this])
