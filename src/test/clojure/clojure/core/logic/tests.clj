@@ -1362,6 +1362,12 @@
   (is (= (difference 1 2)
          1)))
 
+(deftest test-disjoint?-1
+  (is (false? (disjoint? (interval 1 6) (interval 5 10)))))
+
+(deftest test-disjoint?-2
+  (is (false? (disjoint? (interval 5 10) (interval 1 6)))))
+
 (deftest test-recover-vars []
   (let [x (lvar 'x)
         y (lvar 'y)
