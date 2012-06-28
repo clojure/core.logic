@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.macro "0.1.1"]]
   :dev-dependencies [[lein-swank "1.4.4"]
-                     [lein-cljsbuild "0.1.10"]]
+                     [lein-cljsbuild "0.2.2"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
                                    :compiler {:optimizations :simple
                                               :pretty-print true
