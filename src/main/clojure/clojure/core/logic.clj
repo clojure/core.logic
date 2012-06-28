@@ -134,11 +134,10 @@
 
 (defprotocol IFiniteDomain
   (domain? [this])
-  (member? [this v])
+  (member? [this that])
   (disjoint? [this that])
   (intersects? [this that])
   (subsumes? [this that])
-  (expand [this])
   (intersection [this that])
   (difference [this that]))
 
@@ -197,14 +196,84 @@
 ;; =============================================================================
 ;; Constraint Store
 
-(declare lvar?)
+(declare lvar? interval multi-interval)
 
-(deftype FiniteDomain [s]
+(defn interval-< [i j]
+  (< (ub i) (lb j)))
+
+(defn interval-> [i j]
+  (> (lb i) (ub j)))
+
+(defn interval-disjoint? [i j]
+  (let [[imin imax] (bounds i)
+        [jmin jmax] (bounds j)]
+    (or (> imin jmax)
+        (< imax jmin))))
+
+(defn interval-member? [i j]
+  (let [[imin imax] (bounds i)
+        [jmin jmax] (bounds j)]
+    (and (>= jmin imin)
+         (<= jmax imax))))
+
+(defn interval-intersection [i j]
+  )
+
+(defn interval-difference [i j]
+  (let [imin (lb i) imax (ub i)
+        jmin (lb j) jmax (ub j)]
+    (cond
+     (> jmin imax) i
+     (and (<= jmin imin) (>= jmax imax)) nil
+     (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
+                                                       (interval (inc jmax) imax))
+     (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
+     (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax))))
+
+(defn disjoint?* [d0 d1]
+  (if (disjoint? (interval (lb d0) (ub d0))
+                 (interval (lb d1) (ub d1)))
+    true
+    (let [d0 (seq d0)
+          d1 (seq d1)]
+      (loop [d0 d0 d1 d1]
+        (if (nil? d0)
+          true
+          (let [i (first d0)
+                j (first d1)]
+            (cond
+             (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
+             (interval-> i j) (recur d0 (next d1))
+             :else false)))))))
+
+(defn member?* [d0 d1]
+  (if (disjoint? (interval (lb d0) (ub d0))
+                 (interval (lb d1) (ub d1)))
+    false
+    (let [d0 (seq d0)
+          d1 (seq d1)]
+      (loop [d0 d0 d1 d1 r []]
+        (if (nil? d0)
+          r
+          )))))
+
+(defn intersection* [d0 d1]
+  (let [d0 (seq d0)
+        d1 (seq d1)]
+    ))
+
+(defn difference* [d0 d1]
+  (let [d0 (seq d0)
+        d1 (seq d1)]
+    ))
+
+(declare domain)
+
+(deftype FiniteDomain [s min max]
   IInterval
-  (lb [_]
-    (first s))
-  (ub [_]
-    (first (rseq s)))
+  (lb [_] min)
+  (ub [_] max)
+  (bounds [_] (pair min max))
   ISortedDomain
   (drop-before [_ n]
     (apply sorted-set (drop-while #(< % n)) s))
@@ -212,27 +281,28 @@
     (apply sorted-set (take-while #(< % n)) s))
   IFiniteDomain
   (domain? [_] true)
-  (member? [this v]
-    (contains? s v))
-  (disjoint? [_ that]
-    (empty? (set/intersection s (expand that))))
-  (expand [this] s)
+  (member? [this that]
+    (if (integer? that)
+      (if (s that)
+        true
+        false)
+      (contains?* s that)))
+  (disjoint? [this that]
+    (if (integer? that)
+      (not (member? this that))
+      (disjoint?* this that)))
   (intersection [this that]
-    (cond
-     (integer? that) (when (member? this that) that)
-     (subsumes? that this) this
-     :else (let [s (into (sorted-set)
-                     (filter #(member? that %) s))]
-             (when-not (empty? s)
-               (FiniteDomain. s)))))
+    (if (integer? that)
+      (when (member? this that) that)
+      (intersection* this that)))
   (difference [this that]
-    (let [s (into (sorted-set)
-              (filter #(not (member? that %)) s))]
-      (when-not (empty? s)
-        (FiniteDomain. s)))))
+    (if (integer? that)
+      (domain (disj s that))
+      (difference* this that))))
 
-(defn domain [& args]
-  (FiniteDomain. (into sorted-set args)))
+(defn domain [args]
+  (let [s (into sorted-set args)]
+    (FiniteDomain. s (first s) (first (rseq s)))))
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
@@ -251,12 +321,14 @@
          nil))
      IFiniteDomain
      (~'domain? [this#] true)
-     (~'member? [this# v#] (= this# v#))
-     (~'expand [this#] (sorted-set this#))
+     (~'member? [this# that#]
+       (if (integer? that#)
+         (= this# that#)
+         (member? that# this#)))
      (~'disjoint? [this# that#]
        (if (integer? that#)
          (not= this# that#)
-         (disjoint? (expand this#) (expand that#))))
+         (disjoint? that# this#)))
      (~'intersection [this# that#]
        (if (integer? that#)
          (when (= this# that#)
@@ -275,8 +347,6 @@
 (extend-to-fd java.lang.Long)
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
-
-(declare multi-interval)
 
 (deftype IntervalFD [_lb _ub]
   Object
@@ -311,52 +381,27 @@
      :else (IntervalFD. _lb n)))
   IFiniteDomain
   (domain? [_] true)
-  (member? [this v]
-    (and (>= v _lb) (<= v _ub)))
+  (member? [this that]
+    (if (integer? that)
+      (and (>= that _lb) (<= that _ub))
+      (member?* this that)))
   (disjoint? [this that]
-    (if (instance? IntervalFD that)
-      (or (< (ub this) (lb that))
-          (> (lb this) (ub that)))
-      (disjoint? (expand this) (expand that))))
-  (expand [this] (apply sorted-set (range _lb _ub)))
-  (subsumes? [this that]
-    (and (<= _lb (lb that))
-         (>= _ub (ub that))))
+    (if (integer? that)
+      (not (member? this that))
+      (disjoint?* this that)))
   (intersection [this that]
-    (cond
-     (instance? IntervalFD that)
-     (let [^IntervalFD that that
-           lb (max _lb (.lb that))
-           ub (min _ub (.ub that))]
-        (cond
-         (= lb ub) lb
-         (< lb ub) (IntervalFD. lb ub)
-         :else nil))
-     (integer? that) (when (and (>= that _lb) (<= that _ub))
-                       that)
-     (instance? FiniteDomain that)
-     (let [s (intersection that this)]
-       (when-not (empty? s)
-         s))
-     :else (let [s (set/intersection (expand this) (expand that))]
-             (when-not (empty? s)
-               s))))
+    (if (integer? that)
+      (if (member? this that)
+        that
+        nil)
+      (intersection* this that)))
   (difference [this that]
-    (cond
-     (instance? IntervalFD that)
-     (let [imin _lb
-           imax _ub
-           jmin (lb that)
-           jmax (ub that)]
-       (cond
-        (> jmin imax) this
-        (and (<= jmin imin) (>= jmax imax)) nil
-        (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
-                                                          (interval (inc jmax) imax))
-        (and (< imin jmin) (<= jmin imax)) (IntervalFD. imin (dec jmin))
-        (and (> imax jmax) (<= jmin imin)) (IntervalFD. (inc jmax) imax)
-        :else (throw (Error. (str "Not defined " this that)))))
-     :else (throw (Error. (str "Not defined " this that))))))
+    (if (integer? that)
+      (if (member? this that)
+        (multi-interval (interval _lb (dec that))
+                        (interval (inc that) _ub))
+        this)
+      (difference* this that))))
 
 (defmethod print-method IntervalFD [x ^Writer writer]
   (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
@@ -368,9 +413,14 @@
 (deftype MultiIntervalFD [min max rs]
   clojure.lang.Seqable
   (seq [_] rs)
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
   IInterval
   (lb [_] min)
-  (ub [_] max))
+  (ub [_] max)
+  (bounds [_] (pair min max))  )
 
 ;; union where possible
 (defn normalize-intervals [is]
@@ -2400,11 +2450,13 @@
   ;; clojure.lang.IPersistentSet
   )
 
+;; TODO: not going to work in this state
+
 (defn force-ans [u]
   (fn [a]
     (let [v (walk a u)]
       (if (domain? v)
-        ((map-sum (fn [v] (updateg u v))) (expand v))
+        ((map-sum (fn [v] (updateg u v))) v)
         (-force-ans v)))))
 
 (defn running [^Substitutions a c]
