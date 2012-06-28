@@ -1322,178 +1322,222 @@
     (is (= (prefix sp s)
            (list (pair y 2) (pair x 1))))))
 
-(deftest test-interval-intersection-1
-  (is (= (intersection (interval 1 6) (interval 5 10))
-         (interval 5 6))))
+(deftest test-member?-ss-1
+  (is (true? (member? 1 1))))
 
-(deftest test-interval-intersection-2
-  (is (= (intersection (interval 1 6) 1)
-         1)))
+(deftest test-member?-ss-2
+  (is (false? (member? 1 2))))
 
-(deftest test-interval-intersection-3
-  (is (= (intersection 1 (interval 1 6))
-         1)))
+(deftest test-disjoint?-ss-1
+  (is (false? (disjoint? 1 1))))
 
-(deftest test-interval-difference-1
-  (is (= (difference (interval 1 6) (interval 5 10))
-         (interval 1 4))))
+(deftest test-disjoint?-ss-2
+  (is (true? (disjoint? 1 2))))
 
-(deftest test-interval-difference-2
-  (is (= (difference (interval 1 4) (interval 5 10))
-         (interval 1 4))))
-
-(deftest test-interval-difference-3
-  (is (= (difference (interval 5 10) (interval 1 4))
-         (interval 5 10))))
-
-(deftest test-interval-difference-4
-  (is (= (difference (interval 1 10) (interval 1 10))
-         nil)))
-
-(deftest test-interval-difference-5
-  (is (= (difference (interval 2 9) (interval 1 10))
-         nil)))
-
-(deftest test-singleton-dom-difference-1
+(deftest test-difference-ss-1
   (is (= (difference 1 1)
          nil)))
 
-(deftest test-singleton-dom-difference-2
+(deftest test-difference-ss-2
   (is (= (difference 1 2)
          1)))
 
-(deftest test-disjoint?-1
-  (is (false? (disjoint? (interval 1 6) (interval 5 10)))))
+(deftest test-intersection-ss-1
+  (is (= (intersection 1 1)
+         1)))
 
-(deftest test-disjoint?-2
-  (is (false? (disjoint? (interval 5 10) (interval 1 6)))))
+(deftest test-intersection-ss-2
+  (is (= (intersection 1 2)
+         nil)))
 
-(deftest test-recover-vars []
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-            (ext-no-check x 1)
-            (ext-no-check y 2))]
-    (is (= (recover-vars (.l s))
-           [x y]))))
+(deftest test-member?-is-1
+  (is (true? (member? (interval 1 10) 1))))
 
-(deftest test-unify-interval-and-number-1
-  (is (= (run* [q]
-           (== q (interval 1 10))
-           (== q 1))
-         '(1)))
-  (is (= (run* [q]
-           (== q 1)
-           (== q (interval 1 10)))
-         '(1))))
+(deftest test-member?-si-1
+  (is (true? (member? 1 (interval 1 10)))))
 
-(deftest test-unify-interval-and-number-2
-  (is (= (run* [q]
-           (== q (interval 1 10))
-           (== q 11))
-         '()))
-  (is (= (run* [q]
-           (== q 11)
-           (== q (interval 1 10)))
-         '())))
+(deftest test-disjoint?-is-1
+  (is (true? (disjoint? (interval 1 10) 11))))
 
-(deftest test-unify-many-intervals-1
-  (is (= (run* [q]
-           (== q (interval 1 100))
-           (== q (interval 30 60))
-           (== q (interval 50 55))
-           (== q 51))
-         '(51)))
-  (is (= (run* [q]
-           (== q (interval 1 100))
-           (== q (interval 30 60))
-           (== q (interval 50 55))
-           (== q 56))
-         '())))
+(deftest test-disjoint?-si-1
+  (is (true? (disjoint? 11 (interval 1 10)))))
 
-(deftest test-process-dom-1
-  (let [x (lvar 'x)
-        s ((process-dom x 1) empty-s)]
-    (is (= (walk s x) 1))))
+(deftest test-difference-is-1
+  (let [mi (difference (interval 1 10) 5)]
+    (is (= (first (seq mi)) (interval 1 4)))
+    (is (= (second (seq mi)) (interval 6 10)))))
 
-(deftest test-process-dom-2
-  (let [x (lvar 'x)
-        s ((process-dom x (interval 1 10)) empty-s)]
-    (is (= (walk s x) (interval 1 10)))))
+#_(deftest test-difference-si-1
+  (let [mi (difference 5 (interval 1 10))]
+    (is (= (first (seq mi)) (interval 1 4)))
+    (is (= (second (seq mi)) (interval 6 10)))))
 
-(deftest test-process-dom-3
-  (let [x (lvar 'x)
-        s (ext-no-check empty-s x (interval 1 10))
-        s ((process-dom x 1) s)]
-    (is (= (walk s x) 1))))
+(comment
+  (deftest test-interval-intersection-1
+    (is (= (intersection (interval 1 6) (interval 5 10))
+           (interval 5 6))))
 
-(deftest test-process-dom-4
-  (let [x (lvar 'x)
-        s (ext-no-check empty-s x 1)
-        s ((process-dom x (interval 1 10)) s)]
-    (is (= (walk s x) 1))))
+ (deftest test-interval-intersection-2
+   (is (= (intersection (interval 1 6) 1)
+          1)))
 
-(deftest test-domfd-1
-  (let [x (lvar 'x)
-        s ((domfd x (interval 1 10)) empty-s)]
-    (is (= (walk s x) (interval 1 10)))))
+ (deftest test-interval-intersection-3
+   (is (= (intersection 1 (interval 1 6))
+          1)))
 
-(deftest test-infd-1
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        f ((infd x y (interval 1 10)) empty-s)
-        s (f)]
-    (is (= (walk s x) (interval 1 10)))
-    (is (= (walk s y) (interval 1 10)))))
+ (deftest test-interval-difference-1
+   (is (= (difference (interval 1 6) (interval 5 10))
+          (interval 1 4))))
 
-(deftest test-make-fdc-prim-1
-  (let [u (lvar 'u)
-        w (lvar 'w)
-        c (=fdc u w)]
-    (is (= (var-rands c)
-           [u w]))
-    (is (= (rator c)
-           `=fd))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+ (deftest test-interval-difference-2
+   (is (= (difference (interval 1 4) (interval 5 10))
+          (interval 1 4))))
 
-(deftest test-make-fdc-prim-2
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (+fdc u v w)]
-    (is (= (var-rands c)
-           [u w]))
-    (is (= (rator c)
-           `+fd))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+ (deftest test-interval-difference-3
+   (is (= (difference (interval 5 10) (interval 1 4))
+          (interval 5 10))))
 
-(deftest test-make-fdc-1
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))]
-    (is (= (var-rands c)
-           [u w]))
-    (is (= (rator c)
-           `+fd))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+ (deftest test-interval-difference-4
+   (is (= (difference (interval 1 10) (interval 1 10))
+          nil)))
 
-(deftest test-addc-1
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))
-        ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
-        sc (first (get csp u))]
-    (is (= c sc))
-    (is (= (-> sc meta :id) 0))
-    (is (= (count (.km csp)) 2))
-    (is (= (count (.cm csp)) 1))))
+ (deftest test-interval-difference-5
+   (is (= (difference (interval 2 9) (interval 1 10))
+          nil)))
 
-(deftest test-addc-2
+
+ (deftest test-interval-disjoint?-1
+   (is (false? (disjoint? (interval 1 6) (interval 5 10)))))
+
+ (deftest test-interval-disjoint?-2
+   (is (false? (disjoint? (interval 5 10) (interval 1 6)))))
+
+ (deftest test-recover-vars []
+   (let [x (lvar 'x)
+         y (lvar 'y)
+         s (-> empty-s
+               (ext-no-check x 1)
+               (ext-no-check y 2))]
+     (is (= (recover-vars (.l s))
+            [x y]))))
+
+ (deftest test-unify-interval-and-number-1
+   (is (= (run* [q]
+            (== q (interval 1 10))
+            (== q 1))
+          '(1)))
+   (is (= (run* [q]
+            (== q 1)
+            (== q (interval 1 10)))
+          '(1))))
+
+ (deftest test-unify-interval-and-number-2
+   (is (= (run* [q]
+            (== q (interval 1 10))
+            (== q 11))
+          '()))
+   (is (= (run* [q]
+            (== q 11)
+            (== q (interval 1 10)))
+          '())))
+
+ (deftest test-unify-many-intervals-1
+   (is (= (run* [q]
+            (== q (interval 1 100))
+            (== q (interval 30 60))
+            (== q (interval 50 55))
+            (== q 51))
+          '(51)))
+   (is (= (run* [q]
+            (== q (interval 1 100))
+            (== q (interval 30 60))
+            (== q (interval 50 55))
+            (== q 56))
+          '())))
+
+ (deftest test-process-dom-1
+   (let [x (lvar 'x)
+         s ((process-dom x 1) empty-s)]
+     (is (= (walk s x) 1))))
+
+ (deftest test-process-dom-2
+   (let [x (lvar 'x)
+         s ((process-dom x (interval 1 10)) empty-s)]
+     (is (= (walk s x) (interval 1 10)))))
+
+ (deftest test-process-dom-3
+   (let [x (lvar 'x)
+         s (ext-no-check empty-s x (interval 1 10))
+         s ((process-dom x 1) s)]
+     (is (= (walk s x) 1))))
+
+ (deftest test-process-dom-4
+   (let [x (lvar 'x)
+         s (ext-no-check empty-s x 1)
+         s ((process-dom x (interval 1 10)) s)]
+     (is (= (walk s x) 1))))
+
+ (deftest test-domfd-1
+   (let [x (lvar 'x)
+         s ((domfd x (interval 1 10)) empty-s)]
+     (is (= (walk s x) (interval 1 10)))))
+
+ (deftest test-infd-1
+   (let [x (lvar 'x)
+         y (lvar 'y)
+         f ((infd x y (interval 1 10)) empty-s)
+         s (f)]
+     (is (= (walk s x) (interval 1 10)))
+     (is (= (walk s y) (interval 1 10)))))
+
+ (deftest test-make-fdc-prim-1
+   (let [u (lvar 'u)
+         w (lvar 'w)
+         c (=fdc u w)]
+     (is (= (var-rands c)
+            [u w]))
+     (is (= (rator c)
+            `=fd))
+     (is (false? (runnable? c empty-s)))
+     (is (true? (relevant? c empty-s)))))
+
+ (deftest test-make-fdc-prim-2
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (+fdc u v w)]
+     (is (= (var-rands c)
+            [u w]))
+     (is (= (rator c)
+            `+fd))
+     (is (false? (runnable? c empty-s)))
+     (is (true? (relevant? c empty-s)))))
+
+ (deftest test-make-fdc-1
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (fdc (+fdc u v w))]
+     (is (= (var-rands c)
+            [u w]))
+     (is (= (rator c)
+            `+fd))
+     (is (false? (runnable? c empty-s)))
+     (is (true? (relevant? c empty-s)))))
+
+ (deftest test-addc-1
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (fdc (+fdc u v w))
+         ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
+         sc (first (get csp u))]
+     (is (= c sc))
+     (is (= (-> sc meta :id) 0))
+     (is (= (count (.km csp)) 2))
+     (is (= (count (.cm csp)) 1))))
+
+ (deftest test-addc-2
    (let [u (lvar 'u)
          v 1
          w (lvar 'w)
@@ -1511,79 +1555,79 @@
      (is (= (count (.km cs)) 3))
      (is (= (count (.cm cs)) 2))))
 
-(deftest test-ext-cs
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))
-        s empty-s
-        cs (ext-cs (.cs s) c s)]
-    (is (= (count (.km cs)) 2))
-    (is (= (count (.cm cs)) 1))))
+ (deftest test-ext-cs
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (fdc (+fdc u v w))
+         s empty-s
+         cs (ext-cs (.cs s) c s)]
+     (is (= (count (.km cs)) 2))
+     (is (= (count (.cm cs)) 1))))
 
-(deftest test-update-cs
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))
-        s ((update-cs c) empty-s)]
-    (is (= (count (.km (.cs s))) 2))
-    (is (= (count (.cm (.cs s))) 1))))
+ (deftest test-update-cs
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (fdc (+fdc u v w))
+         s ((update-cs c) empty-s)]
+     (is (= (count (.km (.cs s))) 2))
+     (is (= (count (.cm (.cs s))) 1))))
 
-(deftest test-purge-c
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))
-        s ((update-cs c) empty-s)
-        c (first (get (.cs s) u))
-        s (-> s
-              (ext-no-check u 1)
-              (ext-no-check w 2))
-        s ((update-cs c) s)]
-    (is (zero? (count (.km (.cs s)))))
-    (is (zero? (count (.cm (.cs s)))))))
+ (deftest test-purge-c
+   (let [u (lvar 'u)
+         v 1
+         w (lvar 'w)
+         c (fdc (+fdc u v w))
+         s ((update-cs c) empty-s)
+         c (first (get (.cs s) u))
+         s (-> s
+               (ext-no-check u 1)
+               (ext-no-check w 2))
+         s ((update-cs c) s)]
+     (is (zero? (count (.km (.cs s)))))
+     (is (zero? (count (.cm (.cs s)))))))
 
-(deftest test-=fd-1
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 6))
-              (unify y (interval 5 10)))
-        s ((=fd x y) s)]
-    (is (= 2 (count (.km (.cs s)))))
-    (is (= 1 (count (.cm (.cs s)))))
-    (is (= (walk s x) (interval 5 6)))
-    (is (= (walk s y) (interval 5 6)))))
+ (deftest test-=fd-1
+   (let [x (lvar 'x)
+         y (lvar 'y)
+         s (-> empty-s
+               (unify x (interval 1 6))
+               (unify y (interval 5 10)))
+         s ((=fd x y) s)]
+     (is (= 2 (count (.km (.cs s)))))
+     (is (= 1 (count (.cm (.cs s)))))
+     (is (= (walk s x) (interval 5 6)))
+     (is (= (walk s y) (interval 5 6)))))
 
-(deftest test-=fd-2
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s ((=fd x y) empty-s)
-        s ((== x (interval 1 6)) s)
-        s ((== y (interval 5 10)) s)]
-    (is (= 2 (count (.km (.cs s)))))
-    (is (= 1 (count (.cm (.cs s)))))
-    (is (= (walk s x) (interval 5 6)))
-    (is (= (walk s y) (interval 5 6)))))
+ (deftest test-=fd-2
+   (let [x (lvar 'x)
+         y (lvar 'y)
+         s ((=fd x y) empty-s)
+         s ((== x (interval 1 6)) s)
+         s ((== y (interval 5 10)) s)]
+     (is (= 2 (count (.km (.cs s)))))
+     (is (= 1 (count (.cm (.cs s)))))
+     (is (= (walk s x) (interval 5 6)))
+     (is (= (walk s y) (interval 5 6)))))
 
-(deftest test-!=fd-1
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s ((!=fd x y) empty-s)
-        s ((== x (interval 1 6)) s)
-        s ((== y (interval 5 10)) s)]
-    (is (= 0 (count (.km (.cs s)))))
-    (is (= 0 (count (.cm (.cs s)))))
-    (is (= (walk s x) (interval 1 4)))
-    (is (= (walk s y) (interval 7 10)))))
+ (deftest test-!=fd-1
+   (let [x (lvar 'x)
+         y (lvar 'y)
+         s ((!=fd x y) empty-s)
+         s ((== x (interval 1 6)) s)
+         s ((== y (interval 5 10)) s)]
+     (is (= 0 (count (.km (.cs s)))))
+     (is (= 0 (count (.cm (.cs s)))))
+     (is (= (walk s x) (interval 1 4)))
+     (is (= (walk s y) (interval 7 10)))))
 
-(deftest test-multi-interval-1
-  (let [mi (multi-interval (interval 1 3) (interval 7 10))]
-    (is (= 1 (lb mi)))
-    (is (= 10 (ub mi)))))
+ (deftest test-multi-interval-1
+   (let [mi (multi-interval (interval 1 3) (interval 7 10))]
+     (is (= 1 (lb mi)))
+     (is (= 10 (ub mi)))))
 
-(deftest test-run-constraints*
-  (is (= (run-constraints* [] []) s#)))
-
+ (deftest test-run-constraints*
+   (is (= (run-constraints* [] []) s#)))
+ )
 ;; +fd constraint test

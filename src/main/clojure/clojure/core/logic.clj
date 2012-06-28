@@ -286,7 +286,7 @@
       (if (s that)
         true
         false)
-      (contains?* s that)))
+      (member?* s that)))
   (disjoint? [this that]
     (if (integer? that)
       (not (member? this that))
@@ -410,9 +410,9 @@
   ([ub] (IntervalFD. 0 ub))
   ([lb ub] (IntervalFD. lb ub)))
 
-(deftype MultiIntervalFD [min max rs]
+(deftype MultiIntervalFD [min max is]
   clojure.lang.Seqable
-  (seq [_] rs)
+  (seq [_] (seq is))
   IRefinable
   (refinable? [_] true)
   IRefine
@@ -426,9 +426,12 @@
 (defn normalize-intervals [is]
   )
 
-(defn multi-interval
-  [i0 i1 & is]
-  (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))
+(defn multi-interval [i0 i1]
+  (let [is [i0 i1]]
+   (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is)))
+
+(defmethod print-method MultiIntervalFD [x ^Writer writer]
+  (.write writer (str "<intervals:" (apply pr-str (.is x)) ">")))
 
 (defn var-rands [c]
   (into [] (filter lvar? (rands c))))
