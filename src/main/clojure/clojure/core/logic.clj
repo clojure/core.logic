@@ -137,8 +137,12 @@
   (member? [this that])
   (disjoint? [this that])
   (intersects? [this that])
-  (subsumes? [this that])
-  (intersection [this that])
+  (subsumes? [this that]))
+
+(defprotocol IIntersection
+  (intersection [this that]))
+
+(defprotocol IDifference
   (difference [this that]))
 
 (extend-type Object
@@ -291,10 +295,12 @@
     (if (integer? that)
       (not (member? this that))
       (disjoint?* this that)))
+  IIntersection
   (intersection [this that]
     (if (integer? that)
       (when (member? this that) that)
       (intersection* this that)))
+  IDifference
   (difference [this that]
     (if (integer? that)
       (domain (disj s that))
@@ -329,11 +335,13 @@
        (if (integer? that#)
          (not= this# that#)
          (disjoint? that# this#)))
+     IIntersection
      (~'intersection [this# that#]
        (if (integer? that#)
          (when (= this# that#)
            this#)
          (intersection that# this#)))
+     IDifference
      (~'difference [this# that#]
        (if (integer? that#)
          (if (= this# that#)
@@ -389,12 +397,14 @@
     (if (integer? that)
       (not (member? this that))
       (disjoint?* this that)))
+  IIntersection
   (intersection [this that]
     (if (integer? that)
       (if (member? this that)
         that
         nil)
       (intersection* this that)))
+  IDifference
   (difference [this that]
     (if (integer? that)
       (if (member? this that)
