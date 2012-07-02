@@ -27,10 +27,6 @@ Future Roadmap
 * **Environment Trimming** - Definite Clause Grammars (DCGs) are quite slow in miniKanren. This may be due to a lack of groundness analysis or it may be because we are not trimming the environment of needless logic variables. It looks like the original Kanren paper may have some good approaches.
 * **Groundness Analysis** - Initial research on feasibility done. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult. Perhaps limit optimization to DCGs and pattern matching sugar. Again, the original Kanren paper may have insights here.
 
-Future Things
-----
-* **Negation** - Stratified Negation as provided by XSB ?
-
 Examples
 ----
 
