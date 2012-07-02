@@ -1322,6 +1322,9 @@
     (is (= (prefix sp s)
            (list (pair y 2) (pair x 1))))))
 
+(deftest test-singleton-interval
+  (is (= (interval 1 1) 1)))
+
 (deftest test-interval-<
   (is (interval-< (interval 1 10) (interval 11 20)))
   (is (interval-< 1 (interval 11 20))))

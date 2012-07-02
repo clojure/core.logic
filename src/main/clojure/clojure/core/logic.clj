@@ -408,7 +408,10 @@
 
 (defn ^IntervalFD interval
   ([ub] (IntervalFD. 0 ub))
-  ([lb ub] (IntervalFD. lb ub)))
+  ([lb ub]
+     (if (zero? (- ub lb))
+       ub
+       (IntervalFD. lb ub))))
 
 (deftype MultiIntervalFD [min max is]
   clojure.lang.Seqable
