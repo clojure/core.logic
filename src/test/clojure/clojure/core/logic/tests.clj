@@ -1505,27 +1505,45 @@
 ;; -----------------------------------------------------------------------------
 ;; MultiIntervalFD Difference
 
+;; |---| |---|
+;;         |---| |---|
 (deftest test-difference-mimi-1
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
         mi1 (multi-interval (interval 9 13) (interval 17 20))]
     (is (= (difference mi0 mi1)
            (multi-interval (interval 1 4) (interval 6 8))))))
 
+;; |---|  |---|
+;;         N      
 (deftest test-difference-mis-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 8)
            (multi-interval (interval 1 4) 7 (interval 9 10))))))
 
+;;       N
+;; |---|   |---|
 (deftest test-difference-smi-2
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))]
     (is (= (difference 5 mi0) 5))))
 
+;; |---|   |---|
+;;   |-------|
+;;
+;;   |-------|
+;; |---|   |---|
 (deftest test-difference-mii-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 (interval 3 8))
            (multi-interval (interval 1 2) (interval 9 10))))
     (is (= (difference (interval 3 8) mi0)
            (interval 5 6)))))
+
+;; |---|  |---|
+;; |-------| |----|
+(deftest test-difference-mimi-2
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))
+        mi1 (multi-interval (interval 1 8) (interval 10 13))]
+    (is (= (difference mi0 mi1) 9))))
 
 (deftest test-fd-1
   (let [d (domain 1 2 3)]
