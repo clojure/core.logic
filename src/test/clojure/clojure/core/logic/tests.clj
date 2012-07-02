@@ -1487,17 +1487,17 @@
 ;; -----------------------------------------------------------------------------
 ;; MultiIntervalFD Difference
 
-(deftest test-difference-mimi-1
+#_(deftest test-difference-mimi-1
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
         mi1 (multi-interval (interval 9 13) (interval 17 20))]
     (is (= (difference mi0 mi1)
            (multi-interval (interval 1 4) (interval 6 8))))))
 
-(deftest test-difference-mimi-2
+#_(deftest test-difference-mimi-2
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))]
     (is (= (difference 5 mi0) 5))))
 
-(deftest test-difference-mii-1
+#_(deftest test-difference-mii-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 (interval 3 8))
            (multi-interval (interval 1 2) (interval 9 10))))
