@@ -426,8 +426,8 @@
     (if (disjoint? (interval (lb this) (ub this))
                    (interval (lb that) (ub that)))
     false
-    (let [d0 (seq this)
-          d1 (seq that)]
+    (let [d0 (intervals this)
+          d1 (intervals that)]
       (loop [d0 d0 d1 d1 r []]
         (if (nil? d0)
           true)))))

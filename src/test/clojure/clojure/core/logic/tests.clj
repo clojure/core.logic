@@ -1422,6 +1422,18 @@
   (is (true? (disjoint? (interval 1 6) (interval 10 16))))
   (is (true? (disjoint? (interval 10 16) (interval 1 6)))))
 
+(deftest test-member?-mimi-1
+  (is (false? (member? 20 (multi-interval (interval 1 3) 5 (interval 7 10)))))
+  (is (false? (member? (multi-interval (interval 1 3) 5 (interval 7 10)) 20)))
+  (is (false? (member? (interval 20 30) (multi-interval (interval 1 3) 5 (interval 7 10)))))
+  (is (false? (member? (multi-interval (interval 1 3) 5 (interval 7 10)) (interval 20 30)))))
+
+(deftest test-disjoint?-mimi-1
+  (is (true? (disjoint? 20 (multi-interval (interval 1 3) 5 (interval 7 10)))))
+  (is (true? (disjoint? (multi-interval (interval 1 3) 5 (interval 7 10)) 20)))
+  (is (true? (disjoint? (interval 20 30) (multi-interval (interval 1 3) 5 (interval 7 10)))))
+  (is (true? (disjoint? (multi-interval (interval 1 3) 5 (interval 7 10)) (interval 20 30)))))
+
 (deftest test-fd-1
   (let [d (domain 1 2 3)]
     (is (= (lb d) 1))
