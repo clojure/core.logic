@@ -1417,10 +1417,20 @@
          nil)))
 
 (deftest test-disjoint?-ii-1
-  (is (false? (disjoint? (interval 1 6) (interval 5 10)))))
+  (is (false? (disjoint? (interval 1 6) (interval 5 10))))
+  (is (false? (disjoint? (interval 5 10) (interval 1 6))))
+  (is (true? (disjoint? (interval 1 6) (interval 10 16))))
+  (is (true? (disjoint? (interval 10 16) (interval 1 6)))))
 
-(deftest test-disjoint?-ii-2
-  (is (false? (disjoint? (interval 5 10) (interval 1 6)))))
+(deftest test-fd-1
+  (let [d (domain 1 2 3)]
+    (is (= (lb d) 1))
+    (is (= (ub d) 3))))
+
+(deftest test-fd-2
+  (let [d (domain 1 2 3)]
+    (is (= (normalize-intervals (intervals d))
+           (interval 1 3)))))
 
 (deftest test-recover-vars []
   (let [x (lvar 'x)

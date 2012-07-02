@@ -128,6 +128,9 @@
   (ub [this])
   (bounds [this]))
 
+(defprotocol IIntervals
+  (intervals [this]))
+
 (defprotocol ISortedDomain
   (drop-before [this n])
   (keep-before [this n]))
@@ -241,10 +244,12 @@
   (difference [this that]
     (if (integer? that)
       (domain (disj s that))
-      (difference that this))))
+      (difference that this)))
+  IIntervals
+  (intervals [_] (seq s)))
 
-(defn domain [args]
-  (let [s (into sorted-set args)]
+(defn domain [& args]
+  (let [s (into (sorted-set) args)]
     (FiniteDomain. s (first s) (first (rseq s)))))
 
 (defmacro extend-to-fd [t]
@@ -449,11 +454,26 @@
 
 ;; union where possible
 (defn normalize-intervals [is]
-  )
+  (apply multi-interval
+         (reduce (fn [r i]
+                   (if (zero? (count r))
+                     (conj r i)
+                     (let [j (peek r)
+                           jmax (ub j)
+                           imin (lb i)]
+                       (if (<= (dec imin) jmax)
+                         (conj (pop r) (interval (lb j) (ub i)))
+                         (conj r i)))))
+                 [] is)))
 
-(defn multi-interval [i0 i1]
-  (let [is [i0 i1]]
-   (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is)))
+(defn multi-interval
+  ([i0] i0)
+  ([i0 i1]
+     (let [is [i0 i1]]
+       (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is)))
+  ([i0 i1 & ir]
+     (let [is (into [] (list i0 i1) ir)]
+       (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))))
 
 (defmethod print-method MultiIntervalFD [x ^Writer writer]
   (.write writer (str "<intervals:" (apply pr-str (.is x)) ">")))
