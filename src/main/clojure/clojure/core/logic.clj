@@ -284,7 +284,7 @@
          (if (= this# that#)
            nil
            this#)
-         (intersection that# this#)))))
+         (difference that# this#)))))
 
 (extend-to-fd java.lang.Byte)
 (extend-to-fd java.lang.Short)
@@ -351,19 +351,49 @@
      :else (disjoint? that this)))
   IIntersection
   (intersection [this that]
-    (if (integer? that)
-      (if (member? this that)
-        that
-        nil)
-      (intersection this that)))
+    (cond
+     (integer? that) (if (member? this that)
+                       that
+                       nil)
+     (interval? that) (let [i this j that
+                            imin (lb i) imax (ub i)
+                            jmin (lb j) jmax (ub j)]
+                        (cond
+                         (< imax jmin) nil
+                         (< jmax imin) nil
+                         (and (<= imin jmin)
+                              (>= imax jmax)) j
+                         (and (<= jmin imin)
+                              (>= jmax imax)) i
+                         (and (<= imin jmin)
+                              (<= imax jmax)) (interval jmin imax)
+                         (and (<= jmin imin)
+                              (<= jmax imax)) (interval imin jmax)
+                         :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
+     :else (intersection that this)))
   IDifference
   (difference [this that]
-    (if (integer? that)
-      (if (member? this that)
-        (multi-interval (interval _lb (dec that))
-                        (interval (inc that) _ub))
-        this)
-      (difference this that))))
+    (cond
+     (integer? that) (if (member? this that)
+                       (multi-interval (interval _lb (dec that))
+                                       (interval (inc that) _ub))
+                       this)
+     (interval? that) (let [i this j that
+                            imin (lb i) imax (ub i)
+                            jmin (lb j) jmax (ub j)]
+                        (cond
+                         (> jmin imax) i
+                         (and (<= jmin imin)
+                              (>= jmax imax)) nil
+                         (and (< imin jmin)
+                              (> imax jmax)) (multi-interval (interval imin (dec jmin))
+                                                             (interval (inc jmax) imax))
+                         (and (< imin jmin)
+                              (<= jmin imax)) (interval imin (dec jmin))
+                         (and (> imax jmax)
+                              (<= jmin imin)) (interval (inc jmax) imax)
+                         :else (throw (Error. (str "Interval difference not defined " i " " j)))))
+     :else (difference that this))))
 
 (defn interval? [x]
   (instance? IntervalFD x))
@@ -412,31 +442,10 @@
                (interval-> i j) (recur d0 (next d1))
                :else false)))))))
   IIntersection
-  (intersection [this that]
-    (let [i this
-          j that
-          imin (lb i) imax (ub i)
-          jmin (lb j) jmax (ub j)]
-     (cond
-      (> jmin imax) i
-      (and (<= jmin imin) (>= jmax imax)) nil
-      (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
-                                                        (interval (inc jmax) imax))
-      (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
-      (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax))))
+  (intersection [this that])
   IDifference
   (difference [this that]
-    (let [i this
-          j that
-          imin (lb i) imax (ub i)
-          jmin (lb j) jmax (ub j)]
-      (cond
-       (> jmin imax) i
-       (and (<= jmin imin) (>= jmax imax)) nil
-       (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
-                                                         (interval (inc jmax) imax))
-       (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
-       (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax)))))
+    ))
 
 ;; union where possible
 (defn normalize-intervals [is]
