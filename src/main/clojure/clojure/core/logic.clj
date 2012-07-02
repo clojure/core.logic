@@ -208,69 +208,6 @@
 (defn interval-> [i j]
   (> (lb i) (ub j)))
 
-(defn interval-disjoint? [i j]
-  (let [[imin imax] (bounds i)
-        [jmin jmax] (bounds j)]
-    (or (> imin jmax)
-        (< imax jmin))))
-
-(defn interval-member? [i j]
-  (let [[imin imax] (bounds i)
-        [jmin jmax] (bounds j)]
-    (and (>= jmin imin)
-         (<= jmax imax))))
-
-(defn interval-intersection [i j]
-  )
-
-(defn interval-difference [i j]
-  (let [imin (lb i) imax (ub i)
-        jmin (lb j) jmax (ub j)]
-    (cond
-     (> jmin imax) i
-     (and (<= jmin imin) (>= jmax imax)) nil
-     (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
-                                                       (interval (inc jmax) imax))
-     (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
-     (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax))))
-
-(defn disjoint?* [d0 d1]
-  (if (disjoint? (interval (lb d0) (ub d0))
-                 (interval (lb d1) (ub d1)))
-    true
-    (let [d0 (seq d0)
-          d1 (seq d1)]
-      (loop [d0 d0 d1 d1]
-        (if (nil? d0)
-          true
-          (let [i (first d0)
-                j (first d1)]
-            (cond
-             (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
-             (interval-> i j) (recur d0 (next d1))
-             :else false)))))))
-
-(defn member?* [d0 d1]
-  (if (disjoint? (interval (lb d0) (ub d0))
-                 (interval (lb d1) (ub d1)))
-    false
-    (let [d0 (seq d0)
-          d1 (seq d1)]
-      (loop [d0 d0 d1 d1 r []]
-        (if (nil? d0)
-          r
-          )))))
-
-(defn intersection* [d0 d1]
-  (let [d0 (seq d0)
-        d1 (seq d1)]
-    ))
-
-(defn difference* [d0 d1]
-  (let [d0 (seq d0)
-        d1 (seq d1)]
-    ))
-
 (declare domain)
 
 (deftype FiniteDomain [s min max]
@@ -290,21 +227,21 @@
       (if (s that)
         true
         false)
-      (member?* s that)))
+      (member? s that)))
   (disjoint? [this that]
     (if (integer? that)
       (not (member? this that))
-      (disjoint?* this that)))
+      (disjoint? this that)))
   IIntersection
   (intersection [this that]
     (if (integer? that)
       (when (member? this that) that)
-      (intersection* this that)))
+      (intersection this that)))
   IDifference
   (difference [this that]
     (if (integer? that)
       (domain (disj s that))
-      (difference* this that))))
+      (difference that this))))
 
 (defn domain [args]
   (let [s (into sorted-set args)]
@@ -356,6 +293,8 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
+(declare interval?)
+
 (deftype IntervalFD [_lb _ub]
   Object
   (equals [_ o]
@@ -390,20 +329,33 @@
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]
-    (if (integer? that)
-      (and (>= that _lb) (<= that _ub))
-      (member?* this that)))
+    (cond
+     (integer? that) (and (>= that _lb) (<= that _ub))
+     (interval? that) (let [i this
+                            j that
+                            [imin imax] (bounds i)
+                            [jmin jmax] (bounds j)]
+                        (and (>= jmin imin)
+                             (<= jmax imax)))
+     
+     :else (member? that this)))
   (disjoint? [this that]
-    (if (integer? that)
-      (not (member? this that))
-      (disjoint?* this that)))
+    (cond
+     (integer? that) (not (member? this that))
+     (interval? that) (let [i this
+                            j that
+                            [imin imax] (bounds i)
+                            [jmin jmax] (bounds j)]
+                        (or (> imin jmax)
+                            (< imax jmin)))
+     :else (disjoint? that this)))
   IIntersection
   (intersection [this that]
     (if (integer? that)
       (if (member? this that)
         that
         nil)
-      (intersection* this that)))
+      (intersection this that)))
   IDifference
   (difference [this that]
     (if (integer? that)
@@ -411,7 +363,10 @@
         (multi-interval (interval _lb (dec that))
                         (interval (inc that) _ub))
         this)
-      (difference* this that))))
+      (difference this that))))
+
+(defn interval? [x]
+  (instance? IntervalFD x))
 
 (defmethod print-method IntervalFD [x ^Writer writer]
   (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
@@ -430,7 +385,58 @@
   IInterval
   (lb [_] min)
   (ub [_] max)
-  (bounds [_] (pair min max))  )
+  (bounds [_] (pair min max))
+  IFiniteDomain
+  (member? [this that]
+    (if (disjoint? (interval (lb this) (ub this))
+                   (interval (lb that) (ub that)))
+    false
+    (let [d0 (seq this)
+          d1 (seq that)]
+      (loop [d0 d0 d1 d1 r []]
+        (if (nil? d0)
+          true)))))
+  (disjoint? [this that]
+    (if (disjoint? (interval (lb this) (ub this))
+                   (interval (lb that) (ub that)))
+      true
+      (let [d0 (seq this)
+            d1 (seq that)]
+        (loop [d0 d0 d1 d1]
+          (if (nil? d0)
+            true
+            (let [i (first d0)
+                  j (first d1)]
+              (cond
+               (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
+               (interval-> i j) (recur d0 (next d1))
+               :else false)))))))
+  IIntersection
+  (intersection [this that]
+    (let [i this
+          j that
+          imin (lb i) imax (ub i)
+          jmin (lb j) jmax (ub j)]
+     (cond
+      (> jmin imax) i
+      (and (<= jmin imin) (>= jmax imax)) nil
+      (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
+                                                        (interval (inc jmax) imax))
+      (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
+      (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax))))
+  IDifference
+  (difference [this that]
+    (let [i this
+          j that
+          imin (lb i) imax (ub i)
+          jmin (lb j) jmax (ub j)]
+      (cond
+       (> jmin imax) i
+       (and (<= jmin imin) (>= jmax imax)) nil
+       (and (< imin jmin) (> imax jmax)) (multi-interval (interval imin (dec jmin))
+                                                         (interval (inc jmax) imax))
+       (and (< imin jmin) (<= jmin imax)) (interval imin (dec jmin))
+       (and (> imax jmax) (<= jmin imin)) (interval (inc jmax) imax)))))
 
 ;; union where possible
 (defn normalize-intervals [is]
