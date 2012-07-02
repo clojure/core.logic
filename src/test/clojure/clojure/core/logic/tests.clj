@@ -1383,13 +1383,13 @@
 
 (deftest test-difference-is-1
   (let [mi (difference (interval 1 10) 5)]
-    (is (= (first (seq mi)) (interval 1 4)))
-    (is (= (second (seq mi)) (interval 6 10)))))
+    (is (= (first (intervals mi)) (interval 1 4)))
+    (is (= (second (intervals mi)) (interval 6 10)))))
 
 (deftest test-difference-si-1
   (let [mi (difference 5 (interval 1 10))]
-    (is (= (first (seq mi)) (interval 1 4)))
-    (is (= (second (seq mi)) (interval 6 10)))))
+    (is (= (first (intervals mi)) (interval 1 4)))
+    (is (= (second (intervals mi)) (interval 6 10)))))
 
 (deftest test-intersection-ii-1
   (is (= (intersection (interval 1 6) (interval 5 10))
@@ -1437,6 +1437,14 @@
   (is (true? (disjoint? (interval 20 30) (multi-interval (interval 1 3) 5 (interval 7 10)))))
   (is (true? (disjoint? (multi-interval (interval 1 3) 5 (interval 7 10)) (interval 20 30)))))
 
+(deftest test-equals-mi
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
+        mi1 (multi-interval (interval 1 4) (interval 6 10))]
+    (is (= mi0 mi1))))
+
+;; -----------------------------------------------------------------------------
+;; MultiIntervalFD Intersection
+
 (deftest test-intersection-mimi-1
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
         mi1 (multi-interval (interval 9 13) (interval 17 20))]
@@ -1448,16 +1456,59 @@
     (is (= (intersection mi0 7) 7))
     (is (= (intersection 7 mi0) 7))))
 
-(deftest test-equals-mi
-  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
-        mi1 (multi-interval (interval 1 4) (interval 6 10))]
-    (is (= mi0 mi1))))
+;; |-----| 
+;;   |-----|
+(deftest test-intersection-mimi-3
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
+    (is (= (intersection mi0 (interval 3 8))
+           (multi-interval (interval 3 4) (interval 7 8))))))
+
+;; |-----|
+;;  |---|
+(deftest test-intersection-mimi-4
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))
+        mi1 (multi-interval (interval 2 3) (interval 6 9))]
+    (is (= (intersection mi0 mi1)
+           (multi-interval (interval 2 3) (interval 7 9))))))
+
+;;   |-----|
+;; |-----|
+(deftest test-intersection-mimi-5
+  (let [mi0 (multi-interval (interval 4 8) (interval 12 16))
+        mi1 (multi-interval (interval 1 5) (interval 7 15))]
+    (is (= (intersection mi0 mi1)
+           (multi-interval (interval 4 5) (interval 7 8) (interval 12 15))))))
+
+;;  |---|
+;; |-----|
+#_(deftest test-intersection-mimi-6
+  (let [mi0 (multi-interval )]))
+
+;; -----------------------------------------------------------------------------
+;; MultiIntervalFD Difference
 
 (deftest test-difference-mimi-1
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
         mi1 (multi-interval (interval 9 13) (interval 17 20))]
     (is (= (difference mi0 mi1)
            (multi-interval (interval 1 4) (interval 6 8))))))
+
+(deftest test-difference-mimi-2
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))]
+    (is (= (difference 5 mi0) 5))))
+
+(deftest test-difference-mii-1
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
+    (is (= (difference mi0 (interval 3 8))
+           (multi-interval (interval 1 2) (interval 9 10))))
+    (is (= (difference (interval 3 8) mi0)
+           (interval 5 6)))))
+
+(comment
+  ;; what's wrong here?
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
+    (difference (interval 3 8) mi0))
+  )
 
 (deftest test-fd-1
   (let [d (domain 1 2 3)]

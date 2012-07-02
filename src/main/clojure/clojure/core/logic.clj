@@ -252,6 +252,8 @@
   (let [s (into (sorted-set) args)]
     (FiniteDomain. s (first s) (first (rseq s)))))
 
+(declare interval? difference* intersection*)
+
 (defmacro extend-to-fd [t]
   `(extend-type ~t
      IInterval
@@ -279,17 +281,19 @@
          (disjoint? that# this#)))
      IIntersection
      (~'intersection [this# that#]
-       (if (integer? that#)
-         (when (= this# that#)
-           this#)
-         (intersection that# this#)))
+       (cond
+        (integer? that#) (when (= this# that#)
+                           this#)
+        (interval? that#) (intersection that# this#)
+        :else (intersection* this# that#)))
      IDifference
      (~'difference [this# that#]
-       (if (integer? that#)
-         (if (= this# that#)
-           nil
-           this#)
-         (difference that# this#)))
+       (cond
+        (integer? that#) (if (= this# that#)
+                           nil
+                           this#)
+        (interval? that#) (difference that# this#)
+        :else (difference* this# that#)))
      IIntervals
      (~'intervals [this#]
        (list this#))))
@@ -376,7 +380,7 @@
                          (and (<= jmin imin)
                               (<= jmax imax)) (interval imin jmax)
                          :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
-     :else (intersection that this)))
+     :else (intersection* this that)))
   IDifference
   (difference [this that]
     (cond
@@ -399,7 +403,7 @@
                          (and (> imax jmax)
                               (<= jmin imin)) (interval (inc jmax) imax)
                          :else (throw (Error. (str "Interval difference not defined " i " " j)))))
-     :else (difference that this)))
+     :else (difference* this that)))
   IIntervals
   (intervals [this]
     (list this)))
@@ -416,6 +420,76 @@
      (if (zero? (- ub lb))
        ub
        (IntervalFD. lb ub))))
+
+(defn intersection* [is js]
+  (loop [is (seq (intervals is)) js (seq (intervals js)) r []]
+    (if (and is js)
+      (let [i (first is)
+            j (first js)]
+        (cond
+         (interval-< i j) (recur (next is) js r)
+         (interval-> i j) (recur is (next js) r)
+         :else (let [[imin imax] (bounds i)
+                     [jmin jmax] (bounds j)]
+                 (cond
+                  (<= imin jmin)
+                  (cond
+                   ;; |----|   i   |-----|   i
+                   ;; |-----|  j     |-----| j
+                   (< imax jmax)
+                   (recur (next is)
+                          (cons (interval (inc imax) jmax) (next js))
+                          (conj r (interval jmin imax)))
+ 
+                   ;; |-----|  i   |-----|   i
+                   ;; |----|   j    |---|    j
+                   (> imax jmax)
+                   (recur (cons (interval (inc jmax) imax) (next is))
+                                             (next js)
+                                             (conj r j))
+                  
+                   ;; |-----|  i
+                   ;;  |----|  j
+                   :else
+                   (recur (next is) (next js)
+                          (conj r (interval jmin jmax))))
+
+                  (> imin jmin)
+                  (cond
+                   ;;  |-----| i
+                   ;; |-----|  j
+                   (> imax jmax)
+                   (recur (cons (interval (inc jmax) imax) (next is))
+                          (next js)
+                          (conj r (interval imin jmax)))
+
+                   ;;  |---|   i
+                   ;; |-----|  j
+                   (< imax jmax)
+                   (recur is (cons (interval (inc imax) jmax) (next js))
+                          (conj r i))
+
+                   ;;  |----|  i
+                   ;; |-----|  j
+                   :else
+                   (recur (next is) (next js)
+                          (conj r (interval imin imax))))))))
+      (apply multi-interval r))))
+
+(defn difference* [is js]
+    (loop [is (seq (intervals is)) js (seq (intervals js)) r []]
+      (if (and is js)
+        (let [i (first is)
+              j (first js)]
+          (cond
+           (interval-< i j) (recur (next is) js (conj r i))
+           (interval-> i j) (recur is (next js) r)
+           :else (if-let [x (difference i j)]
+                   ;; todo
+                   (recur (next is) js r))))
+        (apply multi-interval r))))
+
+(declare normalize-intervals)
 
 (deftype MultiIntervalFD [min max is]
   Object
@@ -462,32 +536,10 @@
                :else false)))))))
   IIntersection
   (intersection [this that]
-    (loop [is (seq (intervals this)) js (seq (intervals that)) r []]
-      (if (and is js)
-        (let [i (first is)
-              j (first js)]
-         (cond
-          (interval-< i j) (recur (next is) js r)
-          (interval-> i j) (recur is (next js) r)
-          :else (let [nr (if-let [x (intersection i j)]
-                           (conj r x)
-                           r)]
-                  (recur (next is) (next js) nr))))
-        (apply multi-interval r))))
+    (intersection* this that))
   IDifference
   (difference [this that]
-    (loop [is (seq (intervals this)) js (seq (intervals that)) r []]
-      (if (and is js)
-        (let [i (first is)
-              j (first js)]
-          (cond
-           (interval-< i j) (recur (next is) js (conj r i))
-           (interval-> i j) (recur is (next js) r)
-           :else (let [nr (if-let [x (difference i j)]
-                            (into r (intervals x))
-                            r)]
-                   (recur (next is) (next js) nr))))
-        (apply multi-interval r))))
+    (difference* this that))
   IIntervals
   (intervals [this]
     (seq is)))
