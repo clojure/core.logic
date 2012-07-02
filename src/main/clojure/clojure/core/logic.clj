@@ -289,7 +289,10 @@
          (if (= this# that#)
            nil
            this#)
-         (difference that# this#)))))
+         (difference that# this#)))
+     IIntervals
+     (~'intervals [this#]
+       (list this#))))
 
 (extend-to-fd java.lang.Byte)
 (extend-to-fd java.lang.Short)
@@ -450,10 +453,22 @@
                (interval-> i j) (recur d0 (next d1))
                :else false)))))))
   IIntersection
-  (intersection [this that])
+  (intersection [this that]
+    (loop [is (seq (intervals this)) js (seq (intervals that)) r []]
+      (if (and is js)
+        (let [i (first is)
+              j (first js)]
+         (cond
+          (interval-< i j) (recur (next is) js r)
+          (interval-> i j) (recur is (next js) r)
+          :else (if-let [x (intersection i j)]
+                  (recur (next is) (next js) (conj r x))
+                  (recur (next is) (next js) r))))
+        (apply multi-interval r))))
   IDifference
   (difference [this that]
-    )
+    (loop [is (intervals this) js (intervals that)]
+      ))
   IIntervals
   (intervals [this]
     (seq is)))

@@ -1437,6 +1437,17 @@
   (is (true? (disjoint? (interval 20 30) (multi-interval (interval 1 3) 5 (interval 7 10)))))
   (is (true? (disjoint? (multi-interval (interval 1 3) 5 (interval 7 10)) (interval 20 30)))))
 
+(deftest test-intersection-mimi-1
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
+        mi1 (multi-interval (interval 9 13) (interval 17 20))]
+    (is (= (intersection mi0 mi1) (interval 9 10)))
+    (is (= (intersection mi1 mi0) (interval 9 10)))))
+
+(deftest test-intersection-mimi-2
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))]
+    (is (= (intersection mi0 7) 7))
+    (is (= (intersection 7 mi0) 7))))
+
 (deftest test-fd-1
   (let [d (domain 1 2 3)]
     (is (= (lb d) 1))
