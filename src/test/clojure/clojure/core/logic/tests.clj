@@ -1448,6 +1448,17 @@
     (is (= (intersection mi0 7) 7))
     (is (= (intersection 7 mi0) 7))))
 
+(deftest test-equals-mi
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
+        mi1 (multi-interval (interval 1 4) (interval 6 10))]
+    (is (= mi0 mi1))))
+
+(deftest test-difference-mimi-1
+  (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
+        mi1 (multi-interval (interval 9 13) (interval 17 20))]
+    (is (= (difference mi0 mi1)
+           (multi-interval (interval 1 4) (interval 6 8))))))
+
 (deftest test-fd-1
   (let [d (domain 1 2 3)]
     (is (= (lb d) 1))
@@ -1456,12 +1467,12 @@
 (deftest test-normalize-intervals-1
   (let [d (domain 1 2 3)]
     (is (= (normalize-intervals (intervals d))
-           (interval 1 3)))))
+           [(interval 1 3)]))))
 
 (deftest test-normalize-intervals-2
   (let [d (multi-interval (interval 1 4) 5 (interval 6 10))]
     (is (= (normalize-intervals (intervals d))
-           (interval 1 10)))))
+           [(interval 1 10)]))))
 
 (deftest test-recover-vars []
   (let [x (lvar 'x)

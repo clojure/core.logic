@@ -311,8 +311,6 @@
         (and (= _lb (._lb o))
              (= _ub (._ub o))))
       false))
-  clojure.lang.Seqable
-  (seq [this] (list this))
   IRefinable
   (refinable? [_] true)
   IRefine
@@ -401,7 +399,10 @@
                          (and (> imax jmax)
                               (<= jmin imin)) (interval (inc jmax) imax)
                          :else (throw (Error. (str "Interval difference not defined " i " " j)))))
-     :else (difference that this))))
+     :else (difference that this)))
+  IIntervals
+  (intervals [this]
+    (list this)))
 
 (defn interval? [x]
   (instance? IntervalFD x))
@@ -417,8 +418,15 @@
        (IntervalFD. lb ub))))
 
 (deftype MultiIntervalFD [min max is]
-  clojure.lang.Seqable
-  (seq [_] (seq is))
+  Object
+  (equals [this j]
+    (let [i this
+          [jmin jmax] (bounds j)]
+      (if (and (= min jmin) (= max jmax))
+        (let [is (normalize-intervals is)
+              js (normalize-intervals (intervals j))]
+          (= is js))
+        false)))
   IRefinable
   (refinable? [_] true)
   IRefine
@@ -461,31 +469,41 @@
          (cond
           (interval-< i j) (recur (next is) js r)
           (interval-> i j) (recur is (next js) r)
-          :else (if-let [x (intersection i j)]
-                  (recur (next is) (next js) (conj r x))
-                  (recur (next is) (next js) r))))
+          :else (let [nr (if-let [x (intersection i j)]
+                           (conj r x)
+                           r)]
+                  (recur (next is) (next js) nr))))
         (apply multi-interval r))))
   IDifference
   (difference [this that]
-    (loop [is (intervals this) js (intervals that)]
-      ))
+    (loop [is (seq (intervals this)) js (seq (intervals that)) r []]
+      (if (and is js)
+        (let [i (first is)
+              j (first js)]
+          (cond
+           (interval-< i j) (recur (next is) js (conj r i))
+           (interval-> i j) (recur is (next js) r)
+           :else (let [nr (if-let [x (difference i j)]
+                            (into r (intervals x))
+                            r)]
+                   (recur (next is) (next js) nr))))
+        (apply multi-interval r))))
   IIntervals
   (intervals [this]
     (seq is)))
 
 ;; union where possible
 (defn normalize-intervals [is]
-  (apply multi-interval
-         (reduce (fn [r i]
-                   (if (zero? (count r))
-                     (conj r i)
-                     (let [j (peek r)
-                           jmax (ub j)
-                           imin (lb i)]
-                       (if (<= (dec imin) jmax)
-                         (conj (pop r) (interval (lb j) (ub i)))
-                         (conj r i)))))
-                 [] is)))
+  (reduce (fn [r i]
+            (if (zero? (count r))
+              (conj r i)
+              (let [j (peek r)
+                    jmax (ub j)
+                    imin (lb i)]
+                (if (<= (dec imin) jmax)
+                  (conj (pop r) (interval (lb j) (ub i)))
+                  (conj r i)))))
+          [] is))
 
 (defn multi-interval
   ([i0] i0)
