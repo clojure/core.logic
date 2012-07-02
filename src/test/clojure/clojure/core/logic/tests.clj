@@ -1481,34 +1481,51 @@
 
 ;;  |---|
 ;; |-----|
-#_(deftest test-intersection-mimi-6
-  (let [mi0 (multi-interval )]))
+(deftest test-intersection-mimi-6
+  (let [mi0 (multi-interval (interval 1 3) (interval 5 6) (interval 8 10))
+        mi1 (multi-interval (interval 1 3) (interval 4 7) (interval 8 10))]
+    (is (= (intersection mi0 mi1)
+           (multi-interval (interval 1 3) (interval 5 6) (interval 8 10))))))
+
+;; |---|  |---|
+;; |-------|
+(deftest test-intersection-mimi-7
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
+    (is (= (intersection mi0 (interval 1 8))
+           (multi-interval (interval 1 4) (interval 7 8))))))
+
+;; |--------| |--|
+;; |---|  |-------|
+(deftest test-intersection-mimi-8
+  (let [mi0 (multi-interval (interval 1 7) (interval 9 10))
+        mi1 (multi-interval (interval 1 3) (interval 6 11))]
+    (is (= (intersection mi0 mi1)
+           (multi-interval (interval 1 3) (interval 6 7) (interval 9 10))))))
 
 ;; -----------------------------------------------------------------------------
 ;; MultiIntervalFD Difference
 
-#_(deftest test-difference-mimi-1
+(deftest test-difference-mimi-1
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))
         mi1 (multi-interval (interval 9 13) (interval 17 20))]
     (is (= (difference mi0 mi1)
            (multi-interval (interval 1 4) (interval 6 8))))))
 
-#_(deftest test-difference-mimi-2
+(deftest test-difference-mis-1
+  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
+    (is (= (difference mi0 8)
+           (multi-interval (interval 1 4) 7 (interval 9 10))))))
+
+(deftest test-difference-smi-2
   (let [mi0 (multi-interval (interval 1 4) (interval 6 10))]
     (is (= (difference 5 mi0) 5))))
 
-#_(deftest test-difference-mii-1
+(deftest test-difference-mii-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 (interval 3 8))
            (multi-interval (interval 1 2) (interval 9 10))))
     (is (= (difference (interval 3 8) mi0)
            (interval 5 6)))))
-
-(comment
-  ;; what's wrong here?
-  (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
-    (difference (interval 3 8) mi0))
-  )
 
 (deftest test-fd-1
   (let [d (domain 1 2 3)]

@@ -478,56 +478,58 @@
 
 (defn difference* [is js]
     (loop [is (seq (intervals is)) js (seq (intervals js)) r []]
-      (if (and is js)
-        (let [i (first is)
-              j (first js)]
-          (cond
-           (interval-< i j) (recur (next is) js (conj r i))
-           (interval-> i j) (recur is (next js) r)
-           :else (let [[imin imax] (bounds i)
-                       [jmin jmax] (bounds j)]
-                   (cond
-                    (< imin jmin)
-                    (cond
-                     ;; |-----|  i
-                     ;;  |---|   j
-                     (< jmax imax)
-                     (recur (cons (interval jmax max) (next is))
-                            (next js)
-                            (conj r (interval imin (dec jmin))))
+      (if is
+        (if js
+          (let [i (first is)
+                j (first js)]
+            (cond
+             (interval-< i j) (recur (next is) js (conj r i))
+             (interval-> i j) (recur is (next js) r)
+             :else (let [[imin imax] (bounds i)
+                         [jmin jmax] (bounds j)]
+                     (cond
+                      (< imin jmin)
+                      (cond
+                       ;; |-----|  i
+                       ;;  |---|   j
+                       (< jmax imax)
+                       (recur (cons (interval (inc jmax) imax) (next is))
+                              (next js)
+                              (conj r (interval imin (dec jmin))))
 
-                     ;; |-----|  i
-                     ;;  |-----| j
-                     (> jmax imax)
-                     (recur (next is)
-                            (cons (interval (inc imax) jmax) (next js))
-                            (conj r (interval imin (dec jmin))))
+                       ;; |-----|  i
+                       ;;  |-----| j
+                       (> jmax imax)
+                       (recur (next is)
+                              (cons (interval (inc imax) jmax) (next js))
+                              (conj r (interval imin (dec jmin))))
 
-                     ;; |-----|  i
-                     ;;  |----|  j
-                     :else
-                     (recur (next is) (next js)
-                            (conj r (interval imin (dec jmin)))))
-                    (>= imin jmin)
-                    (cond
-                     ;;  |---|   i
-                     ;; |-----|  j
-                     (< imax jmax)
-                     (recur (next is)
-                            (cons (interval (inc imax) jmax) (next js))
-                            r)
+                       ;; |-----|  i
+                       ;;  |----|  j
+                       :else
+                       (recur (next is) (next js)
+                              (conj r (interval imin (dec jmin)))))
+                      (>= imin jmin)
+                      (cond
+                       ;;  |---|   i
+                       ;; |-----|  j
+                       (< imax jmax)
+                       (recur (next is)
+                              (cons (interval (inc imax) jmax) (next js))
+                              r)
 
-                     ;;  |-----| i
-                     ;; |-----|  j
-                     (> imax jmax)
-                     (recur (cons (interval (inc jmax) imax) (next is))
-                            (next js)
-                            r)
+                       ;;  |-----| i
+                       ;; |-----|  j
+                       (> imax jmax)
+                       (recur (cons (interval (inc jmax) imax) (next is))
+                              (next js)
+                              r)
 
-                     ;;  |----|  i
-                     ;; |-----|  j
-                     :else (recur (next is) (next js)
-                                  r))))))
+                       ;;  |----|  i
+                       ;; |-----|  j
+                       :else (recur (next is) (next js)
+                                    r))))))
+          (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
 (declare normalize-intervals)
@@ -540,6 +542,7 @@
       (if (and (= min jmin) (= max jmax))
         (let [is (normalize-intervals is)
               js (normalize-intervals (intervals j))]
+          (println is js)
           (= is js))
         false)))
   IRefinable
