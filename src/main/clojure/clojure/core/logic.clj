@@ -450,7 +450,10 @@
   (intersection [this that])
   IDifference
   (difference [this that]
-    ))
+    )
+  IIntervals
+  (intervals [this]
+    (seq is)))
 
 ;; union where possible
 (defn normalize-intervals [is]
@@ -472,7 +475,7 @@
      (let [is [i0 i1]]
        (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is)))
   ([i0 i1 & ir]
-     (let [is (into [] (list i0 i1) ir)]
+     (let [is (into [] (concat (list i0 i1) ir))]
        (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))))
 
 (defmethod print-method MultiIntervalFD [x ^Writer writer]

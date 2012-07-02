@@ -1427,10 +1427,15 @@
     (is (= (lb d) 1))
     (is (= (ub d) 3))))
 
-(deftest test-fd-2
+(deftest test-normalize-intervals-1
   (let [d (domain 1 2 3)]
     (is (= (normalize-intervals (intervals d))
            (interval 1 3)))))
+
+(deftest test-normalize-intervals-2
+  (let [d (multi-interval (interval 1 4) 5 (interval 6 10))]
+    (is (= (normalize-intervals (intervals d))
+           (interval 1 10)))))
 
 (deftest test-recover-vars []
   (let [x (lvar 'x)
