@@ -351,69 +351,84 @@
   (domain? [_] true)
   (member? [this that]
     (cond
-     (integer? that) (and (>= that _lb) (<= that _ub))
-     (interval? that) (let [i this
-                            j that
-                            [imin imax] (bounds i)
-                            [jmin jmax] (bounds j)]
-                        (and (>= jmin imin)
-                             (<= jmax imax)))
+     (integer? that)
+     (and (>= that _lb) (<= that _ub))
+     
+     (interval? that)
+     (let [i this
+           j that
+           [imin imax] (bounds i)
+           [jmin jmax] (bounds j)]
+       (and (>= jmin imin)
+            (<= jmax imax)))
      
      :else (member? that this)))
   (disjoint? [this that]
     (cond
-     (integer? that) (not (member? this that))
-     (interval? that) (let [i this
-                            j that
-                            [imin imax] (bounds i)
-                            [jmin jmax] (bounds j)]
-                        (or (> imin jmax)
-                            (< imax jmin)))
+     (integer? that)
+     (not (member? this that))
+
+     (interval? that)
+     (let [i this
+           j that
+           [imin imax] (bounds i)
+           [jmin jmax] (bounds j)]
+       (or (> imin jmax)
+           (< imax jmin)))
+
      :else (disjoint? that this)))
   IIntersection
   (intersection [this that]
     (cond
-     (integer? that) (if (member? this that)
-                       that
-                       nil)
-     (interval? that) (let [i this j that
-                            imin (lb i) imax (ub i)
-                            jmin (lb j) jmax (ub j)]
-                        (cond
-                         (< imax jmin) nil
-                         (< jmax imin) nil
-                         (and (<= imin jmin)
-                              (>= imax jmax)) j
-                         (and (<= jmin imin)
-                              (>= jmax imax)) i
-                         (and (<= imin jmin)
-                              (<= imax jmax)) (interval jmin imax)
-                         (and (<= jmin imin)
-                              (<= jmax imax)) (interval imin jmax)
-                         :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
+     (integer? that)
+     (if (member? this that)
+       that
+       nil)
+
+     (interval? that)
+     (let [i this j that
+           imin (lb i) imax (ub i)
+           jmin (lb j) jmax (ub j)]
+       (cond
+        (< imax jmin) nil
+        (< jmax imin) nil
+        (and (<= imin jmin)
+             (>= imax jmax)) j
+        (and (<= jmin imin)
+             (>= jmax imax)) i
+        (and (<= imin jmin)
+             (<= imax jmax)) (interval jmin imax)
+        (and (<= jmin imin)
+             (<= jmax imax)) (interval imin jmax)
+        :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
+
      :else (intersection* this that)))
   IDifference
   (difference [this that]
     (cond
-     (integer? that) (if (member? this that)
-                       (multi-interval (interval _lb (dec that))
-                                       (interval (inc that) _ub))
-                       this)
-     (interval? that) (let [i this j that
-                            imin (lb i) imax (ub i)
-                            jmin (lb j) jmax (ub j)]
-                        (cond
-                         (> jmin imax) i
-                         (and (<= jmin imin)
-                              (>= jmax imax)) nil
-                         (and (< imin jmin)
-                              (> imax jmax)) (multi-interval (interval imin (dec jmin))
-                                                             (interval (inc jmax) imax))
-                         (and (< imin jmin)
-                              (<= jmin imax)) (interval imin (dec jmin))
-                         (and (> imax jmax)
-                              (<= jmin imin)) (interval (inc jmax) imax)
-                         :else (throw (Error. (str "Interval difference not defined " i " " j)))))
+     (integer? that)
+     (if (member? this that)
+       (multi-interval (interval _lb (dec that))
+                       (interval (inc that) _ub))
+       this)
+     
+     (interval? that)
+     (let [i this j that
+           imin (lb i) imax (ub i)
+           jmin (lb j) jmax (ub j)]
+       (cond
+        (> jmin imax) i
+        (and (<= jmin imin)
+             (>= jmax imax)) nil
+        (and (< imin jmin)
+             (> imax jmax)) (multi-interval (interval imin (dec jmin))
+             (interval (inc jmax) imax))
+        (and (< imin jmin)
+             (<= jmin imax)) (interval imin (dec jmin))
+        (and (> imax jmax)
+             (<= jmin imin)) (interval (inc jmax) imax)
+        :else (throw (Error. (str "Interval difference not defined " i " " j)))))
+     
      :else (difference* this that)))
   IIntervals
   (intervals [this]
@@ -440,51 +455,52 @@
         (cond
          (interval-< i j) (recur (next is) js r)
          (interval-> i j) (recur is (next js) r)
-         :else (let [[imin imax] (bounds i)
-                     [jmin jmax] (bounds j)]
-                 (cond
-                  (<= imin jmin)
-                  (cond
-                   ;; |----|   i   |-----|   i
-                   ;; |-----|  j     |-----| j
-                   (< imax jmax)
-                   (recur (next is)
-                          (cons (interval (inc imax) jmax) (next js))
-                          (conj r (interval jmin imax)))
+         :else
+         (let [[imin imax] (bounds i)
+               [jmin jmax] (bounds j)]
+           (cond
+            (<= imin jmin)
+            (cond
+             ;; |----|   i   |-----|   i
+             ;; |-----|  j     |-----| j
+             (< imax jmax)
+             (recur (next is)
+                    (cons (interval (inc imax) jmax) (next js))
+                    (conj r (interval jmin imax)))
  
-                   ;; |-----|  i   |-----|   i
-                   ;; |----|   j    |---|    j
-                   (> imax jmax)
-                   (recur (cons (interval (inc jmax) imax) (next is))
-                                             (next js)
-                                             (conj r j))
+             ;; |-----|  i   |-----|   i
+             ;; |----|   j    |---|    j
+             (> imax jmax)
+             (recur (cons (interval (inc jmax) imax) (next is))
+                    (next js)
+                    (conj r j))
                   
-                   ;; |-----|  i
-                   ;;  |----|  j
-                   :else
-                   (recur (next is) (next js)
-                          (conj r (interval jmin jmax))))
+             ;; |-----|  i
+             ;;  |----|  j
+             :else
+             (recur (next is) (next js)
+                    (conj r (interval jmin jmax))))
 
-                  (> imin jmin)
-                  (cond
-                   ;;  |-----| i
-                   ;; |-----|  j
-                   (> imax jmax)
-                   (recur (cons (interval (inc jmax) imax) (next is))
-                          (next js)
-                          (conj r (interval imin jmax)))
+            (> imin jmin)
+            (cond
+             ;;  |-----| i
+             ;; |-----|  j
+             (> imax jmax)
+             (recur (cons (interval (inc jmax) imax) (next is))
+                    (next js)
+                    (conj r (interval imin jmax)))
 
-                   ;;  |---|   i
-                   ;; |-----|  j
-                   (< imax jmax)
-                   (recur is (cons (interval (inc imax) jmax) (next js))
-                          (conj r i))
+             ;;  |---|   i
+             ;; |-----|  j
+             (< imax jmax)
+             (recur is (cons (interval (inc imax) jmax) (next js))
+                    (conj r i))
 
-                   ;;  |----|  i
-                   ;; |-----|  j
-                   :else
-                   (recur (next is) (next js)
-                          (conj r (interval imin imax))))))))
+             ;;  |----|  i
+             ;; |-----|  j
+             :else
+             (recur (next is) (next js)
+                    (conj r (interval imin imax))))))))
       (apply multi-interval r))))
 
 (defn difference* [is js]
@@ -496,50 +512,51 @@
             (cond
              (interval-< i j) (recur (next is) js (conj r i))
              (interval-> i j) (recur is (next js) r)
-             :else (let [[imin imax] (bounds i)
-                         [jmin jmax] (bounds j)]
-                     (cond
-                      (< imin jmin)
-                      (cond
-                       ;; |-----|  i
-                       ;;  |---|   j
-                       (< jmax imax)
-                       (recur (cons (interval (inc jmax) imax) (next is))
-                              (next js)
-                              (conj r (interval imin (dec jmin))))
+             :else
+             (let [[imin imax] (bounds i)
+                   [jmin jmax] (bounds j)]
+               (cond
+                (< imin jmin)
+                (cond
+                 ;; |-----|  i
+                 ;;  |---|   j
+                 (< jmax imax)
+                 (recur (cons (interval (inc jmax) imax) (next is))
+                        (next js)
+                        (conj r (interval imin (dec jmin))))
 
-                       ;; |-----|  i
-                       ;;  |-----| j
-                       (> jmax imax)
-                       (recur (next is)
-                              (cons (interval (inc imax) jmax) (next js))
-                              (conj r (interval imin (dec jmin))))
+                 ;; |-----|  i
+                 ;;  |-----| j
+                 (> jmax imax)
+                 (recur (next is)
+                        (cons (interval (inc imax) jmax) (next js))
+                        (conj r (interval imin (dec jmin))))
 
-                       ;; |-----|  i
-                       ;;  |----|  j
-                       :else
-                       (recur (next is) (next js)
-                              (conj r (interval imin (dec jmin)))))
-                      (>= imin jmin)
-                      (cond
-                       ;;  |---|   i
-                       ;; |-----|  j
-                       (< imax jmax)
-                       (recur (next is)
-                              (cons (interval (inc imax) jmax) (next js))
-                              r)
+                 ;; |-----|  i
+                 ;;  |----|  j
+                 :else
+                 (recur (next is) (next js)
+                        (conj r (interval imin (dec jmin)))))
+                (>= imin jmin)
+                (cond
+                 ;;  |---|   i
+                 ;; |-----|  j
+                 (< imax jmax)
+                 (recur (next is)
+                        (cons (interval (inc imax) jmax) (next js))
+                        r)
 
-                       ;;  |-----| i
-                       ;; |-----|  j
-                       (> imax jmax)
-                       (recur (cons (interval (inc jmax) imax) (next is))
-                              (next js)
-                              r)
+                 ;;  |-----| i
+                 ;; |-----|  j
+                 (> imax jmax)
+                 (recur (cons (interval (inc jmax) imax) (next is))
+                        (next js)
+                        r)
 
-                       ;;  |----|  i
-                       ;; |-----|  j
-                       :else (recur (next is) (next js)
-                                    r))))))
+                 ;;  |----|  i
+                 ;; |-----|  j
+                 :else (recur (next is) (next js)
+                              r))))))
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
