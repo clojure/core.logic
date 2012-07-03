@@ -1843,19 +1843,31 @@
   (is (= (to-vals (multi-interval (interval 1 5) (interval 7 10)))
          '(1 2 3 4 5 7 8 9 10))))
 
-;; NOTE: works even if x is not defined to be in the interval 1-10
-;; not sure yet if that's a problem
-
 (deftest test-map-sum-1
   (let [x (lvar 'x)
-        s (unify empty-s x (interval 11 20))]
+        s (unify empty-s x (interval 1 10))]
     (is (= (take 10
              (solutions s x
                ((map-sum (fn [v] (updateg x v)))
                 (to-vals (interval 1 10)))))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
-;; force-ans
+(deftest test-force-ans-1
+  (let [x (lvar 'x)
+        s (unify empty-s x (interval 1 10))]
+    (is (= (take 10
+             (solutions s x
+               (force-ans x)))
+           '(1 2 3 4 5 6 7 8 9 10)))))
+
+(deftest test-force-ans-2
+  (let [x (lvar 'x)
+        s (unify empty-s x (interval 1 10))]
+    (is (= (take 10
+             (solutions s x
+               (force-ans [x])))
+           '(1 2 3 4 5 6 7 8 9 10)))))
+
 ;; verify-all-bound
 ;; enforce-constraints
 ;; reify-constraints
