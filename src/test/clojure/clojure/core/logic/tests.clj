@@ -1545,6 +1545,22 @@
         mi1 (multi-interval (interval 1 8) (interval 10 13))]
     (is (= (difference mi0 mi1) 9))))
 
+;;  |----| |-------|
+;; |----|    |---|
+(deftest test-difference-mimi-3
+  (let [mi0 (multi-interval (interval 3 6) (interval 9 15))
+        mi1 (multi-interval (interval 1 4) (interval 10 12))]
+    (is (= (difference mi0 mi1)
+           (multi-interval (interval 5 6) 9 (interval 13 15))))))
+
+;;   |---|     |---|
+;; |-----| |-|
+(deftest test-difference-mimi-4
+  (let [mi0 (multi-interval (interval 3 6) (interval 15 20))
+        mi1 (multi-interval (interval 1 6) (interval 10 13))]
+    (is (= (difference mi0 mi1)
+           (interval 15 20)))))
+
 (deftest test-fd-1
   (let [d (domain 1 2 3)]
     (is (= (lb d) 1))
