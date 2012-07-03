@@ -1454,6 +1454,15 @@
   ([() _ y])
   ([[a . d] _ [a . r]] (appendo d y r)))
 
+(declare rembero)
+
+(defne permuteo [xl yl]
+  ([() ()])
+  ([[x . xs] _]
+     (fresh [ys]
+      (permuteo xs ys)
+      (rembero x yl ys))))
+
 ;; =============================================================================
 ;; Rel
 
@@ -2090,3 +2099,9 @@
   [u v]
   `(fn [a#]
      (!=-verify a# (unify a# ~u ~v))))
+
+(defne rembero [x l o]
+  ([_ [x . xs] xs])
+  ([_ [y . ys] [y . zs]]
+     (!= y x)
+     (rembero x ys zs)))
