@@ -2682,9 +2682,13 @@
 
   clojure.lang.Sequential
   (-force-ans [u]
-    (all
-     (force-ans (first u))
-     (force-ans (rest u))))
+    (letfn [(loop [u]
+              (if u
+                (all
+                 (force-ans (first u))
+                 (loop (next u)))
+                s#))]
+      (loop (seq u))))
 
   ;; clojure.lang.IPersistentMap
   ;; clojure.lang.IPersistentSet
