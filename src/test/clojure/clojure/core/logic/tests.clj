@@ -1793,3 +1793,59 @@
 
 (deftest test-run-constraints*
   (is (= (run-constraints* [] []) s#)))
+
+;; perhaps ok to let doms escape if no applicable constraints?
+
+(deftest test-ckanren-1
+  (is (= (run* [q]
+           (fresh [x y]
+             (== x (interval 1 10))
+             (== y (interval 5 15))
+             (!=fd x y)
+             (== q [x y])))
+         (list [(interval 1 4) (interval 11 15)]))))
+
+(deftest test-drop-one-1
+  (is (= (.s (drop-one (domain 1 2 3)))
+         #{2 3})))
+
+(deftest test-drop-one-2
+  (is (= (drop-one (domain 1))
+         nil)))
+
+(deftest test-drop-one-3
+  (is (= (drop-one 1)
+         nil)))
+
+(deftest test-drop-one-4
+  (is (= (drop-one (interval 1 10))
+         (interval 2 10))))
+
+(deftest test-drop-one-5
+  (is (= (drop-one (interval 1 1))
+         nil)))
+
+(deftest test-drop-one-6
+  (is (= (drop-one (multi-interval (interval 1 10) (interval 15 20)))
+         (multi-interval (interval 2 10) (interval 15 20)))))
+
+(deftest test-to-vals-1
+  (is (= (to-vals 1) '(1))))
+
+(deftest test-to-vals-2
+  (is (= (to-vals (domain 1 2 3)) '(1 2 3))))
+
+(deftest test-to-vals-3
+  (is (= (to-vals (interval 1 10))
+         '(1 2 3 4 5 6 7 8 9 10))))
+
+(deftest test-to-vals-4
+  (is (= (to-vals (multi-interval (interval 1 5) (interval 7 10)))
+         '(1 2 3 4 5 7 8 9 10))))
+
+;; force-ans
+;; verify-all-bound
+;; enforce-constraints
+;; reify-constraints
+;; reifyg
+

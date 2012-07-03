@@ -132,6 +132,7 @@
   (intervals [this]))
 
 (defprotocol ISortedDomain
+  (drop-one [this])
   (drop-before [this n])
   (keep-before [this n]))
 
@@ -219,6 +220,10 @@
   (ub [_] max)
   (bounds [_] (pair min max))
   ISortedDomain
+  (drop-one [_]
+    (let [s (disj s min)]
+      (when (pos? (count s))
+        (FiniteDomain. s (first s) max))))
   (drop-before [_ n]
     (apply sorted-set (drop-while #(< % n)) s))
   (keep-before [this n]
@@ -261,6 +266,8 @@
      (~'ub [this#] this#)
      (~'bounds [this#] (pair this# this#))
      ISortedDomain
+     (~'drop-one [this#]
+       nil)
      (~'drop-before [this# n#]
        (if (= this# n#)
          n#
@@ -324,6 +331,10 @@
   (ub [_] _ub)
   (bounds [_] (pair _lb _ub))
   ISortedDomain
+  (drop-one [_]
+    (let [nlb (inc _lb)]
+      (when (<= nlb _ub)
+        (IntervalFD. nlb _ub))))
   (drop-before [this n]
     (cond
      (= n _ub) n
@@ -532,7 +543,7 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
-(declare normalize-intervals)
+(declare normalize-intervals singleton-dom?)
 
 (deftype MultiIntervalFD [min max is]
   Object
@@ -552,6 +563,18 @@
   (lb [_] min)
   (ub [_] max)
   (bounds [_] (pair min max))
+  ISortedDomain
+  (drop-one [_]
+    (let [i (first is)]
+      (if (singleton-dom? i)
+        (let [nis (rest is)]
+          (MultiIntervalFD. (lb (first nis)) max nis))
+        (let [ni (drop-one i)]
+          (MultiIntervalFD. (lb ni) max (cons ni (rest is)))))))
+  (drop-before [_ n]
+    )
+  (keep-before [_ n]
+    )
   IFiniteDomain
   (member? [this that]
     (if (disjoint? (interval (lb this) (ub this))
@@ -2612,6 +2635,17 @@
         [(f (first ls))]
         [(loop (rest ls))]))))
 
+(defn to-vals [dom]
+  (letfn [(to-vals* [is]
+            (when is
+              (let [i (first is)]
+                (lazy-seq
+                 (cons (lb i)
+                       (if-let [ni (drop-one i)]
+                         (to-vals* (cons ni (next is)))
+                         (to-vals* (next is))))))))]
+    (to-vals* (seq (intervals dom)))))
+
 (declare force-ans)
 
 ;; TODO: handle all Clojure tree types
@@ -2704,13 +2738,15 @@
         (choice `(~v :- ~@rcs) empty-f)))))
 
 (defn reifyg [x]
-  (fn [^Substitutions a]
-    (let [v (walk* a x)
-          r (-reify empty-s v)]
-      (if (empty? r)
-        (list v)
-        (let [v (walk* r v)]
-          (reify-constraints a r v))))))
+  (all
+   (enforce-constraints x)
+   (fn [^Substitutions a]
+     (let [v (walk* a x)
+           r (-reify empty-s v)]
+       (if (empty? r)
+         (list v)
+         (let [v (walk* r v)]
+           ((reify-constraints r v) a)))))))
 
 ;; =============================================================================
 ;; CLP(FD)
