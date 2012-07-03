@@ -1843,6 +1843,17 @@
   (is (= (to-vals (multi-interval (interval 1 5) (interval 7 10)))
          '(1 2 3 4 5 7 8 9 10))))
 
+(deftest test-map-sum-1
+  (let [x (lvar 'x)
+        s (unify empty-s x (interval 1 10))
+        r ((all
+            ((map-sum (fn [v] (updateg x v))) (to-vals (interval 1 10)))
+            (fn [a]
+              (cons (-reify a x) '()))) s)]
+    (is (= (take 10 (take* r))
+           '(1 2 3 4 5 6 7 8 9 10)))))
+
+;; map-sum
 ;; force-ans
 ;; verify-all-bound
 ;; enforce-constraints
