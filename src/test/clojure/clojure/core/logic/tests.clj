@@ -1843,6 +1843,10 @@
   (is (= (to-vals (multi-interval (interval 1 5) (interval 7 10)))
          '(1 2 3 4 5 7 8 9 10))))
 
+(deftest test-to-vals-5
+  (is (= (to-vals (multi-interval (interval 1 5) 7 (interval 9 12)))
+         '(1 2 3 4 5 7 9 10 11 12))))
+
 (deftest test-map-sum-1
   (let [x (lvar 'x)
         s (unify empty-s x (interval 1 10))]
@@ -1868,8 +1872,10 @@
                (force-ans [x])))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
+(deftest test-verify-all-bound-1
+  )
+
 ;; verify-all-bound
 ;; enforce-constraints
 ;; reify-constraints
 ;; reifyg
-

@@ -2699,7 +2699,6 @@
     ((let [v (walk a u)]
        (if (domain? v)
          ((map-sum (fn [v] (updateg u v))) (to-vals v))
-         ;; polymorphic case, need to handle the various term types
          (-force-ans v))) a)))
 
 (defn running [^Substitutions a c]
@@ -2737,11 +2736,13 @@
         (run-constraints* (next xs) cs))) ))
 
 (defn verify-all-bound [a constrained]
-  (when (seq constrained)
-    (let [f (first constrained)]
-      (if (and (lvar? f) (= f (walk a f)))
-        (throw (Exception. (str "Constrained variable " f " without domain")))
-        (recur a (rest constrained))))))
+  (letfn [(verify-all-bound* [a constrained]
+            (when constrained
+              (let [f (first constrained)]
+                (if (and (lvar? f) (= f (walk a f)))
+                  (throw (Exception. (str "Constrained variable " f " without domain")))
+                  (recur a (next constrained))))))]
+    (verify-all-bound* a (seq constrained))))
 
 (defn enforce-constraints [x]
   (all
