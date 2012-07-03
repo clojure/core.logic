@@ -1693,6 +1693,13 @@
   ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
+(defn solutions
+  ([s q g]
+     (take*
+      ((all g
+        (fn [a]
+          (cons (-reify a q) '()))) s))))
+
 ;; =============================================================================
 ;; Debugging
 
