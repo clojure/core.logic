@@ -2627,14 +2627,6 @@
      (member? dom v) a
      :else nil)))
 
-(defn map-sum [f]
-  (fn loop [ls]
-    (if (empty? ls)
-      (fn [a] nil)
-      (conde
-        [(f (first ls))]
-        [(loop (rest ls))]))))
-
 (defn to-vals [dom]
   (letfn [(to-vals* [is]
             (when is
@@ -2645,6 +2637,14 @@
                          (to-vals* (cons ni (next is)))
                          (to-vals* (next is))))))))]
     (to-vals* (seq (intervals dom)))))
+
+(defn map-sum [f]
+  (fn loop [ls]
+    (if (empty? ls)
+      (fn [a] nil)
+      (conde
+        [(f (first ls))]
+        [(loop (rest ls))]))))
 
 (declare force-ans)
 
@@ -2666,14 +2666,13 @@
   ;; clojure.lang.IPersistentSet
   )
 
-;; TODO: not going to work in this state
-
 (defn force-ans [u]
   (fn [a]
-    (let [v (walk a u)]
-      (if (domain? v)
-        ((map-sum (fn [v] (updateg u v))) v)
-        (-force-ans v)))))
+    ((let [v (walk a u)]
+       (if (domain? v)
+         ((map-sum (fn [v] (updateg u v))) (to-vals v))
+         ;; polymorphic case, need to handle the various term types
+         (-force-ans v))) a)))
 
 (defn running [^Substitutions a c]
   (make-s (.s a) (.l a) (runc (.cs a) c)))
