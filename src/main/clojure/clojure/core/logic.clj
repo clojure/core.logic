@@ -542,7 +542,6 @@
       (if (and (= min jmin) (= max jmax))
         (let [is (normalize-intervals is)
               js (normalize-intervals (intervals j))]
-          (println is js)
           (= is js))
         false)))
   IRefinable
