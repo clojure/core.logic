@@ -1890,7 +1890,7 @@
               (unify x (interval 1 10))
               (unify y (interval 1 5)))
         s ((=fd x y) s)]
-    (is (= (take* (((reifyg x) s)))
+    (is (= (take* ((reifyg x) s))
            '(1 2 3 4 5)))))
 
 ;; reifyg
