@@ -153,7 +153,7 @@
   (domain? [x] false))
 
 (defprotocol IForceAnswerTerm
-  (-force-ans [u]))
+  (-force-ans [v x]))
 
 (defprotocol IMakeDomain
   (make-dom [this xs]))
@@ -2683,31 +2683,40 @@
 ;; TODO: handle all Clojure tree types
 (extend-protocol IForceAnswerTerm
   nil
-  (-force-ans [u] s#)
+  (-force-ans [v x] s#)
 
   Object
-  (-force-ans [u] s#)
+  (-force-ans [v x] s#)
 
   clojure.lang.Sequential
-  (-force-ans [u]
-    (letfn [(loop [u]
-              (if u
+  (-force-ans [v x]
+    (letfn [(loop [xs]
+              (if xs
                 (all
-                 (force-ans (first u))
-                 (loop (next u)))
+                 (force-ans (first xs))
+                 (loop (next xs)))
                 s#))]
-      (loop (seq u))))
+      (loop (seq v))))
 
   ;; clojure.lang.IPersistentMap
   ;; clojure.lang.IPersistentSet
-  )
 
-(defn force-ans [u]
+  FiniteDomain
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+
+  IntervalFD
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+
+  MultiIntervalFD
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v))))
+
+(defn force-ans [x]
   (fn [a]
-    ((let [v (walk a u)]
-       (if (domain? v)
-         ((map-sum (fn [v] (updateg u v))) (to-vals v))
-         (-force-ans v))) a)))
+    ((let [v (walk a x)]
+       (-force-ans v x)) a)))
 
 (defn running [^Substitutions a c]
   (make-s (.s a) (.l a) (runc (.cs a) c)))
