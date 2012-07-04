@@ -2220,6 +2220,15 @@
   ([() _ y])
   ([[a . d] _ [a . r]] (appendo d y r)))
 
+(declare rembero)
+
+(defne permuteo [xl yl]
+  ([() ()])
+  ([[x . xs] _]
+     (fresh [ys]
+      (permuteo xs ys)
+      (rembero x yl ys))))
+
 ;; =============================================================================
 ;; Rel
 
@@ -3056,7 +3065,6 @@
                :else (recur (rest c) (cons oc cp))))
             (recur (rest c) (cons oc cp))))))))
 
-;; TODO: change to lazy-seq
 (defn prefix [^Substitutions s ^Substitutions <s]
   (letfn [(prefix* [s <s]
            (if (identical? s <s)
@@ -3081,3 +3089,11 @@
       (!=c a ad)
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
+
+(declare !=)
+
+(defne rembero [x l o]
+  ([_ [x . xs] xs])
+  ([_ [y . ys] [y . zs]]
+     (!= y x)
+     (rembero x ys zs)))

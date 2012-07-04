@@ -550,18 +550,6 @@
        (appendo res-a res-d out))]
     [(conso s '() out)]))
 
-(defn rembero [x l out]
-  (conde
-    [(== '() l) (== '() out)]
-    [(fresh [a d]
-       (conso a d l)
-       (== x a)
-       (== d out))]
-    [(fresh [a d res]
-       (conso a d l)
-       (conso a res out)
-       (rembero x d res))]))
-
 ;; =============================================================================
 ;; conde
 
@@ -704,7 +692,7 @@
 ;; -----------------------------------------------------------------------------
 ;; rembero
 
-(deftest rembero-1
+#_(deftest rembero-1
   (is (= (run 1 [q]
            (rembero 'b '(a b c b d) q))
          '((a c b d)))))
