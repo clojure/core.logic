@@ -96,8 +96,7 @@
   (running? [this c]))
 
 (defprotocol IStorableConstraint
-  (proc [this])
-  (process-prefix [this p]))
+  (proc [this]))
 
 (defprotocol IConstraintOp
   (rator [this])
@@ -2822,14 +2821,7 @@
   (relevant? [this x s]
     (relevant? proc x s))
   IStorableConstraint
-  (proc [this] proc)
-  (process-prefix [this p]
-    (if (empty? p)
-      identity
-      (let [[x v] (first p)]
-        (composeg
-         (run-constraints* [x] this)
-         (process-prefix this (rest p)))))))
+  (proc [this] proc))
 
 (defn fdc
   ([proc] (fdc proc nil))
@@ -3030,10 +3022,7 @@
   IEnforceableConstraint
   (enforceable? [_] true)
   IReifiableConstraint
-  (reifiable? [_] true)
-  IStorableConstraint
-  (process-prefix [this p]
-    (run-constraints* (recover-vars p) this)))
+  (reifiable? [_] true))
 
 (deftype CLPTree [])
 
