@@ -781,7 +781,9 @@
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
-  (toString [_] (prn s))
+
+  ;; TODO: prn doesn't work anymore on empty-s, why not?
+  (toString [_] (str s))
 
   clojure.lang.Counted
   (count [this] (count s))
@@ -2770,28 +2772,25 @@
         (verify-all-bound a constrained)
         ((onceo (force-ans constrained)) a)))))
 
-(defn reify-constraints [v r]
-  (fn [^Substitutions a]
-    (let [^ConstraintStore cs (.cs a)
-          rcs (apply concat
-                     (-> (get cs v)
-                         (filter reifiable?)
-                         (map (fn [oc]
-                                ((reifyc oc v r) a)))))]
-      (if (empty? rcs)
-        (choice v empty-f)
-        (choice `(~v :- ~@rcs) empty-f)))))
+(defn reify-constraints [v r ^ConstraintStore cs]
+  (let [rcs (apply concat
+              (->> (get cs v)
+                   (filter reifiable?)
+                   (map #(reifyc % v r))))]
+    (if (empty? rcs)
+      (choice (list v) empty-f)
+      (choice (list `(~v :- ~@rcs)) empty-f))))
 
 (defn reifyg [x]
   (all
    (enforce-constraints x)
    (fn [^Substitutions a]
      (let [v (walk* a x)
-           r (-reify empty-s v)]
-       (if (empty? r)
-         (list v)
+           r (-reify* empty-s v)]
+       (if (zero? (count r))
+         (choice (list v) empty-f)
          (let [v (walk* r v)]
-           ((reify-constraints r v) a)))))))
+           (reify-constraints v r (.cs a))))))))
 
 ;; =============================================================================
 ;; CLP(FD)

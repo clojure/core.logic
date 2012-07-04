@@ -1875,6 +1875,22 @@
               (unify x (interval 1 10)))]
     (is (thrown? Exception (verify-all-bound s [x y])))))
 
-;; enforce-constraints
-;; reify-constraints
+(deftest test-enforce-constraints-1
+  (let [x (lvar 'x)
+        s (-> empty-s
+              (unify x (interval 1 3)))]
+    (is (= (solutions s x
+             (enforce-constraints x))
+           '(1 2 3)))))
+
+(deftest test-reifyg-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (unify x (interval 1 10))
+              (unify y (interval 1 5)))
+        s ((=fd x y) s)]
+    (is (= (take* (((reifyg x) s)))
+           '(1 2 3 4 5)))))
+
 ;; reifyg
