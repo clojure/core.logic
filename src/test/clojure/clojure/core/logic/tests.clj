@@ -1861,9 +1861,20 @@
            '(1 2 3 4 5 6 7 8 9 10)))))
 
 (deftest test-verify-all-bound-1
-  )
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (unify x (interval 1 10))
+              (unify y (interval 1 10)))]
+    (is (nil? (verify-all-bound s [x y])))))
 
-;; verify-all-bound
+(deftest test-verify-all-bound-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (unify x (interval 1 10)))]
+    (is (thrown? Exception (verify-all-bound s [x y])))))
+
 ;; enforce-constraints
 ;; reify-constraints
 ;; reifyg
