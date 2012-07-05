@@ -704,9 +704,7 @@
       (ConstraintStore. nkm ncm cid running)))
   clojure.lang.ILookup
   (valAt [this k]
-    (when-not (lvar? k)
-      (throw (Error. (str "constraint store lookup expected logic var key: " k))))
-    (let [ids (get km k)]
+    (when-let [ids (get km k)]
       (map cm (remove running ids))))
   (valAt [this k not-found]
     (if-let [v (.valAt this k)]
@@ -740,7 +738,7 @@
     (ext-no-check s u v)))
 
 (defn walk* [s v]
-  (let [v (walk s v)]
+  (let [v (walk s v false)]
     (walk-term v s)))
 
 (defn unify [s u v]
@@ -763,7 +761,7 @@
       (symbol (str "_." (count s))))))
 
 (defn -reify* [s v]
-  (let [v (walk s v)]
+  (let [v (walk s v false)]
     (reify-term v s)))
 
 (defn -reify [s v]
@@ -1462,7 +1460,11 @@
         (if (seq v)
           (recur (next v) (conj r (walk* s (first v))))
           r))
-      (meta v))))
+      (meta v)))
+
+  Refinable
+  (walk-term [v s]
+    (.v v)))
 
 ;; =============================================================================
 ;; Occurs Check Term
@@ -1645,13 +1647,15 @@
       (let [~@(lvar-binds lvars)]
         (bind* a# ~@goals)))))
 
+(declare reifyg)
+
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
     `(let [xs# (take* (fn []
-                        ((fresh [~x] ~@goals
-                                (fn [a#]
-                                  (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
+                        ((fresh [~x]
+                           ~@goals
+                           (reifyg ~x))
                          empty-s)))]
        (if ~n
          (take ~n xs#)
@@ -2717,7 +2721,7 @@
 
 (defn force-ans [x]
   (fn [a]
-    ((let [v (walk a x)]
+    ((let [v (walk a x false)]
        (-force-ans v x)) a)))
 
 (defn running [^Substitutions a c]
