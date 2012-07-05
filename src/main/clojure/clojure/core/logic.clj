@@ -793,7 +793,7 @@
                     cs))
 
   (walk [this v]
-    (walk this v))
+    (walk this v false))
 
   (walk [this v wrap?]
     (loop [lv v [v vp] (find s v)]
@@ -876,6 +876,10 @@
   IUnifyWithSet
   (unify-with-set [v u s]
     (ext s v u))
+  IUnifyWithRefinable
+  (unify-with-refinable [v u s]
+    (let [^Refinable u u]
+      (ext-no-check s v (.lvar u))))
   IReifyTerm
   (reify-term [v s]
     (if *reify-vars*
@@ -1150,7 +1154,12 @@
 
   Object
   (unify-with-lvar [v u s]
-    (ext s u v)))
+    (ext s u v))
+
+  Refinable
+  (unify-with-lvar [v u s]
+    (let [^Refinable v v]
+     (ext-no-check s u (.lvar v)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
