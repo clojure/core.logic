@@ -738,7 +738,7 @@
     (ext-no-check s u v)))
 
 (defn walk* [s v]
-  (let [v (walk s v false)]
+  (let [v (walk s v)]
     (walk-term v s)))
 
 (defn unify [s u v]
@@ -761,7 +761,7 @@
       (symbol (str "_." (count s))))))
 
 (defn -reify* [s v]
-  (let [v (walk s v false)]
+  (let [v (walk s v)]
     (reify-term v s)))
 
 (defn -reify [s v]
@@ -793,7 +793,7 @@
                     cs))
 
   (walk [this v]
-    (walk this v false))
+    (walk this v))
 
   (walk [this v wrap?]
     (loop [lv v [v vp] (find s v)]
@@ -2721,7 +2721,7 @@
 
 (defn force-ans [x]
   (fn [a]
-    ((let [v (walk a x false)]
+    ((let [v (walk a x)]
        (-force-ans v x)) a)))
 
 (defn running [^Substitutions a c]
