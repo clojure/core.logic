@@ -268,13 +268,11 @@
      (~'drop-one [this#]
        nil)
      (~'drop-before [this# n#]
-       (if (= this# n#)
-         n#
-         nil))
+       (when (>= this# n#)
+         this#))
      (~'keep-before [this# n#]
-       (if (= this# n#)
-         n#
-         nil))
+       (when (< this# n#)
+         this#))
      IFiniteDomain
      (~'domain? [this#] true)
      (~'member? [this# that#]
@@ -321,6 +319,8 @@
         (and (= _lb (._lb o))
              (= _ub (._ub o))))
       false))
+  (toString [this]
+    (pr-str this))
   IRefinable
   (refinable? [_] true)
   IRefine
@@ -2967,11 +2967,11 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
-       (let [[ulb uub] (bounds du)
-             [vlb vub] (bounds dv)]
-         ((composeg
-           (process-dom u (keep-before du vub))
-           (process-dom v (drop-before dv ulb))) s))))
+        (let [umin (lb du)
+              vmax (ub dv)]
+         ((composeg*
+           (process-dom u (keep-before du vmax))
+           (process-dom v (drop-before dv umin))) s))))
     IConstraintOp
     (rator [_] `<=fd)
     (rands [_] [u v])
