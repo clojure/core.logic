@@ -615,8 +615,8 @@
     (if (disjoint? (interval (lb this) (ub this))
                    (interval (lb that) (ub that)))
       true
-      (let [d0 (seq this)
-            d1 (seq that)]
+      (let [d0 (intervals this)
+            d1 (intervals that)]
         (loop [d0 d0 d1 d1]
           (if (nil? d0)
             true
@@ -2814,8 +2814,6 @@
 (defn running [^Substitutions a c]
   (make-s (.s a) (.l a) (runc (.cs a) c)))
 
-(declare runnable?)
-
 (defn run-constraint [c]
   (fn [^Substitutions a]
     (if (not (running? (.cs a) c))
@@ -3007,7 +3005,16 @@
     (invoke [this s]
       (let-dom s [u du v dv]
         (cond
+         (and (singleton-dom? du)
+              (singleton-dom? dv)
+              (= du dv)) nil
          (disjoint? du dv) s
+         (singleton-dom? du)
+         (when-let [vdiff (difference dv du)]
+           ((process-dom v vdiff) s))
+         (singleton-dom? dv)
+         (when-let [udiff (difference du dv)]
+           ((process-dom u udiff) s))
          :else (when-let [udiff (difference du dv)]
                  (let [vdiff (difference dv du)]
                    ((composeg
@@ -3019,18 +3026,16 @@
     IRelevant
     (relevant? [this s]
       (let-dom s [u du v dv]
-        (cond
-         (disjoint? du dv) false
-         (not (singleton-dom? du)) true
-         (not (singleton-dom? dv)) true
-         :else (not= du dv))))
+        (not (disjoint? du dv))))
     (relevant? [this x s]
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
       (let-dom s [u du v dv]
-        (cond
-         (disjoint? du dv) false
-         :else (if (= x u)
-                 (not (singleton-dom? du))
-                 (not (singleton-dom? dv))))))))
+        (and (domain? du) (domain? dv)
+             (or (singleton-dom? du)
+                 (singleton-dom? dv)
+                 (not= du dv)))))))
 
 (defn !=fd [u v]
   (fdcg (!=fdc u v)))
