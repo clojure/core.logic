@@ -2858,7 +2858,7 @@
 (defn fdcg [g]
   (fn [a]
     (if (runnable? g a)
-      (let [a (g a)]
+      (when-let [a (g a)]
         (if (relevant? g a)
           ((update-cs (FDConstraint. g nil)) a)
           a))
