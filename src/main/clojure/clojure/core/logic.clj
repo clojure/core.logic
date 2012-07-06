@@ -563,13 +563,15 @@
 (deftype MultiIntervalFD [min max is]
   Object
   (equals [this j]
-    (let [i this
-          [jmin jmax] (bounds j)]
-      (if (and (= min jmin) (= max jmax))
-        (let [is (normalize-intervals is)
-              js (normalize-intervals (intervals j))]
-          (= is js))
-        false)))
+    (if (instance? MultiIntervalFD j)
+      (let [i this
+            [jmin jmax] (bounds j)]
+        (if (and (= min jmin) (= max jmax))
+          (let [is (normalize-intervals is)
+                js (normalize-intervals (intervals j))]
+            (= is js))
+          false))
+      false))
   IRefinable
   (refinable? [_] true)
   IRefine
