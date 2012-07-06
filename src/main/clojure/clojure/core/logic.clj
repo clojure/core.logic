@@ -1312,6 +1312,10 @@
   (unify-with-refinable [v u s]
     (unify-with-refinable* u v s))
 
+  MultiIntervalFD
+  (unify-with-refinable [v u s]
+    (unify-with-refinable* u v s))
+
   Refinable
   (unify-with-refinable [v u s]
     (let [^Refinable u u
