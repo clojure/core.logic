@@ -79,6 +79,9 @@
 (defprotocol IUnifyWithIntervalFD
   (unify-with-interval [v u s]))
 
+(defprotocol IRunnable
+  (runnable? [c s]))
+
 (defprotocol IRefinable
   (refinable? [x]))
 
@@ -2819,8 +2822,10 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(defn runnable? [c s]
-  (every? domain? (map #(walk s %) (rands c))))
+(extend-type Object
+  IRunnable
+  (runnable? [c s]
+    (every? domain? (map #(walk s %) (rands c)))))
 
 (deftype FDConstraint [proc _meta]
   Object
