@@ -1515,6 +1515,13 @@
       (and a
            (g1 a)))))
 
+(defmacro composeg*
+  ([g0] g0)
+  ([g0 & gs]
+     `(composeg
+       ~g0
+       (composeg* ~@gs))))
+
 (defmacro bind*
   ([a g] `(bind ~a ~g))
   ([a g & g-rest]
