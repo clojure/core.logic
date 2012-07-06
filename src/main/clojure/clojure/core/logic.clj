@@ -3070,14 +3070,14 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
-        (let [[wlb wub] (bounds dw)
-              [ulb uub] (bounds du)
-              [vlb vub] (bounds dv)]
+        (let [[wmin wmax] (bounds dw)
+              [umin umax] (bounds du)
+              [vmin vmax] (bounds dv)]
           ((composeg
-             (process-dom w (interval (+ ulb vlb) (+ uub vub)))
+             (process-dom w (interval (+ umin vmin) (+ umax vmax)))
              (composeg
-               (process-dom u (interval (- wlb vub) (- wub vlb)))
-               (process-dom v (interval (- wlb uub) (- wub ulb))))) s))))
+               (process-dom u (interval (- wmin vmax) (- wmax vmin)))
+               (process-dom v (interval (- wmin umax) (- wmax umin))))) s))))
     IConstraintOp
     (rator [_] `+fd)
     (rands [_] [u v w])
