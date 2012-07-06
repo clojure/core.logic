@@ -1824,17 +1824,6 @@
 (deftest test-run-constraints*
   (is (= (run-constraints* [] []) s#)))
 
-;; perhaps ok to let doms escape if no applicable constraints?
-
-(deftest test-ckanren-1
-  (is (= (run* [q]
-           (fresh [x y]
-             (== x (interval 1 10))
-             (== y (interval 5 15))
-             (!=fd x y)
-             (== q [x y])))
-         (list [(interval 1 4) (interval 11 15)]))))
-
 (deftest test-drop-one-1
   (is (= (.s (drop-one (domain 1 2 3)))
          #{2 3})))
@@ -1902,6 +1891,14 @@
                (force-ans [x])))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
+(deftest test-force-ans-3
+  (let [x (lvar 'x)
+        s (unify empty-s x (multi-interval (interval 1 4) (interval 6 10)))]
+    (is (= (take 10
+             (solutions s x
+               (force-ans x)))
+           '(1 2 3 4 6 7 8 9 10)))))
+
 (deftest test-verify-all-bound-1
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -1935,4 +1932,25 @@
     (is (= (take* ((reifyg x) s))
            '(1 2 3 4 5)))))
 
-;; reifyg
+(deftest test-unify-interval-smaller-1
+  (let [x (lvar 'x)
+        s (-> empty-s
+              (unify x (interval 1 10))
+              (unify x (interval 2 10)))]
+    (walk s x)))
+
+(deftest test-boundary-interval-1
+  (is (difference (interval 1 10) 1)
+      (interval 2 10)))
+
+(deftest test-boundary-interval-1
+  (is (difference (interval 1 10) 10)
+      (interval 1 9)))
+
+(deftest test-unify-imi-1
+  (let [x (lvar 'x)
+        s (-> empty-s
+              (unify x (interval 2 10))
+              (unify x (multi-interval (interval 1 4) (interval 6 10))))]
+    (is (= (walk s x)
+           (multi-interval (interval 2 4) (interval 6 10))))))
