@@ -70,14 +70,17 @@
 ;; -----------------------------------------------------------------------------
 ;; cKanren protocols
 
-(defprotocol IUnifyWithInteger
-  (unify-with-integer [v u s]))
-
 (defprotocol IUnifyWithRefinable
   (unify-with-refinable [v u s]))
 
+(defprotocol IUnifyWithInteger
+  (unify-with-integer [v u s]))
+
 (defprotocol IUnifyWithIntervalFD
   (unify-with-interval [v u s]))
+
+(defprotocol IUnifyWithMultiIntervalFD
+  (unify-with-multi-interval [v u s]))
 
 (defprotocol IRunnable
   (runnable? [c s]))
@@ -1103,6 +1106,10 @@
   (unify-terms [u v s]
     (unify-with-interval v u s))
 
+  MultiIntervalFD
+  (unify-terms [u v s]
+    (unify-with-multi-interval v u s))
+
   java.lang.Byte
   (unify-terms [u v s]
     (unify-with-integer v u s))
@@ -1334,7 +1341,7 @@
   clojure.lang.BigInt)
 
 ;; -----------------------------------------------------------------------------
-;; Unify Interval with X
+;; Unify IntervalFD with X
 
 (extend-protocol IUnifyWithIntervalFD
   nil
@@ -1351,6 +1358,12 @@
   (unify-with-interval [v u s]
     (if (refine u v)
       s
+      false))
+
+  MultiIntervalFD
+  (unify-with-interval [v u s]
+    (if (refine u v)
+      s
       false)))
 
 (defn extend-type-to-unify-with-interval [t]
@@ -1363,9 +1376,55 @@
 
 (defmacro extend-to-unify-with-interval [& ts]
   `(do
-     ~@(map extend-type-to-unify-with-refinable ts)))
+     ~@(map extend-type-to-unify-with-interval ts)))
 
 (extend-to-unify-with-interval
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
+;; Unify MultiIntervalFD with X
+
+(extend-protocol IUnifyWithMultiIntervalFD
+  nil
+  (unify-with-multi-interval [v u s] false)
+
+  Object
+  (unify-with-multi-interval [v u s] false)
+
+  Refinable
+  (unify-with-multi-interval [v u s]
+    (unify-with-refinable* v u s))
+
+  IntervalFD
+  (unify-with-multi-interval [v u s]
+    (if (refine u v)
+      s
+      false))
+
+  MultiIntervalFD
+  (unify-with-multi-interval [v u s]
+    (if (refine u v)
+      s
+      false)))
+
+(defn extend-type-to-unify-with-multi-interval [t]
+  `(extend-type ~t
+     IUnifyWithMultiIntervalFD
+     (~'unify-with-multi-interval [~'v ~'u ~'s]
+       (if (refine ~'u ~'v)
+         ~'s
+         false))))
+
+(defmacro extend-to-unify-with-multi-interval [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-multi-interval ts)))
+
+(extend-to-unify-with-multi-interval
   java.lang.Byte
   java.lang.Short
   java.lang.Integer
