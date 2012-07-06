@@ -311,7 +311,7 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
-(declare interval?)
+(declare interval interval?)
 
 (deftype IntervalFD [_lb _ub]
   Object
@@ -333,19 +333,18 @@
   (drop-one [_]
     (let [nlb (inc _lb)]
       (when (<= nlb _ub)
-        (IntervalFD. nlb _ub))))
+        (interval nlb _ub))))
   (drop-before [this n]
     (cond
      (= n _ub) n
      (< n _lb) this
      (> n _ub) nil
-     :else (IntervalFD. n _ub)))
+     :else (interval n _ub)))
   (keep-before [this n]
     (cond
-     (= n _lb) n
+     (<= n _lb) nil
      (> n _ub) this
-     (< n _lb) nil
-     :else (IntervalFD. _lb n)))
+     :else (interval _lb (dec n))))
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]
@@ -2670,7 +2669,8 @@
 (defn process-dom [v dom]
   (fn [a]
     (cond
-     (lvar? v) (unify a v dom)
+     (lvar? v) (if-let [a (unify a v dom)] ;; TODO: why we really return nil from unify
+                 a nil)
      (member? dom v) a
      :else nil)))
 

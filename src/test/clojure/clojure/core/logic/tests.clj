@@ -1310,6 +1310,30 @@
     (is (= (prefix sp s)
            (list (pair y 2) (pair x 1))))))
 
+(deftest test-keep-before-1 []
+  (is (= (keep-before (interval 1 10) 5)
+         (interval 1 4)))
+  (is (= (keep-before (interval 5 10) 5)
+         nil))
+  (is (= (keep-before (interval 5 10) 6)
+         5))
+  (is (= (keep-before (interval 5 10) 10)
+         (interval 5 9))))
+
+(deftest test-drop-before-1 []
+  (is (= (drop-before (interval 5 10) 4)
+         (interval 5 10)))
+  (is (= (drop-before (interval 1 10) 5)
+         (interval 5 10)))
+  (is (= (drop-before (interval 5 10) 5)
+         (interval 5 10)))
+  (is (= (drop-before (interval 5 10) 6)
+         (interval 6 10)))
+  (is (= (drop-before (interval 5 10) 10)
+         10))
+  (is (= (drop-before (interval 5 10) 11)
+         nil)))
+
 (deftest test-singleton-interval
   (is (= (interval 1 1) 1)))
 
