@@ -1334,6 +1334,24 @@
   (is (= (drop-before (interval 5 10) 11)
          nil)))
 
+(deftest test-keep-before-2 []
+  (is (= (keep-before 1 3)
+         1))
+  (is (= (keep-before 1 2)
+         1))
+  (is (= (keep-before 1 1)
+         nil)))
+
+(deftest test-drop-before-2 []
+  (is (= (drop-before 1 3)
+         nil))
+  (is (= (drop-before 1 2)
+         nil))
+  (is (= (drop-before 1 1)
+         1))
+  (is (= (drop-before 1 0)
+         1)))
+
 (deftest test-singleton-interval
   (is (= (interval 1 1) 1)))
 
