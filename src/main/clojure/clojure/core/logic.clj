@@ -408,10 +408,13 @@
   (difference [this that]
     (cond
      (integer? that)
-     (if (member? this that)
-       (multi-interval (interval _lb (dec that))
-                       (interval (inc that) _ub))
-       this)
+     (cond
+      (= _lb that) (interval (inc _lb) _ub)
+      (= _ub that) (interval _lb (dec _ub))
+      :else (if (member? this that)
+              (multi-interval (interval _lb (dec that))
+                              (interval (inc that) _ub))
+              this))
      
      (interval? that)
      (let [i this j that
