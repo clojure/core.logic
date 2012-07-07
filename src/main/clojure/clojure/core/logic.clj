@@ -3085,13 +3085,14 @@
     (rands [_] [u v w])
     IRelevant
     (relevant? [this s]
-      (cond
-       (not (singleton-dom? (walk s u))) true
-       (not (singleton-dom? (walk s v))) true
-       (not (singleton-dom? (walk s w))) true
-       :else false))
+      (let-dom s [u du v dv w dw]
+       (cond
+        (not (singleton-dom? du)) true
+        (not (singleton-dom? dv)) true
+        (not (singleton-dom? dw)) true
+        :else (or (= du dw) (= dv dw)))))
     (relevant? [this x s]
-      (not (singleton-dom? (walk s x))))))
+      (relevant? this s))))
 
 (defn +fd [u v w]
   (fdcg (+fdc u v w)))
