@@ -2000,34 +2000,23 @@
       (!=fd x y)
       (== q [x y])))
 
-  ;; FIXME
-  ;; should fail, fails if we give x a concrete value (== x 1)
-  (run* [q]
-    (fresh [x]
-      (infd x (interval 1 3))
-      (+fd x x x)))
-
-  ;; TODO: negative interval grow
-
-  (refine (interval 2 3) (interval -2 2))
-
-  ;; the question is where should we be failing?
-  ;; what's happening is that we get domains, we narrow them to 2
-  ;; but when we reify the constraint isn't run again
-
-  ;; ah - what happens is that if a domain become a singleton
-  ;; constraints are rerun
-
+  ;; WORKS
   (run* [q]
     (fresh [x]
       (infd x (interval 1 3))
       (== x 3)
       (+fd x 0 x)))
 
-  ;; FIXME
-  ;; should fail
+  ;; WORKS
   (run* [q]
     (fresh [x y z]
       (infd x z (interval 1 10))
       (+fd x 1 x)))
+
+  ;; FIXME
+  ;; should fail, fails if we give x a concrete value (== x 1)
+  (run* [q]
+    (fresh [x]
+      (infd x (interval 1 3))
+      (+fd x x x)))
   )

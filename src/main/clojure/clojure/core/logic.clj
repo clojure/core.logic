@@ -2780,7 +2780,10 @@
   (-force-ans [v x] s#)
 
   Object
-  (-force-ans [v x] s#)
+  (-force-ans [v x]
+    (if (integer? v)
+      (updateg x v)
+      s#))
 
   clojure.lang.Sequential
   (-force-ans [v x]
