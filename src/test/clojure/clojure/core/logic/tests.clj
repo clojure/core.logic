@@ -1954,3 +1954,80 @@
               (unify x (multi-interval (interval 1 4) (interval 6 10))))]
     (is (= (walk s x)
            (multi-interval (interval 2 4) (interval 6 10))))))
+
+(comment
+  ;; WORKS
+  (run* [q]
+    (fresh [x]
+      (infd x (interval 1 10))
+      (== q x)))
+  
+  ;; WORKS
+  (run* [q]
+    (fresh [x y z]
+      (infd x z (interval 1 5))
+      (== y (interval 3 5))
+      (+fd x y z)
+      (== q [x y z])))
+
+  ;; WORKS
+  (run* [q]
+    (fresh [x y]
+      (infd x y (interval 1 10))
+      (=fd x y)
+      (== q [x y])))
+
+  ;; WORKS
+  (run* [q]
+    (fresh [x y]
+      (infd x y (interval 1 3))
+      (<=fd x y)
+      (== q [x y])))
+
+  ;; WORKS
+  (every? (fn [[x y]] (not= x y))
+    (run* [q]
+      (fresh [x y]
+        (infd x y (interval 1 10))
+        (!=fd x y)
+        (== q [x y]))))
+
+  ;; WORKS
+  (run* [q]
+    (fresh [x y]
+      (infd x y (interval 1 10))
+      (== x 5)
+      (!=fd x y)
+      (== q [x y])))
+
+  ;; FIXME
+  ;; should fail, fails if we give x a concrete value (== x 1)
+  (run* [q]
+    (fresh [x]
+      (infd x (interval 1 3))
+      (+fd x x x)))
+
+  ;; TODO: negative interval grow
+
+  (refine (interval 2 3) (interval -2 2))
+
+  ;; the question is where should we be failing?
+  ;; what's happening is that we get domains, we narrow them to 2
+  ;; but when we reify the constraint isn't run again
+
+  ;; ah - what happens is that if a domain become a singleton
+  ;; constraints are rerun
+
+  (run* [q]
+    (fresh [x]
+      (infd x (interval 1 3))
+      (== x 3)
+      (+fd x 0 x)))
+
+  ;; FIXME
+  ;; should fail
+  (run* [q]
+    (fresh [x y z]
+      (infd x z (interval 1 10))
+      (+fd x 1 x)))
+  )
