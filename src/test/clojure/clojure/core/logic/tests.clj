@@ -2016,15 +2016,15 @@
              (+fd x x x)))
          '())))
 
-(comment
-  ;; FIXME
-  ;; missing [3 3]
-  (run* [q]
-    (fresh [x y]
-      (infd x y (interval 1 3))
-      (<=fd x y)
-      (== q [x y])))
+(deftest test-ckanren-8
+  (is (= (run* [q]
+           (fresh [x y]
+             (infd x y (interval 1 3))
+             (<=fd x y)
+             (== q [x y])))
+         '([1 1] [1 2] [2 2] [1 3] [3 3] [2 3]))))
 
+(comment
   ;; FIXME
   (run* [q]
     (fresh [x]

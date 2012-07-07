@@ -3049,7 +3049,7 @@
         (let [umin (lb du)
               vmax (ub dv)]
          ((composeg*
-           (process-dom u (keep-before du vmax))
+           (process-dom u (keep-before du (inc vmax)))
            (process-dom v (drop-before dv umin))) s))))
     IConstraintOp
     (rator [_] `<=fd)
