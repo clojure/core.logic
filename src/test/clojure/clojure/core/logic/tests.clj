@@ -1955,68 +1955,80 @@
     (is (= (walk s x)
            (multi-interval (interval 2 4) (interval 6 10))))))
 
+
+;; -----------------------------------------------------------------------------
+;; cKanren
+
+(deftest test-ckanren-1
+  (is (= (run* [q]
+           (fresh [x]
+             (infd x (interval 1 3))
+             (== q x)))
+         '(1 2 3))))
+
+(deftest test-ckanren-2
+  (is (= (run* [q]
+           (fresh [x y z]
+             (infd x z (interval 1 5))
+             (== y (interval 3 5))
+             (+fd x y z)
+             (== q [x y z])))
+         '([1 3 4] [2 3 5] [1 4 5]))))
+
+(deftest test-ckanren-3
+  (is (= (run* [q]
+           (fresh [x y]
+             (infd x y (interval 1 3))
+             (=fd x y)
+             (== q [x y])))
+         '([1 1] [2 2] [3 3]))))
+
+(deftest test-ckanren-4
+  (is (true?
+       (every? (fn [[x y]] (not= x y))
+         (run* [q]
+           (fresh [x y]
+             (infd x y (interval 1 10))
+             (!=fd x y)
+             (== q [x y])))))))
+
+(deftest test-ckanren-5
+  (is (= (run* [q]
+           (fresh [x y]
+             (infd x y (interval 1 3))
+             (== x 2)
+             (!=fd x y)
+             (== q [x y])))
+         '([2 1] [2 3]))))
+
+(deftest test-ckanren-6
+  (is (= (run* [q]
+           (fresh [x]
+             (infd x (interval 1 3))
+             (+fd x 1 x)
+             (== q x)))
+         '())))
+
+(deftest test-ckanren-7
+  (is (= (run* [q]
+           (fresh [x]
+             (infd x (interval 1 3))
+             (+fd x x x)))
+         '())))
+
 (comment
-  ;; WORKS
-  (run* [q]
-    (fresh [x]
-      (infd x (interval 1 10))
-      (== q x)))
-  
-  ;; WORKS
-  (run* [q]
-    (fresh [x y z]
-      (infd x z (interval 1 5))
-      (== y (interval 3 5))
-      (+fd x y z)
-      (== q [x y z])))
-
-  ;; WORKS
-  (run* [q]
-    (fresh [x y]
-      (infd x y (interval 1 10))
-      (=fd x y)
-      (== q [x y])))
-
-  ;; WORKS
+  ;; FIXME
+  ;; missing [3 3]
   (run* [q]
     (fresh [x y]
       (infd x y (interval 1 3))
       (<=fd x y)
       (== q [x y])))
 
-  ;; WORKS
-  (every? (fn [[x y]] (not= x y))
-    (run* [q]
-      (fresh [x y]
-        (infd x y (interval 1 10))
-        (!=fd x y)
-        (== q [x y]))))
-
-  ;; WORKS
-  (run* [q]
-    (fresh [x y]
-      (infd x y (interval 1 10))
-      (== x 5)
-      (!=fd x y)
-      (== q [x y])))
-
-  ;; WORKS
-  (run* [q]
-    (fresh [x]
-      (infd x (interval 1 3))
-      (== x 3)
-      (+fd x 0 x)))
-
-  ;; WORKS
-  (run* [q]
-    (fresh [x y z]
-      (infd x z (interval 1 10))
-      (+fd x 1 x)))
-
   ;; FIXME
-  ;; should fail, fails if we give x a concrete value (== x 1)
   (run* [q]
     (fresh [x]
-      (infd x (interval 1 3))
-      (+fd x x x)))
+      (infd x (interval 0 3))
+      (+fd x x x)
+      (== q x)))
   )
