@@ -3066,6 +3066,11 @@
 (defn <=fd [u v]
   (fdcg (<=fdc u v)))
 
+(defn <fd [u v]
+  (all
+   (<=fd u v)
+   (!=fd u v)))
+
 ;; NOTE: we could put logic right back in but then we're managing
 ;; the constraint in the body again which were trying to get
 ;; away from

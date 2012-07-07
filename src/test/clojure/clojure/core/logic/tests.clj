@@ -2024,6 +2024,14 @@
              (== q [x y])))
          '([1 1] [1 2] [2 2] [1 3] [3 3] [2 3]))))
 
+(deftest test-ckanren-9
+  (is (= (run* [q]
+           (fresh [x y]
+             (infd x y (interval 1 3))
+             (<fd x y)
+             (== q [x y])))
+         '([1 2] [2 3] [1 3])))
+
 (comment
   ;; FIXME
   (run* [q]
@@ -2031,4 +2039,4 @@
       (infd x (interval 0 3))
       (+fd x x x)
       (== q x)))
-  )
+  ))
