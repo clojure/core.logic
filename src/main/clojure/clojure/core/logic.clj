@@ -3115,7 +3115,44 @@
           (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
           (recur (rest xs) gs))))))
 
-;; TODO: distinctfdc
+
+(defn *fdc [u v w]
+  (letfn [(safe-div [n c a]
+            (if (zero? n) c (/ a n)))]
+   (reify
+     clojure.lang.IFn
+     (invoke [this s]
+       (let-dom s [u du v dv w dw]
+         (let [[wmin wmax] (bounds dw)
+               [umin umax] (bounds du)
+               [vmin vmax] (bounds dv)
+               ui (interval (safe-div vmax umin wmin)
+                            (safe-div vmin umax wmax))
+               vi (interval (safe-div umax vmin wmin)
+                            (safe-div umin vmax wmax))
+               wi (interval (* umin vmin) (* umax vmax))]
+           (composeg
+            (process-dom w wi)
+            (composeg
+             (process-dom u ui)
+             (process-dom v vi))))))
+     IConstraintOp
+     (rator [_] `*fd)
+     (rands [_] [u v w])
+     IRelevant
+     (relevant? [this s]
+       (let-dom s [u du v dv w dw]
+         (cond
+          (not (singleton-dom? du)) true
+          (not (singleton-dom? dv)) true
+          (not (singleton-dom? dw)) true
+          :else (or (= du dw) (= dv dw)))))
+     (relevant? [this x s]
+       (relevant? this s)))))
+
+(defn *fd [u v w]
+  (fdcg (*fdc u v w)))
+
 ;; TODO: distinctfd
 
 ;; =============================================================================
