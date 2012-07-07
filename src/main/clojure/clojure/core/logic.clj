@@ -99,7 +99,7 @@
   (addc [this c])
   (updatec [this c s])
   (runc [this c])
-  (running? [this c]))
+  (constraints [this x]))
 
 (defprotocol IStorableConstraint
   (proc [this]))
@@ -700,11 +700,12 @@
       (ConstraintStore. nkm ncm cid (disj running id))))
   (runc [this c]
     (ConstraintStore. km cm cid (conj running (-> c meta :id))))
-  (running? [this c]
-    (running (-> c meta :id)))
+  (constraints [this x]
+    (map cm (get km x)))
   clojure.lang.Counted
   (count [this]
     (count cm))
+  ;; TODO: do no expose a map interface
   clojure.lang.Associative
   (assoc [this k v]
     (when-not (lvar? k)
@@ -2816,30 +2817,27 @@
 
 (defn run-constraint [c]
   (fn [^Substitutions a]
-    (if (not (running? (.cs a) c))
-      (if (runnable? c a)
-        (if (relevant? c a)
-          ((composeg c (update-cs c)) (running a c))
-          ((update-cs c) a))
-        a)
+    (if (runnable? c a)
+      (if (relevant? c a)
+        ((composeg c (update-cs c)) (running a c))
+        ((update-cs c) a))
       a)))
 
-(defn run-constraints [x xcs]
+(defn run-constraints [xcs]
   (if xcs
     (composeg
      (run-constraint (first xcs))
-     (run-constraints x (next xcs)))
+     (run-constraints (next xcs)))
     s#))
 
 (defn run-constraints* [xs cs]
   (if (or (zero? (count cs))
           (nil? (seq xs)))
     s#
-    (let [x (first xs)
-          xcs (get cs x)]
+    (let [xcs (get cs (first xs))]
       (if (seq xcs)
         (composeg
-         (run-constraints x xcs)
+         (run-constraints xcs)
          (run-constraints* (next xs) cs))
         (run-constraints* (next xs) cs))) ))
 
@@ -3064,6 +3062,10 @@
 
 (defn <=fd [u v]
   (fdcg (<=fdc u v)))
+
+;; NOTE: we could put logic right back in but then we're managing
+;; the constraint in the body again which were trying to get
+;; away from
 
 (defn +fdc [u v w]
   (reify 
