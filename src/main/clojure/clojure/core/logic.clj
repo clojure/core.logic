@@ -2943,13 +2943,6 @@
              "")]
     (.write writer (str "(" id (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
 
-(deftype CLPFD []
-  IMakeDomain
-  (make-dom [this xs]
-    (apply sorted-set xs))  )
-
-(def clpfd (CLPFD.))
-
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
         dom (last xs-and-dom)
@@ -3177,10 +3170,6 @@
   (enforceable? [_] true)
   IReifiableConstraint
   (reifiable? [_] true))
-
-(deftype CLPTree [])
-
-(def clptree (CLPTree.))
 
 (defn oc->prefix [oc]
   (first (rands oc)))
