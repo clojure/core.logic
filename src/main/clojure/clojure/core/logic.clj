@@ -281,6 +281,9 @@
   (let [s (into (sorted-set) args)]
     (FiniteDomain. s (first s) (first (rseq s)))))
 
+(defn sorted-set->dom [s]
+  (FiniteDomain. s (first s) (first (rseq s))))
+
 (declare interval? difference* intersection*)
 
 (defmacro extend-to-fd [t]
@@ -3184,14 +3187,15 @@
        (invoke [this s]
          (loop [y* (seq y*) n* n* x* #{}]
            (if y*
-             (let [y (walk s (first y*))]
-               (if (singleton-dom? y)
-                 (if (n* y)
+             (let [y (first y*)
+                   yv (walk s y)]
+               (if (singleton-dom? yv)
+                 (if (n* yv)
                    nil
-                   (recur (next y*) (conj n* y) x*))
+                   (recur (next y*) (conj n* yv) x*))
                  (recur (next y*) n* (conj x* y))))
              ((composeg
-               (exclude-from-dom (domain n*) x* s)
+               (exclude-from-dom (sorted-set->dom n*) x* s)
                (update-procg (-distinctfdc x* n* id))) s))))
        IWithConstraintId
        (with-id [this id]
