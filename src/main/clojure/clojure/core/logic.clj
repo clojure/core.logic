@@ -99,7 +99,8 @@
   (addc [this c])
   (updatec [this c s])
   (runc [this c])
-  (constraints [this x]))
+  (constraints [this x])
+  (update-proc [this id proc]))
 
 ;; TODO: think about breaking apart and providing default with-id, id impl?
 
@@ -118,6 +119,7 @@
   (id [this] nil))
 
 (defprotocol IStorableConstraint
+  (with-proc [this proc])
   (proc [this]))
 
 (defprotocol IConstraintOp
@@ -717,6 +719,9 @@
     (ConstraintStore. km cm cid (conj running (id c))))
   (constraints [this x]
     (map cm (get km x)))
+  (update-proc [this id proc]
+    (let [ncm (assoc cm id (with-proc (get cm id) proc))]
+      (ConstraintStore. km ncm cid running)))
   clojure.lang.Counted
   (count [this]
     (count cm))
@@ -2936,10 +2941,11 @@
   (relevant? [this x s]
     (relevant? proc x s))
   IWithConstraintId
-  (with-id [this new-id] (FDConstraint. proc new-id _meta))
+  (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
   (id [this] _id)
   IStorableConstraint
+  (with-proc [this proc] (FDConstraint. proc _id _meta))
   (proc [this] proc))
 
 (defn fdc [proc]
@@ -3116,17 +3122,6 @@
 (defn +fd [u v w]
   (fdcg (+fdc u v w)))
 
-(defn exclude-from [dom1 a xs]
-  (loop [xs xs gs []]
-    (if (empty? xs)
-      (reduce composeg gs)
-      (let [x (first xs)
-            dom2 (walk a x)]
-        (if (domain? dom2)
-          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
-          (recur (rest xs) gs))))))
-
-
 (defn *fdc [u v w]
   (letfn [(safe-div [n c a]
             (if (zero? n) c (/ a n)))]
@@ -3164,7 +3159,85 @@
 (defn *fd [u v w]
   (fdcg (*fdc u v w)))
 
-;; TODO: distinctfd
+(defn exclude-from-dom [dom1 a xs]
+  (loop [xs xs gs []]
+    (if (empty? xs)
+      (reduce composeg gs)
+      (let [x (first xs)
+            dom2 (walk a x)]
+        (if (domain? dom2)
+          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
+          (recur (rest xs) gs))))))
+
+(defn update-procg [proc]
+  (fn [^Substitutions a]
+    (let [ncs (update-proc (.cs a) (id proc) proc)]
+      (make-s (.s a) (.l a) ncs))))
+
+(defn -distinctfdc
+  ([y* n*] (-distinctfdc y* n* nil))
+  ([y* n* id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this s]
+         (loop [y* (seq y*) n* n* x* []]
+           (if y*
+             (let [y (walk (first y*) s)]
+               (cond
+                (lvar? y) (recur (next y*) n* (conj x* y))
+                (n* y) nil
+                :else (recur (next y*) (conj n* y) x*)))
+             ((composeg
+               (exclude-from-dom (domain n*) s x*)
+               (update-procg (-distinctfdc x* n* id))) s))))
+       IWithConstraintId
+       (with-id [this id]
+         (-distinctfdc y* n* id))
+       IConstraintId
+       (id [this] id)
+       IConstraintOp
+       (rator [_] `-distinctfd)
+       (rands [_] y*)
+       IRelevant
+       (relevant? [this s]
+         (not (empty? y*)))
+       (relevant? [this x s]
+         (y* x))
+       IRunnable
+       (runnable? [this s]
+         (not (empty? n*))))))
+
+(defn -distinctfd [y* n*]
+  (fdcg -distinctfdc))
+
+(defn list-sorted? [pred ls]
+  )
+
+(defn distinctfdc [v*]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let [v* (walk s v*)
+            {x* true n* false} (group-by lvar? v*)
+            n* (sort < n*)]
+        (when (list-sorted? < n*)
+          ((-distinctfd x* n*) s))))
+    IConstraintOp
+    (rator [_] `distinctfd)
+    (rands [_] [v*])
+    IRelevant
+    (relevant? [this s]
+      (let [v* (walk s v*)]
+        (lvar? v*)))
+    (relevant? [this x s]
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
+      (let [v* (walk s v*)]
+        (not (lvar? v*))))))
+
+(defn distinctfd [v*]
+  (fdcg (distinctfdc v*)))
 
 ;; =============================================================================
 ;; CLP(Tree)
