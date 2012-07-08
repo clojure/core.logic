@@ -3183,10 +3183,11 @@
          (loop [y* (seq y*) n* n* x* #{}]
            (if y*
              (let [y (walk (first y*) s)]
-               (cond
-                (lvar? y) (recur (next y*) n* (conj x* y))
-                (n* y) nil
-                :else (recur (next y*) (conj n* y) x*)))
+               (if (singleton-dom? y)
+                 (if (n* y)
+                   nil
+                   (recur (next y*) (conj n* y) x*))
+                 (recur (next y*) n* (conj x* y))))
              ((composeg
                (exclude-from-dom (domain n*) x* s)
                (update-procg (-distinctfdc x* n* id))) s))))
