@@ -106,8 +106,16 @@
 (defprotocol IWithConstraintId
   (with-id [this id]))
 
+(extend-type Object
+  IWithConstraintId
+  (with-id [this id] this))
+
 (defprotocol IConstraintId
   (id [this]))
+
+(extend-type Object
+  IConstraintId
+  (id [this] nil))
 
 (defprotocol IStorableConstraint
   (proc [this]))
@@ -118,6 +126,8 @@
 
 (defprotocol IRelevant
   (relevant? [this s] [this x s]))
+
+;; TODO: add IRelevantVar ?
 
 (defprotocol IReifiableConstraint
   (reifiable? [this])
@@ -168,9 +178,6 @@
 
 (defprotocol IForceAnswerTerm
   (-force-ans [v x]))
-
-(defprotocol IMakeDomain
-  (make-dom [this xs]))
 
 ;; =============================================================================
 ;; Pair
