@@ -2049,9 +2049,26 @@
     (is (= (walk s x) (multi-interval 2 4)))
     (is (= (walk s y) (multi-interval 6 8)))))
 
-;; update-procg
-;; -distinctfdc
-;; distinctfd
+;; TODO: *fdc
+
+(deftest test-with-id
+  (let [x (lvar 'x)
+        n* (sorted-set 1 3 5)
+        c (with-id (fdc (-distinctfdc #{x} (conj n* 7))) 1)]
+    (is (= (id c) 1))
+    (is (= (id (proc c)) 1))))
+
+(deftest test-update-procg
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        n* (sorted-set 1 3 5)
+        c (fdc (-distinctfdc #{x y} n*))
+        s ((update-cs c) empty-s)
+        s ((update-procg (with-id (fdc (-distinctfdc #{x} (conj n* 7))) 0)) s)]
+    (is (= (var-rands (get (.cm (.cs s)) 0))
+           [x]))))
+
+;; TODO: distinctfd
 
 (comment
   ;; FIXME

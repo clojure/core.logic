@@ -679,7 +679,7 @@
   (.write writer (str "<intervals:" (apply pr-str (.is x)) ">")))
 
 (defn var-rands [c]
-  (into [] (filter lvar? (rands c))))
+  (into [] (filter lvar? (flatten (rands c)))))
 
 (defn vars-to-remove [c s]
   (let [purge (atom true)
@@ -3198,7 +3198,7 @@
        (id [this] id)
        IConstraintOp
        (rator [_] `-distinctfd)
-       (rands [_] [y* n*])
+       (rands [_] [(seq y*) (seq n*)])
        IRelevant
        (relevant? [this s]
          (pos? (count y*)))
