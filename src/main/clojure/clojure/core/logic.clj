@@ -698,12 +698,11 @@
         vs (doall
             (filter (fn [x]
                       (when (lvar? x)
-                        (let [v (walk s x)
-                              remove? (not (relevant? c v s))]
+                        (let [remove? (not (relevant? c x s))]
                           (when-not remove?
                             (reset! purge false))
                           remove?)))
-                    (rands c)))]
+                    (flatten (rands c))))]
     (pair @purge vs)))
 
 (deftype ConstraintStore [km cm cid running]
@@ -3231,7 +3230,9 @@
        (relevant? [this s]
          (pos? (count y*)))
        (relevant? [this x s]
-         (y* x))
+         (if (y* x)
+           true
+           false))
        IRunnable
        (runnable? [this s]
          (or (pos? (count n*))
