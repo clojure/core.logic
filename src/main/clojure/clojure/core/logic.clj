@@ -103,9 +103,13 @@
 
 ;; TODO: think about breaking apart and providing default with-id, id impl?
 
+(defprotocol IWithConstraintId
+  (with-id [this id]))
+
+(defprotocol IConstraintId
+  (id [this]))
+
 (defprotocol IStorableConstraint
-  (with-id [this id])
-  (id [this])
   (proc [this]))
 
 (defprotocol IConstraintOp
@@ -2924,9 +2928,11 @@
     (relevant? proc s))
   (relevant? [this x s]
     (relevant? proc x s))
-  IStorableConstraint
+  IWithConstraintId
   (with-id [this new-id] (FDConstraint. proc new-id _meta))
+  IConstraintId
   (id [this] _id)
+  IStorableConstraint
   (proc [this] proc))
 
 (defn fdc [proc]
