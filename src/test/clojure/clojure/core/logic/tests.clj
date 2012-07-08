@@ -2038,7 +2038,17 @@
   (is (false? (list-sorted? < [1 1 3])))
   (is (false? (list-sorted? < [1 5 4 1]))))
 
-;; exclude-from-dom
+(deftest test-exclude-from-dom
+  (let [dom1 (domain 1 3 5 7 9)
+        x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (unify x (interval 2 4))
+              (unify y (interval 6 8)))
+        s ((exclude-from-dom dom1 [x y] s) s)]
+    (is (= (walk s x) (multi-interval 2 4)))
+    (is (= (walk s y) (multi-interval 6 8)))))
+
 ;; update-procg
 ;; -distinctfdc
 ;; distinctfd
