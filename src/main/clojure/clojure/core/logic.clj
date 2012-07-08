@@ -3235,7 +3235,7 @@
             {x* true n* false} (group-by lvar? v*)
             n* (sort < n*)]
         (when (list-sorted? < n*)
-          ((-distinctfd x* n*) s))))
+          ((-distinctfd (into #{} x*) (apply sorted-set n*)) s))))
     IConstraintOp
     (rator [_] `distinctfd)
     (rands [_] [v*])
