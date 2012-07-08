@@ -148,6 +148,13 @@
   IEnforceableConstraint
   (enforceable? [x] false))
 
+(defprotocol INeedsStore
+  (needs-store? [this]))
+
+(extend-type Object
+  INeedsStore
+  (needs-store? [_] false))
+
 ;; TODO: ICLPSet, half the below could be moved into this
 
 (defprotocol IInterval
@@ -2956,13 +2963,26 @@
 (defn fdc [proc]
   (FDConstraint. proc nil nil))
 
+;; TODO: only used for goals that must be added to store to work
+;; such as distinctfd
+
+(defn addg [^Substitutions a g]
+  (let [^ConstraintStore ncs (addc (.cs a) g)
+        g ((.cm ncs) (dec (.cid ncs)))
+        a (make-s (.s a) (.l a) ncs)]
+    (pair g a)))
+
 (defn fdcg [g]
   (fn [a]
     (if (runnable? g a)
-      (when-let [a (g a)]
-        (if (relevant? g a)
-          ((update-cs (fdc g)) a)
-          a))
+      (if (needs-store? g)
+        (let [[g a] (addg a (fdc g))]
+          (when-let [a (g a)]
+            ((update-cs g) a)))
+        (when-let [a (g a)]
+          (if (relevant? g a)
+            ((update-cs (fdc g)) a)
+            a)))
       ((update-cs (fdc g)) a))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
@@ -3197,6 +3217,8 @@
              ((composeg
                (exclude-from-dom (sorted-set->dom n*) x* s)
                (update-procg (-distinctfdc x* n* id))) s))))
+       INeedsStore
+       (needs-store? [_] true)
        IWithConstraintId
        (with-id [this id]
          (-distinctfdc y* n* id))
