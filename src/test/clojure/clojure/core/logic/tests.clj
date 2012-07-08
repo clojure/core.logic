@@ -2030,7 +2030,7 @@
              (infd x y (interval 1 3))
              (<fd x y)
              (== q [x y])))
-         '([1 2] [2 3] [1 3])))
+         '([1 2] [2 3] [1 3]))))
 
 (comment
   ;; FIXME
@@ -2039,4 +2039,4 @@
       (infd x (interval 0 3))
       (+fd x x x)
       (== q x)))
-  ))
+  )

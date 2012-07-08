@@ -3159,15 +3159,15 @@
 (defn *fd [u v w]
   (fdcg (*fdc u v w)))
 
-(defn exclude-from-dom [dom1 a xs]
-  (loop [xs xs gs []]
-    (if (empty? xs)
-      (reduce composeg gs)
+(defn exclude-from-dom [dom1 xs s]
+  (loop [xs (seq xs) gs []]
+    (if xs
       (let [x (first xs)
-            dom2 (walk a x)]
+            dom2 (walk s x)]
         (if (domain? dom2)
-          (recur (rest xs) (conj gs (process-dom x (difference dom2 dom1))))
-          (recur (rest xs) gs))))))
+          (recur (next xs) (conj gs (process-dom x (difference dom2 dom1))))
+          (recur (next xs) gs)))
+      (reduce composeg gs))))
 
 (defn update-procg [proc]
   (fn [^Substitutions a]
@@ -3180,7 +3180,7 @@
      (reify
        clojure.lang.IFn
        (invoke [this s]
-         (loop [y* (seq y*) n* n* x* []]
+         (loop [y* (seq y*) n* n* x* #{}]
            (if y*
              (let [y (walk (first y*) s)]
                (cond
@@ -3188,7 +3188,7 @@
                 (n* y) nil
                 :else (recur (next y*) (conj n* y) x*)))
              ((composeg
-               (exclude-from-dom (domain n*) s x*)
+               (exclude-from-dom (domain n*) x* s)
                (update-procg (-distinctfdc x* n* id))) s))))
        IWithConstraintId
        (with-id [this id]
@@ -3197,10 +3197,10 @@
        (id [this] id)
        IConstraintOp
        (rator [_] `-distinctfd)
-       (rands [_] y*)
+       (rands [_] [y* n*])
        IRelevant
        (relevant? [this s]
-         (not (empty? y*)))
+         (pos? (count y*)))
        (relevant? [this x s]
          (y* x))
        IRunnable
@@ -3211,7 +3211,15 @@
   (fdcg -distinctfdc))
 
 (defn list-sorted? [pred ls]
-  )
+  (if (empty? ls)
+    true
+    (loop [f (first ls) ls (next ls)]
+      (if ls
+        (let [s (first ls)]
+         (if (pred f s)
+           (recur s (next ls))
+           false))
+        true))))
 
 (defn distinctfdc [v*]
   (reify
