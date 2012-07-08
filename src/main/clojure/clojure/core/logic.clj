@@ -95,6 +95,8 @@
   IRefinable
   (refinable? [_] false))
 
+;; TODO: think more about update-proc, works for now
+
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c s])
@@ -3182,7 +3184,7 @@
        (invoke [this s]
          (loop [y* (seq y*) n* n* x* #{}]
            (if y*
-             (let [y (walk (first y*) s)]
+             (let [y (walk s (first y*))]
                (if (singleton-dom? y)
                  (if (n* y)
                    nil
@@ -3206,10 +3208,13 @@
          (y* x))
        IRunnable
        (runnable? [this s]
-         (not (empty? n*))))))
+         (or (pos? (count n*))
+             (some (fn [y]
+                     (not (lvar? (walk s y))))
+                   y*))))))
 
 (defn -distinctfd [y* n*]
-  (fdcg -distinctfdc))
+  (fdcg (-distinctfdc y* n*)))
 
 (defn list-sorted? [pred ls]
   (if (empty? ls)
