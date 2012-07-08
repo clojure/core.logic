@@ -2032,6 +2032,17 @@
              (== q [x y])))
          '([1 2] [2 3] [1 3]))))
 
+(deftest test-list-sorted
+  (is (true? (list-sorted? < [1 2 3])))
+  (is (true? (list-sorted? < [1 3 5])))
+  (is (false? (list-sorted? < [1 1 3])))
+  (is (false? (list-sorted? < [1 5 4 1]))))
+
+;; exclude-from-dom
+;; update-procg
+;; -distinctfdc
+;; distinctfd
+
 (comment
   ;; FIXME
   (run* [q]
