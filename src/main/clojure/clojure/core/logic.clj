@@ -101,7 +101,11 @@
   (runc [this c])
   (constraints [this x]))
 
+;; TODO: think about breaking apart and providing default with-id, id impl?
+
 (defprotocol IStorableConstraint
+  (with-id [this id])
+  (id [this])
   (proc [this]))
 
 (defprotocol IConstraintOp
@@ -681,12 +685,12 @@
   IConstraintStore
   (addc [this c]
     (let [vars (var-rands c)
-          c (vary-meta c assoc :id cid)
+          c (with-id c cid)
           ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
       (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
   (updatec [this c s]
-    (let [id (-> c meta :id)
-          oc (get cm cid)
+    (let [id (id c)
+          oc (get cm id)
           [purge? vs] (vars-to-remove c s)
           nkm (reduce (fn [m v]
                         (let [kcs (disj (get m v) id)]
@@ -699,7 +703,7 @@
                 cm)]
       (ConstraintStore. nkm ncm cid (disj running id))))
   (runc [this c]
-    (ConstraintStore. km cm cid (conj running (-> c meta :id))))
+    (ConstraintStore. km cm cid (conj running (id c))))
   (constraints [this x]
     (map cm (get km x)))
   clojure.lang.Counted
@@ -2737,7 +2741,7 @@
 ;; http://github.com/calvis/cKanren
 
 (defn ext-cs [cs oc s]
-  (if (-> oc meta :id)
+  (if (id oc)
     (updatec cs oc s)
     (addc cs oc)))
 
@@ -2892,7 +2896,7 @@
   (runnable? [c s]
     (every? domain? (map #(walk s %) (rands c)))))
 
-(deftype FDConstraint [proc _meta]
+(deftype FDConstraint [proc _id _meta]
   Object
   (equals [this o]
     (if (instance? FDConstraint o)
@@ -2904,7 +2908,7 @@
   (meta [this]
     _meta)
   (withMeta [this new-meta]
-    (FDConstraint. proc new-meta))
+    (FDConstraint. proc _id new-meta))
   clojure.lang.IFn
   (invoke [_ s]
     (proc s))
@@ -2921,27 +2925,28 @@
   (relevant? [this x s]
     (relevant? proc x s))
   IStorableConstraint
+  (with-id [this new-id] (FDConstraint. proc new-id _meta))
+  (id [this] _id)
   (proc [this] proc))
 
-(defn fdc
-  ([proc] (fdc proc nil))
-  ([proc meta] (FDConstraint. proc meta)))
+(defn fdc [proc]
+  (FDConstraint. proc nil nil))
 
 (defn fdcg [g]
   (fn [a]
     (if (runnable? g a)
       (when-let [a (g a)]
         (if (relevant? g a)
-          ((update-cs (FDConstraint. g nil)) a)
+          ((update-cs (fdc g)) a)
           a))
-      ((update-cs (FDConstraint. g nil)) a))))
+      ((update-cs (fdc g)) a))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
-        id (if-let [id (-> x meta :id)]
-             (str id ":")
+        cid (if-let [cid (id x)]
+             (str cid ":")
              "")]
-    (.write writer (str "(" id (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
+    (.write writer (str "(" cid (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
 
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
