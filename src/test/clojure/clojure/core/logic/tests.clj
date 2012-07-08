@@ -1727,7 +1727,7 @@
         ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
         sc (first (get csp u))]
     (is (= c sc))
-    (is (= (-> sc meta :id) 0))
+    (is (= (id sc) 0))
     (is (= (count (.km csp)) 2))
     (is (= (count (.cm csp)) 1))))
 
@@ -1743,9 +1743,9 @@
                                                     (addc c1))
         sc0 (get (.cm cs) 0)
         sc1 (get (.cm cs) 1)]
-    (is (= sc0 c0)) (is (= (-> sc0 meta :id) 0))
-    (is (= sc1 c1)) (is (= (-> sc1 meta :id) 1))
-    (is (= (-> sc0 meta :id) 0))
+    (is (= sc0 c0)) (is (= (id sc0) 0))
+    (is (= sc1 c1)) (is (= (id sc1) 1))
+    (is (= (id sc0) 0))
     (is (= (count (.km cs)) 3))
     (is (= (count (.cm cs)) 2))))
 
