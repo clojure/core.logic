@@ -296,4 +296,52 @@
        (dinesman))))
 
   (-> (dinesman) first ->answer)
-)
+  )
+
+;; =============================================================================
+;; Stone Problem
+
+(defn subchecko [w sl r o n]
+  (conde
+    [(== sl ())
+     (fresh [a d]
+      (infd a (interval 1 n))
+      (conde
+        [(conso a d r) (+fd a 1 w)
+         (conso w r o)]              
+        [(== r '()) (conso w r o)]))]
+    [(fresh [a b c ro0 ro1 nw nsl]
+      (infd a b c (interval 1 n))           
+      (conso a nsl sl)
+      (+fd a b w) (+fd a w c)
+      (subchecko b nsl r ro0 n)
+      (subchecko w nsl ro0 ro1 n)
+      (subchecko c nsl ro1 o n))]))
+
+(defne checko [ws sl r n]
+  ([() _ [a . _] a])
+  ([[w . wr] _ _ _]
+     (fresh [nsl nr]
+       (subchecko w sl r nr n)
+       (conso w sl nsl)
+       (checko wr nsl nr n))))
+
+(defn matches [n]
+  (run* [q]
+    (fresh [a b c d s1 s2]
+      (infd a b c d s1 s2 (interval 1 n)) 
+      (distinctfd [a b c d])
+      (== a 1)
+      (<=fd a b) (<=fd b c) (<=fd c d)
+      #_(+fd a b s1) #_(+fd s1 c s2) #_(+fd s2 d n)
+      #_(checko [a b c d] () () n)
+      (== q [a b c d]))))
+
+(comment
+  (matches 40)
+  
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 10]
+       (matches 40))))
+  )

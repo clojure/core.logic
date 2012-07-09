@@ -2086,6 +2086,15 @@
          '([1 2 3]))))
 
 (comment
+  ;; FIXME: [1 3 4] missing
+  (run* [q]
+    (fresh [a b c]
+      (infd a b c (interval 1 4))
+      (distinctfd [a b c])
+      (== a 1)
+      (<=fd a b) (<=fd b c)
+      (== q [a b c])))
+
   ;; FIXME
   (run* [q]
     (fresh [x]
