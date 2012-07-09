@@ -255,3 +255,45 @@
           (== (<= x b) true))
         (partition l b l1 d))
        (partition l b c d))))
+
+;; =============================================================================
+;; Dinesman Dwelling Problem with CLP(FD)
+
+(defn not-adjacento [x y]
+  (fresh [f]
+    (infd f (interval 1 5))
+    (conde
+      [(+fd x f y) (<fd 1 f)]
+      [(+fd y f x) (<fd 1 f)])))
+
+(defn dinesmanfd []
+  (run* [q]
+    (fresh [baker cooper fletcher miller smith]
+      (== q [baker cooper fletcher miller smith])
+      (distinctfd [baker cooper fletcher miller smith])
+      (infd baker cooper fletcher miller smith (interval 1 5))
+      (!=fd baker 5) (!=fd cooper 1)
+      (!=fd fletcher 5) (!=fd fletcher 1)
+      (<fd cooper miller) 
+      (not-adjacento smith fletcher)
+      (not-adjacento fletcher cooper))))
+
+(defn sort-dwellers [[fa _] [fb _]]
+  (cond (< fa fb) -1 (= fa fb) 0 :else 1))
+
+(defn ->answer [ns]
+  (->> (map vector ns [:baker :cooper :fletcher :miller :smith])
+       (sort sort-dwellers)
+       (map second)))
+
+(comment
+  ;; ~800-900ms
+  ;; comparable to Petite Chez, which means there's probably some
+  ;; perf work to do
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 200]
+       (dinesman))))
+
+  (-> (dinesman) first ->answer)
+)

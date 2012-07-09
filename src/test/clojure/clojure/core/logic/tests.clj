@@ -1805,7 +1805,8 @@
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
 
-(deftest test-!=fd-1
+;; FIXME: test based on bad old behavior of !=fd
+#_(deftest test-!=fd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!=fd x y) empty-s)
@@ -2075,6 +2076,14 @@
              (distinctfd [x y z])
              (== q [x y z])))
          '([1 2 3] [1 3 2] [2 1 3] [2 3 1] [3 1 2] [3 2 1]))))
+
+(deftest test-<fd-1
+  (is (= (run* [q]
+           (fresh [a b c]
+             (infd a b c (interval 1 3))
+             (<fd a b) (<fd b c)
+             (== q [a b c])))
+         '([1 2 3]))))
 
 (comment
   ;; FIXME
