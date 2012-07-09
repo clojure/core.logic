@@ -2953,6 +2953,9 @@
     (relevant? proc s))
   (relevant? [this x s]
     (relevant? proc x s))
+  IRunnable
+  (runnable? [this s]
+    (runnable? proc s))
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
