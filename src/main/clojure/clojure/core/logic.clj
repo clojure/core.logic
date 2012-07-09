@@ -682,6 +682,7 @@
           [] is))
 
 (defn multi-interval
+  ([] nil)
   ([i0] i0)
   ([i0 i1]
      (let [is [i0 i1]]
@@ -3062,14 +3063,8 @@
          (singleton-dom? du)
          (when-let [vdiff (difference dv du)]
            ((process-dom v vdiff) s))
-         (singleton-dom? dv)
-         (when-let [udiff (difference du dv)]
-           ((process-dom u udiff) s))
          :else (when-let [udiff (difference du dv)]
-                 (let [vdiff (difference dv du)]
-                   ((composeg
-                     (process-dom u udiff)
-                     (process-dom v vdiff)) s))))))
+                 ((process-dom u udiff) s)))))
     IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
@@ -3084,8 +3079,7 @@
       (let-dom s [u du v dv]
         (and (domain? du) (domain? dv)
              (or (singleton-dom? du)
-                 (singleton-dom? dv)
-                 (not= du dv)))))))
+                 (singleton-dom? dv)))))))
 
 (defn !=fd [u v]
   (fdcg (!=fdc u v)))
