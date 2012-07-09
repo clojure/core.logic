@@ -3186,14 +3186,16 @@
   (fdcg (*fdc u v w)))
 
 (defn exclude-from-dom [dom1 xs s]
-  (loop [xs (seq xs) gs []]
-    (if xs
-      (let [x (first xs)
-            dom2 (walk s x)]
-        (if (domain? dom2)
-          (recur (next xs) (conj gs (process-dom x (difference dom2 dom1))))
-          (recur (next xs) gs)))
-      (reduce composeg gs))))
+  (if dom1
+    (loop [xs (seq xs) gs []]
+      (if xs
+        (let [x (first xs)
+              dom2 (walk s x)]
+          (if (domain? dom2)
+            (recur (next xs) (conj gs (process-dom x (difference dom2 dom1))))
+            (recur (next xs) gs)))
+        (reduce composeg gs)))
+    s#))
 
 (defn update-procg [proc]
   (fn [^Substitutions a]
