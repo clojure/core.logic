@@ -633,6 +633,7 @@
   (keep-before [_ n]
     )
   IFiniteDomain
+  (domain? [_] true)
   (member? [this that]
     (if (disjoint? (interval (lb this) (ub this))
                    (interval (lb that) (ub that)))
@@ -1614,11 +1615,13 @@
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(defn composeg [g0 g1]
-  (fn [a]
-    (let [a (g0 a)]
-      (and a
-           (g1 a)))))
+(defn composeg
+  ([] identity)
+  ([g0 g1]
+     (fn [a]
+       (let [a (g0 a)]
+         (and a
+              (g1 a))))))
 
 (defmacro composeg*
   ([g0] g0)
