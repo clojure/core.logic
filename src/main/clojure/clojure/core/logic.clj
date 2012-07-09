@@ -285,11 +285,13 @@
   (intervals [_] (seq s)))
 
 (defn domain [& args]
-  (let [s (into (sorted-set) args)]
-    (FiniteDomain. s (first s) (first (rseq s)))))
+  (when (seq args)
+    (let [s (into (sorted-set) args)]
+      (FiniteDomain. s (first s) (first (rseq s))))))
 
 (defn sorted-set->dom [s]
-  (FiniteDomain. s (first s) (first (rseq s))))
+  (when (seq s)
+    (FiniteDomain. s (first s) (first (rseq s)))))
 
 (declare interval? difference* intersection*)
 
