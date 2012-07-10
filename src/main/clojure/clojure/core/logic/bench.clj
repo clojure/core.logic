@@ -118,12 +118,12 @@
 
 (defne noattacko [q others]
   ([_ ()])
-  ([[x y] [[x1 y1] . others]]
+  ([[x y] [[x1 y1] . r]]
      (!= y y1)
      (project [y y1 x x1]
        (!= (- y1 y) (- x1 x))
        (!= (- y1 y) (- x x1)))
-     (noattacko [x y] others)))
+     (noattacko [x y] r)))
 
 (defn solve-nqueens []
   (run* [q]
@@ -155,8 +155,9 @@
   ;; ~610ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1]
-       (solve-nqueens))))
+     (binding [*occurs-check* false]
+      (dotimes [_ 1]
+        (solve-nqueens)))))
 
   ;; nqueens benefits from constraints
   )
