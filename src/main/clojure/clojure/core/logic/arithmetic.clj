@@ -1,5 +1,5 @@
 (ns clojure.core.logic.arithmetic
-  (:refer-clojure :exclude [reify == inc = > < >= <=])
+  (:refer-clojure :exclude [== = > < >= <=])
   (:use clojure.core.logic))
 
 (defmacro = [x y]

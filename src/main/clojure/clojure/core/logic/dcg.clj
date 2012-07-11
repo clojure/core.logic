@@ -1,5 +1,5 @@
 (ns clojure.core.logic.dcg
-  (:refer-clojure :exclude [reify == inc])
+  (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]))
 
 ;; TODO: think about indexing

@@ -1,5 +1,5 @@
 (ns clojure.core.logic.bench
-  (:refer-clojure :exclude [reify inc ==])
+  (:refer-clojure :exclude [==])
   (:use clojure.core.logic)
   (:require [clojure.core.logic.arithmetic :as a]))
 
