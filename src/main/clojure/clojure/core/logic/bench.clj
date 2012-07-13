@@ -302,21 +302,20 @@
 ;; =============================================================================
 ;; Stone Problem
 
-(defn subchecko [w sl r o n]
-  (conde
-    [(== sl ())
+(defne subchecko [w sl r o n]
+  ([_ () _ _ _]
      (fresh [a]
-      (infd a (interval 1 n))
-      (matche [r o]
-        ([[a . d] [w . r]] (+fd a 1 w))
-        ([() [w . r]])))]
-    [(fresh [a b c ro0 ro1 nw nsl]
-      (infd a b c (interval 1 n))           
-      (conso a nsl sl)
-      (+fd a b w) (+fd a w c)
-      (subchecko b nsl r ro0 n)
-      (subchecko w nsl ro0 ro1 n)
-      (subchecko c nsl ro1 o n))]))
+       (infd a (interval 1 n))
+       (matche [r o]
+         ([[a . d] [w . r]] (+fd a 1 w))
+         ([() [w . r]]))))
+  ([_ [a . nsl] _ _ _]
+     (fresh [b c ro0 ro1 nw]
+       (infd a b c (interval 1 n))
+       (+fd a b w) (+fd a w c)
+       (subchecko b nsl r ro0 n)
+       (subchecko w nsl ro0 ro1 n)
+       (subchecko c nsl ro1 o n))))
 
 (defne checko [ws sl r n]
   ([() _ [a . _] a])
