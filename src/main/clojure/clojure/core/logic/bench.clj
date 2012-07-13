@@ -305,12 +305,11 @@
 (defn subchecko [w sl r o n]
   (conde
     [(== sl ())
-     (fresh [a d]
+     (fresh [a]
       (infd a (interval 1 n))
-      (conde
-        [(conso a d r) (+fd a 1 w)
-         (conso w r o)]              
-        [(== r '()) (conso w r o)]))]
+      (matche [r o]
+        ([[a . d] [w . r]] (+fd a 1 w))
+        ([() [w . r]])))]
     [(fresh [a b c ro0 ro1 nw nsl]
       (infd a b c (interval 1 n))           
       (conso a nsl sl)
