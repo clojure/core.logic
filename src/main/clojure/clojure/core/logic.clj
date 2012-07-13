@@ -598,7 +598,7 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
-(declare normalize-intervals singleton-dom?)
+(declare normalize-intervals singleton-dom? multi-interval)
 
 (deftype MultiIntervalFD [min max is]
   Object
@@ -629,9 +629,25 @@
         (let [ni (drop-one i)]
           (MultiIntervalFD. (lb ni) max (cons ni (rest is)))))))
   (drop-before [_ n]
-    )
+    (let [is (seq is)]
+      (loop [is is r []]
+        (if is
+          (let [i (drop-before (first is) n)]
+            (if i
+              (recur (next is) (conj r i))
+              (recur (next is) r)))
+          (when (pos? (count r))
+            (apply multi-interval r))))))
   (keep-before [_ n]
-    )
+    (let [is (seq is)]
+      (loop [is is r []]
+        (if is
+          (let [i (keep-before (first is) n)]
+            (if i
+              (recur (next is) (conj r i))
+              (recur (next is) r)))
+          (when (pos? (count r))
+            (apply multi-interval r))))))
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]

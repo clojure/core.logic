@@ -334,15 +334,16 @@
       (distinctfd [a b c d])
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
-      #_(+fd a b s1) #_(+fd s1 c s2) #_(+fd s2 d n)
-      #_(checko [a b c d] () () n)
+      (+fd a b s1) #_(+fd s1 c s2) #_(+fd s2 d n)
+      (checko [a b c d] () () n)
       (== q [a b c d]))))
 
 (comment
   (matches 40)
   
+  ;; 20ms
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10]
+     (dotimes [_ 1]
        (matches 40))))
   )

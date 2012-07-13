@@ -1352,6 +1352,14 @@
   (is (= (drop-before 1 0)
          1)))
 
+(deftest test-drop-before-mi-1 []
+  (is (= (drop-before (multi-interval 2 4) (lb 3))
+         4)))
+
+(deftest test-keep-before-mi-2 []
+  (is (= (keep-before (multi-interval 2 4) (lb 3))
+         2)))
+
 (deftest test-singleton-interval
   (is (= (interval 1 1) 1)))
 
@@ -2085,20 +2093,26 @@
              (== q [a b c])))
          '([1 2 3]))))
 
-(comment
-  ;; FIXME: [1 3 4] missing
-  (run* [q]
-    (fresh [a b c]
-      (infd a b c (interval 1 4))
-      (distinctfd [a b c])
-      (== a 1)
-      (<=fd a b) (<=fd b c)
-      (== q [a b c])))
+(deftest test-<=fd-1
+  (is (= (run* [q]
+           (fresh [x y]
+             (== x 3)
+             (== y (multi-interval 2 4))
+             (<=fd x y)
+             (== q y)))
+         '(4))))
 
+(comment
   ;; FIXME
   (run* [q]
     (fresh [x]
       (infd x (interval 0 3))
       (+fd x x x)
       (== q x)))
+
+  ;; this is not very fast
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e6] 
+       (drop-before (multi-interval 2 4) (lb 3)))))
   )
