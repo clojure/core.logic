@@ -364,4 +364,10 @@
         (== a 1)
         (<=fd a b) (<=fd b c) (<=fd c d)
         (+fd a b s1) (+fd s1 c s2) (+fd s2 d n))))
+
+  ;; we are running them too often, constraints are are only run in the
+  ;; Scheme cKanren when we have a singleton dom
+
+  ;; refinements that don't production singleton doms should not
+  ;; trigger running constraints
   )
