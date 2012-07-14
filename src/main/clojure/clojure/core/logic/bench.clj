@@ -173,7 +173,8 @@
 
 (comment
   ;; direct translation does not work
-  ;; some domain inference would be nice
+  ;; because of the subtraction constraints
+  ;; also, some domain inference would be nice
   
   (defne noattackfd [y ys d]
     ([_ () _])
