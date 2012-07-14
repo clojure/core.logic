@@ -336,16 +336,32 @@
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
       (+fd a b s1) (+fd s1 c s2) (+fd s2 d n)
-      (checko [a b c d] () () n)
-      (== q [a b c d]))))
+      #_(fn [as]
+        (println "values:" (map #(walk as %) [a b c d s1 s2 n]))
+        as)
+      ;; (checko [a b c d] () () n)
+      ;; (== q [a b c d])
+      )))
 
 (comment
-  (matches 40)
+  (time (matches 40))
   
   ;; ~130ms, not clear why this is 10X slower
   ;; is our interval rep bad?
-  (dotimes [_ 5]
+  (dotimes [_ 10]
     (time
-     (dotimes [_ 1]
+     (dotimes [_ 10]
        (matches 40))))
+
+  ;; ~20-23ms
+  ;; even if we don't really do much solving, are we running the constraints
+  ;; too often?
+  (defn matches-test [n]
+    (run* [q]
+      (fresh [a b c d s1 s2]
+        (infd a b c d s1 s2 (interval 1 n)) 
+        (distinctfd [a b c d])
+        (== a 1)
+        (<=fd a b) (<=fd b c) (<=fd c d)
+        (+fd a b s1) (+fd s1 c s2) (+fd s2 d n))))
   )
