@@ -287,7 +287,9 @@
 (defn domain [& args]
   (when (seq args)
     (let [s (into (sorted-set) args)]
-      (FiniteDomain. s (first s) (first (rseq s))))))
+      (if (> (count s) 1)
+        (FiniteDomain. s (first s) (first (rseq s)))
+        (first s)))))
 
 (defn sorted-set->dom [s]
   (when (seq s)
