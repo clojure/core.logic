@@ -166,7 +166,49 @@
   ;; nqueens benefits from constraints
   )
 
-;; Bratko pg 344, constraint version
+;; =============================================================================
+;; nqueensfd
+
+;; based on Bratko pg 344, constraint version
+
+(comment
+  ;; direct translation does not work
+  ;; some domain inference would be nice
+  
+  (defne noattackfd [y ys d]
+    ([_ () _])
+    ([y1 [y2 . yr] d]
+       (fresh [x nd]
+         (infd x nd (interval 1 8))
+         (!=fd d x)
+         (conde
+           [(<fd y1 y2) (+fd y1 x y2)]
+           [(<fd y2 y1) (+fd y2 x y1)])
+         (+fd d 1 nd)
+         (noattackfd y1 yr nd))))
+
+  (defne safefd [l]
+    ([()])
+    ([[y . ys]]
+       (noattackfd y ys 1)
+       (safefd ys)))
+
+  (defn nqueensfd []
+    (run* [q]
+      (fresh [a b c d e f g h]
+        (infd a b c d e f g h (interval 1 8))
+        (== q [a b c d e f g h])
+        (distinctfd q)
+        (safefd q))))
+
+  (nqueensfd)
+
+  (run* [q]
+    (fresh [a b]
+      (infd a b (interval 1 8))
+      (== q [a b])
+      (safefd q)))
+  )
 
 ;; =============================================================================
 ;; send more money
