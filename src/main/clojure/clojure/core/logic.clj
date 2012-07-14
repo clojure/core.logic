@@ -876,7 +876,9 @@
 
   ISubstitutionsCLP
   (update [this x v]
-    ((run-constraints* (if (lvar? v) [x v] [x]) cs)
+    ((if-not (refinable? v)
+       (run-constraints* (if (lvar? v) [x v] [x]) cs)
+       s#)
      (if *occurs-check*
        (ext this x v)
        (ext-no-check this x v))))

@@ -288,18 +288,14 @@
        (map second)))
 
 (comment
-  ;; FIXME: now we're getting an incorrect answer, 2 answers
-  
-  ;; ~470ms
-  ;; comparable to Petite Chez, which means there's probably some
-  ;; perf work to do
+  ;; ~250ms
+  ;; close to 2X faster than Petite Chez
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
        (dinesmanfd))))
 
   (-> (dinesmanfd) first ->answer)  ; (:smith :cooper :baker :fletcher :miller)
-  (-> (dinesmanfd) second ->answer) ;
   )
 
 ;; =============================================================================
@@ -336,38 +332,16 @@
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
       (+fd a b s1) (+fd s1 c s2) (+fd s2 d n)
-      #_(fn [as]
-        (println "values:" (map #(walk as %) [a b c d s1 s2 n]))
-        as)
-      ;; (checko [a b c d] () () n)
-      ;; (== q [a b c d])
-      )))
+      (checko [a b c d] () () n)
+      (== q [a b c d]))))
 
 (comment
   (time (matches 40))
   
-  ;; ~130ms, not clear why this is 10X slower
-  ;; is our interval rep bad?
+  ;; ~40ms much faster
+  ;; so >2X faster than cKanren under Petite Chez
   (dotimes [_ 10]
     (time
      (dotimes [_ 10]
        (matches 40))))
-
-  ;; ~20-23ms
-  ;; even if we don't really do much solving, are we running the constraints
-  ;; too often?
-  (defn matches-test [n]
-    (run* [q]
-      (fresh [a b c d s1 s2]
-        (infd a b c d s1 s2 (interval 1 n)) 
-        (distinctfd [a b c d])
-        (== a 1)
-        (<=fd a b) (<=fd b c) (<=fd c d)
-        (+fd a b s1) (+fd s1 c s2) (+fd s2 d n))))
-
-  ;; we are running them too often, constraints are are only run in the
-  ;; Scheme cKanren when we have a singleton dom
-
-  ;; refinements that don't production singleton doms should not
-  ;; trigger running constraints
   )
