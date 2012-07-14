@@ -3324,9 +3324,6 @@
         (conj r x v)
         (conj r x)))))
 
-(defn oc->prefix [oc]
-  (first (rands oc)))
-
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
 (defn prefix-subsumes? [s p pp]
