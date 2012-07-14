@@ -252,13 +252,20 @@
   (bounds [_] (pair min max))
   ISortedDomain
   (drop-one [_]
-    (let [s (disj s min)]
-      (when (pos? (count s))
-        (FiniteDomain. s (first s) max))))
+    (let [s (disj s min)
+          c (count s)]
+      (cond
+       (= 1 c) (first s)
+       (> 1 c) (FiniteDomain. s (first s) max)
+       :else nil)))
   (drop-before [_ n]
-    (apply sorted-set (drop-while #(< % n)) s))
+    (apply domain (drop-while #(< % n) s)))
   (keep-before [this n]
-    (apply sorted-set (take-while #(< % n)) s))
+    (apply domain (take-while #(< % n) s)))
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]
