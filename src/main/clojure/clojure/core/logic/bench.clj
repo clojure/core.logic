@@ -288,15 +288,18 @@
        (map second)))
 
 (comment
-  ;; ~800-900ms
+  ;; FIXME: now we're getting an incorrect answer, 2 answers
+  
+  ;; ~470ms
   ;; comparable to Petite Chez, which means there's probably some
   ;; perf work to do
   (dotimes [_ 5]
     (time
-     (dotimes [_ 200]
-       (dinesman))))
+     (dotimes [_ 100]
+       (dinesmanfd))))
 
-  (-> (dinesman) first ->answer)
+  (-> (dinesmanfd) first ->answer)  ; (:smith :cooper :baker :fletcher :miller)
+  (-> (dinesmanfd) second ->answer) ;
   )
 
 ;; =============================================================================
@@ -339,7 +342,8 @@
 (comment
   (matches 40)
   
-  ;; 20ms, ~130ms if we add the other sums
+  ;; ~130ms, not clear why this is 10X slower
+  ;; is our interval rep bad?
   (dotimes [_ 5]
     (time
      (dotimes [_ 1]
