@@ -255,8 +255,8 @@
     (let [s (disj s min)
           c (count s)]
       (cond
-       (= 1 c) (first s)
-       (> 1 c) (FiniteDomain. s (first s) max)
+       (= c 1) (first s)
+       (> c 1) (FiniteDomain. s (first s) max)
        :else nil)))
   (drop-before [_ n]
     (apply domain (drop-while #(< % n) s)))
@@ -878,7 +878,7 @@
   (update [this x v]
     ((if-not (refinable? v)
        (run-constraints* (if (lvar? v) [x v] [x]) cs)
-       s#)
+       identity)
      (if *occurs-check*
        (ext this x v)
        (ext-no-check this x v))))
@@ -2991,6 +2991,7 @@
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
   (id [this] _id)
+  ;; TODO: not super happy about the naming here
   IStorableConstraint
   (with-proc [this proc] (FDConstraint. proc _id _meta))
   (proc [this] proc))
@@ -3323,17 +3324,6 @@
         (conj r x v)
         (conj r x)))))
 
-(deftype TreeConstraint [proc _meta]
-  clojure.lang.IObj
-  (meta [this]
-    _meta)
-  (withMeta [this new-meta]
-    (TreeConstraint. proc new-meta))
-  IEnforceableConstraint
-  (enforceable? [_] true)
-  IReifiableConstraint
-  (reifiable? [_] true))
-
 (defn oc->prefix [oc]
   (first (rands oc)))
 
@@ -3360,17 +3350,51 @@
                :else (recur (rest c) (cons oc cp))))
             (recur (rest c) (cons oc cp))))))))
 
-(defn prefix [^Substitutions s ^Substitutions <s]
+(defn prefix-s [^Substitutions s ^Substitutions <s]
   (letfn [(prefix* [s <s]
-           (if (identical? s <s)
-             nil
-             (cons (first s) (prefix* (rest s) <s))))]
+            (if (identical? s <s)
+              nil
+              (cons (first s) (prefix* (rest s) <s))))]
     (prefix* (.l s) (.l <s))))
 
-#_(defn !=neq [u v]
+(defprotocol IConstraintPrefix
+  (prefix [this]))
+
+;; NOTE: u / v may have vars, that's what we care about
+
+(defn !=c
+  ([u v] (!=c u v nil nil))
+  ([u v p id]
+     (reify
+       IWithConstraintId
+       (with-id [_ id] (!=c u v id))
+       IConstraintId
+       (id [_] id)
+       IConstraintPrefix
+       (prefix [_] p)
+       IEnforceableConstraint
+       (enforceable? [_] true)
+       IReifiableConstraint
+       (reifiable? [_] true)
+       IConstraintOp
+       (rator [_] `!=)
+       (rands [_] [u v])
+       IRelevant
+       (relevant? [this s]
+         true)
+       (relevant? [this x s]
+         true)
+       IRunnable
+       (runnable? [this s]
+         (and (not (lvar? (walk s u))
+                   (lvar? (walk s v))))))))
+
+(declare normalize-store)
+
+(defn != [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
-      (let [p (prefix a ap)]
+      (let [p (prefix-s a ap)]
         (when (not (empty? p))
           ((normalize-store p) a)))
       a)))

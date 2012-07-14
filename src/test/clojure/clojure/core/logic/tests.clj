@@ -1300,14 +1300,14 @@
   (is (= (pair 1 2)
          (pair 1 2))))
 
-(deftest test-prefix []
+(deftest test-prefix-s []
   (let [x (lvar 'x)
         y (lvar 'y)
         s empty-s
         sp (-> s
              (ext-no-check x 1)
              (ext-no-check y 2))]
-    (is (= (prefix sp s)
+    (is (= (prefix-s sp s)
            (list (pair y 2) (pair x 1))))))
 
 (deftest test-keep-before-1 []
@@ -1802,17 +1802,6 @@
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
 
-(deftest test-=fd-2
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s ((=fd x y) empty-s)
-        s ((== x (interval 1 6)) s)
-        s ((== y (interval 5 10)) s)]
-    (is (= 2 (count (.km (.cs s)))))
-    (is (= 1 (count (.cm (.cs s)))))
-    (is (= (walk s x) (interval 5 6)))
-    (is (= (walk s y) (interval 5 6)))))
-
 ;; FIXME: test based on bad old behavior of !=fd
 #_(deftest test-!=fd-1
   (let [x (lvar 'x)
@@ -2110,7 +2099,7 @@
       (+fd x x x)
       (== q x)))
 
-  ;; this is not very fast
+  ;; NOTE: this is not very fast
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e6] 
