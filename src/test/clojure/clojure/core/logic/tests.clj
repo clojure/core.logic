@@ -1266,7 +1266,7 @@
   (is (= (run* [q] (== q #{1}))
          '(#{1}))))
 
-(deftest test-31-unifier-associative
+#_(deftest test-31-unifier-associative
   (is (= (binding [*reify-vars* false]
            (unifier '{:a ?x} '{:a ?y} '{:a 5}))
          {:a 5}))
@@ -2101,7 +2101,18 @@
            (list (pair y 2) (pair x 1))))
     (is (= (-> p meta :s) sp))))
 
-(deftest test-prefix-subsumes? [])
+(deftest test-prefix-subsumes? []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s empty-s
+        sp (-> s
+             (ext-no-check x 1)
+             (ext-no-check y 2))
+        p (prefix-s sp s)]
+    (is (true? (prefix-subsumes? p (list (pair x 1)))))
+    (is (true? (prefix-subsumes? p (list (pair y 2)))))
+    (is (false? (prefix-subsumes? p (list (pair z 3)))))))
 
 (deftest test-normalize-store [])
 

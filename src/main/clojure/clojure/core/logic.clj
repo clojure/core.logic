@@ -734,6 +734,9 @@
                     (flatten (rands c))))]
     (pair @purge vs)))
 
+;; TODO: map interface stinks, but a collection might be OK?
+;; conj, disj?
+
 (deftype ConstraintStore [km cm cid running]
   IConstraintStore
   (addc [this c]
@@ -3318,6 +3321,16 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
+(defprotocol IConstraintPrefix
+  (prefix [this]))
+
+(defn prefix-s [^Substitutions s ^Substitutions <s]
+  (letfn [(prefix* [s <s]
+            (if (identical? s <s)
+              nil
+              (cons (first s) (prefix* (rest s) <s))))]
+    (with-meta (prefix* (.l s) (.l <s)) {:s s})))
+
 (defn recover-vars [p]
   (if (empty? p)
     []
@@ -3329,38 +3342,16 @@
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-(defn prefix-subsumes? [s p pp]
-  (when-let [sp (reduce unify (-> p meta :s) pp)]
-    (identical? s sp)))
+(defn prefix-subsumes? [p pp]
+  (let [s (-> p meta :s)
+        sp (reduce (fn [s [lhs rhs]]
+                     (unify s lhs rhs))
+                   s pp)]
+    (when sp
+      (identical? s sp))))
 
-(declare !=neq)
-
-#_(defn normalize-store [p]
-  (fn [^Substitutions a]
-    (loop [c (.c a) cp ()]
-      (if (empty? c)
-        (let [cp (ext-cs (build-oc !=neq p) cp)]
-          (make-s (.s a) (.l a) cp))
-        (let [oc (first c)]
-          (if (= (rator oc) '!=new)
-            (let [pp (oc->prefix oc)]
-              (cond
-               (prefix-subsumes? a pp p) a
-               (prefix-subsumes? a p pp) (recur (rest c) cp)
-               :else (recur (rest c) (cons oc cp))))
-            (recur (rest c) (cons oc cp))))))))
-
-(defn prefix-s [^Substitutions s ^Substitutions <s]
-  (letfn [(prefix* [s <s]
-            (if (identical? s <s)
-              nil
-              (cons (first s) (prefix* (rest s) <s))))]
-    (with-meta (prefix* (.l s) (.l <s)) {:s s})))
-
-(defprotocol IConstraintPrefix
-  (prefix [this]))
-
-;; NOTE: u / v may have vars, that's what we care about
+(defn prefix->vars [p]
+  (map lhs p))
 
 (defn !=c
   ([p] (!=c p nil))
@@ -3383,12 +3374,27 @@
        (relevant? [this s]
          (not (empty? p)))
        (relevant? [this x s]
-         (some #{x} (map lhs p)))
+         (some #{x} (prefix->vars lhs p)))
        IRunnable
        (runnable? [this s]
          true))))
 
-(declare normalize-store)
+(defn normalize-store [p]
+  (fn [^Substitutions a]
+    (let [^ConstraintStore cs (.cs a)
+          cids (map (.km cs) (prefix->vars p))
+          neqcs (seq (map (.cm cs) cids))]
+      (loop [a a neqcs neqcs]
+        (let [^Substitutions a a]
+          (if neqcs
+            (let [oc (first neqcs)
+                  pp (prefix oc)]
+              (cond
+               (prefix-subsumes? pp p) a
+               (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (disj cs oc))
+                                              (next neqcs))
+               :else (recur a (next neqcs))))
+            a))))))
 
 (defn != [u v]
   (fn [a]
