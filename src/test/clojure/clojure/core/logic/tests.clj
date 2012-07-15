@@ -47,10 +47,10 @@
 (deftest unify-object-object-4
   (is (= (unify empty-s "foo" "foo") empty-s)))
 
-#_(deftest unify-object-object-5
+(deftest unify-object-object-5
   (is (= (unify empty-s 1 2) false)))
 
-#_(deftest unify-object-object-6
+(deftest unify-object-object-6
   (is (= (unify empty-s 2 1) false)))
 
 (deftest unify-object-object-7
@@ -587,12 +587,11 @@
 ;; =============================================================================
 ;; conso
 
-#_(deftest test-conso
+(deftest test-conso
   (is (= (run* [q]
            (fresh [a d]
-             (conso a d '())
-             (== (cons a d) q))
-           []))))
+             (conso a d '())))
+         ())))
 
 (deftest test-conso-1
   (let [a (lvar 'a)
@@ -692,7 +691,7 @@
 ;; -----------------------------------------------------------------------------
 ;; rembero
 
-#_(deftest rembero-1
+(deftest rembero-1
   (is (= (run 1 [q]
            (rembero 'b '(a b c b d) q))
          '((a c b d)))))
@@ -2046,8 +2045,6 @@
         s ((exclude-from-dom dom1 [x y] s) s)]
     (is (= (walk s x) (multi-interval 2 4)))
     (is (= (walk s y) (multi-interval 6 8)))))
-
-;; TODO: *fdc
 
 (deftest test-with-id
   (let [x (lvar 'x)
