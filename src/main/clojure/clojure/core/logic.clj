@@ -934,6 +934,9 @@
   IUnifyWithObject
   (unify-with-object [v u s]
     (ext s v u))
+  IUnifyWithInteger
+  (unify-with-integer [v u s]
+    (ext-no-check s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext-no-check s u v))

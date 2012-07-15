@@ -62,7 +62,7 @@
 (deftest unify-object-object-9
   (is (= (unify empty-s "foo" "bar") false)))
 
-#_(deftest unify-object-lvar-1
+(deftest unify-object-lvar-1
   (let [x (lvar 'x)
         os (ext-no-check empty-s x 1)]
     (is (= (unify empty-s 1 x) os))))
@@ -166,7 +166,7 @@
         os (ext-no-check empty-s x y)]
     (is (= (unify empty-s lc1 lc2) os))))
 
-#_(deftest unify-lcons-lcons-2
+(deftest unify-lcons-lcons-2
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
@@ -365,7 +365,7 @@
 (deftest unify-map-map-3
   (is (= (unify empty-s {1 2} {1 2 3 4}) false)))
 
-#_(deftest unify-map-map-4
+(deftest unify-map-map-4
   (let [x (lvar 'x)
         m1 {1 2 3 4}
         m2 {1 2 3 x}
@@ -413,7 +413,7 @@
         os (ext-no-check empty-s x 1)]
     (is (= (unify empty-s #{x} #{1}) os))))
 
-#_(deftest unify-set-set-4
+(deftest unify-set-set-4
   (let [x (lvar 'x)
         y (lvar 'y)
         os (-> empty-s
@@ -421,7 +421,7 @@
                (ext-no-check y 1))]
     (is (= (unify empty-s #{1 x} #{2 y}) os))))
 
-#_(deftest unify-set-set-5
+(deftest unify-set-set-5
   (let [x (lvar 'x)
         y (lvar 'y)
         os (-> empty-s
@@ -429,7 +429,7 @@
                (ext-no-check y 1))]
     (is (= (unify empty-s #{x 1} #{2 y}) os))))
 
-#_(deftest unify-set-set-6
+(deftest unify-set-set-6
   (let [a (lvar 'a)
         b (lvar 'b)
         c (lvar 'c)
@@ -710,7 +710,7 @@
     [(== 2 x)]
     [(== 3 x)]))
 
-#_(deftest test-conde-1-clause
+(deftest test-conde-1-clause
   (is (= (run* [q]
            (fresh [x y]
              (digit-1 x)
@@ -718,7 +718,7 @@
              (== q [x y])))
          '([0 0]))))
 
-#_(deftest test-conde-4-clauses
+(deftest test-conde-4-clauses
   (is (= (run* [q]
            (fresh [x y]
              (digit-4 x)
@@ -1023,7 +1023,7 @@
          (arco-2 x z)
          (patho-2 z y))])))
 
-#_(deftest test-tabled-2
+(deftest test-tabled-2
   (let [r (set (run* [q] (patho-2 1 q)))]
     (is (and (= (count r) 4)
              (= r #{2 3 4 5})))))
@@ -1117,7 +1117,7 @@
   (is (= (unifier '(?x ?y) '(1 2))
          '(1 2))))
 
-#_(deftest test-unifier-2
+(deftest test-unifier-2
   (is (= (unifier '(?x ?y 3) '(1 2 ?z))
          '(1 2 3))))
 
@@ -1141,7 +1141,7 @@
   (is (= (binding-map '(?x ?y) '(1 2))
          '{?x 1 ?y 2})))
 
-#_(deftest test-binding-map-2
+(deftest test-binding-map-2
   (is (= (binding-map '(?x ?y 3) '(1 2 ?z))
          '{?x 1 ?y 2 ?z 3})))
 
@@ -1266,7 +1266,7 @@
   (is (= (run* [q] (== q #{1}))
          '(#{1}))))
 
-#_(deftest test-31-unifier-associative
+(deftest test-31-unifier-associative
   (is (= (binding [*reify-vars* false]
            (unifier '{:a ?x} '{:a ?y} '{:a 5}))
          {:a 5}))
