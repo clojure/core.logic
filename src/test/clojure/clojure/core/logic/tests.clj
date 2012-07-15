@@ -2091,6 +2091,14 @@
              (== q y)))
          '(4))))
 
+(deftest test-*fd-1
+  (is (= (run* [q]
+           (fresh [n m]
+             (infd n m (interval 1 10))
+             (*fd n 2 m)
+             (== q [n m])))
+         '([1 2] [2 4] [3 6] [4 8] [ 5 10]))))
+
 (comment
   ;; FIXME
   (run* [q]
