@@ -1511,27 +1511,27 @@
 
   java.lang.Byte
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   java.lang.Short
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   java.lang.Integer
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   java.lang.Long
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   java.math.BigInteger
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   clojure.lang.BigInt
   (unify-with-integer [v u s]
-    (when (= u v) s))
+    (if (= u v) s false))
 
   IntervalFD
   (unify-with-integer [v u s]
