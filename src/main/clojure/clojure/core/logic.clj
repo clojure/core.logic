@@ -3330,7 +3330,7 @@
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
 (defn prefix-subsumes? [s p pp]
-  (when-let [sp (unify s p pp)]
+  (when-let [sp (reduce unify (-> p meta :s) pp)]
     (identical? s sp)))
 
 (declare !=neq)
@@ -3355,7 +3355,7 @@
             (if (identical? s <s)
               nil
               (cons (first s) (prefix* (rest s) <s))))]
-    (prefix* (.l s) (.l <s))))
+    (with-meta (prefix* (.l s) (.l <s)) {:s s})))
 
 (defprotocol IConstraintPrefix
   (prefix [this]))
@@ -3363,11 +3363,11 @@
 ;; NOTE: u / v may have vars, that's what we care about
 
 (defn !=c
-  ([u v] (!=c u v nil nil))
-  ([u v p id]
+  ([p] (!=c p nil))
+  ([p id]
      (reify
        IWithConstraintId
-       (with-id [_ id] (!=c u v id))
+       (with-id [_ id] (!=c p id))
        IConstraintId
        (id [_] id)
        IConstraintPrefix
@@ -3378,16 +3378,15 @@
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] [u v])
+       (rands [_] p)
        IRelevant
        (relevant? [this s]
-         true)
+         (not (empty? p)))
        (relevant? [this x s]
-         true)
+         (some #{x} (map lhs p)))
        IRunnable
        (runnable? [this s]
-         (and (not (lvar? (walk s u))
-                   (lvar? (walk s v))))))))
+         true))))
 
 (declare normalize-store)
 
@@ -3396,7 +3395,7 @@
     (if-let [ap (unify a u v)]
       (let [p (prefix-s a ap)]
         (when (not (empty? p))
-          ((normalize-store p) a)))
+          ((!=c a) a)))
       a)))
 
 #_(defn all-diffo [l]

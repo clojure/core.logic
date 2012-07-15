@@ -1299,16 +1299,6 @@
   (is (= (pair 1 2)
          (pair 1 2))))
 
-(deftest test-prefix-s []
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s empty-s
-        sp (-> s
-             (ext-no-check x 1)
-             (ext-no-check y 2))]
-    (is (= (prefix-s sp s)
-           (list (pair y 2) (pair x 1))))))
-
 (deftest test-keep-before-1 []
   (is (= (keep-before (interval 1 10) 5)
          (interval 1 4)))
@@ -1612,15 +1602,6 @@
   (let [d (multi-interval (interval 1 4) 5 (interval 6 10))]
     (is (= (normalize-intervals (intervals d))
            [(interval 1 10)]))))
-
-(deftest test-recover-vars []
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              (ext-no-check x 1)
-              (ext-no-check y 2))]
-    (is (= (recover-vars (.l s))
-           [x y]))))
 
 (deftest test-unify-interval-and-number-1
    (is (= (run* [q]
@@ -2095,3 +2076,35 @@
              (*fd n 2 m)
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [ 5 10]))))
+
+;; -----------------------------------------------------------------------------
+;; CLP(Tree)
+
+(deftest test-recover-vars []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (ext-no-check x 1)
+              (ext-no-check y 2))]
+    (is (= (recover-vars (.l s))
+           [x y]))))
+
+(deftest test-prefix-s []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s empty-s
+        sp (-> s
+             (ext-no-check x 1)
+             (ext-no-check y 2))
+        p (prefix-s sp s)]
+    (is (= p
+           (list (pair y 2) (pair x 1))))
+    (is (= (-> p meta :s) sp))))
+
+(deftest test-prefix-subsumes? [])
+
+(deftest test-normalize-store [])
+
+(deftest test-!=c-1)
+
+(deftest test-!=-1)
