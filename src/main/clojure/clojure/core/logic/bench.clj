@@ -107,7 +107,7 @@
 ;; =============================================================================
 ;; nqueens
 
-;; Bratko pg 103
+;; Bratko 3d pg 103
 
 (comment
   (declare noattacko)
@@ -169,7 +169,7 @@
 ;; =============================================================================
 ;; nqueensfd
 
-;; based on Bratko pg 344, constraint version
+;; based on Bratko 3d pg 344, constraint version
 
 (comment
   ;; direct translation does not work
@@ -264,7 +264,7 @@
 
 ;; =============================================================================
 ;; Cryptarithmetic Puzzle
-;; Bratko pg 343
+;; Bratko 3rd ed pg 343
 
 ;; TODO: we want sugar for this
 
