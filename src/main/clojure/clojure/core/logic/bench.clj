@@ -357,11 +357,11 @@
        (map second)))
 
 (comment
-  ;; ~250ms
+  ;; ~2250ms
   ;; close to 2X faster than Petite Chez
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100]
+     (dotimes [_ 1000]
        (dinesmanfd))))
 
   (-> (dinesmanfd) first ->answer)  ; (:smith :cooper :baker :fletcher :miller)
@@ -407,10 +407,10 @@
 (comment
   (time (matches 40))
   
-  ;; ~40ms much faster
+  ;; ~2970ms much faster
   ;; so >2X faster than cKanren under Petite Chez
-  (dotimes [_ 10]
+  (dotimes [_ 5]
     (time
-     (dotimes [_ 100]
+     (dotimes [_ 1000]
        (matches 40))))
   )

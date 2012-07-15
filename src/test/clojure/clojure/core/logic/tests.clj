@@ -2095,18 +2095,3 @@
              (*fd n 2 m)
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [ 5 10]))))
-
-(comment
-  ;; FIXME
-  (run* [q]
-    (fresh [x]
-      (infd x (interval 0 3))
-      (+fd x x x)
-      (== q x)))
-
-  ;; NOTE: this is not very fast
-  (dotimes [_ 5]
-    (time
-     (dotimes [_ 1e6] 
-       (drop-before (multi-interval 2 4) (lb 3)))))
-  )
