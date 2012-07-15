@@ -3191,11 +3191,11 @@
                vi (interval (safe-div umax vmin wmin)
                             (safe-div umin vmax wmax))
                wi (interval (* umin vmin) (* umax vmax))]
-           (composeg
-            (process-dom w wi)
-            (composeg
-             (process-dom u ui)
-             (process-dom v vi))))))
+           ((composeg
+             (process-dom w wi)
+             (composeg
+              (process-dom u ui)
+              (process-dom v vi))) s))))
      IConstraintOp
      (rator [_] `*fd)
      (rands [_] [u v w])

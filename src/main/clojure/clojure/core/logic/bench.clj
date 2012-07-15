@@ -263,6 +263,26 @@
   )
 
 ;; =============================================================================
+;; Cryptarithmetic Puzzle
+;; Bratko pg 343
+
+;; TODO: we want sugar for this
+
+#_(defn cryptarithfd []
+  (run* [q]
+    (fresh [d o n a l d
+            g e r a l d
+            r o b e r t]
+      (let [vars [d o n a l d g e r a l d r o b e r t]]
+        (== q vars)
+        (infd d o n a l d g e r a l d r o b e r t (interval 0 9))
+        (distintfd vars)
+        ))))
+
+(comment
+  )
+
+;; =============================================================================
 ;; Hanoi
 
 (defne moveo [n x y z]
@@ -385,6 +405,6 @@
   ;; so >2X faster than cKanren under Petite Chez
   (dotimes [_ 10]
     (time
-     (dotimes [_ 10]
+     (dotimes [_ 100]
        (matches 40))))
   )
