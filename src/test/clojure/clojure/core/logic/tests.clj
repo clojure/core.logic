@@ -2119,3 +2119,14 @@
 (deftest test-!=c-1)
 
 (deftest test-!=-1)
+
+(comment
+  ;; FIXME:
+  (run* [q]
+    (fresh [x y z]
+     (infd x y z (interval 1 10))
+     (+fd x y z)
+     (<fd x y)
+     (== z 8)
+     (== q [x y z])))
+  )
