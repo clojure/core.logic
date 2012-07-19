@@ -27,6 +27,16 @@ Future Roadmap
 * **Environment Trimming** - Definite Clause Grammars (DCGs) are quite slow in miniKanren. This may be due to a lack of groundness analysis or it may be because we are not trimming the environment of needless logic variables. It looks like the original Kanren paper may have some good approaches.
 * **Groundness Analysis** - Initial research on feasibility done. It does in fact give significant performance boosts (2-3X). Seems to close many performance gaps between SWI-Prolog and miniKanren. However maintaining correctness seems difficult. Perhaps limit optimization to DCGs and pattern matching sugar. Again, the original Kanren paper may have insights here.
 
+YourKit
+----
+
+YourKit has given an open source license for their profiler, greatly simplifying the profiling of core.logic performance.
+
+YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
+
+* <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
+* <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
+
 Examples
 ----
 
@@ -266,16 +276,6 @@ It's important to index relationships so that the time to run queries doesn't gr
 ; Clojure 1.2.0
 (defrel likes ^{:index true} p1 ^{:index true} p2)
 ```
-
-YourKit
-----
-
-YourKit has has given me a free license for their profiler, greatly simplifying the profiling of core.logic performance. 
-
-YourKit is kindly supporting open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of innovative and intelligent tools for profiling Java and .NET applications. Take a look at YourKit's leading software products:
-
-* <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
-* <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
 
 Notes
 ----
