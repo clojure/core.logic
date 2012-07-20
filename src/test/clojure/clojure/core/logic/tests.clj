@@ -2125,6 +2125,17 @@
     (is (true? (prefix-subsumes? p (list (pair y 2)))))
     (is (false? (prefix-subsumes? p (list (pair z 3)))))))
 
+(deftest test-remc []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        c (fdc (+fdc x y z))
+        cs (addc (make-cs) c)
+        cp (get (.cm cs) 0)
+        cs (remc cs cp)]
+    (is (= (.km cs) {}))
+    (is (= (.cm cs) {}))))
+
 (deftest test-normalize-store [])
 
 (deftest test-!=c-1)

@@ -100,11 +100,10 @@
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c s])
+  (remc [this c])
   (runc [this c])
   (constraints [this x])
   (update-proc [this id proc]))
-
-;; TODO: think about breaking apart and providing default with-id, id impl?
 
 (defprotocol IWithConstraintId
   (with-id [this id]))
@@ -758,6 +757,17 @@
                 (dissoc cm id)
                 cm)]
       (ConstraintStore. nkm ncm cid (disj running id))))
+  (remc [this c]
+    (let [vs (var-rands c)
+          cid (id c)
+          nkm (reduce (fn [km v]
+                        (let [vcs (disj (get km v) cid)]
+                          (if (empty? vcs)
+                            (dissoc km v)
+                            (assoc km v vcs))))
+                      km vs)
+          ncm (dissoc cm cid)]
+      (ConstraintStore. nkm ncm cid running)))
   (runc [this c]
     (ConstraintStore. km cm cid (conj running (id c))))
   (constraints [this x]
