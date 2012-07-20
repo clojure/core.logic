@@ -2136,6 +2136,19 @@
     (is (= (.km cs) {}))
     (is (= (.cm cs) {}))))
 
+(deftest test-treec-id-1 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (with-id (!=c x y) 0)]
+    (is (zero? (id c)))))
+
+(deftest test-tree-constraint? []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (!=c x y)
+        cs (addc (make-cs) c)]
+    (.km cs)))
+
 (deftest test-normalize-store [])
 
 (deftest test-!=c-1)

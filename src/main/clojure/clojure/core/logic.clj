@@ -3330,6 +3330,13 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
+(defprotocol ITreeConstraint
+  (tree-constraint? [this]))
+
+(extend-type Object
+  ITreeConstraint
+  (tree-constraint? [this] false))
+
 (defprotocol IConstraintPrefix
   (prefix [this]))
 
@@ -3366,6 +3373,8 @@
   ([p] (!=c p nil))
   ([p id]
      (reify
+       ITreeConstraint
+       (tree-constraint? [_] true)
        IWithConstraintId
        (with-id [_ id] (!=c p id))
        IConstraintId
@@ -3392,7 +3401,9 @@
   (fn [^Substitutions a]
     (let [^ConstraintStore cs (.cs a)
           cids (map (.km cs) (prefix->vars p))
-          neqcs (seq (map (.cm cs) cids))]
+          neqcs (seq (->> cids
+                       (map (.cm cs))
+                       (filter tree-constraint?)))]
       (loop [a a neqcs neqcs]
         (let [^Substitutions a a]
           (if neqcs
@@ -3400,7 +3411,7 @@
                   pp (prefix oc)]
               (cond
                (prefix-subsumes? pp p) a
-               (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (disj cs oc))
+               (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                               (next neqcs))
                :else (recur a (next neqcs))))
             a))))))
