@@ -2077,6 +2077,17 @@
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [ 5 10]))))
 
+
+(deftest test0-<fd-2
+  (is (= (run* [q]
+           (fresh [x y z]
+             (infd x y z (interval 1 10))
+             (+fd x y z)
+             (<fd x y)
+             (== z 10)
+             (== q [x y z])))
+         '([1 9 10] [2 8 10] [3 7 10] [4 6 10]))))
+
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
 
@@ -2119,14 +2130,3 @@
 (deftest test-!=c-1)
 
 (deftest test-!=-1)
-
-(comment
-  ;; FIXME:
-  (run* [q]
-    (fresh [x y z]
-     (infd x y z (interval 1 10))
-     (+fd x y z)
-     (<fd x y)
-     (== z 8)
-     (== q [x y z])))
-  )

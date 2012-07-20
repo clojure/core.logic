@@ -2891,9 +2891,7 @@
 (defn run-constraint [c]
   (fn [^Substitutions a]
     (if (runnable? c a)
-      (if (relevant? c a)
-        ((composeg c (update-cs c)) (running a c))
-        ((update-cs c) a))
+      ((composeg c (update-cs c)) (running a c))
       a)))
 
 (defn run-constraints [xcs]
@@ -3133,12 +3131,13 @@
     (rands [_] [u v])
     IRelevant
     (relevant? [this s]
-      (cond
-       (not (singleton-dom? (walk s u))) true
-       (not (singleton-dom? (walk s v))) true
-       :else false))
+      (let-dom s [u du v dv]
+       (cond
+        (not (singleton-dom? du)) true
+        (not (singleton-dom? dv)) true
+        :else (not (<= du dv)))))
     (relevant? [this x s]
-      (not (singleton-dom? (walk s x))))))
+      (relevant? this s))))
 
 (defn <=fd [u v]
   (fdcg (<=fdc u v)))
