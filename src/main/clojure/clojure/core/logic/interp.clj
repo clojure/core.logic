@@ -20,16 +20,18 @@
 
   IBind
   (bind [this g]
-    (let [exp (mk-exp g)
-          sub-tree (cond
-                    (= exp :fresh) [exp (mk-vars g)]
-                    (= exp :conde) []
-                    :else :goal)
-          sub-s (tracer sub-tree)
-          new-tree (if (= exp :conde)
-                     (conj _tree [:conde (tree (unwrap (g sub-s)))])
-                     (conj _tree (tree (unwrap (g sub-s)))))]
-      (tracer new-tree)))
+    (if (seen (class g))
+      (tracer (conj _tree [:goal :seen]) seen)
+      (let [exp (mk-exp g)
+            sub-tree (cond
+                      (= exp :fresh) [exp (mk-vars g)]
+                      (= exp :conde) []
+                      :else :goal)
+            sub-s (tracer sub-tree (conj seen (class g)))
+            new-tree (if (= exp :conde)
+                       (conj _tree [:conde (-> (g sub-s) unwrap tree)])
+                       (conj _tree (-> (g sub-s) unwrap tree)))]
+        (tracer new-tree))))
 
   IMPlus
   (mplus [this f]
@@ -37,7 +39,7 @@
       (tracer (into [_tree] [(tree s)])))))
 
 (defn tracer
-  ([] (tracer [] nil))
+  ([] (tracer [] #{}))
   ([tree] (tracer tree #{}))
   ([tree seen]
      (TraceSubstitutions. tree seen)))
@@ -77,13 +79,18 @@
   ;; can trace relations
   (tree (bind (tracer) (foo)))
 
-  ;; we don't want conde copied into it
-  
+  (defn aloop []
+    (conde
+      [s#]
+      [(aloop)]))
+
+  ;; works can handle recursive goals
+  (tree (bind (tracer) (aloop)))
+
   ;; 1. we care about fresh
   ;; 2. we care about conde
   ;; 3. if encounter -inc, we force it
   ;; 4. we never call goals we've seen before
-  ;; 5. 
-
-  ;; we 
+  ;; 5. we can test whether two goal are the same, their classes will match
+  ;;    this works for regular relations, ones that don't using matching sugar
   )
