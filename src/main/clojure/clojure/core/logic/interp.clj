@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [==])
   (:use clojure.core.logic))
 
-(def ^:dynamic *trees* nil)
-
+;; to remove thunks
 (defn unwrap [g]
   (cond
    (trace-subst? g) g
@@ -15,7 +14,7 @@
 (defprotocol ISearchTree
   (tree [this]))
 
-(deftype TraceSubstitutions [_tree]
+(deftype TraceSubstitutions [_tree seen]
   ISearchTree
   (tree [this] _tree)
 
@@ -38,9 +37,10 @@
       (tracer (into [_tree] [(tree s)])))))
 
 (defn tracer
-  ([] (tracer []))
-  ([tree]
-     (TraceSubstitutions. tree)))
+  ([] (tracer [] nil))
+  ([tree] (tracer tree #{}))
+  ([tree seen]
+     (TraceSubstitutions. tree seen)))
 
 (defn trace-subst? [x]
   (instance? TraceSubstitutions x))
@@ -55,7 +55,7 @@
   ;; works
   (tree (bind (tracer) (fresh [x] (fresh [y] s#) s#)))
 
-  ;; mplus?
+  ;; works
   (tree
    (bind (tracer)
          (fresh [x]
@@ -63,6 +63,19 @@
              [s# s#]
              [s# s#])
            s#)))
+
+  (defn bar []
+    (conde
+      [s#]
+      [s#]))
+
+  (defn foo []
+    (fresh [x y]
+      s#
+      (bar)))
+
+  ;; can trace relations
+  (tree (bind (tracer) (foo)))
 
   ;; we don't want conde copied into it
   
