@@ -3348,7 +3348,8 @@
             (if (identical? s <s)
               nil
               (cons (first s) (prefix* (rest s) <s))))]
-    (with-meta (prefix* (.l s) (.l <s)) {:s s})))
+    (when-let [p (prefix* (.l s) (.l <s))]
+      (with-meta p {:s s}))))
 
 (defn recover-vars [p]
   (if (empty? p)
@@ -3372,6 +3373,8 @@
 (defn prefix->vars [p]
   (map lhs p))
 
+(declare normalize-store)
+
 (defn !=c
   ([p] (!=c p nil))
   ([p id]
@@ -3381,9 +3384,8 @@
          (if-let [ap (reduce (fn [a [u v]]
                                (when a (unify a u v)))
                              a p)]
-           (if-let [p (seq (prefix-s ap a))]
-             ((normalize-store (with-prefix this p)) a)
-             false)
+           (when-let [p (prefix-s ap a)]
+             ((normalize-store (with-prefix this p)) a))
            a))
        ITreeConstraint
        (tree-constraint? [_] true)
@@ -3419,17 +3421,16 @@
           neqcs (seq (->> cids
                        (map (.cm cs))
                        (filter tree-constraint?)))]
-      (loop [a a neqcs neqcs]
-        (let [^Substitutions a a]
-          (if neqcs
-            (let [oc (first neqcs)
-                  pp (prefix oc)]
-              (cond
-               (prefix-subsumes? pp p) a
-               (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
-                                              (next neqcs))
-               :else (recur a (next neqcs))))
-            ((update-cs c) a)))))))
+      (loop [^Substitutions a a neqcs neqcs]
+        (if neqcs
+          (let [oc (first neqcs)
+                pp (prefix oc)]
+            (cond
+             (prefix-subsumes? pp p) a
+             (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
+                                            (next neqcs))
+             :else (recur a (next neqcs))))
+          ((update-cs c) a))))))
 
 (defn != [u v]
   (fn [a]

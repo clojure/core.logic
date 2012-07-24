@@ -2165,6 +2165,13 @@
         s ((!= x y) empty-s)]
     (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
 
+(deftest test-!=-2 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)
+        s ((== x y) s)]
+    (is (= s nil))))
+
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)
         y (lvar 'y)
