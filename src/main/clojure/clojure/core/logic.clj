@@ -3429,7 +3429,8 @@
                (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                               (next neqcs))
                :else (recur a (next neqcs))))
-            (let [^ConstraintStore cs (.cs a)])))))))
+            (let [^ConstraintStore cs (.cs a)]
+              (make-s (.s a) (.l a) (updatec cs c a)))))))))
 
 (defn != [u v]
   (fn [a]
