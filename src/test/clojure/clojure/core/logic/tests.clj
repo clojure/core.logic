@@ -2145,9 +2145,11 @@
 (deftest test-tree-constraint? []
   (let [x (lvar 'x)
         y (lvar 'y)
-        c (!=c x y)
+        c (!=c (list (pair x 1) (pair y 2)))
         cs (addc (make-cs) c)]
-    (.km cs)))
+    (is (tree-constraint? ((.cm cs) 0)))
+    (is (= (into #{} (keys (.km cs)))
+           #{x y}))))
 
 (deftest test-normalize-store [])
 

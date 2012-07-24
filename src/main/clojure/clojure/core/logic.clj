@@ -3387,7 +3387,7 @@
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] p)
+       (rands [_] (map lhs p))
        IRelevant
        (relevant? [this s]
          (not (empty? p)))
