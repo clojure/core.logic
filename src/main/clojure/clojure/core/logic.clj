@@ -3364,15 +3364,19 @@
   ITreeConstraint
   (tree-constraint? [this] false))
 
-(defprotocol IConstraintPrefix
+(defprotocol IPrefix
   (prefix [this]))
+
+(defprotocol IWithPrefix
+  (with-prefix [this p]))
 
 (defn prefix-s [^Substitutions s ^Substitutions <s]
   (letfn [(prefix* [s <s]
             (if (identical? s <s)
               nil
               (cons (first s) (prefix* (rest s) <s))))]
-    (with-meta (prefix* (.l s) (.l <s)) {:s s})))
+    (when-let [p (prefix* (.l s) (.l <s))]
+      (with-meta p {:s s}))))
 
 (defn recover-vars [p]
   (if (empty? p)
@@ -3396,59 +3400,71 @@
 (defn prefix->vars [p]
   (map lhs p))
 
+(declare normalize-store)
+
 (defn !=c
   ([p] (!=c p nil))
   ([p id]
      (reify
+       clojure.lang.IFn
+       (invoke [this a]
+         (if-let [ap (reduce (fn [a [u v]]
+                               (when a (unify a u v)))
+                             a p)]
+           (when-let [p (prefix-s ap a)]
+             ((normalize-store (with-prefix this p)) a))
+           a))
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
        (with-id [_ id] (!=c p id))
        IConstraintId
        (id [_] id)
-       IConstraintPrefix
+       IPrefix
        (prefix [_] p)
+       IWithPrefix
+       (with-prefix [_ p] (!=c p id))
        IEnforceableConstraint
        (enforceable? [_] true)
        IReifiableConstraint
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] p)
+       (rands [_] (prefix->vars p))
        IRelevant
        (relevant? [this s]
          (not (empty? p)))
        (relevant? [this x s]
-         (some #{x} (prefix->vars lhs p)))
+         (some #{x} (prefix->vars p)))
        IRunnable
        (runnable? [this s]
-         true))))
+         (some #(not= (walk s %) %) (prefix->vars p))))))
 
-(defn normalize-store [p]
+(defn normalize-store [c]
   (fn [^Substitutions a]
-    (let [^ConstraintStore cs (.cs a)
-          cids (map (.km cs) (prefix->vars p))
+    (let [p (prefix c)
+          ^ConstraintStore cs (.cs a)
+          cids (remove nil? (map (.km cs) (prefix->vars p)))
           neqcs (seq (->> cids
                        (map (.cm cs))
                        (filter tree-constraint?)))]
-      (loop [a a neqcs neqcs]
-        (let [^Substitutions a a]
-          (if neqcs
-            (let [oc (first neqcs)
-                  pp (prefix oc)]
-              (cond
-               (prefix-subsumes? pp p) a
-               (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
-                                              (next neqcs))
-               :else (recur a (next neqcs))))
-            a))))))
+      (loop [^Substitutions a a neqcs neqcs]
+        (if neqcs
+          (let [oc (first neqcs)
+                pp (prefix oc)]
+            (cond
+             (prefix-subsumes? pp p) a
+             (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
+                                            (next neqcs))
+             :else (recur a (next neqcs))))
+          ((update-cs c) a))))))
 
 (defn != [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
-      (let [p (prefix-s a ap)]
+      (let [p (prefix-s ap a)]
         (when (not (empty? p))
-          ((!=c a) a)))
+          ((!=c p) a)))
       a)))
 
 #_(defn all-diffo [l]
@@ -3460,8 +3476,6 @@
       (!=c a ad)
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
-
-(declare !=)
 
 (defne rembero [x l o]
   ([_ [x . xs] xs])

@@ -2145,11 +2145,50 @@
 (deftest test-tree-constraint? []
   (let [x (lvar 'x)
         y (lvar 'y)
-        c (!=c x y)
+        c (!=c (list (pair x 1) (pair y 2)))
         cs (addc (make-cs) c)]
-    (.km cs)))
+    (is (tree-constraint? ((.cm cs) 0)))
+    (is (= (into #{} (keys (.km cs)))
+           #{x y}))))
 
-(deftest test-normalize-store [])
+(deftest test-prefix-protocols []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (!=c (list (pair x 1) (pair y 2)))
+        c (with-prefix c (list (pair x 1)))]
+    (is (= (prefix c)
+           (list (pair x 1))))))
+
+(deftest test-!=-1 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)]
+    (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
+
+(deftest test-!=-2 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)
+        s ((== x y) s)]
+    (is (= s nil))))
+
+;; TODO: constraint is still in the store, why?
+#_(deftest test-!=-3 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)
+        s ((== x 1) s)
+        s ((== y 2) s)
+        c (get (.cm (.cs s)) 0)]
+    (is (not (nil? s)))))
+
+#_(deftest test-normalize-store []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (!=c (list (pair x 1)))
+        sc (!=c (list (pair x 1) (pair y 2)))
+        cs (addc (make-cs) c)]
+    ))
 
 (deftest test-!=c-1)
 
