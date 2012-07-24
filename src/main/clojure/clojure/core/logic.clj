@@ -3408,7 +3408,7 @@
        (relevant? [this s]
          (not (empty? p)))
        (relevant? [this x s]
-         (some #{x} (prefix->vars lhs p)))
+         (some #{x} (prefix->vars p)))
        IRunnable
        (runnable? [this s]
          (some #(not= (walk s %) %) (prefix->vars p))))))

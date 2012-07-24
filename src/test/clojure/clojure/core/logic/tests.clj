@@ -2172,6 +2172,16 @@
         s ((== x y) s)]
     (is (= s nil))))
 
+;; TODO: constraint is still in the store, why?
+#_(deftest test-!=-3 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)
+        s ((== x 1) s)
+        s ((== y 2) s)
+        c (get (.cm (.cs s)) 0)]
+    (is (not (nil? s)))))
+
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)
         y (lvar 'y)
