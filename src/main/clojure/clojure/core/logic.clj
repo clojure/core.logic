@@ -3382,8 +3382,8 @@
                                (when a (unify a u v)))
                              a p)]
            (if-let [p (seq (prefix-s ap a))]
-             false
-             ((normalize-store (with-prefix this p)) a))
+             ((normalize-store (with-prefix this p)) a)
+             false)
            a))
        ITreeConstraint
        (tree-constraint? [_] true)
@@ -3429,15 +3429,14 @@
                (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                               (next neqcs))
                :else (recur a (next neqcs))))
-            (let [^ConstraintStore cs (.cs a)]
-              (make-s (.s a) (.l a) (updatec cs c a)))))))))
+            (ext-cs (.cs a) c a)))))))
 
 (defn != [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
-      (let [p (prefix-s a ap)]
+      (let [p (prefix-s ap a)]
         (when (not (empty? p))
-          ((!=c a) a)))
+          ((!=c p) a)))
       a)))
 
 #_(defn all-diffo [l]
