@@ -2159,10 +2159,17 @@
     (is (= (prefix c)
            (list (pair x 1))))))
 
-(deftest test-normalize-store []
+(deftest test-!=-1 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)]
+    (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
+
+#_(deftest test-normalize-store []
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1)))
+        sc (!=c (list (pair x 1) (pair y 2)))
         cs (addc (make-cs) c)]
     ))
 

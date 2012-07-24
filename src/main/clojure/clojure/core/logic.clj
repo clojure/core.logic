@@ -3415,7 +3415,7 @@
   (fn [^Substitutions a]
     (let [p (prefix c)
           ^ConstraintStore cs (.cs a)
-          cids (map (.km cs) (prefix->vars p))
+          cids (remove nil? (map (.km cs) (prefix->vars p)))
           neqcs (seq (->> cids
                        (map (.cm cs))
                        (filter tree-constraint?)))]
@@ -3429,7 +3429,7 @@
                (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                               (next neqcs))
                :else (recur a (next neqcs))))
-            (ext-cs (.cs a) c a)))))))
+            ((update-cs c) a)))))))
 
 (defn != [u v]
   (fn [a]
@@ -3448,8 +3448,6 @@
       (!=c a ad)
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
-
-(declare !=)
 
 (defne rembero [x l o]
   ([_ [x . xs] xs])
