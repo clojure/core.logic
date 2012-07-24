@@ -2151,7 +2151,20 @@
     (is (= (into #{} (keys (.km cs)))
            #{x y}))))
 
-(deftest test-normalize-store [])
+(deftest test-prefix-protocols []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (!=c (list (pair x 1) (pair y 2)))
+        c (with-prefix c (list (pair x 1)))]
+    (is (= (prefix c)
+           (list (pair x 1))))))
+
+(deftest test-normalize-store []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        c (!=c (list (pair x 1)))
+        cs (addc (make-cs) c)]
+    ))
 
 (deftest test-!=c-1)
 

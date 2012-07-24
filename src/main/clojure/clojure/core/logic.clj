@@ -3337,8 +3337,11 @@
   ITreeConstraint
   (tree-constraint? [this] false))
 
-(defprotocol IConstraintPrefix
+(defprotocol IPrefix
   (prefix [this]))
+
+(defprotocol IWithPrefix
+  (with-prefix [this p]))
 
 (defn prefix-s [^Substitutions s ^Substitutions <s]
   (letfn [(prefix* [s <s]
@@ -3373,21 +3376,26 @@
   ([p] (!=c p nil))
   ([p id]
      (reify
+       clojure.lang.IFn
+       (invoke [_ a]
+         )
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
        (with-id [_ id] (!=c p id))
        IConstraintId
        (id [_] id)
-       IConstraintPrefix
+       IPrefix
        (prefix [_] p)
+       IWithPrefix
+       (with-prefix [_ p] (!=c p id))
        IEnforceableConstraint
        (enforceable? [_] true)
        IReifiableConstraint
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] (map lhs p))
+       (rands [_] (prefix->vars p))
        IRelevant
        (relevant? [this s]
          (not (empty? p)))
