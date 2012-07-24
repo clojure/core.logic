@@ -3377,8 +3377,14 @@
   ([p id]
      (reify
        clojure.lang.IFn
-       (invoke [_ a]
-         )
+       (invoke [this a]
+         (if-let [ap (reduce (fn [a [u v]]
+                               (when a (unify a u v)))
+                             a p)]
+           (if-let [p (seq (prefix-s ap a))]
+             false
+             ((normalize-store (with-prefix this p)) a))
+           a))
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
@@ -3403,11 +3409,12 @@
          (some #{x} (prefix->vars lhs p)))
        IRunnable
        (runnable? [this s]
-         true))))
+         (some #(not= (walk s %) %) (prefix->vars p))))))
 
-(defn normalize-store [p]
+(defn normalize-store [c]
   (fn [^Substitutions a]
-    (let [^ConstraintStore cs (.cs a)
+    (let [p (prefix c)
+          ^ConstraintStore cs (.cs a)
           cids (map (.km cs) (prefix->vars p))
           neqcs (seq (->> cids
                        (map (.cm cs))
@@ -3422,7 +3429,7 @@
                (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                               (next neqcs))
                :else (recur a (next neqcs))))
-            a))))))
+            (let [^ConstraintStore cs (.cs a)])))))))
 
 (defn != [u v]
   (fn [a]
