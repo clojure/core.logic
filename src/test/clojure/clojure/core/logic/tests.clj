@@ -1737,7 +1737,8 @@
     (is (= (count (.km cs)) 3))
     (is (= (count (.cm cs)) 2))))
 
-(deftest test-ext-cs
+;; FIXME: ext-cs no longer exists
+#_(deftest test-ext-cs
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
@@ -1766,7 +1767,7 @@
         s (-> s
               (ext-no-check u 1)
               (ext-no-check w 2))
-        s ((update-cs c) s)]
+        s ((check-cs c) s)]
     (is (zero? (count (.km (.cs s)))))
     (is (zero? (count (.cm (.cs s)))))))
 
@@ -2165,7 +2166,7 @@
         s ((!= x y) empty-s)]
     (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
 
-(deftest test-!=-2 []
+#_(deftest test-!=-2 []
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)
@@ -2174,13 +2175,18 @@
 
 ;; TODO: constraint is still in the store, why?
 #_(deftest test-!=-3 []
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s ((!= x y) empty-s)
-        s ((== x 1) s)
-        s ((== y 2) s)
-        c (get (.cm (.cs s)) 0)]
-    (is (not (nil? s)))))
+    (let [x (lvar 'x)
+          y (lvar 'y)
+          _ (println "(!= x y)")
+          s ((!= x y) empty-s)
+          _ (println "(== x 1)")
+          s ((== x 1) s)
+          _ (println "(== y 2)")
+          s ((== y 2) s)
+          c (get (.cm (.cs s)) 0)]
+      (is (not (nil? s)))
+      [(.km (.cs s)) (prefix (get (.cm (.cs s)) 0))]))
+;; why do we see x and not y?
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)

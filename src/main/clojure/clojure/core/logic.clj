@@ -100,6 +100,7 @@
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c s])
+  (checkc [this c s])
   (remc [this c])
   (runc [this c])
   (constraints [this x])
@@ -744,6 +745,8 @@
           ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
       (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
   (updatec [this c s]
+    (ConstraintStore. km (assoc cm (id c) c) cid running))
+  (checkc [this c s]
     (let [id (id c)
           oc (get cm id)
           [purge? vs] (vars-to-remove c s)
@@ -2816,14 +2819,13 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn ext-cs [cs oc s]
-  (if (id oc)
-    (updatec cs oc s)
-    (addc cs oc)))
-
 (defn ^Substitutions update-cs [oc]
   (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (ext-cs (.cs a) oc a))))
+    (make-s (.s a) (.l a) (addc (.cs a) oc))))
+
+(defn ^Substitutions check-cs [oc]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (checkc (.cs a) oc a))))
 
 (defn process-dom [v dom]
   (fn [a]
@@ -2901,7 +2903,7 @@
 (defn run-constraint [c]
   (fn [^Substitutions a]
     (if (runnable? c a)
-      ((composeg c (update-cs c)) (running a c))
+      ((composeg c (check-cs c)) (running a c))
       a)))
 
 (defn run-constraints [xcs]
@@ -3028,7 +3030,7 @@
       (if (needs-store? g)
         (let [[g a] (addg a (fdc g))]
           (when-let [a (g a)]
-            ((update-cs g) a)))
+            ((check-cs g) a)))
         (when-let [a (g a)]
           (if (relevant? g a)
             ((update-cs (fdc g)) a)
@@ -3430,7 +3432,7 @@
              (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                             (next neqcs))
              :else (recur a (next neqcs))))
-          ((update-cs c) a))))))
+          ((check-cs c) a))))))
 
 (defn != [u v]
   (fn [a]
