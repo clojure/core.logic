@@ -3384,7 +3384,18 @@
       (identical? s sp))))
 
 (defn prefix->vars [p]
-  (map lhs p))
+  (loop [p (seq p) r #{}]
+    (if p
+      (let [f (first p)]
+        (let [u (lhs f)]
+          (if (lvar? u)
+            (let [r (conj r u)]
+              (let [v (rhs f)]
+                (if (lvar? v)
+                  (recur (next p) (conj r v))
+                  (recur (next p) r))))
+            (recur (next p) r))))
+      r)))
 
 (declare normalize-store)
 
@@ -3416,44 +3427,48 @@
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] (prefix->vars p))
+       (rands [_] (seq (prefix->vars p)))
+       INeedsStore
+       (needs-store? [_] true)
+       IRunnable
+       (runnable? [this s]
+         (some #(not= (walk s %) %) (prefix->vars p)))
        IRelevant
        (relevant? [this s]
          (not (empty? p)))
        (relevant? [this x s]
-         (some #{x} (prefix->vars p)))
-       IRunnable
-       (runnable? [this s]
-         (some #(not= (walk s %) %) (prefix->vars p))))))
+         ((prefix->vars p) x)))))
 
 (defn normalize-store [c]
   (fn [^Substitutions a]
     (let [p (prefix c)
+          cid (id c)
           ^ConstraintStore cs (.cs a)
-          cids (remove nil? (map (.km cs) (prefix->vars p)))
-          neqcs (seq (->> cids
-                       (map (.cm cs))
-                       (filter tree-constraint?)))]
-      (loop [^Substitutions a a neqcs neqcs]
+          cids (->> (seq (prefix->vars p))
+                    (mapcat (.km cs))
+                    (remove nil?)
+                    (into #{}))
+          neqcs (->> (seq cids)
+                     (map (.cm cs))
+                     (filter tree-constraint?)
+                     (remove #(= (id %) cid)))]
+      (loop [^Substitutions a a neqcs (seq neqcs)]
         (if neqcs
           (let [oc (first neqcs)
                 pp (prefix oc)]
             (cond
-             (prefix-subsumes? pp p) a
+             (prefix-subsumes? pp p) ((remcg c) a)
              (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                             (next neqcs))
              :else (recur a (next neqcs))))
-          ((check-cs c)
-           (if-not (id c)
-             ((update-cs c) a)
-             a)))))))
+          ((updatecg c) a))))))
 
 (defn != [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
       (let [p (prefix-s ap a)]
-        (when (not (empty? p))
-          ((!=c p) a)))
+        (when-not (empty? p)
+          ((cgoal (!=c p)) a)))
       a)))
 
 #_(defn all-diffo [l]
