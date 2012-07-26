@@ -99,7 +99,7 @@
 
 (defprotocol IConstraintStore
   (addc [this c])
-  (updatec [this c s])
+  (updatec [this c])
   (checkc [this c s])
   (remc [this c])
   (runc [this c])
@@ -744,7 +744,7 @@
           c (with-id c cid)
           ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
       (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
-  (updatec [this c s]
+  (updatec [this c]
     (ConstraintStore. km (assoc cm (id c) c) cid running))
   (checkc [this c s]
     (let [id (id c)
@@ -2819,17 +2819,21 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn updatecg [oc]
+(defn addcg [c]
   (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (addc (.cs a) oc))))
+    (make-s (.s a) (.l a) (addc (.cs a) c))))
 
-(defn checkcg [oc]
+(defn updatecg [c]
   (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (checkc (.cs a) oc a))))
+    (make-s (.s a) (.l a) (updatec (.cs a) c))))
 
-(defn remcg [oc]
+(defn checkcg [c]
   (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (remc (.cs a) oc))))
+    (make-s (.s a) (.l a) (checkc (.cs a) c a))))
+
+(defn remcg [c]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (remc (.cs a) c))))
 
 (defn process-dom [v dom]
   (fn [a]
@@ -2985,9 +2989,9 @@
             ((checkcg c) a)))
         (when-let [a (c a)]
           (if (relevant? c a)
-            ((updatecg c) a)
+            ((addcg c) a)
             a)))
-      ((updatecg c) a))))
+      ((addcg c) a))))
 
 ;; =============================================================================
 ;; CLP(FD)
