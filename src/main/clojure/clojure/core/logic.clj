@@ -2962,6 +2962,28 @@
          (let [v (walk* r v)]
            (reify-constraints v r (.cs a))))))))
 
+;; TODO: only used for goals that must be added to store to work
+;; such as distinctfd
+
+(defn addg [^Substitutions a g]
+  (let [^ConstraintStore ncs (addc (.cs a) g)
+        g ((.cm ncs) (dec (.cid ncs)))
+        a (make-s (.s a) (.l a) ncs)]
+    (pair g a)))
+
+(defn cgoal [g]
+  (fn [a]
+    (if (runnable? g a)
+      (if (needs-store? g)
+        (let [[g a] (addg a g)]
+          (when-let [a (g a)]
+            ((check-cs g) a)))
+        (when-let [a (g a)]
+          (if (relevant? g a)
+            ((update-cs g) a)
+            a)))
+      ((update-cs g) a))))
+
 ;; =============================================================================
 ;; CLP(FD)
 
@@ -2995,6 +3017,8 @@
   IConstraintOp
   (rator [_] (rator proc))
   (rands [_] (rands proc))
+  INeedsStore
+  (needs-store? [_] (needs-store? proc))
   IRelevant
   (relevant? [this s]
     (relevant? proc s))
@@ -3014,28 +3038,6 @@
 
 (defn fdc [proc]
   (FDConstraint. proc nil nil))
-
-;; TODO: only used for goals that must be added to store to work
-;; such as distinctfd
-
-(defn addg [^Substitutions a g]
-  (let [^ConstraintStore ncs (addc (.cs a) g)
-        g ((.cm ncs) (dec (.cid ncs)))
-        a (make-s (.s a) (.l a) ncs)]
-    (pair g a)))
-
-(defn fdcg [g]
-  (fn [a]
-    (if (runnable? g a)
-      (if (needs-store? g)
-        (let [[g a] (addg a (fdc g))]
-          (when-let [a (g a)]
-            ((check-cs g) a)))
-        (when-let [a (g a)]
-          (if (relevant? g a)
-            ((update-cs (fdc g)) a)
-            a)))
-      ((update-cs (fdc g)) a))))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
   (let [^FDConstraint x x
@@ -3092,7 +3094,7 @@
       (not (singleton-dom? x)))))
 
 (defn =fd [u v]
-  (fdcg (=fdc u v)))
+  (cgoal (fdc (=fdc u v))))
 
 (defn !=fdc [u v]
   (reify 
@@ -3126,7 +3128,7 @@
                  (singleton-dom? dv)))))))
 
 (defn !=fd [u v]
-  (fdcg (!=fdc u v)))
+  (cgoal (fdc (!=fdc u v))))
 
 (defn <=fdc [u v]
   (reify 
@@ -3152,7 +3154,7 @@
       (relevant? this s))))
 
 (defn <=fd [u v]
-  (fdcg (<=fdc u v)))
+  (cgoal (fdc (<=fdc u v))))
 
 (defn <fd [u v]
   (all
@@ -3191,7 +3193,7 @@
       (relevant? this s))))
 
 (defn +fd [u v w]
-  (fdcg (+fdc u v w)))
+  (cgoal (fdc (+fdc u v w))))
 
 (defn *fdc [u v w]
   (letfn [(safe-div [n c a]
@@ -3228,7 +3230,7 @@
        (relevant? this s)))))
 
 (defn *fd [u v w]
-  (fdcg (*fdc u v w)))
+  (cgoal (fdc (*fdc u v w))))
 
 (defn exclude-from-dom [dom1 xs s]
   (if dom1
@@ -3290,7 +3292,7 @@
                    y*))))))
 
 (defn -distinctfd [y* n*]
-  (fdcg (-distinctfdc y* n*)))
+  (cgoal (fdc (-distinctfdc y* n*))))
 
 (defn list-sorted? [pred ls]
   (if (empty? ls)
@@ -3327,7 +3329,7 @@
         (not (lvar? v*))))))
 
 (defn distinctfd [v*]
-  (fdcg (distinctfdc v*)))
+  (cgoal (fdc (distinctfdc v*))))
 
 ;; =============================================================================
 ;; CLP(Tree)
@@ -3432,7 +3434,10 @@
              (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
                                             (next neqcs))
              :else (recur a (next neqcs))))
-          ((check-cs c) a))))))
+          ((check-cs c)
+           (if-not (id c)
+             ((update-cs c) a)
+             a)))))))
 
 (defn != [u v]
   (fn [a]
