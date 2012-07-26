@@ -1748,12 +1748,12 @@
     (is (= (count (.km cs)) 2))
     (is (= (count (.cm cs)) 1))))
 
-(deftest test-update-cs
+(deftest test-updatecg
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        s ((update-cs c) empty-s)]
+        s ((updatecg c) empty-s)]
     (is (= (count (.km (.cs s))) 2))
     (is (= (count (.cm (.cs s))) 1))))
 
@@ -1762,12 +1762,12 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        s ((update-cs c) empty-s)
+        s ((updatecg c) empty-s)
         c (first (get (.cs s) u))
         s (-> s
               (ext-no-check u 1)
               (ext-no-check w 2))
-        s ((check-cs c) s)]
+        s ((checkcg c) s)]
     (is (zero? (count (.km (.cs s)))))
     (is (zero? (count (.cm (.cs s)))))))
 
@@ -2040,7 +2040,7 @@
         y (lvar 'y)
         n* (sorted-set 1 3 5)
         c (fdc (-distinctfdc #{x y} n*))
-        s ((update-cs c) empty-s)
+        s ((updatecg c) empty-s)
         s ((update-procg (with-id (fdc (-distinctfdc #{x} (conj n* 7))) 0)) s)]
     (is (= (var-rands (get (.cm (.cs s)) 0))
            [x]))))

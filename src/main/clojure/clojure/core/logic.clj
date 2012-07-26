@@ -2819,13 +2819,17 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn ^Substitutions update-cs [oc]
+(defn updatecg [oc]
   (fn [^Substitutions a]
     (make-s (.s a) (.l a) (addc (.cs a) oc))))
 
-(defn ^Substitutions check-cs [oc]
+(defn checkcg [oc]
   (fn [^Substitutions a]
     (make-s (.s a) (.l a) (checkc (.cs a) oc a))))
+
+(defn remcg [oc]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (remc (.cs a) oc))))
 
 (defn process-dom [v dom]
   (fn [a]
@@ -2903,7 +2907,7 @@
 (defn run-constraint [c]
   (fn [^Substitutions a]
     (if (runnable? c a)
-      ((composeg c (check-cs c)) (running a c))
+      ((composeg c (checkcg c)) (running a c))
       a)))
 
 (defn run-constraints [xcs]
@@ -2962,27 +2966,28 @@
          (let [v (walk* r v)]
            (reify-constraints v r (.cs a))))))))
 
-;; TODO: only used for goals that must be added to store to work
-;; such as distinctfd
+;; NOTE: only used for goals that must be added to store to work
+;; a simple way to add the goal to the store and return that goal
+;; with its id assigned
 
-(defn addg [^Substitutions a g]
-  (let [^ConstraintStore ncs (addc (.cs a) g)
-        g ((.cm ncs) (dec (.cid ncs)))
+(defn addc* [^Substitutions a c]
+  (let [^ConstraintStore ncs (addc (.cs a) c)
+        c ((.cm ncs) (dec (.cid ncs)))
         a (make-s (.s a) (.l a) ncs)]
-    (pair g a)))
+    (pair c a)))
 
-(defn cgoal [g]
+(defn cgoal [c]
   (fn [a]
-    (if (runnable? g a)
-      (if (needs-store? g)
-        (let [[g a] (addg a g)]
-          (when-let [a (g a)]
-            ((check-cs g) a)))
-        (when-let [a (g a)]
-          (if (relevant? g a)
-            ((update-cs g) a)
+    (if (runnable? c a)
+      (if (needs-store? c)
+        (let [[c a] (addc* a c)]
+          (when-let [a (c a)]
+            ((checkcg c) a)))
+        (when-let [a (c a)]
+          (if (relevant? c a)
+            ((updatecg c) a)
             a)))
-      ((update-cs g) a))))
+      ((updatecg c) a))))
 
 ;; =============================================================================
 ;; CLP(FD)
