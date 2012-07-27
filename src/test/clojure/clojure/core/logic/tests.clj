@@ -863,21 +863,20 @@
 ;; -----------------------------------------------------------------------------
 ;; disequality
 
-(comment
-  (deftest test-disequality-1
-    (is (= (run* [q]
-             (fresh [x]
-               (!= x 1)
-               (== q x)))
-           '(_.0))))
+(deftest test-disequality-1
+  (is (= (run* [q]
+           (fresh [x]
+             (!= x 1)
+             (== q x)))
+         '(_.0))))
 
-  (deftest test-disequality-2
-    (is (= (run* [q]
-             (fresh [x]
-               (== q x)
-               (!= x 1)))
-           '(_.0))))
-  )
+(deftest test-disequality-2
+  (is (= (run* [q]
+           (fresh [x]
+             (== q x)
+             (!= x 1)))
+         '(_.0))))
+
 
 (deftest test-disequality-3
   (is (= (run* [q]

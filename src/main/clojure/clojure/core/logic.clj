@@ -3421,7 +3421,7 @@
        IWithPrefix
        (with-prefix [_ p] (!=c p id))
        IEnforceableConstraint
-       (enforceable? [_] true)
+       (enforceable? [_] false)
        IReifiableConstraint
        (reifiable? [_] true)
        IConstraintOp
