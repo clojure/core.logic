@@ -2944,14 +2944,24 @@
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
 
+(defn enforceable-constrained [^Substitutions a]
+  (let [^ConstraintStore cs (.cs a)
+        km (.km cs)
+        cm (.cm cs)
+        vs (keys km)]
+    (filter (fn [v]
+              (some (fn [cid]
+                      (enforceable? (get cm cid)))
+                    (get km v)))
+            vs)))
+
 (defn enforce-constraints [x]
   (all
-    (force-ans x)
-    (fn [^Substitutions a]
-      (let [^ConstraintStore cs (.cs a)
-            constrained (keys (.km cs))]
-        (verify-all-bound a constrained)
-        ((onceo (force-ans constrained)) a)))))
+   (force-ans x)
+   (fn [^Substitutions a]
+     (let [constrained (enforceable-constrained a)]
+       (verify-all-bound a constrained)
+       ((onceo (force-ans constrained)) a)))))
 
 (defn reify-constraints [v r ^ConstraintStore cs]
   (let [rcs (apply concat
