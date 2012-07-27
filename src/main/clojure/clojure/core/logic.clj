@@ -2964,10 +2964,9 @@
        ((onceo (force-ans constrained)) a)))))
 
 (defn reify-constraints [v r ^ConstraintStore cs]
-  (let [rcs (apply concat
-              (->> (get cs v)
-                   (filter reifiable?)
-                   (map #(reifyc % v r))))]
+  (let [rcs (->> (vals (.cm cs))
+                 (filter reifiable?)
+                 (map #(reifyc % v r)))]
     (if (empty? rcs)
       (choice (list v) empty-f)
       (choice (list `(~v :- ~@rcs)) empty-f))))
@@ -3424,6 +3423,15 @@
        (enforceable? [_] false)
        IReifiableConstraint
        (reifiable? [_] true)
+       (reifyc [this v r]
+         (let [p* (walk* r (map (fn [[lhs rhs]] `(~lhs ~rhs)) p))]
+           (if (empty? p*)
+             '()
+             (let [p* (filter (fn [[lhs rhs]]
+                                (not (or (var? lhs)
+                                         (var? rhs))))
+                              p*)]
+               `(~'!= ~@(first p*))))))
        IConstraintOp
        (rator [_] `!=)
        (rands [_] (seq (recover-vars p)))

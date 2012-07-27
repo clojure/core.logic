@@ -868,15 +868,14 @@
            (fresh [x]
              (!= x 1)
              (== q x)))
-         '(_.0))))
+         '((_.0 :- (!= _.0 1))))))
 
 (deftest test-disequality-2
   (is (= (run* [q]
            (fresh [x]
              (== q x)
              (!= x 1)))
-         '(_.0))))
-
+         '((_.0 :- (!= _.0 1))))))
 
 (deftest test-disequality-3
   (is (= (run* [q]
@@ -984,6 +983,13 @@
              (== q x)))
          ())))
 
+(deftest test-disequality-15
+  (is (= (run* [q]
+           (fresh [x y]
+             (== q [x y])
+             (!= x 1)
+             (!= y 2)))
+         '(([_.0 _.1] :- (!= _.0 1) (!= _.1 2))))))
 
 ;; -----------------------------------------------------------------------------
 ;; tabled
@@ -2199,6 +2205,12 @@
         s ((== y 2) s)]
     (is (empty? (.cm (.cs s))))
     (is (empty? (.km (.cs s))))))
+
+(deftest test-!=-6 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x 1) empty-s)]
+    (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x 1))))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)
