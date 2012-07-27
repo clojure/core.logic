@@ -2099,7 +2099,7 @@
               (ext-no-check x 1)
               (ext-no-check y 2))]
     (is (= (recover-vars (.l s))
-           [x y]))))
+           #{x y}))))
 
 (deftest test-prefix-s []
   (let [x (lvar 'x)
@@ -2166,27 +2166,21 @@
         s ((!= x y) empty-s)]
     (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
 
-#_(deftest test-!=-2 []
+(deftest test-!=-2 []
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)
         s ((== x y) s)]
     (is (= s nil))))
 
-;; TODO: constraint is still in the store, why?
-#_(deftest test-!=-3 []
-    (let [x (lvar 'x)
-          y (lvar 'y)
-          _ (println "(!= x y)")
-          s ((!= x y) empty-s)
-          _ (println "(== x 1)")
-          s ((== x 1) s)
-          _ (println "(== y 2)")
-          s ((== y 2) s)
-          c (get (.cm (.cs s)) 0)]
-      (is (not (nil? s)))
-      [(.km (.cs s)) (prefix (get (.cm (.cs s)) 0))]))
-;; why do we see x and not y?
+(deftest test-!=-3 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s ((!= x y) empty-s)
+        s ((== x 1) s)
+        s ((== y 2) s)]
+    (is (empty? (.cm (.cs s))))
+    (is (empty? (.km (.cs s))))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)

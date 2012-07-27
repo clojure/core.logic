@@ -722,7 +722,7 @@
 (defn var-rands [c]
   (into [] (filter lvar? (flatten (rands c)))))
 
-(defn vars-to-remove [c s]
+(defn vars-to-remove [c vs s]
   (let [purge (atom true)
         vs (doall
             (filter (fn [x]
@@ -731,7 +731,7 @@
                           (when-not remove?
                             (reset! purge false))
                           remove?)))
-                    (flatten (rands c))))]
+                    (flatten vs)))]
     (pair @purge vs)))
 
 ;; TODO: map interface stinks, but a collection might be OK?
@@ -747,29 +747,32 @@
   (updatec [this c]
     (ConstraintStore. km (assoc cm (id c) c) cid running))
   (checkc [this c s]
-    (let [id (id c)
-          oc (get cm id)
-          [purge? vs] (vars-to-remove c s)
-          nkm (reduce (fn [m v]
-                        (let [kcs (disj (get m v) id)]
-                          (if (empty? kcs)
-                            (dissoc m v)
-                            (assoc m v kcs))))
-                      km vs)
-          ncm (if purge?
-                (dissoc cm id)
-                cm)]
-      (ConstraintStore. nkm ncm cid (disj running id))))
+    (let [ocid (id c)
+          oc (get cm ocid)]
+      ;; the constraint may no longer be in the store
+      (if oc
+        (let [[purge? vs] (vars-to-remove oc (rands c) s)
+              nkm (reduce (fn [m v]
+                            (let [kcs (disj (get m v) ocid)]
+                              (if (empty? kcs)
+                                (dissoc m v)
+                                (assoc m v kcs))))
+                          km vs)
+              ncm (if purge?
+                    (dissoc cm ocid)
+                    cm)]
+          (ConstraintStore. nkm ncm cid (disj running ocid)))
+        (ConstraintStore. km cm cid (disj running ocid)))))
   (remc [this c]
     (let [vs (var-rands c)
-          cid (id c)
+          ocid (id c)
           nkm (reduce (fn [km v]
-                        (let [vcs (disj (get km v) cid)]
+                        (let [vcs (disj (get km v) ocid)]
                           (if (empty? vcs)
                             (dissoc km v)
                             (assoc km v vcs))))
                       km vs)
-          ncm (dissoc cm cid)]
+          ncm (dissoc cm ocid)]
       (ConstraintStore. nkm ncm cid running)))
   (runc [this c]
     (ConstraintStore. km cm cid (conj running (id c))))
@@ -3364,15 +3367,6 @@
     (when-let [p (prefix* (.l s) (.l <s))]
       (with-meta p {:s s}))))
 
-(defn recover-vars [p]
-  (if (empty? p)
-    []
-    (let [[x v] (first p)
-          r (recover-vars (rest p))]
-      (if (lvar? v)
-        (conj r x v)
-        (conj r x)))))
-
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
 
 (defn prefix-subsumes? [p pp]
@@ -3383,18 +3377,13 @@
     (when sp
       (identical? s sp))))
 
-(defn prefix->vars [p]
+(defn recover-vars [p]
   (loop [p (seq p) r #{}]
     (if p
-      (let [f (first p)]
-        (let [u (lhs f)]
-          (if (lvar? u)
-            (let [r (conj r u)]
-              (let [v (rhs f)]
-                (if (lvar? v)
-                  (recur (next p) (conj r v))
-                  (recur (next p) r))))
-            (recur (next p) r))))
+      (let [[u v] (first p)]
+        (if (lvar? v)
+          (recur (next p) (conj r u v))
+          (recur (next p) (conj r u))))
       r)))
 
 (declare normalize-store)
@@ -3410,7 +3399,7 @@
                              a p)]
            (when-let [p (prefix-s ap a)]
              ((normalize-store (with-prefix this p)) a))
-           a))
+           ((remcg this) a)))
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
@@ -3427,24 +3416,24 @@
        (reifiable? [_] true)
        IConstraintOp
        (rator [_] `!=)
-       (rands [_] (seq (prefix->vars p)))
+       (rands [_] (seq (recover-vars p)))
        INeedsStore
        (needs-store? [_] true)
        IRunnable
        (runnable? [this s]
-         (some #(not= (walk s %) %) (prefix->vars p)))
+         (some #(not= (walk s %) %) (recover-vars p)))
        IRelevant
        (relevant? [this s]
          (not (empty? p)))
        (relevant? [this x s]
-         ((prefix->vars p) x)))))
+         ((recover-vars p) x)))))
 
 (defn normalize-store [c]
   (fn [^Substitutions a]
     (let [p (prefix c)
           cid (id c)
           ^ConstraintStore cs (.cs a)
-          cids (->> (seq (prefix->vars p))
+          cids (->> (seq (recover-vars p))
                     (mapcat (.km cs))
                     (remove nil?)
                     (into #{}))
