@@ -19,8 +19,8 @@
     (fresh [x y]
       (appendo x y q)))
 
-  ;; 1.4s
-  (dotimes [_ 10]
+  ;; 453ms
+  (dotimes [_ 5]
     (time
      (dotimes [_ 1]
        (run 700 [q]
@@ -44,7 +44,7 @@
   (run 1 [q] (nrevo q (range 30)))
 
   ;; SWI-Prolog 0.06-0.08s
-  ;; ~4.1s
+  ;; ~3.7s
   (let [data (into [] (range 30))]
     (binding [*occurs-check* false]
       (dotimes [_ 5]
@@ -87,6 +87,8 @@
    (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
 
 (comment
+  (run 1 [q] (zebrao q))
+  
   ;; SWI-Prolog 6-8.5s
   ;; ~2.4s
   (binding [*occurs-check* false]
@@ -95,7 +97,7 @@
        (dotimes [_ 1e3]
          (run 1 [q] (zebrao q))))))
 
-  ;; < 3s
+  ;; ~3.7s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
@@ -105,31 +107,33 @@
 ;; =============================================================================
 ;; nqueens
 
-;; Bratko pg 103
+;; Bratko 3d pg 103
 
-(declare noattacko)
+(comment
+  (declare noattacko)
 
-(defne nqueenso [l]
-  ([()])
-  ([[[x y] . others]]
-     (nqueenso others)
-     (membero y [1 2 3 4 5 6 7 8])
-     (noattacko [x y] others)))
+ (defne nqueenso [l]
+   ([()])
+   ([[[x y] . others]]
+      (nqueenso others)
+      (membero y [1 2 3 4 5 6 7 8])
+      (noattacko [x y] others)))
 
-(defne noattacko [q others]
-  ([_ ()])
-  ([[x y] [[x1 y1] . r]]
-     (!= y y1)
-     (project [y y1 x x1]
-       (!= (- y1 y) (- x1 x))
-       (!= (- y1 y) (- x x1)))
-     (noattacko [x y] r)))
+ (defne noattacko [q others]
+   ([_ ()])
+   ([[x y] [[x1 y1] . r]]
+      (!= y y1)
+      (project [y y1 x x1]
+        (!= (- y1 y) (- x1 x))
+        (!= (- y1 y) (- x x1)))
+      (noattacko [x y] r)))
 
-(defn solve-nqueens []
-  (run* [q]
-    (fresh [y1 y2 y3 y4 y5 y6 y7 y8]
-      (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
-      (nqueenso q))))
+ (defn solve-nqueens []
+   (run* [q]
+     (fresh [y1 y2 y3 y4 y5 y6 y7 y8]
+       (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
+       (nqueenso q))))
+ )
 
 (comment
   (take 1 (solve-nqueens))
@@ -162,7 +166,50 @@
   ;; nqueens benefits from constraints
   )
 
-;; Bratko pg 344, constraint version
+;; =============================================================================
+;; nqueensfd
+
+;; based on Bratko 3d pg 344, constraint version
+
+(comment
+  ;; direct translation does not work
+  ;; because of the subtraction constraints
+  ;; also, some domain inference would be nice
+  
+  (defne noattackfd [y ys d]
+    ([_ () _])
+    ([y1 [y2 . yr] d]
+       (fresh [x nd]
+         (infd x nd (interval 1 8))
+         (!=fd d x)
+         (conde
+           [(<fd y1 y2) (+fd y1 x y2)]
+           [(<fd y2 y1) (+fd y2 x y1)])
+         (+fd d 1 nd)
+         (noattackfd y1 yr nd))))
+
+  (defne safefd [l]
+    ([()])
+    ([[y . ys]]
+       (noattackfd y ys 1)
+       (safefd ys)))
+
+  (defn nqueensfd []
+    (run* [q]
+      (fresh [a b c d e f g h]
+        (infd a b c d e f g h (interval 1 8))
+        (== q [a b c d e f g h])
+        (distinctfd q)
+        (safefd q))))
+
+  (nqueensfd)
+
+  (run* [q]
+    (fresh [a b]
+      (infd a b (interval 1 8))
+      (== q [a b])
+      (safefd q)))
+  )
 
 ;; =============================================================================
 ;; send more money
@@ -216,6 +263,32 @@
   )
 
 ;; =============================================================================
+;; Cryptarithmetic Puzzle
+;; Bratko 3rd ed pg 343
+
+;; TODO: we want sugar for this
+
+#_(defn cryptarithfd []
+  (run* [d o n a l d
+         g e r a l d
+         r o b e r t] :as q
+    (infd q (interval 0 9))
+    (distintfd q)
+    (eqfd
+     (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
+           (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
+        (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t)))))
+
+(comment
+  ;; eqfd, codewalking convenience macro
+
+  (eqfd
+   (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
+         (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
+      (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t)))
+  )
+
+;; =============================================================================
 ;; Hanoi
 
 (defne moveo [n x y z]
@@ -252,3 +325,92 @@
           (== (<= x b) true))
         (partition l b l1 d))
        (partition l b c d))))
+
+;; =============================================================================
+;; Dinesman Dwelling Problem with CLP(FD)
+
+(defn not-adjacento [x y]
+  (fresh [f]
+    (infd f (interval 1 5))
+    (conde
+      [(+fd x f y) (<fd 1 f)]
+      [(+fd y f x) (<fd 1 f)])))
+
+(defn dinesmanfd []
+  (run* [q]
+    (fresh [baker cooper fletcher miller smith]
+      (== q [baker cooper fletcher miller smith])
+      (distinctfd [baker cooper fletcher miller smith])
+      (infd baker cooper fletcher miller smith (interval 1 5))
+      (!=fd baker 5) (!=fd cooper 1)
+      (!=fd fletcher 5) (!=fd fletcher 1)
+      (<fd cooper miller) 
+      (not-adjacento smith fletcher)
+      (not-adjacento fletcher cooper))))
+
+(defn sort-dwellers [[fa _] [fb _]]
+  (cond (< fa fb) -1 (= fa fb) 0 :else 1))
+
+(defn ->answer [ns]
+  (->> (map vector ns [:baker :cooper :fletcher :miller :smith])
+       (sort sort-dwellers)
+       (map second)))
+
+(comment
+  ;; ~2250ms
+  ;; close to 2X faster than Petite Chez
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1000]
+       (dinesmanfd))))
+
+  (-> (dinesmanfd) first ->answer)  ; (:smith :cooper :baker :fletcher :miller)
+  )
+
+;; =============================================================================
+;; Stone Problem
+
+(defne subchecko [w sl r o n]
+  ([_ () _ _ _]
+     (fresh [a]
+       (infd a (interval 1 n))
+       (matche [r o]
+         ([[a . d] [w . r]] (+fd a 1 w))
+         ([() [w . r]]))))
+  ([_ [a . nsl] _ _ _]
+     (fresh [b c ro0 ro1 nw]
+       (infd a b c (interval 1 n))
+       (+fd a b w) (+fd a w c)
+       (subchecko b nsl r ro0 n)
+       (subchecko w nsl ro0 ro1 n)
+       (subchecko c nsl ro1 o n))))
+
+(defne checko [ws sl r n]
+  ([() _ [a . _] a])
+  ([[w . wr] _ _ _]
+     (fresh [nsl nr]
+       (subchecko w sl r nr n)
+       (conso w sl nsl)
+       (checko wr nsl nr n))))
+
+(defn matches [n]
+  (run* [q]
+    (fresh [a b c d s1 s2]
+      (infd a b c d s1 s2 (interval 1 n)) 
+      (distinctfd [a b c d])
+      (== a 1)
+      (<=fd a b) (<=fd b c) (<=fd c d)
+      (+fd a b s1) (+fd s1 c s2) (+fd s2 d n)
+      (checko [a b c d] () () n)
+      (== q [a b c d]))))
+
+(comment
+  (time (matches 40))
+  
+  ;; ~2970ms much faster
+  ;; so >2X faster than cKanren under Petite Chez
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1000]
+       (matches 40))))
+  )

@@ -7,6 +7,13 @@
 (def ^{:dynamic true} *occurs-check* true)
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
+(def ^{:dynamic true} *expand-doms*)
+
+;; =============================================================================
+;; Core Protocols
+
+;; -----------------------------------------------------------------------------
+;; miniKanren Protocols
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -53,15 +60,135 @@
 (defprotocol ITake
   (take* [a]))
 
-(deftype Unbound [])
-(def ^Unbound unbound (Unbound.))
+(defprotocol ISubstitutions
+  (ext-no-check [this x v])
+  (walk [this x] [this x wrap?]))
 
-(defprotocol ILVar
-  (constraints [this])
-  (add-constraint [this c])
-  (add-constraints [this ds])
-  (remove-constraint [this c])
-  (remove-constraints [this]))
+(defprotocol ISubstitutionsCLP
+  (update [this x v]))
+
+;; -----------------------------------------------------------------------------
+;; cKanren protocols
+
+(defprotocol IUnifyWithRefinable
+  (unify-with-refinable [v u s]))
+
+(defprotocol IUnifyWithInteger
+  (unify-with-integer [v u s]))
+
+(defprotocol IUnifyWithIntervalFD
+  (unify-with-interval [v u s]))
+
+(defprotocol IUnifyWithMultiIntervalFD
+  (unify-with-multi-interval [v u s]))
+
+(defprotocol IRunnable
+  (runnable? [c s]))
+
+(defprotocol IRefinable
+  (refinable? [x]))
+
+(defprotocol IRefine
+  (refine [x v]))
+
+(extend-type Object
+  IRefinable
+  (refinable? [_] false))
+
+;; TODO: think more about update-proc, works for now
+
+(defprotocol IConstraintStore
+  (addc [this c])
+  (updatec [this c])
+  (checkc [this c s])
+  (remc [this c])
+  (runc [this c])
+  (constraints [this x])
+  (update-proc [this id proc]))
+
+(defprotocol IWithConstraintId
+  (with-id [this id]))
+
+(extend-type Object
+  IWithConstraintId
+  (with-id [this id] this))
+
+(defprotocol IConstraintId
+  (id [this]))
+
+(extend-type Object
+  IConstraintId
+  (id [this] nil))
+
+(defprotocol IStorableConstraint
+  (with-proc [this proc])
+  (proc [this]))
+
+(defprotocol IConstraintOp
+  (rator [this])
+  (rands [this]))
+
+(defprotocol IRelevant
+  (relevant? [this s] [this x s]))
+
+;; TODO: add IRelevantVar ?
+
+(defprotocol IReifiableConstraint
+  (reifiable? [this])
+  (reifyc [this v r]))
+
+(extend-type Object
+  IReifiableConstraint
+  (reifiable? [this] false))
+
+(defprotocol IEnforceableConstraint
+  (enforceable? [c]))
+
+(extend-type Object
+  IEnforceableConstraint
+  (enforceable? [x] false))
+
+(defprotocol INeedsStore
+  (needs-store? [this]))
+
+(extend-type Object
+  INeedsStore
+  (needs-store? [_] false))
+
+;; TODO: ICLPSet, half the below could be moved into this
+
+(defprotocol IInterval
+  (lb [this])
+  (ub [this])
+  (bounds [this]))
+
+(defprotocol IIntervals
+  (intervals [this]))
+
+(defprotocol ISortedDomain
+  (drop-one [this])
+  (drop-before [this n])
+  (keep-before [this n]))
+
+(defprotocol IFiniteDomain
+  (domain? [this])
+  (member? [this that])
+  (disjoint? [this that])
+  (intersects? [this that])
+  (subsumes? [this that]))
+
+(defprotocol IIntersection
+  (intersection [this that]))
+
+(defprotocol IDifference
+  (difference [this that]))
+
+(extend-type Object
+  IFiniteDomain
+  (domain? [x] false))
+
+(defprotocol IForceAnswerTerm
+  (-force-ans [v x]))
 
 ;; =============================================================================
 ;; Pair
@@ -90,31 +217,598 @@
   (getValue [_] rhs)
   Object
   (toString [_]
-    (str "(" lhs " . " rhs ")")))
+    (str "(" lhs " . " rhs ")"))
+  (equals [_ o]
+    (if (instance? Pair o)
+      (let [^Pair o o]
+        (and (= lhs (.lhs o))
+             (= rhs (.rhs o))))
+      false)))
 
 (defn- ^Pair pair [lhs rhs]
   (Pair. lhs rhs))
 
+(defmethod print-method Pair [x ^Writer writer]
+  (let [^Pair x x]
+    (.write writer (str "(" (.lhs x) " . " (.rhs x) ")"))))
+
+;; =============================================================================
+;; Constraint Store
+
+(declare lvar? interval multi-interval)
+
+(defn interval-< [i j]
+  (< (ub i) (lb j)))
+
+(defn interval-> [i j]
+  (> (lb i) (ub j)))
+
+(declare domain)
+
+(deftype FiniteDomain [s min max]
+  IInterval
+  (lb [_] min)
+  (ub [_] max)
+  (bounds [_] (pair min max))
+  ISortedDomain
+  (drop-one [_]
+    (let [s (disj s min)
+          c (count s)]
+      (cond
+       (= c 1) (first s)
+       (> c 1) (FiniteDomain. s (first s) max)
+       :else nil)))
+  (drop-before [_ n]
+    (apply domain (drop-while #(< % n) s)))
+  (keep-before [this n]
+    (apply domain (take-while #(< % n) s)))
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
+  IFiniteDomain
+  (domain? [_] true)
+  (member? [this that]
+    (if (integer? that)
+      (if (s that)
+        true
+        false)
+      (member? s that)))
+  (disjoint? [this that]
+    (if (integer? that)
+      (not (member? this that))
+      (disjoint? this that)))
+  IIntersection
+  (intersection [this that]
+    (if (integer? that)
+      (when (member? this that) that)
+      (intersection this that)))
+  IDifference
+  (difference [this that]
+    (if (integer? that)
+      (domain (disj s that))
+      (difference that this)))
+  IIntervals
+  (intervals [_] (seq s)))
+
+(defn domain [& args]
+  (when (seq args)
+    (let [s (into (sorted-set) args)]
+      (if (> (count s) 1)
+        (FiniteDomain. s (first s) (first (rseq s)))
+        (first s)))))
+
+(defn sorted-set->dom [s]
+  (when (seq s)
+    (FiniteDomain. s (first s) (first (rseq s)))))
+
+(declare interval? difference* intersection*)
+
+(defmacro extend-to-fd [t]
+  `(extend-type ~t
+     IInterval
+     (~'lb [this#] this#)
+     (~'ub [this#] this#)
+     (~'bounds [this#] (pair this# this#))
+     ISortedDomain
+     (~'drop-one [this#]
+       nil)
+     (~'drop-before [this# n#]
+       (when (>= this# n#)
+         this#))
+     (~'keep-before [this# n#]
+       (when (< this# n#)
+         this#))
+     IFiniteDomain
+     (~'domain? [this#] true)
+     (~'member? [this# that#]
+       (if (integer? that#)
+         (= this# that#)
+         (member? that# this#)))
+     (~'disjoint? [this# that#]
+       (if (integer? that#)
+         (not= this# that#)
+         (disjoint? that# this#)))
+     IIntersection
+     (~'intersection [this# that#]
+       (cond
+        (integer? that#) (when (= this# that#)
+                           this#)
+        (interval? that#) (intersection that# this#)
+        :else (intersection* this# that#)))
+     IDifference
+     (~'difference [this# that#]
+       (cond
+        (integer? that#) (if (= this# that#)
+                           nil
+                           this#)
+        (interval? that#) (difference that# this#)
+        :else (difference* this# that#)))
+     IIntervals
+     (~'intervals [this#]
+       (list this#))))
+
+(extend-to-fd java.lang.Byte)
+(extend-to-fd java.lang.Short)
+(extend-to-fd java.lang.Integer)
+(extend-to-fd java.lang.Long)
+(extend-to-fd java.math.BigInteger)
+(extend-to-fd clojure.lang.BigInt)
+
+(declare interval interval?)
+
+(deftype IntervalFD [_lb _ub]
+  Object
+  (equals [_ o]
+    (if (instance? IntervalFD o)
+      (let [^IntervalFD o o]
+        (and (= _lb (._lb o))
+             (= _ub (._ub o))))
+      false))
+  (toString [this]
+    (pr-str this))
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
+  IInterval
+  (lb [_] _lb)
+  (ub [_] _ub)
+  (bounds [_] (pair _lb _ub))
+  ISortedDomain
+  (drop-one [_]
+    (let [nlb (inc _lb)]
+      (when (<= nlb _ub)
+        (interval nlb _ub))))
+  (drop-before [this n]
+    (cond
+     (= n _ub) n
+     (< n _lb) this
+     (> n _ub) nil
+     :else (interval n _ub)))
+  (keep-before [this n]
+    (cond
+     (<= n _lb) nil
+     (> n _ub) this
+     :else (interval _lb (dec n))))
+  IFiniteDomain
+  (domain? [_] true)
+  (member? [this that]
+    (cond
+     (integer? that)
+     (and (>= that _lb) (<= that _ub))
+     
+     (interval? that)
+     (let [i this
+           j that
+           [imin imax] (bounds i)
+           [jmin jmax] (bounds j)]
+       (and (>= jmin imin)
+            (<= jmax imax)))
+     
+     :else (member? that this)))
+  (disjoint? [this that]
+    (cond
+     (integer? that)
+     (not (member? this that))
+
+     (interval? that)
+     (let [i this
+           j that
+           [imin imax] (bounds i)
+           [jmin jmax] (bounds j)]
+       (or (> imin jmax)
+           (< imax jmin)))
+
+     :else (disjoint? that this)))
+  IIntersection
+  (intersection [this that]
+    (cond
+     (integer? that)
+     (if (member? this that)
+       that
+       nil)
+
+     (interval? that)
+     (let [i this j that
+           imin (lb i) imax (ub i)
+           jmin (lb j) jmax (ub j)]
+       (cond
+        (< imax jmin) nil
+        (< jmax imin) nil
+        (and (<= imin jmin)
+             (>= imax jmax)) j
+        (and (<= jmin imin)
+             (>= jmax imax)) i
+        (and (<= imin jmin)
+             (<= imax jmax)) (interval jmin imax)
+        (and (<= jmin imin)
+             (<= jmax imax)) (interval imin jmax)
+        :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
+
+     :else (intersection* this that)))
+  IDifference
+  (difference [this that]
+    (cond
+     (integer? that)
+     (cond
+      (= _lb that) (interval (inc _lb) _ub)
+      (= _ub that) (interval _lb (dec _ub))
+      :else (if (member? this that)
+              (multi-interval (interval _lb (dec that))
+                              (interval (inc that) _ub))
+              this))
+     
+     (interval? that)
+     (let [i this j that
+           imin (lb i) imax (ub i)
+           jmin (lb j) jmax (ub j)]
+       (cond
+        (> jmin imax) i
+        (and (<= jmin imin)
+             (>= jmax imax)) nil
+        (and (< imin jmin)
+             (> imax jmax)) (multi-interval (interval imin (dec jmin))
+             (interval (inc jmax) imax))
+        (and (< imin jmin)
+             (<= jmin imax)) (interval imin (dec jmin))
+        (and (> imax jmax)
+             (<= jmin imin)) (interval (inc jmax) imax)
+        :else (throw (Error. (str "Interval difference not defined " i " " j)))))
+     
+     :else (difference* this that)))
+  IIntervals
+  (intervals [this]
+    (list this)))
+
+(defn interval? [x]
+  (instance? IntervalFD x))
+
+(defmethod print-method IntervalFD [x ^Writer writer]
+  (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
+
+(defn ^IntervalFD interval
+  ([ub] (IntervalFD. 0 ub))
+  ([lb ub]
+     (if (zero? (- ub lb))
+       ub
+       (IntervalFD. lb ub))))
+
+(defn intersection* [is js]
+  (loop [is (seq (intervals is)) js (seq (intervals js)) r []]
+    (if (and is js)
+      (let [i (first is)
+            j (first js)]
+        (cond
+         (interval-< i j) (recur (next is) js r)
+         (interval-> i j) (recur is (next js) r)
+         :else
+         (let [[imin imax] (bounds i)
+               [jmin jmax] (bounds j)]
+           (cond
+            (<= imin jmin)
+            (cond
+             ;; |----|   i   |-----|   i
+             ;; |-----|  j     |-----| j
+             (< imax jmax)
+             (recur (next is)
+                    (cons (interval (inc imax) jmax) (next js))
+                    (conj r (interval jmin imax)))
+ 
+             ;; |-----|  i   |-----|   i
+             ;; |----|   j    |---|    j
+             (> imax jmax)
+             (recur (cons (interval (inc jmax) imax) (next is))
+                    (next js)
+                    (conj r j))
+                  
+             ;; |-----|  i
+             ;;  |----|  j
+             :else
+             (recur (next is) (next js)
+                    (conj r (interval jmin jmax))))
+
+            (> imin jmin)
+            (cond
+             ;;  |-----| i
+             ;; |-----|  j
+             (> imax jmax)
+             (recur (cons (interval (inc jmax) imax) (next is))
+                    (next js)
+                    (conj r (interval imin jmax)))
+
+             ;;  |---|   i
+             ;; |-----|  j
+             (< imax jmax)
+             (recur is (cons (interval (inc imax) jmax) (next js))
+                    (conj r i))
+
+             ;;  |----|  i
+             ;; |-----|  j
+             :else
+             (recur (next is) (next js)
+                    (conj r (interval imin imax))))))))
+      (apply multi-interval r))))
+
+(defn difference* [is js]
+    (loop [is (seq (intervals is)) js (seq (intervals js)) r []]
+      (if is
+        (if js
+          (let [i (first is)
+                j (first js)]
+            (cond
+             (interval-< i j) (recur (next is) js (conj r i))
+             (interval-> i j) (recur is (next js) r)
+             :else
+             (let [[imin imax] (bounds i)
+                   [jmin jmax] (bounds j)]
+               (cond
+                (< imin jmin)
+                (cond
+                 ;; |-----|  i
+                 ;;  |---|   j
+                 (< jmax imax)
+                 (recur (cons (interval (inc jmax) imax) (next is))
+                        (next js)
+                        (conj r (interval imin (dec jmin))))
+
+                 ;; |-----|  i
+                 ;;  |-----| j
+                 (> jmax imax)
+                 (recur (next is)
+                        (cons (interval (inc imax) jmax) (next js))
+                        (conj r (interval imin (dec jmin))))
+
+                 ;; |-----|  i
+                 ;;  |----|  j
+                 :else
+                 (recur (next is) (next js)
+                        (conj r (interval imin (dec jmin)))))
+                (>= imin jmin)
+                (cond
+                 ;;  |---|   i
+                 ;; |-----|  j
+                 (< imax jmax)
+                 (recur (next is)
+                        (cons (interval (inc imax) jmax) (next js))
+                        r)
+
+                 ;;  |-----| i
+                 ;; |-----|  j
+                 (> imax jmax)
+                 (recur (cons (interval (inc jmax) imax) (next is))
+                        (next js)
+                        r)
+
+                 ;;  |----|  i
+                 ;; |-----|  j
+                 :else (recur (next is) (next js)
+                              r))))))
+          (apply multi-interval (into r is)))
+        (apply multi-interval r))))
+
+(declare normalize-intervals singleton-dom? multi-interval)
+
+(deftype MultiIntervalFD [min max is]
+  Object
+  (equals [this j]
+    (if (instance? MultiIntervalFD j)
+      (let [i this
+            [jmin jmax] (bounds j)]
+        (if (and (= min jmin) (= max jmax))
+          (let [is (normalize-intervals is)
+                js (normalize-intervals (intervals j))]
+            (= is js))
+          false))
+      false))
+  IRefinable
+  (refinable? [_] true)
+  IRefine
+  (refine [this other] (intersection this other))
+  IInterval
+  (lb [_] min)
+  (ub [_] max)
+  (bounds [_] (pair min max))
+  ISortedDomain
+  (drop-one [_]
+    (let [i (first is)]
+      (if (singleton-dom? i)
+        (let [nis (rest is)]
+          (MultiIntervalFD. (lb (first nis)) max nis))
+        (let [ni (drop-one i)]
+          (MultiIntervalFD. (lb ni) max (cons ni (rest is)))))))
+  (drop-before [_ n]
+    (let [is (seq is)]
+      (loop [is is r []]
+        (if is
+          (let [i (drop-before (first is) n)]
+            (if i
+              (recur (next is) (conj r i))
+              (recur (next is) r)))
+          (when (pos? (count r))
+            (apply multi-interval r))))))
+  (keep-before [_ n]
+    (let [is (seq is)]
+      (loop [is is r []]
+        (if is
+          (let [i (keep-before (first is) n)]
+            (if i
+              (recur (next is) (conj r i))
+              (recur (next is) r)))
+          (when (pos? (count r))
+            (apply multi-interval r))))))
+  IFiniteDomain
+  (domain? [_] true)
+  (member? [this that]
+    (if (disjoint? (interval (lb this) (ub this))
+                   (interval (lb that) (ub that)))
+    false
+    (let [d0 (intervals this)
+          d1 (intervals that)]
+      (loop [d0 d0 d1 d1 r []]
+        (if (nil? d0)
+          true)))))
+  (disjoint? [this that]
+    (if (disjoint? (interval (lb this) (ub this))
+                   (interval (lb that) (ub that)))
+      true
+      (let [d0 (intervals this)
+            d1 (intervals that)]
+        (loop [d0 d0 d1 d1]
+          (if (nil? d0)
+            true
+            (let [i (first d0)
+                  j (first d1)]
+              (cond
+               (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
+               (interval-> i j) (recur d0 (next d1))
+               :else false)))))))
+  IIntersection
+  (intersection [this that]
+    (intersection* this that))
+  IDifference
+  (difference [this that]
+    (difference* this that))
+  IIntervals
+  (intervals [this]
+    (seq is)))
+
+;; union where possible
+(defn normalize-intervals [is]
+  (reduce (fn [r i]
+            (if (zero? (count r))
+              (conj r i)
+              (let [j (peek r)
+                    jmax (ub j)
+                    imin (lb i)]
+                (if (<= (dec imin) jmax)
+                  (conj (pop r) (interval (lb j) (ub i)))
+                  (conj r i)))))
+          [] is))
+
+(defn multi-interval
+  ([] nil)
+  ([i0] i0)
+  ([i0 i1]
+     (let [is [i0 i1]]
+       (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is)))
+  ([i0 i1 & ir]
+     (let [is (into [] (concat (list i0 i1) ir))]
+       (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))))
+
+(defmethod print-method MultiIntervalFD [x ^Writer writer]
+  (.write writer (str "<intervals:" (apply pr-str (.is x)) ">")))
+
+(defn var-rands [c]
+  (into [] (filter lvar? (flatten (rands c)))))
+
+(defn vars-to-remove [c vs s]
+  (let [purge (atom true)
+        vs (doall
+            (filter (fn [x]
+                      (when (lvar? x)
+                        (let [remove? (not (relevant? c x s))]
+                          (when-not remove?
+                            (reset! purge false))
+                          remove?)))
+                    (flatten vs)))]
+    (pair @purge vs)))
+
+;; TODO: map interface stinks, but a collection might be OK?
+;; conj, disj?
+
+(deftype ConstraintStore [km cm cid running]
+  IConstraintStore
+  (addc [this c]
+    (let [vars (var-rands c)
+          c (with-id c cid)
+          ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
+      (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
+  (updatec [this c]
+    (ConstraintStore. km (assoc cm (id c) c) cid running))
+  (checkc [this c s]
+    (let [ocid (id c)
+          oc (get cm ocid)]
+      ;; the constraint may no longer be in the store
+      (if oc
+        (let [[purge? vs] (vars-to-remove oc (rands c) s)
+              nkm (reduce (fn [m v]
+                            (let [kcs (disj (get m v) ocid)]
+                              (if (empty? kcs)
+                                (dissoc m v)
+                                (assoc m v kcs))))
+                          km vs)
+              ncm (if purge?
+                    (dissoc cm ocid)
+                    cm)]
+          (ConstraintStore. nkm ncm cid (disj running ocid)))
+        (ConstraintStore. km cm cid (disj running ocid)))))
+  (remc [this c]
+    (let [vs (var-rands c)
+          ocid (id c)
+          nkm (reduce (fn [km v]
+                        (let [vcs (disj (get km v) ocid)]
+                          (if (empty? vcs)
+                            (dissoc km v)
+                            (assoc km v vcs))))
+                      km vs)
+          ncm (dissoc cm ocid)]
+      (ConstraintStore. nkm ncm cid running)))
+  (runc [this c]
+    (ConstraintStore. km cm cid (conj running (id c))))
+  (constraints [this x]
+    (map cm (get km x)))
+  (update-proc [this id proc]
+    (let [ncm (assoc cm id (with-proc (get cm id) proc))]
+      (ConstraintStore. km ncm cid running)))
+  clojure.lang.Counted
+  (count [this]
+    (count cm))
+  ;; TODO: do no expose a map interface
+  clojure.lang.Associative
+  (assoc [this k v]
+    (when-not (lvar? k)
+      (throw (Error. (str "constraint store assoc expected logic var key: " k))))
+    (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
+          ncm (assoc cm cid v)]
+      (ConstraintStore. nkm ncm cid running)))
+  clojure.lang.ILookup
+  (valAt [this k]
+    (when-let [ids (get km k)]
+      (map cm (remove running ids))))
+  (valAt [this k not-found]
+    (if-let [v (.valAt this k)]
+      v
+      not-found)))
+
+(defn ^ConstraintStore make-cs []
+  (ConstraintStore.
+   clojure.lang.PersistentHashMap/EMPTY
+   clojure.lang.PersistentHashMap/EMPTY 0
+   #{}))
+
 ;; =============================================================================
 ;; Substitutions
-
-(defprotocol ISubstitutions
-  (length [this])
-  (occurs-check [this u v])
-  (ext [this u v])
-  (ext-no-check [this u v])
-  (swap [this cu])
-  (constrain [this u c])
-  (get-var [this v])
-  (use-verify [this f])
-  (walk [this v])
-  (walk-var [this v])
-  (walk* [this v])
-  (unify [this u v])
-  (reify-lvar-name [_])
-  (-reify* [this v])
-  (-reify [this v])
-  (build [this u]))
 
 (declare empty-s)
 (declare choice)
@@ -122,89 +816,91 @@
 (declare lvar?)
 (declare pair)
 (declare lcons)
+(declare run-constraints*)
 
-(deftype Substitutions [s l verify cs]
+(defn occurs-check [s u v]
+  (let [v (walk s v)]
+    (occurs-check-term v u s)))
+
+(defn ext [s u v]
+  (if (and *occurs-check* (occurs-check s u v))
+    nil
+    (ext-no-check s u v)))
+
+(defn walk* [s v]
+  (let [v (walk s v)]
+    (walk-term v s)))
+
+(defn unify [s u v]
+  (if (identical? u v)
+    s
+    (let [u (walk s u true)
+          v (walk s v true)]
+      (if (identical? u v)
+        s
+        (unify-terms u v s)))))
+
+(def unbound-names
+  (let [r (range 100)]
+    (zipmap r (map (comp symbol str) (repeat "_.") r))))
+
+(defn reify-lvar-name [s]
+  (let [c (count s)]
+    (if (< c 100)
+      (unbound-names c)
+      (symbol (str "_." (count s))))))
+
+(defn -reify* [s v]
+  (let [v (walk s v)]
+    (reify-term v s)))
+
+(defn -reify [s v]
+  (let [v (walk* s v)]
+    (walk* (-reify* empty-s v) v)))
+
+(defn build [s u]
+  (build-term u s))
+
+(deftype Refinable [v lvar])
+
+(deftype Substitutions [s l cs]
   Object
   (equals [this o]
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
-  (toString [_]
-    (prn-str [s l verify cs]))
+
+  ;; TODO: prn doesn't work anymore on empty-s, why not?
+  (toString [_] (str s))
+
+  clojure.lang.Counted
+  (count [this] (count s))
 
   ISubstitutions
-  (length [this] (count s))
-
-  (occurs-check [this u v]
-    (let [v (walk this v)]
-      (occurs-check-term v u this)))
-  
-  (ext [this u v]
-    (if (and *occurs-check* (occurs-check this u v))
-      nil
-      (ext-no-check this u v)))
-
   (ext-no-check [this u v]
-    (verify this u v))
+    (Substitutions. (assoc s u v)
+                    (cons (pair u v) l)
+                    cs))
 
-  (swap [this cu]
-    (if (contains? s cu)
-      (let [v (s cu)]
-        (Substitutions. (-> s (dissoc cu) (assoc cu v)) l verify cs))
-      (Substitutions. (assoc s cu unbound) l verify cs)))
-
-  (constrain [this u c]
-    (let [u (walk this u)]
-      (swap this (add-constraint u c))))
-
-  (get-var [this v]
-    (first (find s v)))
-
-  (use-verify [this f]
-    (Substitutions. s l f cs))
-  
   (walk [this v]
+    (walk this v false))
+
+  (walk [this v wrap?]
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
-       (identical? vp unbound) v
+       (and wrap? (refinable? vp)) (if (lvar? lv) (Refinable. vp lv) vp)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
-  
-  (walk-var [this v]
-    (loop [lv v [v vp] (find s v)]
-      (cond
-       (nil? v) lv
-       (identical? vp unbound) v
-       (not (lvar? vp)) v
-       :else (recur vp (find s vp)))))
-  
-  (walk* [this v]
-    (let [v (walk this v)]
-      (walk-term v this)))
 
-  (unify [this u v]
-    (if (identical? u v)
-      this
-      (let [u (walk this u)
-            v (walk this v)]
-        (if (identical? u v)
-          this
-          (unify-terms u v this)))))
-
-  (reify-lvar-name [this]
-    (symbol (str "_." (count s))))
-
-  (-reify* [this v]
-    (let [v (walk this v)]
-      (reify-term v this)))
-
-  (-reify [this v]
-    (let [v (walk* this v)]
-      (walk* (-reify* empty-s v) v)))
-
-  (build [this u]
-    (build-term u this))
+  ISubstitutionsCLP
+  (update [this x v]
+    ((if-not (refinable? v)
+       (run-constraints* (if (lvar? v) [x v] [x]) cs)
+       identity)
+     (if *occurs-check*
+       (ext this x v)
+       (ext-no-check this x v))))
 
   IBind
   (bind [this g]
@@ -215,36 +911,32 @@
   ITake
   (take* [this] this))
 
-(defn- ^Substitutions pass-verify [^Substitutions s u v]
-  (Substitutions. (assoc (.s s) u v)
-                  (cons (pair u v) (.l s))
-                  (.verify s)
-                  (.cs s)))
-
 (defn- ^Substitutions make-s
-  ([m l] (Substitutions. m l pass-verify nil))
-  ([m l f] (Substitutions. m l f nil))
-  ([m l f cs] (Substitutions. m l f cs)))
+  ([] (Substitutions. clojure.lang.PersistentHashMap/EMPTY () (make-cs)))
+  ([m] (Substitutions. m () (make-cs)))
+  ([m l] (Substitutions. m l (make-cs)))
+  ([m l cs] (Substitutions. m l cs)))
 
-(def ^Substitutions empty-s (make-s {} '()))
+(def ^Substitutions empty-s (make-s))
+(def empty-f (fn []))
 
 (defn- subst? [x]
   (instance? Substitutions x))
 
 (defn ^Substitutions to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) clojure.lang.PersistentHashMap/EMPTY v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
-    (make-s s l)))
+    (make-s s l (make-cs))))
 
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name hash cs meta]
+(deftype LVar [name hash meta]
   clojure.lang.IObj
   (meta [this]
     meta)
   (withMeta [this new-meta]
-    (LVar. name hash cs meta))
+    (LVar. name hash meta))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -252,12 +944,6 @@
          (let [^LVar o o]
            (identical? name (.name o)))))
   (hashCode [_] hash)
-  ILVar
-  (constraints [_] cs)
-  (add-constraint [_ c] (LVar. name hash (conj (or cs #{}) c) meta))
-  (add-constraints [_ ds] (LVar. name hash (reduce conj (or cs #{}) ds) meta))
-  (remove-constraint [_ c] (LVar. name hash (disj cs c) meta))
-  (remove-constraints [_] (LVar. name hash nil meta))
   IUnifyTerms
   (unify-terms [u v s]
     (unify-with-lvar v u s))
@@ -267,6 +953,9 @@
   IUnifyWithObject
   (unify-with-object [v u s]
     (ext s v u))
+  IUnifyWithInteger
+  (unify-with-integer [v u s]
+    (ext-no-check s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext-no-check s u v))
@@ -282,6 +971,10 @@
   IUnifyWithSet
   (unify-with-set [v u s]
     (ext s v u))
+  IUnifyWithRefinable
+  (unify-with-refinable [v u s]
+    (let [^Refinable u u]
+      (ext-no-check s v (.lvar u))))
   IReifyTerm
   (reify-term [v s]
     (if *reify-vars*
@@ -293,26 +986,29 @@
   (occurs-check-term [v x s] (= (walk s v) x))
   IBuildTerm
   (build-term [u s]
-    (let [m (.s ^Substitutions s)
-          l (.l ^Substitutions s)
+    (let [^Substitutions s s
+          m (.s s)
+          l (.l s)
+          cs (.cs s)
           lv (lvar 'ignore) ]
       (if (contains? m u)
         s
         (make-s (assoc m u lv)
-                (cons (Pair. u lv) l))))))
+                (cons (Pair. u lv) l)
+                cs)))))
 
 (defn ^LVar lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil {:name name})))
+       (LVar. name (.hashCode name) nil)))
   ([name]
      (let [oname name
            name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil {:name oname})))
+       (LVar. name (.hashCode name) nil)))
   ([name cs]
      (let [oname name
            name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs {:name oname}))))
+       (LVar. name (.hashCode name) cs))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (.name ^LVar x) ">")))
@@ -362,7 +1058,8 @@
      :else (str a " . " d )))
   Object
   (toString [this] (cond
-                    (.. this getClass (isInstance d)) (str "(" a " " (toShortString d) ")")
+                    (.. this getClass (isInstance d))
+                      (str "(" a " " (toShortString d) ")")
                     :else (str "(" a " . " d ")")))
   (equals [this o]
     (or (identical? this o)
@@ -455,8 +1152,8 @@
   (instance? LCons x))
 
 (defmacro llist
-  "Constructs a sequence from 2 or more arguments, with the last argument as the tail.
-  The tail is improper if the last argument is a logic variable."
+  "Constructs a sequence from 2 or more arguments, with the last argument as the
+   tail. The tail is improper if the last argument is a logic variable."
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
 
@@ -468,37 +1165,68 @@
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
-    (unify-with-nil v u s)))
+    (unify-with-nil v u s))
 
-(extend-type Object
-  IUnifyTerms
+  Object
   (unify-terms [u v s]
-    (unify-with-object v u s)))
+    (unify-with-object v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.Sequential
   (unify-terms [u v s]
-    (unify-with-seq v u s)))
+    (unify-with-seq v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
-    (unify-with-map v u s)))
+    (unify-with-map v u s))
 
-(extend-protocol IUnifyTerms
   clojure.lang.IPersistentSet
   (unify-terms [u v s]
-    (unify-with-set v u s)))
+    (unify-with-set v u s))
+
+  Refinable
+  (unify-terms [u v s]
+    (unify-with-refinable v u s))
+
+  IntervalFD
+  (unify-terms [u v s]
+    (unify-with-interval v u s))
+
+  MultiIntervalFD
+  (unify-terms [u v s]
+    (unify-with-multi-interval v u s))
+
+  java.lang.Byte
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Short
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Integer
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.lang.Long
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  java.math.BigInteger
+  (unify-terms [u v s]
+    (unify-with-integer v u s))
+
+  clojure.lang.BigInt
+  (unify-terms [u v s]
+    (unify-with-integer v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
 
 (extend-protocol IUnifyWithNil
   nil
-  (unify-with-nil [v u s] s))
+  (unify-with-nil [v u s] s)
 
-(extend-type Object
-  IUnifyWithNil
+  Object
   (unify-with-nil [v u s] false))
 
 ;; -----------------------------------------------------------------------------
@@ -506,37 +1234,42 @@
 
 (extend-protocol IUnifyWithObject
   nil
-  (unify-with-object [v u s] false))
+  (unify-with-object [v u s] false)
 
-(extend-type Object
-  IUnifyWithObject
+  Object
   (unify-with-object [v u s]
-    (if (= u v) s false)))
+    (if (= u v) s false))
+
+  Refinable
+  (unify-with-object [v u s]
+    (unify-with-refinable u v s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LVar with X
 
 (extend-protocol IUnifyWithLVar
   nil
-  (unify-with-lvar [v u s] (ext-no-check s u v)))
+  (unify-with-lvar [v u s] (ext-no-check s u v))
 
-(extend-type Object
-  IUnifyWithLVar
+  Object
   (unify-with-lvar [v u s]
-    (ext s u v)))
+    (ext s u v))
+
+  Refinable
+  (unify-with-lvar [v u s]
+    (let [^Refinable v v]
+     (ext-no-check s u (.lvar v)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
 
 (extend-protocol IUnifyWithLSeq
   nil
-  (unify-with-lseq [v u s] false))
+  (unify-with-lseq [v u s] false)
 
-(extend-type Object
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s] false))
+  Object
+  (unify-with-lseq [v u s] false)
 
-(extend-protocol IUnifyWithLSeq
   clojure.lang.Sequential
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
@@ -555,13 +1288,11 @@
 
 (extend-protocol IUnifyWithSequential
   nil
-  (unify-with-seq [v u s] false))
+  (unify-with-seq [v u s] false)
 
-(extend-type Object
-  IUnifyWithSequential
-  (unify-with-seq [v u s] false))
+  Object
+  (unify-with-seq [v u s] false)
 
-(extend-protocol IUnifyWithSequential
   clojure.lang.Sequential
   (unify-with-seq [v u s]
     (loop [u u v v s s]
@@ -578,13 +1309,11 @@
 
 (extend-protocol IUnifyWithMap
   nil
-  (unify-with-map [v u s] false))
+  (unify-with-map [v u s] false)
 
-(extend-type Object
-  IUnifyWithMap
-  (unify-with-map [v u s] false))
+  Object
+  (unify-with-map [v u s] false)
 
-(extend-protocol IUnifyWithMap
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
     (let [ks (keys u)]
@@ -606,26 +1335,23 @@
 
 (extend-protocol IUnifyWithSet
   nil
-  (unify-with-set [v u s] false))
+  (unify-with-set [v u s] false)
 
-(extend-type Object
-  IUnifyWithSet
-  (unify-with-set [v u s] false))
+  Object
+  (unify-with-set [v u s] false)
 
-;; TODO : improve speed, the following takes 890ms
-;; 
-;; (let [a (lvar 'a)
-;;       b (lvar 'b)
-;;       c (lvar 'c)
-;;       d (lvar 'd)
-;;       s1 #{a b 3 4 5}
-;;       s2 #{1 2 3 c d}]
-;;     (dotimes [_ 10]
-;;       (time
-;;        (dotimes [_ 1e5]
-;;          (.s (unify empty-s s1 s2))))))
-
-(extend-protocol IUnifyWithSet
+  ;; TODO : improve speed, the following takes 890ms
+  ;; 
+  ;; (let [a (lvar 'a)
+  ;;       b (lvar 'b)
+  ;;       c (lvar 'c)
+  ;;       d (lvar 'd)
+  ;;       s1 #{a b 3 4 5}
+  ;;       s2 #{1 2 3 c d}]
+  ;;     (dotimes [_ 10]
+  ;;       (time
+  ;;        (dotimes [_ 1e5]
+  ;;          (.s (unify empty-s s1 s2))))))
   clojure.lang.IPersistentSet
   (unify-with-set [v u s]
     (loop [u u v v ulvars [] umissing []]
@@ -651,18 +1377,204 @@
             false)
           s)))))
 
+;; -----------------------------------------------------------------------------
+;; Unify Refinable with X
+
+(defn unify-with-refinable* [u v s]
+  (let [^Refinable u u]
+    (if-let [r (refine (.v u) v)]
+      (update s (.lvar u) r)
+      false)))
+
+(extend-protocol IUnifyWithRefinable
+  nil
+  (unify-with-refinable [v u s] false)
+
+  Object
+  (unify-with-refinable [v u s] false)
+
+  IntervalFD
+  (unify-with-refinable [v u s]
+    (unify-with-refinable* u v s))
+
+  MultiIntervalFD
+  (unify-with-refinable [v u s]
+    (unify-with-refinable* u v s))
+
+  Refinable
+  (unify-with-refinable [v u s]
+    (let [^Refinable u u
+          ^Refinable v v]
+      (if-let [r (refine (.v u) (.v v))]
+        (if-let [s (update s (.lvar u) r)]
+          (ext-no-check s (.lvar v) (.lvar u))
+          false)
+        false))))
+
+(defn extend-type-to-unify-with-refinable [t]
+  `(extend-type ~t
+     IUnifyWithRefinable
+     (~'unify-with-refinable [~'v ~'u ~'s]
+       (~'unify-with-refinable* ~'u ~'v ~'s))))
+
+(defmacro extend-to-unify-with-refinable [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-refinable ts)))
+
+(extend-to-unify-with-refinable
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
+;; Unify IntervalFD with X
+
+(extend-protocol IUnifyWithIntervalFD
+  nil
+  (unify-with-interval [v u s] false)
+
+  Object
+  (unify-with-interval [v u s] false)
+
+  Refinable
+  (unify-with-interval [v u s]
+    (unify-with-refinable* v u s))
+
+  IntervalFD
+  (unify-with-interval [v u s]
+    (if (refine u v)
+      s
+      false))
+
+  MultiIntervalFD
+  (unify-with-interval [v u s]
+    (if (refine u v)
+      s
+      false)))
+
+(defn extend-type-to-unify-with-interval [t]
+  `(extend-type ~t
+     IUnifyWithIntervalFD
+     (~'unify-with-interval [~'v ~'u ~'s]
+       (if (refine ~'u ~'v)
+         ~'s
+         false))))
+
+(defmacro extend-to-unify-with-interval [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-interval ts)))
+
+(extend-to-unify-with-interval
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
+;; Unify MultiIntervalFD with X
+
+(extend-protocol IUnifyWithMultiIntervalFD
+  nil
+  (unify-with-multi-interval [v u s] false)
+
+  Object
+  (unify-with-multi-interval [v u s] false)
+
+  Refinable
+  (unify-with-multi-interval [v u s]
+    (unify-with-refinable* v u s))
+
+  IntervalFD
+  (unify-with-multi-interval [v u s]
+    (if (refine u v)
+      s
+      false))
+
+  MultiIntervalFD
+  (unify-with-multi-interval [v u s]
+    (if (refine u v)
+      s
+      false)))
+
+(defn extend-type-to-unify-with-multi-interval [t]
+  `(extend-type ~t
+     IUnifyWithMultiIntervalFD
+     (~'unify-with-multi-interval [~'v ~'u ~'s]
+       (if (refine ~'u ~'v)
+         ~'s
+         false))))
+
+(defmacro extend-to-unify-with-multi-interval [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-multi-interval ts)))
+
+(extend-to-unify-with-multi-interval
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
+;; Unify Integer with X
+
+(extend-protocol IUnifyWithInteger
+  nil
+  (unify-with-integer [v u s] false)
+
+  Object
+  (unify-with-integer [v u s] false)
+
+  java.lang.Byte
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  java.lang.Short
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  java.lang.Integer
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  java.lang.Long
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  java.math.BigInteger
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  clojure.lang.BigInt
+  (unify-with-integer [v u s]
+    (if (= u v) s false))
+
+  IntervalFD
+  (unify-with-integer [v u s]
+    (if (refine v u)
+      s
+      false))
+
+  Refinable
+  (unify-with-integer [v u s]
+    (unify-with-refinable* v u s)))
+
 ;; =============================================================================
 ;; Reification
 
 (extend-protocol IReifyTerm
   nil
-  (reify-term [v s] s))
+  (reify-term [v s] s)
 
-(extend-type Object
-  IReifyTerm
-  (reify-term [v s] s))
+  Object
+  (reify-term [v s] s)
 
-(extend-protocol IReifyTerm
   clojure.lang.IPersistentCollection
   (reify-term [v s]
     (loop [v v s s]
@@ -675,20 +1587,17 @@
 
 (extend-protocol IWalkTerm
   nil
-  (walk-term [v s] nil))
+  (walk-term [v s] nil)
 
-(extend-type Object
-  IWalkTerm
-  (walk-term [v s] v))
+  Object
+  (walk-term [v s] v)
 
-(extend-protocol IWalkTerm
   clojure.lang.ISeq
   (walk-term [v s]
     (with-meta
       (map #(walk* s %) v)
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentVector
   (walk-term [v s]
     (with-meta
@@ -696,9 +1605,8 @@
         (if (seq v)
           (recur (next v) (conj! r (walk* s (first v))))
           (persistent! r)))
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentMap
   (walk-term [v s]
     (with-meta
@@ -707,9 +1615,8 @@
           (let [[vfk vfv] (first v)]
             (recur (next v) (assoc! r vfk (walk* s vfv))))
           (persistent! r)))
-      (meta v))))
+      (meta v)))
 
-(extend-protocol IWalkTerm
   clojure.lang.IPersistentSet
   (walk-term [v s]
     (with-meta
@@ -717,20 +1624,22 @@
         (if (seq v)
           (recur (next v) (conj r (walk* s (first v))))
           r))
-      (meta v))))
+      (meta v)))
+
+  Refinable
+  (walk-term [v s]
+    (.v v)))
 
 ;; =============================================================================
 ;; Occurs Check Term
 
 (extend-protocol IOccursCheckTerm
   nil
-  (occurs-check-term [v x s] false))
+  (occurs-check-term [v x s] false)
 
-(extend-type Object
-  IOccursCheckTerm
-  (occurs-check-term [v x s] false))
+  Object
+  (occurs-check-term [v x s] false)
 
-(extend-protocol IOccursCheckTerm
   clojure.lang.IPersistentCollection
   (occurs-check-term [v x s]
     (loop [v v x x s s]
@@ -744,19 +1653,32 @@
 
 (extend-protocol IBuildTerm
   nil
-  (build-term [u s] s))
+  (build-term [u s] s)
 
-(extend-type Object
-  IBuildTerm
-  (build-term [u s] s))
+  Object
+  (build-term [u s] s)
 
-(extend-protocol IBuildTerm
   clojure.lang.ISeq
   (build-term [u s]
     (reduce build s u)))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
+
+(defn composeg
+  ([] identity)
+  ([g0 g1]
+     (fn [a]
+       (let [a (g0 a)]
+         (and a
+              (g1 a))))))
+
+(defmacro composeg*
+  ([g0] g0)
+  ([g0 & gs]
+     `(composeg
+       ~g0
+       (composeg* ~@gs))))
 
 (defmacro bind*
   ([a g] `(bind ~a ~g))
@@ -842,12 +1764,28 @@
 
 (def u# fail)
 
-(defmacro ==
+(defn updateg [u v]
+  (fn [a]
+    (update a u v)))
+
+(defn update-prefix [^Substitutions a ^Substitutions ap]
+  (let [l (.l a)]
+    ((fn loop [lp]
+       (if (identical? l lp)
+         s#
+         (let [[lhs rhs] (first lp)]
+          (composeg
+           (updateg lhs rhs)
+           (loop (rest lp)))))) (.l ap))))
+
+(defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  `(fn [a#]
-     (if-let [b# (unify a# ~u ~v)]
-       b# nil)))
+  (fn [^Substitutions a]
+    (when-let [ap (unify a u v)]
+      (if (pos? (count (.cs a)))
+        ((update-prefix a ap) a)
+        ap))))
 
 (defn- bind-conde-clause [a]
   (fn [g-rest]
@@ -882,13 +1820,15 @@
       (let [~@(lvar-binds lvars)]
         (bind* a# ~@goals)))))
 
+(declare reifyg)
+
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
     `(let [xs# (take* (fn []
-                        ((fresh [~x] ~@goals
-                                (fn [a#]
-                                  (cons (-reify a# ~x) '()))) ;; TODO: do we need this?
+                        ((fresh [~x]
+                           ~@goals
+                           (reifyg ~x))
                          empty-s)))]
        (if ~n
          (take ~n xs#)
@@ -905,7 +1845,8 @@
   `(run false ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not occurs-check."
+  "Executes goals until a maximum of n results are found. Does not 
+   occurs-check."
   [& [n & goals]]
   `(binding [*occurs-check* false]
      (run ~n ~@goals)))
@@ -929,6 +1870,13 @@
   "Like fresh but does does not create logic variables."
   ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
+
+(defn solutions
+  ([s q g]
+     (take*
+      ((all g
+        (fn [a]
+          (cons (-reify a q) '()))) s))))
 
 ;; =============================================================================
 ;; Debugging
@@ -1130,52 +2078,46 @@
   nil
   (ifa [b gs c]
        (when c
-         (force c))))
+         (force c)))
+
+  Substitutions
+  (ifa [b gs c]
+       (loop [b b [g0 & gr] gs]
+         (if g0
+           (when-let [b (g0 b)]
+             (recur b gr))
+           b)))
+
+  clojure.lang.Fn
+  (ifa [b gs c]
+       (-inc (ifa (b) gs c)))
+
+  Choice
+  (ifa [b gs c]
+    (reduce bind b gs)))
 
 (extend-protocol IIfU
   nil
   (ifu [b gs c]
        (when c
-         (force c))))
+         (force c)))
 
-(extend-type Substitutions
-  IIfA
-  (ifa [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
-
-(extend-type Substitutions
-  IIfU
+  Substitutions
   (ifu [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b))))
+    (loop [b b [g0 & gr] gs]
+      (if g0
+        (when-let [b (g0 b)]
+          (recur b gr))
+        b)))
 
-(extend-type clojure.lang.Fn
-  IIfA
-  (ifa [b gs c]
-       (-inc (ifa (b) gs c))))
-
-(extend-type clojure.lang.Fn
-  IIfU
+  clojure.lang.Fn
   (ifu [b gs c]
-       (-inc (ifu (b) gs c))))
+    (-inc (ifu (b) gs c)))
 
-(extend-protocol IIfA
-  Choice
-  (ifa [b gs c]
-       (reduce bind b gs)))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-(extend-protocol IIfU
+  ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
-       (reduce bind (.a ^Choice b) gs)))
+    (reduce bind (.a ^Choice b) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -1197,6 +2139,8 @@
   (let [a (gensym "a")]
     `(fn [~a]
        (ifu* ~@(map (cond-clauses a) clauses)))))
+
+(defn onceo [g] (condu (g)))
 
 ;; =============================================================================
 ;; copy-term
@@ -1437,7 +2381,7 @@
   (binding [*locals* (env-locals xs (keys &env))]
     (handle-clauses `condu xs cs)))
 
-;; ==============================================================================
+;; =============================================================================
 ;; More convenient goals
 
 (defne membero 
@@ -1481,8 +2425,9 @@
     (catch java.lang.ClassNotFoundException e
      `(defn ~'arity-exc-helper [~'name ~'n]
         (fn [~'& ~'args]
-          (throw (java.lang.IllegalArgumentException.
-                  (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
+          (throw
+           (java.lang.IllegalArgumentException.
+            (str "Wrong number of args (" ~'n ") passed to:" ~'name))))))))
 
 (def-arity-exc-helper)
 
@@ -1502,7 +2447,8 @@
       `(do
          (def ~name
            (.withMeta
-            (~'clojure.core.logic.Rel. '~name (atom {}) nil ~@(map arity-excs r))
+            (~'clojure.core.logic.Rel.
+             '~name (atom {}) nil ~@(map arity-excs r))
             {:ns ~'*ns*}))
          (extend-rel ~name ~@args))
       `(def ~name
@@ -1515,13 +2461,16 @@
         args (map a-sym r)
         arg-binds (fn [n]
                     (mapcat (fn [a]
-                              `(~a (first ~'arglist) ~'arglist (next ~'arglist)))
+                              `(~a (first ~'arglist)
+                                   ~'arglist (next ~'arglist)))
                             (take n args)))
         case-clause (fn [n]
                       `(~n (let [~@(arg-binds (dec n))]
                             (.invoke ~'ifn ~@(take (dec n) args)
-                                     (clojure.lang.Util/ret1 (first ~'arglist) nil)))))]
-   `(defn ~'apply-to-helper [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
+                                     (clojure.lang.Util/ret1
+                                      (first ~'arglist) nil)))))]
+   `(defn ~'apply-to-helper
+      [~(with-meta 'ifn {:tag clojure.lang.IFn}) ~'arglist]
       (case (clojure.lang.RT/boundedLength ~'arglist 20)
             ~@(mapcat case-clause r)))))
 
@@ -1688,6 +2637,11 @@
 ;; =============================================================================
 ;; Tabling
 
+;; See - William Byrd "Relational Programming in miniKanren:
+;; Techniques, Applications, and Implementations"
+;; http://scholarworks.iu.edu/dspace/bitstream/handle/2022/8777/Byrd_indiana_0093A_10344.pdf?sequence=1
+;; http://code.google.com/p/iucs-relational-research/
+
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
 ;; (atom []) is cache, waiting streams are PersistentVectors
@@ -1739,7 +2693,8 @@
   (reuse [this argv cache start end])
   (subunify [this arg ans]))
 
-;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to them
+;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to
+;; them
 
 (extend-type Substitutions
   ITabled
@@ -1767,7 +2722,8 @@
                      (if (= ansv* end)
                        [(make-ss cache start
                                  (fn [] (reuse this argv cache @cache start)))]
-                       (Choice. (subunify this argv (reify-tabled this (first ansv*)))
+                       (Choice. (subunify this argv
+                                          (reify-tabled this (first ansv*)))
                                 (fn [] (reuse-loop (rest ansv*))))))]
              (reuse-loop start))))
 
@@ -1859,246 +2815,678 @@
                (reuse a# argv# cache# nil nil))))))))
 
 ;; =============================================================================
-;; Disequality
+;; cKanren
 
-;; TODO: change to lazy-seq
-(defn prefix [s <s]
-  (if (= s <s)
-    ()
-    (cons (first s) (prefix (rest s) <s))))
+;; See - Claire Alvis, Dan Friedman, Will Byrd, et al
+;; "cKanren - miniKanren with Constraints"
+;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
+;; http://github.com/calvis/cKanren
+
+(defn addcg [c]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (addc (.cs a) c))))
+
+(defn updatecg [c]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (updatec (.cs a) c))))
+
+(defn checkcg [c]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (checkc (.cs a) c a))))
+
+(defn remcg [c]
+  (fn [^Substitutions a]
+    (make-s (.s a) (.l a) (remc (.cs a) c))))
+
+(defn process-dom [v dom]
+  (fn [a]
+    (cond
+     (lvar? v) (if-let [a (unify a v dom)] ;; TODO: why we really return nil from unify
+                 a nil)
+     (member? dom v) a
+     :else nil)))
+
+(defn to-vals [dom]
+  (letfn [(to-vals* [is]
+            (when is
+              (let [i (first is)]
+                (lazy-seq
+                 (cons (lb i)
+                       (if-let [ni (drop-one i)]
+                         (to-vals* (cons ni (next is)))
+                         (to-vals* (next is))))))))]
+    (to-vals* (seq (intervals dom)))))
+
+(defn map-sum [f]
+  (fn loop [ls]
+    (if (empty? ls)
+      (fn [a] nil)
+      (conde
+        [(f (first ls))]
+        [(loop (rest ls))]))))
+
+(declare force-ans)
+
+;; TODO: handle all Clojure tree types
+(extend-protocol IForceAnswerTerm
+  nil
+  (-force-ans [v x] s#)
+
+  Object
+  (-force-ans [v x]
+    (if (integer? v)
+      (updateg x v)
+      s#))
+
+  clojure.lang.Sequential
+  (-force-ans [v x]
+    (letfn [(loop [xs]
+              (if xs
+                (all
+                 (force-ans (first xs))
+                 (loop (next xs)))
+                s#))]
+      (loop (seq v))))
+
+  ;; clojure.lang.IPersistentMap
+  ;; clojure.lang.IPersistentSet
+
+  FiniteDomain
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+
+  IntervalFD
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+
+  MultiIntervalFD
+  (-force-ans [v x]
+    ((map-sum (fn [n] (updateg x n))) (to-vals v))))
+
+(defn force-ans [x]
+  (fn [a]
+    ((let [v (walk a x)]
+       (-force-ans v x)) a)))
+
+(defn running [^Substitutions a c]
+  (make-s (.s a) (.l a) (runc (.cs a) c)))
+
+(defn run-constraint [c]
+  (fn [^Substitutions a]
+    (if (runnable? c a)
+      ((composeg c (checkcg c)) (running a c))
+      a)))
+
+(defn run-constraints [xcs]
+  (if xcs
+    (composeg
+     (run-constraint (first xcs))
+     (run-constraints (next xcs)))
+    s#))
+
+(defn run-constraints* [xs cs]
+  (if (or (zero? (count cs))
+          (nil? (seq xs)))
+    s#
+    (let [xcs (get cs (first xs))]
+      (if (seq xcs)
+        (composeg
+         (run-constraints xcs)
+         (run-constraints* (next xs) cs))
+        (run-constraints* (next xs) cs))) ))
+
+(defn verify-all-bound [a constrained]
+  (letfn [(verify-all-bound* [a constrained]
+            (when constrained
+              (let [f (first constrained)]
+                (if (and (lvar? f) (= f (walk a f)))
+                  (throw (Exception. (str "Constrained variable " f " without domain")))
+                  (recur a (next constrained))))))]
+    (verify-all-bound* a (seq constrained))))
+
+(defn enforceable-constrained [^Substitutions a]
+  (let [^ConstraintStore cs (.cs a)
+        km (.km cs)
+        cm (.cm cs)
+        vs (keys km)]
+    (filter (fn [v]
+              (some (fn [cid]
+                      (enforceable? (get cm cid)))
+                    (get km v)))
+            vs)))
+
+(defn enforce-constraints [x]
+  (all
+   (force-ans x)
+   (fn [^Substitutions a]
+     (let [constrained (enforceable-constrained a)]
+       (verify-all-bound a constrained)
+       ((onceo (force-ans constrained)) a)))))
+
+(defn reify-constraints [v r ^ConstraintStore cs]
+  (let [rcs (->> (vals (.cm cs))
+                 (filter reifiable?)
+                 (map #(reifyc % v r)))]
+    (if (empty? rcs)
+      (choice (list v) empty-f)
+      (choice (list `(~v :- ~@rcs)) empty-f))))
+
+(defn reifyg [x]
+  (all
+   (enforce-constraints x)
+   (fn [^Substitutions a]
+     (let [v (walk* a x)
+           r (-reify* empty-s v)]
+       (if (zero? (count r))
+         (choice (list v) empty-f)
+         (let [v (walk* r v)]
+           (reify-constraints v r (.cs a))))))))
+
+;; NOTE: only used for goals that must be added to store to work
+;; a simple way to add the goal to the store and return that goal
+;; with its id assigned
+
+(defn addc* [^Substitutions a c]
+  (let [^ConstraintStore ncs (addc (.cs a) c)
+        c ((.cm ncs) (dec (.cid ncs)))
+        a (make-s (.s a) (.l a) ncs)]
+    (pair c a)))
+
+(defn cgoal [c]
+  (fn [a]
+    (if (runnable? c a)
+      (if (needs-store? c)
+        (let [[c a] (addc* a c)]
+          (when-let [a (c a)]
+            ((checkcg c) a)))
+        (when-let [a (c a)]
+          (if (relevant? c a)
+            ((addcg c) a)
+            a)))
+      ((addcg c) a))))
 
 ;; =============================================================================
-;; Verification
+;; CLP(FD)
 
-(defprotocol IConstraintStore
-  (merge-constraint [this c])
-  (refine-constraint [this c u])
-  (discard-constraint [this c])
-  (propagate [this s u v])
-  (get-simplified [this])
-  (discard-simplified [this]))
+;; NOTE: aliasing FD? for solving problems like zebra - David
 
-(defprotocol IDisequality
-  (!=-verify [this sp]))
+(extend-type Object
+  IRunnable
+  (runnable? [c s]
+    (every? domain? (map #(walk s %) (rands c)))))
 
-(declare make-store)
-(declare make-c)
-(declare constraint-verify)
-
-(defn ^Substitutions constraint-verify-simple [^Substitutions s u v]
-  (let [uc (set (map #(walk s %) (constraints u)))]
-    (if (contains? uc v)
-      nil
-      (let [u (remove-constraints u)
-            v (if (lvar? v) (add-constraints v uc) v)]
-        (make-s (-> (.s s) (dissoc u) (assoc u v))
-                (cons (pair u v) (.l s))
-                constraint-verify
-                (.cs s))))))
-
-(defn ^Substitutions constraint-verify [^Substitutions s u v]
-  (when-let [s (constraint-verify-simple s u v)]
-    (if-let [cs (.cs s)]
-      (let [cs (propagate cs s u v)
-            ^Substitutions s (reduce (fn [s [u c]]
-                                       (constrain s u c))
-                                     s (get-simplified cs))
-            s (make-s (.s s) (.l s)
-                      constraint-verify (discard-simplified cs))]
-        (constraint-verify-simple s (get-var s u) v))
-      s)))
-
-
-(defn unify* [^Substitutions s m]
-  (loop [[[u v :as p] & r] (seq m) result {}]
-    (let [^Substitutions sp (unify s u v)]
-      (cond
-       (nil? p) result
-       (not sp) nil
-       (identical? s sp) (recur r result)
-       :else (recur r
-                    (conj result
-                          (first (prefix (.l sp) (.l s)))))))))
-
-(extend-type Substitutions
-  IDisequality
-  (!=-verify [this sp]
-             (let [^Substitutions sp sp]
-               (cond
-                (not sp) this
-                (= this sp) nil
-                :else (let [[[u v] :as c] (prefix (.l sp) (.l this))
-                            simple (= (count c) 1)]
-                        (if simple
-                          (let [u (walk this u)
-                                v (walk this v)]
-                            (if (= u v)
-                              nil
-                              (let [s (.s this)
-                                    u (add-constraint u v)
-                                    s (if (contains? s u)
-                                        (let [uv (s u)]
-                                          (-> s (dissoc u) (assoc u uv)))
-                                        (assoc s u unbound))
-                                    v (if (lvar? v) (add-constraint v u) v)
-                                    s (if (contains? s v)
-                                        (let [vv (s v)]
-                                          (-> s (dissoc v) (assoc v vv)))
-                                        (assoc s v unbound))]
-                                (make-s s (.l this) constraint-verify (.cs this)))))
-                          (let [r (unify* this c)]
-                            (cond
-                             (nil? r) this
-                             (empty? r) nil
-                             :else (make-s (.s this) (.l this) constraint-verify
-                                           (-> (or (.cs this) (make-store))
-                                               (merge-constraint
-                                                (make-c r))))))))))))
-
-;; =============================================================================
-;; Constraint
-
-;; need hashCode and equals for propagation bit
-(deftype Constraint [^String name ^clojure.lang.Associative m okeys hash]
+(deftype FDConstraint [proc _id _meta]
   Object
   (equals [this o]
-          (and (.. this getClass (isInstance o))
-               (let [^Constraint o o]
-                 (identical? name (.name o)))))
-  (hashCode [_] hash)
-  clojure.lang.Associative
-  (containsKey [this key]
-               (contains? m key))
-  (entryAt [this key]
-           (.entryAt m key))
-  clojure.lang.IPersistentMap
-  (without [this key]
-           (Constraint. name (dissoc m key) okeys hash))
-  clojure.lang.ISeq
-  (first [_] (first m))
-  (seq [_] (seq m))
-  (count [_] (count m))
-  clojure.lang.ILookup
-  (valAt [this key]
-         (m key)))
+    (if (instance? FDConstraint o)
+      (let [^FDConstraint o o]
+        (and (= (rator this) (rator o))
+             (= (rands this) (rands o))))
+      false))
+  clojure.lang.IObj
+  (meta [this]
+    _meta)
+  (withMeta [this new-meta]
+    (FDConstraint. proc _id new-meta))
+  clojure.lang.IFn
+  (invoke [_ s]
+    (proc s))
+  IEnforceableConstraint
+  (enforceable? [_] true)
+  IReifiableConstraint
+  (reifiable? [_] false)
+  IConstraintOp
+  (rator [_] (rator proc))
+  (rands [_] (rands proc))
+  INeedsStore
+  (needs-store? [_] (needs-store? proc))
+  IRelevant
+  (relevant? [this s]
+    (relevant? proc s))
+  (relevant? [this x s]
+    (relevant? proc x s))
+  IRunnable
+  (runnable? [this s]
+    (runnable? proc s))
+  IWithConstraintId
+  (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
+  IConstraintId
+  (id [this] _id)
+  ;; TODO: not super happy about the naming here
+  IStorableConstraint
+  (with-proc [this proc] (FDConstraint. proc _id _meta))
+  (proc [this] proc))
 
-;; NOTE: gensym is slow don't use it directly
-(defn ^Constraint make-c [m]
-  (let [name (str "constraint-" (. clojure.lang.RT (nextID)))]
-    (Constraint. name m (keys m) (.hashCode name))))
+(defn fdc [proc]
+  (FDConstraint. proc nil nil))
 
-(defn constraint? [x]
-  (instance? Constraint x))
+(defmethod print-method FDConstraint [x ^Writer writer]
+  (let [^FDConstraint x x
+        cid (if-let [cid (id x)]
+             (str cid ":")
+             "")]
+    (.write writer (str "(" cid (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
 
-(defmethod print-method Constraint [x ^Writer writer]
-           (.write writer (str "<constraint:" (.m ^Constraint x) ">")))
+(defmacro infd [& xs-and-dom]
+  (let [xs (butlast xs-and-dom)
+        dom (last xs-and-dom)
+        domsym (gensym "dom_")]
+    `(let [~domsym ~dom]
+      (fresh []
+        ~@(map (fn [x]
+                 `(domfd ~x ~domsym))
+               xs)))))
+
+(defn domfd [x dom]
+  (fn [a]
+    ((process-dom (walk a x) dom) a)))
+
+(defn walk-var [a [v b]]
+  `(~b (walk ~a ~v)))
+
+(defmacro let-dom [a vars & body]
+  `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
+     ~@body))
+
+(defn singleton-dom? [x]
+  (and (not (lvar? x))
+       (not (refinable? x))))
+
+(defn =fdc [u v]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+        (let [i (intersection du dv)]
+          ((composeg
+            (process-dom u i)
+            (process-dom v i)) s))))
+    IConstraintOp
+    (rator [_] `=fd)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv]
+        (cond
+         (not (singleton-dom? du)) true
+         (not (singleton-dom? dv)) true
+         :else false)))
+    (relevant? [this x s]
+      (not (singleton-dom? x)))))
+
+(defn =fd [u v]
+  (cgoal (fdc (=fdc u v))))
+
+(defn !=fdc [u v]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+        (cond
+         (and (singleton-dom? du)
+              (singleton-dom? dv)
+              (= du dv)) nil
+         (disjoint? du dv) s
+         (singleton-dom? du)
+         (when-let [vdiff (difference dv du)]
+           ((process-dom v vdiff) s))
+         :else (when-let [udiff (difference du dv)]
+                 ((process-dom u udiff) s)))))
+    IConstraintOp
+    (rator [_] `!=fd)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv]
+        (not (disjoint? du dv))))
+    (relevant? [this x s]
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
+      (let-dom s [u du v dv]
+        (and (domain? du) (domain? dv)
+             (or (singleton-dom? du)
+                 (singleton-dom? dv)))))))
+
+(defn !=fd [u v]
+  (cgoal (fdc (!=fdc u v))))
+
+(defn <=fdc [u v]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv]
+        (let [umin (lb du)
+              vmax (ub dv)]
+         ((composeg*
+           (process-dom u (keep-before du (inc vmax)))
+           (process-dom v (drop-before dv umin))) s))))
+    IConstraintOp
+    (rator [_] `<=fd)
+    (rands [_] [u v])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv]
+       (cond
+        (not (singleton-dom? du)) true
+        (not (singleton-dom? dv)) true
+        :else (not (<= du dv)))))
+    (relevant? [this x s]
+      (relevant? this s))))
+
+(defn <=fd [u v]
+  (cgoal (fdc (<=fdc u v))))
+
+(defn <fd [u v]
+  (all
+   (<=fd u v)
+   (!=fd u v)))
+
+;; NOTE: we could put logic right back in but then we're managing
+;; the constraint in the body again which were trying to get
+;; away from
+
+(defn +fdc [u v w]
+  (reify 
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [u du v dv w dw]
+        (let [[wmin wmax] (bounds dw)
+              [umin umax] (bounds du)
+              [vmin vmax] (bounds dv)]
+          ((composeg
+             (process-dom w (interval (+ umin vmin) (+ umax vmax)))
+             (composeg
+               (process-dom u (interval (- wmin vmax) (- wmax vmin)))
+               (process-dom v (interval (- wmin umax) (- wmax umin))))) s))))
+    IConstraintOp
+    (rator [_] `+fd)
+    (rands [_] [u v w])
+    IRelevant
+    (relevant? [this s]
+      (let-dom s [u du v dv w dw]
+       (cond
+        (not (singleton-dom? du)) true
+        (not (singleton-dom? dv)) true
+        (not (singleton-dom? dw)) true
+        :else (or (= du dw) (= dv dw)))))
+    (relevant? [this x s]
+      (relevant? this s))))
+
+(defn +fd [u v w]
+  (cgoal (fdc (+fdc u v w))))
+
+(defn *fdc [u v w]
+  (letfn [(safe-div [n c a]
+            (if (zero? n) c (/ a n)))]
+   (reify
+     clojure.lang.IFn
+     (invoke [this s]
+       (let-dom s [u du v dv w dw]
+         (let [[wmin wmax] (bounds dw)
+               [umin umax] (bounds du)
+               [vmin vmax] (bounds dv)
+               ui (interval (safe-div vmax umin wmin)
+                            (safe-div vmin umax wmax))
+               vi (interval (safe-div umax vmin wmin)
+                            (safe-div umin vmax wmax))
+               wi (interval (* umin vmin) (* umax vmax))]
+           ((composeg
+             (process-dom w wi)
+             (composeg
+              (process-dom u ui)
+              (process-dom v vi))) s))))
+     IConstraintOp
+     (rator [_] `*fd)
+     (rands [_] [u v w])
+     IRelevant
+     (relevant? [this s]
+       (let-dom s [u du v dv w dw]
+         (cond
+          (not (singleton-dom? du)) true
+          (not (singleton-dom? dv)) true
+          (not (singleton-dom? dw)) true
+          :else (or (= du dw) (= dv dw)))))
+     (relevant? [this x s]
+       (relevant? this s)))))
+
+(defn *fd [u v w]
+  (cgoal (fdc (*fdc u v w))))
+
+(defn exclude-from-dom [dom1 xs s]
+  (if dom1
+    (loop [xs (seq xs) gs []]
+      (if xs
+        (let [x (first xs)
+              dom2 (walk s x)]
+          (if (domain? dom2)
+            (recur (next xs) (conj gs (process-dom x (difference dom2 dom1))))
+            (recur (next xs) gs)))
+        (reduce composeg gs)))
+    s#))
+
+(defn update-procg [proc]
+  (fn [^Substitutions a]
+    (let [ncs (update-proc (.cs a) (id proc) proc)]
+      (make-s (.s a) (.l a) ncs))))
+
+(defn -distinctfdc
+  ([y* n*] (-distinctfdc y* n* nil))
+  ([y* n* id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this s]
+         (loop [y* (seq y*) n* n* x* #{}]
+           (if y*
+             (let [y (first y*)
+                   yv (walk s y)]
+               (if (singleton-dom? yv)
+                 (if (n* yv)
+                   nil
+                   (recur (next y*) (conj n* yv) x*))
+                 (recur (next y*) n* (conj x* y))))
+             ((composeg
+               (exclude-from-dom (sorted-set->dom n*) x* s)
+               (update-procg (-distinctfdc x* n* id))) s))))
+       INeedsStore
+       (needs-store? [_] true)
+       IWithConstraintId
+       (with-id [this id]
+         (-distinctfdc y* n* id))
+       IConstraintId
+       (id [this] id)
+       IConstraintOp
+       (rator [_] `-distinctfd)
+       (rands [_] [(seq y*) (seq n*)])
+       IRelevant
+       (relevant? [this s]
+         (pos? (count y*)))
+       (relevant? [this x s]
+         (if (y* x)
+           true
+           false))
+       IRunnable
+       (runnable? [this s]
+         (or (pos? (count n*))
+             (some (fn [y]
+                     (not (lvar? (walk s y))))
+                   y*))))))
+
+(defn -distinctfd [y* n*]
+  (cgoal (fdc (-distinctfdc y* n*))))
+
+(defn list-sorted? [pred ls]
+  (if (empty? ls)
+    true
+    (loop [f (first ls) ls (next ls)]
+      (if ls
+        (let [s (first ls)]
+         (if (pred f s)
+           (recur s (next ls))
+           false))
+        true))))
+
+(defn distinctfdc [v*]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let [v* (walk s v*)
+            {x* true n* false} (group-by lvar? v*)
+            n* (sort < n*)]
+        (when (list-sorted? < n*)
+          ((-distinctfd (into #{} x*) (apply sorted-set n*)) s))))
+    IConstraintOp
+    (rator [_] `distinctfd)
+    (rands [_] [v*])
+    IRelevant
+    (relevant? [this s]
+      (let [v* (walk s v*)]
+        (lvar? v*)))
+    (relevant? [this x s]
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
+      (let [v* (walk s v*)]
+        (not (lvar? v*))))))
+
+(defn distinctfd [v*]
+  (cgoal (fdc (distinctfdc v*))))
 
 ;; =============================================================================
-;; Constraint Store
+;; CLP(Tree)
 
-(deftype ConstraintStore [vmap cmap simple]
-  IConstraintStore
-  (merge-constraint [this c]
-                    (let [ks (keys c)]
-                      (reduce (fn [cs k] (assoc cs k c)) this ks))) ;; NOTE: switch to loop/recur?
+(defprotocol ITreeConstraint
+  (tree-constraint? [this]))
 
-  (refine-constraint [this c u]
-                     (let [^Constraint c c
-                           name (.name c)
-                           ^Constraint c (dissoc (get cmap name) u)
-                           vmap (update-in vmap [u] #(disj % name))
-                           vmap (if (empty? (vmap u))
-                                  (dissoc vmap u)
-                                  vmap)]
-                       (if (= (count c) 1)
-                         (let [okeys (.okeys c)
-                               cmap (dissoc cmap name)
-                               vmap (reduce (fn [m v]
-                                              (update-in m [v] #(disj % name)))
-                                            vmap okeys)] ;; NOTE: hmm not all these keys exist
-                           ;; TODO: clear out empty vars like below
-                           (ConstraintStore. vmap cmap
-                                             (conj (or simple [])
-                                                   (first c))))
-                         (let [cmap (assoc cmap name c)]
-                           (ConstraintStore. vmap cmap simple)))))
+(extend-type Object
+  ITreeConstraint
+  (tree-constraint? [this] false))
 
-  (discard-constraint [this c]
-                      (let [^Constraint c c
-                            name (.name c)
-                            ^Constraint c (get cmap name)
-                            okeys (.okeys c)
-                            cmap (dissoc cmap name)
-                            vmap (reduce (fn [m v] ;; TODO: combine
-                                           (update-in m [v] #(disj % name)))
-                                         vmap okeys)
-                            vmap (reduce (fn [m v]
-                                           (if (empty? (m v))
-                                             (dissoc m v)
-                                             m))
-                                         vmap okeys)]
-                        (ConstraintStore. vmap cmap simple)))
+(defprotocol IPrefix
+  (prefix [this]))
 
-  (propagate [this s u v]
-             (if (contains? vmap u)
-               (let [cs (get this u)]
-                 (loop [[c & cr] cs me this]
-                   (if (nil? c)
-                     me
-                     (let [vp (walk s (get c u))]
-                       (cond
-                        (= vp v) (recur cr (refine-constraint me c u))
-                        (or (lvar? vp)
-                            (lvar? v)) (recur cr me)
-                            :else (recur cr (discard-constraint me c)))))))
-               this))
+(defprotocol IWithPrefix
+  (with-prefix [this p]))
 
-  (get-simplified [this] simple)
+(defn prefix-s [^Substitutions s ^Substitutions <s]
+  (letfn [(prefix* [s <s]
+            (if (identical? s <s)
+              nil
+              (cons (first s) (prefix* (rest s) <s))))]
+    (when-let [p (prefix* (.l s) (.l <s))]
+      (with-meta p {:s s}))))
 
-  (discard-simplified [this] (ConstraintStore. vmap cmap nil))
+;; TODO: unify should return the prefix sub, then can eliminate l - David
 
-  clojure.lang.Associative
-  (assoc [this u c]
-    (if (constraint? c)
-      (let [name (.name ^Constraint c)]
-        (ConstraintStore. (update-in vmap [u] (fnil #(conj % name) #{}))
-                          (assoc cmap name c) simple))
-      (throw (Exception. "Adding something which is not a constraint"))))
+(defn prefix-subsumes? [p pp]
+  (let [s (-> p meta :s)
+        sp (reduce (fn [s [lhs rhs]]
+                     (unify s lhs rhs))
+                   s pp)]
+    (when sp
+      (identical? s sp))))
 
-  (containsKey [this key]
-               (contains? vmap key))
+(defn recover-vars [p]
+  (loop [p (seq p) r #{}]
+    (if p
+      (let [[u v] (first p)]
+        (if (lvar? v)
+          (recur (next p) (conj r u v))
+          (recur (next p) (conj r u))))
+      r)))
 
-  (entryAt [this key]
-           (when (contains? vmap key)
-             (let [val (when-let [s (seq (map #(cmap %) (vmap key)))]
-                         (vec s))]
-               (clojure.core/reify
-                clojure.lang.IMapEntry
-                (key [_] key)
-                (val [_] val)
-                Object
-                (toString [_] (.toString [key val]))))))
+(declare normalize-store)
 
-  clojure.lang.ILookup
-  (valAt [this key]
-         (when (contains? vmap key)
-           (when-let [s (seq (map #(cmap %) (vmap key)))]
-             (vec s)))))
+(defn !=c
+  ([p] (!=c p nil))
+  ([p id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this a]
+         (if-let [ap (reduce (fn [a [u v]]
+                               (when a (unify a u v)))
+                             a p)]
+           (when-let [p (prefix-s ap a)]
+             ((normalize-store (with-prefix this p)) a))
+           ((remcg this) a)))
+       ITreeConstraint
+       (tree-constraint? [_] true)
+       IWithConstraintId
+       (with-id [_ id] (!=c p id))
+       IConstraintId
+       (id [_] id)
+       IPrefix
+       (prefix [_] p)
+       IWithPrefix
+       (with-prefix [_ p] (!=c p id))
+       IEnforceableConstraint
+       (enforceable? [_] false)
+       IReifiableConstraint
+       (reifiable? [_] true)
+       (reifyc [this v r]
+         (let [p* (walk* r (map (fn [[lhs rhs]] `(~lhs ~rhs)) p))]
+           (if (empty? p*)
+             '()
+             (let [p* (filter (fn [[lhs rhs]]
+                                (not (or (var? lhs)
+                                         (var? rhs))))
+                              p*)]
+               `(~'!= ~@(first p*))))))
+       IConstraintOp
+       (rator [_] `!=)
+       (rands [_] (seq (recover-vars p)))
+       INeedsStore
+       (needs-store? [_] true)
+       IRunnable
+       (runnable? [this s]
+         (some #(not= (walk s %) %) (recover-vars p)))
+       IRelevant
+       (relevant? [this s]
+         (not (empty? p)))
+       (relevant? [this x s]
+         ((recover-vars p) x)))))
 
-(defn ^ConstraintStore make-store []
-  (ConstraintStore. {} {} nil))
+(defn normalize-store [c]
+  (fn [^Substitutions a]
+    (let [p (prefix c)
+          cid (id c)
+          ^ConstraintStore cs (.cs a)
+          cids (->> (seq (recover-vars p))
+                    (mapcat (.km cs))
+                    (remove nil?)
+                    (into #{}))
+          neqcs (->> (seq cids)
+                     (map (.cm cs))
+                     (filter tree-constraint?)
+                     (remove #(= (id %) cid)))]
+      (loop [^Substitutions a a neqcs (seq neqcs)]
+        (if neqcs
+          (let [oc (first neqcs)
+                pp (prefix oc)]
+            (cond
+             (prefix-subsumes? pp p) ((remcg c) a)
+             (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
+                                            (next neqcs))
+             :else (recur a (next neqcs))))
+          ((updatecg c) a))))))
 
-;; =============================================================================
-;; Syntax
+(defn != [u v]
+  (fn [a]
+    (if-let [ap (unify a u v)]
+      (let [p (prefix-s ap a)]
+        (when-not (empty? p)
+          ((cgoal (!=c p)) a)))
+      a)))
 
-(defmacro !=
-  "Impose a disequality constraint on u and v. If the two
-  terms ever unify will result in failure. u and v can be
-  compound terms allowing complex conditions to require
-  failure."
-  [u v]
-  `(fn [a#]
-     (!=-verify a# (unify a# ~u ~v))))
+#_(defn all-diffo [l]
+  (conde
+    [(== l ())]
+    [(fresh (a) (== l [a]))]
+    [(fresh (a ad dd)
+      (== l (llist a ad dd))
+      (!=c a ad)
+      (all-diffo (llist a dd))
+      (all-diffo (llist ad dd)))]))
 
 (defne rembero [x l o]
   ([_ [x . xs] xs])
