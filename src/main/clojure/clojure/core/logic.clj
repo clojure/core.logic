@@ -508,43 +508,26 @@
            (cond
             (<= imin jmin)
             (cond
-             ;; |----|   i   |-----|   i
-             ;; |-----|  j     |-----| j
              (< imax jmax)
              (recur (next is)
                     (cons (interval (inc imax) jmax) (next js))
                     (conj r (interval jmin imax)))
- 
-             ;; |-----|  i   |-----|   i
-             ;; |----|   j    |---|    j
              (> imax jmax)
              (recur (cons (interval (inc jmax) imax) (next is))
                     (next js)
                     (conj r j))
-                  
-             ;; |-----|  i
-             ;;  |----|  j
              :else
              (recur (next is) (next js)
                     (conj r (interval jmin jmax))))
-
             (> imin jmin)
             (cond
-             ;;  |-----| i
-             ;; |-----|  j
              (> imax jmax)
              (recur (cons (interval (inc jmax) imax) (next is))
                     (next js)
                     (conj r (interval imin jmax)))
-
-             ;;  |---|   i
-             ;; |-----|  j
              (< imax jmax)
              (recur is (cons (interval (inc imax) jmax) (next js))
                     (conj r i))
-
-             ;;  |----|  i
-             ;; |-----|  j
              :else
              (recur (next is) (next js)
                     (conj r (interval imin imax))))))))
@@ -565,43 +548,27 @@
                (cond
                 (< imin jmin)
                 (cond
-                 ;; |-----|  i
-                 ;;  |---|   j
                  (< jmax imax)
                  (recur (cons (interval (inc jmax) imax) (next is))
                         (next js)
                         (conj r (interval imin (dec jmin))))
-
-                 ;; |-----|  i
-                 ;;  |-----| j
                  (> jmax imax)
                  (recur (next is)
                         (cons (interval (inc imax) jmax) (next js))
                         (conj r (interval imin (dec jmin))))
-
-                 ;; |-----|  i
-                 ;;  |----|  j
                  :else
                  (recur (next is) (next js)
                         (conj r (interval imin (dec jmin)))))
                 (>= imin jmin)
                 (cond
-                 ;;  |---|   i
-                 ;; |-----|  j
                  (< imax jmax)
                  (recur (next is)
                         (cons (interval (inc imax) jmax) (next js))
                         r)
-
-                 ;;  |-----| i
-                 ;; |-----|  j
                  (> imax jmax)
                  (recur (cons (interval (inc jmax) imax) (next is))
                         (next js)
                         r)
-
-                 ;;  |----|  i
-                 ;; |-----|  j
                  :else (recur (next is) (next js)
                               r))))))
           (apply multi-interval (into r is)))
