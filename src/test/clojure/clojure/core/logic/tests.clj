@@ -2220,6 +2220,11 @@
         cs (addc (make-cs) c)]
     ))
 
-(deftest test-!=c-1)
-
-(deftest test-!=-1)
+;; FIXME: disequality constraint not triggered
+#_(deftest test-multi-constraints-1 []
+  (run* [q]
+    (fresh [x y z]
+      (infd x y z (interval 1 3))
+      (!= z 3)
+      (+fd x y z)
+      (== q [x y z]))))
