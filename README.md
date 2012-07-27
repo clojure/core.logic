@@ -12,7 +12,6 @@ If you're interested in using core.logic from ClojureScript look [here](http://g
 Immediate Roadmap
 ----
 
-* **Constraint Logic Programming**, [cKanren](http://github.com/clojure/core.logic/tree/cKanren)
 * **Parallel Execution**, [fork-join](http://github.com/clojure/core.logic/tree/fork-join)
 * **Fair Conjunction**, [fair-conj2](http://github.com/clojure/core.logic/tree/fair-conj2)
 
