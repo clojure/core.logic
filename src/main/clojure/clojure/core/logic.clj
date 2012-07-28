@@ -3445,7 +3445,7 @@
           ((cgoal (!=c p)) a)))
       a)))
 
-#_(defn all-diffo [l]
+(defn all-diffo [l]
   (conde
     [(== l ())]
     [(fresh (a) (== l [a]))]
