@@ -2964,7 +2964,7 @@
     (if (runnable? c a)
       (if (needs-store? c)
         (let [[c a] (addc* a c)]
-          (when-let [a (c a)]
+          (when-let [a (c (running a c))]
             ((checkcg c) a)))
         (when-let [a (c a)]
           (if (relevant? c a)
