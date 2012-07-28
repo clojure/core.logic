@@ -746,8 +746,10 @@
   (constraints [this x]
     (map cm (get km x)))
   (update-proc [this id proc]
-    (let [ncm (assoc cm id (with-proc (get cm id) proc))]
-      (ConstraintStore. km ncm cid running)))
+    (if-let [c (get cm id)]
+      (let [ncm (assoc cm id (with-proc c proc))]
+        (ConstraintStore. km ncm cid running))
+      this))
   clojure.lang.Counted
   (count [this]
     (count cm))

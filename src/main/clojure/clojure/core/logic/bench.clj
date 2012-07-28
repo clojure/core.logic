@@ -414,3 +414,52 @@
      (dotimes [_ 1000]
        (matches 40))))
   )
+
+;; =============================================================================
+;; Sudoku
+
+(defn distincto [s]
+  (if s
+    (all
+     (distinctfd (first s))
+     (distincto (next s)))
+    s#))
+
+(defn sudokufd []
+  (run 1 [q]
+    (fresh [a1 a2 a3 a4
+            b1 b2 b3 b4
+            c1 c2 c3 c4
+            d1 d2 d3 d4]
+      (== q [[a1 a2 a3 a4]
+             [b1 b2 b3 b4]
+             [c1 c2 c3 c4]
+             [d1 d2 d3 d4]])
+      (infd a1 a2 a3 a4
+            b1 b2 b3 b4
+            c1 c2 c3 c4
+            d1 d2 d3 d4
+            (interval 1 4))
+      (let [row1 [a1 a2 a3 a4]
+            row2 [b1 b2 b3 b4]
+            row3 [c1 c2 c3 c4]
+            row4 [d1 d2 d3 d4]
+            col1 [a1 b1 c1 d1]
+            col2 [a2 b2 c2 d2]
+            col3 [a3 b3 c3 d3]
+            col4 [a4 b4 c4 d4]
+            sq1 [a1 a2 b1 b2]
+            sq2 [a3 a4 b3 b4]
+            sq3 [c1 c2 d1 d2]
+            sq4 [c3 c4 d3 d4]]
+        (distincto [row1 row2 row3 row4
+                    col1 col2 col3 col4
+                    sq1 sq2 sq3 sq4])))))
+
+(comment
+  ;; ~1950ms
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e3] 
+       (sudokufd))))
+  )
