@@ -247,7 +247,7 @@
 (defn interval-> [i j]
   (> (lb i) (ub j)))
 
-(declare domain sorted-set->domain difference* intersection*)
+(declare domain sorted-set->domain difference* intersection* member?* disjoint?*)
 
 (deftype FiniteDomain [s min max]
   IInterval
@@ -424,7 +424,7 @@
        (and (>= jmin imin)
             (<= jmax imax)))
      
-     :else (member? that this)))
+     :else (member?* this that)))
   (disjoint? [this that]
     (cond
      (integer? that)
@@ -438,7 +438,7 @@
        (or (> imin jmax)
            (< imax jmin)))
 
-     :else (disjoint? that this)))
+     :else (disjoint?* this that)))
   IIntersection
   (intersection [this that]
     (cond
