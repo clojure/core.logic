@@ -3,7 +3,8 @@
   (:use clojure.core.logic)
   (:require [clojure.core.logic.arithmetic :as a]
             [clojure.repl :as r]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [clojure.set :as set]))
 
 (comment
   (run* [q]
@@ -459,7 +460,7 @@
                     sq1 sq2 sq3 sq4])))))
 
 (comment
-  ;; ~1950ms
+  ;; ~1668ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -531,7 +532,7 @@
   ;; 2.2s w/ interval
   (dotimes [_ 5]
     (time (big-sudokufd)))
-  ;; 1.4s w/ domain
+  ;; ~1.4s w/ domain
 
   ;; this is 1000X slower than the small sudoku
 
@@ -540,6 +541,13 @@
   ;; 27875 calls to distinct fd
   ;; 137249 calls to process-dom
   ;; 141053 calls to FD difference
+  ;; 6002 calls to -oforce-ans
+  ;; yet only 26 constraints in the store
 
   ;; these numbers seem high
+
+  ;; not simple to make faster ops that sorted-set
+  ;; can we eliminate the # of calls
+
+  ;; 
   )
