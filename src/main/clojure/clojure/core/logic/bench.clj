@@ -536,4 +536,10 @@
   ;; this is 1000X slower than the small sudoku
 
   (big-sudokufd)
+
+  ;; 27875 calls to distinct fd
+  ;; 137249 calls to process-dom
+  ;; 141053 calls to FD difference
+
+  ;; these numbers seem high
   )
