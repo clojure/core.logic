@@ -243,7 +243,7 @@
 (defn interval-> [i j]
   (> (lb i) (ub j)))
 
-(declare domain)
+(declare domain sorted-set->domain difference* intersection*)
 
 (deftype FiniteDomain [s min max]
   IInterval
@@ -280,29 +280,41 @@
       (disjoint? this that)))
   IIntersection
   (intersection [this that]
-    (if (integer? that)
-      (when (member? this that) that)
-      (intersection this that)))
+    (cond
+     (integer? that)
+       (when (member? this that) that)
+     (instance? FiniteDomain that)
+       (let [^FiniteDomain that that]
+         (sorted-set->domain (set/intersection s (.s that))))
+     :else
+       (intersection* this that)))
   IDifference
   (difference [this that]
-    (if (integer? that)
-      (domain (disj s that))
-      (difference that this)))
+    (cond
+     (integer? that)
+       (sorted-set->domain (disj s that))
+     (instance? FiniteDomain that)
+       (let [^FiniteDomain that that]
+         (sorted-set->domain (set/difference s (.s that))))
+     :else
+       (difference* this that)))
   IIntervals
   (intervals [_] (seq s)))
 
+(defn sorted-set->domain [s]
+  (if (> (count s) 1)
+    (FiniteDomain. s (first s) (first (rseq s)))
+    (first s)))
+
 (defn domain [& args]
   (when (seq args)
-    (let [s (into (sorted-set) args)]
-      (if (> (count s) 1)
-        (FiniteDomain. s (first s) (first (rseq s)))
-        (first s)))))
+    (sorted-set->domain (into (sorted-set) args))))
 
 (defn sorted-set->dom [s]
   (when (seq s)
     (FiniteDomain. s (first s) (first (rseq s)))))
 
-(declare interval? difference* intersection*)
+(declare interval?)
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
