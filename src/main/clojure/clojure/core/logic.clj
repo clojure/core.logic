@@ -302,17 +302,15 @@
   (intervals [_] (seq s)))
 
 (defn sorted-set->domain [s]
-  (if (> (count s) 1)
-    (FiniteDomain. s (first s) (first (rseq s)))
-    (first s)))
+  (let [c (count s)]
+    (cond
+     (zero? c) nil
+     (= c 1) (first s)
+     :else (FiniteDomain. s (first s) (first (rseq s))))))
 
 (defn domain [& args]
   (when (seq args)
     (sorted-set->domain (into (sorted-set) args))))
-
-(defn sorted-set->dom [s]
-  (when (seq s)
-    (FiniteDomain. s (first s) (first (rseq s)))))
 
 (declare interval?)
 
@@ -3267,7 +3265,7 @@
                    (recur (next y*) (conj n* yv) x*))
                  (recur (next y*) n* (conj x* y))))
              ((composeg
-               (exclude-from-dom (sorted-set->dom n*) x* s)
+               (exclude-from-dom (sorted-set->domain n*) x* s)
                (update-procg (-distinctfdc x* n* id))) s))))
        INeedsStore
        (needs-store? [_] true)

@@ -1,7 +1,9 @@
 (ns clojure.core.logic.bench
   (:refer-clojure :exclude [==])
   (:use clojure.core.logic)
-  (:require [clojure.core.logic.arithmetic :as a]))
+  (:require [clojure.core.logic.arithmetic :as a]
+            [clojure.repl :as r]
+            [clojure.pprint :as pp]))
 
 (comment
   (run* [q]
