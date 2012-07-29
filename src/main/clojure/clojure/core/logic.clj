@@ -1,7 +1,8 @@
 (ns clojure.core.logic
   (:refer-clojure :exclude [==])
   (:use [clojure.walk :only [postwalk]])
-  (:require [clojure.set :as set])
+  (:require [clojure.set :as set]
+            [clojure.string :as string])
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *occurs-check* true)
@@ -75,6 +76,9 @@
 
 (defprotocol IUnifyWithInteger
   (unify-with-integer [v u s]))
+
+(defprotocol IUnifyWithFiniteDomain
+  (unify-with-domain [v u s]))
 
 (defprotocol IUnifyWithIntervalFD
   (unify-with-interval [v u s]))
@@ -311,6 +315,10 @@
 (defn domain [& args]
   (when (seq args)
     (sorted-set->domain (into (sorted-set) args))))
+
+(defmethod print-method FiniteDomain [x ^Writer writer]
+  (let [^FiniteDomain x x]
+    (.write writer (str "<domain:" (string/join " " (seq (.s x))) ">"))))
 
 (declare interval?)
 
@@ -1166,6 +1174,10 @@
   (unify-terms [u v s]
     (unify-with-refinable v u s))
 
+  FiniteDomain
+  (unify-terms [u v s]
+    (unify-with-domain v u s))
+
   IntervalFD
   (unify-terms [u v s]
     (unify-with-interval v u s))
@@ -1372,6 +1384,10 @@
   Object
   (unify-with-refinable [v u s] false)
 
+  FiniteDomain
+  (unify-with-domain [v u s]
+    (unify-with-refinable* u v s))
+
   IntervalFD
   (unify-with-refinable [v u s]
     (unify-with-refinable* u v s))
@@ -1409,6 +1425,57 @@
   clojure.lang.BigInt)
 
 ;; -----------------------------------------------------------------------------
+;; Unify FiniteDomain with X
+
+(defn unify-with-domain* [d u s]
+  (if (refine d u)
+    s
+    false))
+
+(extend-protocol IUnifyWithFiniteDomain
+  nil
+  (unify-with-domain [v u s] false)
+
+  Object
+  (unify-with-domain [v u s] false)
+
+  Refinable
+  (unify-with-domain [v u s]
+    (unify-with-refinable* v u s))
+
+  FiniteDomain
+  (unify-with-domain [v u s]
+    (unify-with-domain* v u s))
+
+  IntervalFD
+  (unify-with-domain [v u s]
+    (unify-with-domain* v u s))
+
+  MultiIntervalFD
+  (unify-with-domain [v u s]
+    (unify-with-domain* v u s)))
+
+(defn extend-type-to-unify-with-domain [t]
+  `(extend-type ~t
+     IUnifyWithFiniteDomain
+     (~'unify-with-domain [~'v ~'u ~'s]
+       (if (refine ~'u ~'v)
+         ~'s
+         false))))
+
+(defmacro extend-to-unify-with-domain [& ts]
+  `(do
+     ~@(map extend-type-to-unify-with-domain ts)))
+
+(extend-to-unify-with-domain
+  java.lang.Byte
+  java.lang.Short
+  java.lang.Integer
+  java.lang.Long
+  java.math.BigInteger
+  clojure.lang.BigInt)
+
+;; -----------------------------------------------------------------------------
 ;; Unify IntervalFD with X
 
 (extend-protocol IUnifyWithIntervalFD
@@ -1422,17 +1489,17 @@
   (unify-with-interval [v u s]
     (unify-with-refinable* v u s))
 
+  FiniteDomain
+  (unify-with-interval [v u s]
+    (unify-with-domain* v u s))
+
   IntervalFD
   (unify-with-interval [v u s]
-    (if (refine u v)
-      s
-      false))
+    (unify-with-domain* v u s))
 
   MultiIntervalFD
   (unify-with-interval [v u s]
-    (if (refine u v)
-      s
-      false)))
+    (unify-with-domain* v u s)))
 
 (defn extend-type-to-unify-with-interval [t]
   `(extend-type ~t
@@ -1468,17 +1535,17 @@
   (unify-with-multi-interval [v u s]
     (unify-with-refinable* v u s))
 
+  FiniteDomain
+  (unify-with-multi-interval [v u s]
+    (unify-with-domain* v u s))
+
   IntervalFD
   (unify-with-multi-interval [v u s]
-    (if (refine u v)
-      s
-      false))
+    (unify-with-domain* v u s))
 
   MultiIntervalFD
   (unify-with-multi-interval [v u s]
-    (if (refine u v)
-      s
-      false)))
+    (unify-with-domain* v u s)))
 
 (defn extend-type-to-unify-with-multi-interval [t]
   `(extend-type ~t
@@ -1534,12 +1601,18 @@
   (unify-with-integer [v u s]
     (if (= u v) s false))
 
+  FiniteDomain
+  (unify-with-integer [v u s]
+    (unify-with-domain* v u s))
+
   IntervalFD
   (unify-with-integer [v u s]
-    (if (refine v u)
-      s
-      false))
+    (unify-with-domain* v u s))
 
+  MultiIntervalFD
+  (unify-with-integer [v u s]
+    (unify-with-domain* v u s))
+  
   Refinable
   (unify-with-integer [v u s]
     (unify-with-refinable* v u s)))
