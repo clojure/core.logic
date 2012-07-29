@@ -717,7 +717,8 @@
        (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))))
 
 (defmethod print-method MultiIntervalFD [x ^Writer writer]
-  (.write writer (str "<intervals:" (apply pr-str (.is x)) ">")))
+  (let [^MultiIntervalFD x x]
+    (.write writer (str "<intervals:" (apply pr-str (.is x)) ">"))))
 
 (defn var-rands [c]
   (into [] (filter lvar? (flatten (rands c)))))
@@ -1400,7 +1401,7 @@
   (unify-with-refinable [v u s] false)
 
   FiniteDomain
-  (unify-with-domain [v u s]
+  (unify-with-refinable [v u s]
     (unify-with-refinable* u v s))
 
   IntervalFD
