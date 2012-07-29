@@ -592,6 +592,32 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
+(defn member?* [is js]
+  (if (disjoint? (interval (lb is) (ub is))
+                 (interval (lb js) (ub js)))
+    false
+    (let [d0 (intervals is)
+          d1 (intervals js)]
+      (loop [d0 d0 d1 d1 r []]
+        (if (nil? d0)
+          true)))))
+
+(defn disjoint?* [is js]
+  (if (disjoint? (interval (lb is) (ub is))
+                 (interval (lb js) (ub js)))
+      true
+      (let [d0 (intervals is)
+            d1 (intervals js)]
+        (loop [d0 d0 d1 d1]
+          (if (nil? d0)
+            true
+            (let [i (first d0)
+                  j (first d1)]
+              (cond
+               (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
+               (interval-> i j) (recur d0 (next d1))
+               :else false)))))))
+
 (declare normalize-intervals singleton-dom? multi-interval)
 
 (deftype MultiIntervalFD [min max is]
@@ -645,29 +671,9 @@
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]
-    (if (disjoint? (interval (lb this) (ub this))
-                   (interval (lb that) (ub that)))
-    false
-    (let [d0 (intervals this)
-          d1 (intervals that)]
-      (loop [d0 d0 d1 d1 r []]
-        (if (nil? d0)
-          true)))))
+    (member?* this that))
   (disjoint? [this that]
-    (if (disjoint? (interval (lb this) (ub this))
-                   (interval (lb that) (ub that)))
-      true
-      (let [d0 (intervals this)
-            d1 (intervals that)]
-        (loop [d0 d0 d1 d1]
-          (if (nil? d0)
-            true
-            (let [i (first d0)
-                  j (first d1)]
-              (cond
-               (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
-               (interval-> i j) (recur d0 (next d1))
-               :else false)))))))
+    (disjoint?* this that))
   IIntersection
   (intersection [this that]
     (intersection* this that))
