@@ -273,15 +273,24 @@
   IFiniteDomain
   (domain? [_] true)
   (member? [this that]
-    (if (integer? that)
-      (if (s that)
-        true
-        false)
-      (member? s that)))
+    (cond
+     (integer? that)
+       (if (s that) true false)
+     (instance? FiniteDomain that)
+       (let [^FiniteDomain that that]
+         (set/subset? s (s that)))
+     :else (member?* this that)))
   (disjoint? [this that]
-    (if (integer? that)
-      (not (member? this that))
-      (disjoint? this that)))
+    (cond
+     (integer? that)
+       (if (s that) false true)
+     (instance? FiniteDomain that)
+       (let [^FiniteDomain that that]
+         (cond
+          (< max (.min that)) true
+          (> min (.max that)) true
+          :else (empty? (set/intersection this (.s that)))))
+     :else (disjoint?* this that)))
   IIntersection
   (intersection [this that]
     (cond
