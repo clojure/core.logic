@@ -538,10 +538,11 @@
 
   (big-sudokufd)
 
-  ;; 27875 calls to distinct fd
+  ;; 27869 calls to run-constraint
+  ;; 27875 calls to distinctfd
   ;; 137249 calls to process-dom
   ;; 141053 calls to FD difference
-  ;; 6002 calls to -oforce-ans
+  ;; 6002 calls to -force-ans
   ;; yet only 26 constraints in the store
 
   ;; these numbers seem high
