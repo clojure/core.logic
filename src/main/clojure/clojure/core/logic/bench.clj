@@ -465,6 +465,8 @@
     (time
      (dotimes [_ 1e3] 
        (sudokufd))))
+
+  (sudokufd)
   )
 
 (defn big-sudokufd []
@@ -539,11 +541,13 @@
   (big-sudokufd)
 
   ;; 27869 calls to run-constraint
+  ;; 13181 calls to run-constraints? because something is no longer refinable
   ;; 27875 calls to distinctfd
   ;; 137249 calls to process-dom
   ;; 141053 calls to FD difference
   ;; 6002 calls to -force-ans
   ;; yet only 26 constraints in the store
+  ;; max running constraints - #{4 5 14 16 23}
 
   ;; these numbers seem high
 

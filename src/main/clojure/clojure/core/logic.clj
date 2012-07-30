@@ -3338,6 +3338,11 @@
     (let [ncs (update-proc (.cs a) (id proc) proc)]
       (make-s (.s a) (.l a) ncs))))
 
+;; NOTE: this implementation attempts to optimize by sharing across all variables.
+;; however this not optimal since this is run when a particular var becomes a singleton.
+;; then we could just remove that single value from all the other domains instead of
+;; having to run set/difference and looping over all the vars
+
 (defn -distinctfdc
   ([y* n*] (-distinctfdc y* n* nil))
   ([y* n* id]
