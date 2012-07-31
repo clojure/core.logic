@@ -491,7 +491,7 @@
     s#))
 
 (defn big-sudokufd [init]
-  (let [vs   (->> (range 1 82) (map #(lvar (symbol (str %))))) 
+  (let [vs   (repeatedly 81 lvar) 
         grid (->> vs (partition 9) (map vec) (into []))
         rows grid
         cols (apply map vector grid)

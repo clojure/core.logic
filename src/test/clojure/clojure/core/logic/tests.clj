@@ -2023,17 +2023,6 @@
   (is (false? (list-sorted? < [1 1 3])))
   (is (false? (list-sorted? < [1 5 4 1]))))
 
-(deftest test-exclude-from-dom
-  (let [dom1 (domain 1 3 5 7 9)
-        x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 2 4))
-              (unify y (interval 6 8)))
-        s ((exclude-from-dom dom1 [x y] s) s)]
-    (is (= (walk s x) (multi-interval 2 4)))
-    (is (= (walk s y) (multi-interval 6 8)))))
-
 (deftest test-with-id
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -2041,16 +2030,6 @@
         c (with-id (fdc (-distinctfdc x #{y} (conj n* 7))) 1)]
     (is (= (id c) 1))
     (is (= (id (proc c)) 1))))
-
-#_(deftest test-update-procg
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        n* (sorted-set 1 3 5)
-        c (fdc (-distinctfdc #{x y} n*))
-        s ((addcg c) empty-s)
-        s ((update-procg (with-id (fdc (-distinctfdc #{x} (conj n* 7))) 0)) s)]
-    (is (= (var-rands (get (.cm (.cs s)) 0))
-           [x]))))
 
 (deftest test-distinctfd
   (is (= (run* [q]
