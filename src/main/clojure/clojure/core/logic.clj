@@ -108,7 +108,8 @@
   (remc [this c])
   (runc [this c])
   (constraints [this x])
-  (update-proc [this id proc]))
+  ;;(update-proc [this id proc])
+  )
 
 (defprotocol IWithConstraintId
   (with-id [this id]))
@@ -152,12 +153,12 @@
   IEnforceableConstraint
   (enforceable? [x] false))
 
-(defprotocol INeedsStore
-  (needs-store? [this]))
+;; (defprotocol INeedsStore
+;;   (needs-store? [this]))
 
-(extend-type Object
-  INeedsStore
-  (needs-store? [_] false))
+;; (extend-type Object
+;;   INeedsStore
+;;   (needs-store? [_] false))
 
 ;; TODO: ICLPSet, half the below could be moved into this
 
@@ -779,11 +780,11 @@
     (ConstraintStore. km cm cid (conj running (id c))))
   (constraints [this x]
     (map cm (get km x)))
-  (update-proc [this id proc]
-    (if-let [c (get cm id)]
-      (let [ncm (assoc cm id (with-proc c proc))]
-        (ConstraintStore. km ncm cid running))
-      this))
+  ;; (update-proc [this id proc]
+  ;;   (if-let [c (get cm id)]
+  ;;     (let [ncm (assoc cm id (with-proc c proc))]
+  ;;       (ConstraintStore. km ncm cid running))
+  ;;     this))
   clojure.lang.Counted
   (count [this]
     (count cm))
@@ -3054,23 +3055,32 @@
 ;; a simple way to add the goal to the store and return that goal
 ;; with its id assigned
 
-(defn addc* [^Substitutions a c]
-  (let [^ConstraintStore ncs (addc (.cs a) c)
-        c ((.cm ncs) (dec (.cid ncs)))
-        a (make-s (.s a) (.l a) ncs)]
-    (pair c a)))
+;; (defn addc* [^Substitutions a c]
+;;   (let [^ConstraintStore ncs (addc (.cs a) c)
+;;         c ((.cm ncs) (dec (.cid ncs)))
+;;         a (make-s (.s a) (.l a) ncs)]
+;;     (pair c a)))
+
+;; (defn cgoal [c]
+;;   (fn [a]
+;;     (if (runnable? c a)
+;;       (if (needs-store? c)
+;;         (let [[c a] (addc* a c)]
+;;           (when-let [a (c (running a c))]
+;;             ((checkcg c) a)))
+;;         (when-let [a (c a)]
+;;           (if (relevant? c a)
+;;             ((addcg c) a)
+;;             a)))
+;;       ((addcg c) a))))
 
 (defn cgoal [c]
   (fn [a]
     (if (runnable? c a)
-      (if (needs-store? c)
-        (let [[c a] (addc* a c)]
-          (when-let [a (c (running a c))]
-            ((checkcg c) a)))
-        (when-let [a (c a)]
-          (if (relevant? c a)
-            ((addcg c) a)
-            a)))
+      (when-let [a (c a)]
+        (if (relevant? c a)
+          ((addcg c) a)
+          a))
       ((addcg c) a))))
 
 ;; =============================================================================
@@ -3106,8 +3116,8 @@
   IConstraintOp
   (rator [_] (rator proc))
   (rands [_] (rands proc))
-  INeedsStore
-  (needs-store? [_] (needs-store? proc))
+  ;; INeedsStore
+  ;; (needs-store? [_] (needs-store? proc))
   IRelevant
   (relevant? [this s]
     (relevant? proc s))
@@ -3321,12 +3331,10 @@
 (defn *fd [u v w]
   (cgoal (fdc (*fdc u v w))))
 
-;; TODO: maybe remove
-
-(defn update-procg [proc]
-  (fn [^Substitutions a]
-    (let [ncs (update-proc (.cs a) (id proc) proc)]
-      (make-s (.s a) (.l a) ncs))))
+;; (defn update-procg [proc]
+;;   (fn [^Substitutions a]
+;;     (let [ncs (update-proc (.cs a) (id proc) proc)]
+;;       (make-s (.s a) (.l a) ncs))))
 
 (defn categorize [s]
   (fn [ys ds ss]
@@ -3502,8 +3510,8 @@
        IConstraintOp
        (rator [_] `!=)
        (rands [_] (seq (recover-vars p)))
-       INeedsStore
-       (needs-store? [_] true)
+       ;; INeedsStore
+       ;; (needs-store? [_] true)
        IRunnable
        (runnable? [this s]
          (some #(not= (walk s %) %) (recover-vars p)))
