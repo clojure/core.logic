@@ -491,16 +491,13 @@
     s#))
 
 (defn big-sudokufd [init]
-  (let [vs (map #(lvar (symbol (str %))) (range 1 (inc (* 9 9))))
-        grid (->> vs
-                  (partition 9)
-                  (map vec)
-                  (into []))
+  (let [vs   (->> (range 1 82) (map #(lvar (symbol (str %))))) 
+        grid (->> vs (partition 9) (map vec) (into []))
         rows grid
         cols (apply map vector grid)
-        sqs (for [x (range 0 9 3)
-                  y (range 0 9 3)]
-              (get-square grid x y))]
+        sqs  (for [x (range 0 9 3)
+                   y (range 0 9 3)]
+               (get-square grid x y))]
     (run-nc 1 [q]
       (== q grid)
       (all-infd vs (domain 1 2 3 4 5 6 7 8 9))
@@ -517,7 +514,7 @@
     [[4 1] 8] [[4 2] 4] [[4 5] 6] [[4 6] 3]])
 
   ;; ~950ms
-  ;; ~9.5ms to solve
+  ;; ~95ms to solve
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
