@@ -3560,3 +3560,10 @@
   ([_ [y . ys] [y . zs]]
      (!= y x)
      (rembero x ys zs)))
+
+(defn everyo [g xs]
+  (if (seq xs)
+    (all
+     (g (first xs))
+     (everyo g (next xs)))
+    s#))

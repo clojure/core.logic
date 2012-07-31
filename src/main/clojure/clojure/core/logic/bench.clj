@@ -421,13 +421,6 @@
 ;; =============================================================================
 ;; Sudoku
 
-(defn distincto [s]
-  (if s
-    (all
-     (distinctfd (first s))
-     (distincto (next s)))
-    s#))
-
 (defn sudokufd []
   (run-nc 1 [q]
     (fresh [a1 a2 a3 a4
@@ -455,9 +448,10 @@
             sq2 [a3 a4 b3 b4]
             sq3 [c1 c2 d1 d2]
             sq4 [c3 c4 d3 d4]]
-        (distincto [row1 row2 row3 row4
-                    col1 col2 col3 col4
-                    sq1 sq2 sq3 sq4])))))
+        (everyo distinctfd
+           [row1 row2 row3 row4
+            col1 col2 col3 col4
+            sq1 sq2 sq3 sq4])))))
 
 (comment
   ;; ~1668ms
@@ -470,27 +464,15 @@
   (sudokufd)
   )
 
-(defn all-infd [xs d]
-  (if (seq xs)
-    (all
-     (domfd (first xs) d)
-     (all-infd (next xs) d))
-    s#))
-
 (defn get-square [grid x y]
   (for [x (range x (+ x 3))
         y (range y (+ y 3))]
     (get-in grid [x y])))
 
-(defn init-all [grid inits]
-  (if (seq inits)
-    (let [[pos v] (first inits)]
-      (all
-       (== (get-in grid pos) v)
-       (init-all grid (next inits))))
-    s#))
+(defn init [grid [pos value]]
+  (== (get-in grid pos) value))
 
-(defn big-sudokufd [init]
+(defn big-sudokufd [initial]
   (let [vs   (repeatedly 81 lvar) 
         grid (->> vs (partition 9) (map vec) (into []))
         rows grid
@@ -500,11 +482,11 @@
                (get-square grid x y))]
     (run-nc 1 [q]
       (== q grid)
-      (all-infd vs (domain 1 2 3 4 5 6 7 8 9))
-      (init-all grid init)
-      (distincto rows)
-      (distincto cols)
-      (distincto sqs))))
+      (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vs)
+      (everyo (partial init grid) initial)
+      (everyo distinctfd rows)
+      (everyo distinctfd cols)
+      (everyo distinctfd sqs))))
 
 (comment
   (big-sudokufd
@@ -515,8 +497,12 @@
 
   ;; ~950ms
   ;; ~95ms to solve
-  (dotimes [_ 5]
-    (time
-     (dotimes [_ 10]
-       (big-sudokufd init0))))
+  (let [initial [[[0 4] 2] [[0 6] 9] [[1 4] 6] [[1 5] 3]
+                 [[1 8] 8] [[2 0] 3] [[2 5] 8] [[2 6] 1] 
+                 [[2 7] 4] [[3 4] 4] [[3 6] 8] [[3 8] 7] 
+                 [[4 1] 8] [[4 2] 4] [[4 5] 6] [[4 6] 3]]]
+   (dotimes [_ 5]
+     (time
+      (dotimes [_ 10]
+        (big-sudokufd initial)))))
   )
