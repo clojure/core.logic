@@ -470,90 +470,56 @@
   (sudokufd)
   )
 
-(defn big-sudokufd []
-  (run-nc 1 [q]
-    (fresh [a1 a2 a3 a4 a5 a6 a7 a8 a9
-            b1 b2 b3 b4 b5 b6 b7 b8 b9
-            c1 c2 c3 c4 c5 c6 c7 c8 c9
-            d1 d2 d3 d4 d5 d6 d7 d8 d9
-            e1 e2 e3 e4 e5 e6 e7 e8 e9
-            f1 f2 f3 f4 f5 f6 f7 f8 f9
-            g1 g2 g3 g4 g5 g6 g7 g8 g9
-            h1 h2 h3 h4 h5 h6 h7 h8 h9
-            i1 i2 i3 i4 i5 i6 i7 i8 i9]
-      (== q [[a1 a2 a3 a4 a5 a6 a7 a8 a9]
-             [b1 b2 b3 b4 b5 b6 b7 b8 b9]
-             [c1 c2 c3 c4 c5 c6 c7 c8 c9]
-             [d1 d2 d3 d4 d5 d6 d7 d8 d9]
-             [e1 e2 e3 e4 e5 e6 e7 e8 e9]
-             [f1 f2 f3 f4 f5 f6 f7 f8 f9]
-             [g1 g2 g3 g4 g5 g6 g7 g8 g9]
-             [h1 h2 h3 h4 h5 h6 h7 h8 h9]
-             [i1 i2 i3 i4 i5 i6 i7 i8 i9]])
-      (infd a1 a2 a3 a4 a5 a6 a7 a8 a9
-            b1 b2 b3 b4 b5 b6 b7 b8 b9
-            c1 c2 c3 c4 c5 c6 c7 c8 c9
-            d1 d2 d3 d4 d5 d6 d7 d8 d9
-            e1 e2 e3 e4 e5 e6 e7 e8 e9
-            f1 f2 f3 f4 f5 f6 f7 f8 f9
-            g1 g2 g3 g4 g5 g6 g7 g8 g9
-            h1 h2 h3 h4 h5 h6 h7 h8 h9
-            i1 i2 i3 i4 i5 i6 i7 i8 i9
-            (domain 1 2 3 4 5 6 7 8 9))
-      (== a5 2)
-      (== a7 9)
-      (== b5 6)
-      (== b6 3)
-      (== b9 8)
-      (== c1 3)
-      (== c6 8)
-      (== c7 1)
-      (== c8 4)
-      (== d5 4)
-      (== d7 8)
-      (== d9 7)
-      (== e2 8)
-      (== e3 4)
-      (== e6 6)
-      (== e7 3)
-      (let [row1 [a1 a2 a3 a4 a5 a6 a7 a8 a9]
-            row2 [b1 b2 b3 b4 b5 b6 b7 b8 b9]
-            row3 [c1 c2 c3 c4 c5 c6 c7 c8 c9]
-            row4 [d1 d2 d3 d4 d5 d6 d7 d8 d9]
-            row5 [e1 e2 e3 e4 e5 e6 e7 e8 e9]
-            row6 [f1 f2 f3 f4 f5 f6 f7 f8 f9]
-            row7 [g1 g2 g3 g4 g5 g6 g7 g8 g9]
-            row8 [h1 h2 h3 h4 h5 h6 h7 h8 h9]
-            row9 [i1 i2 i3 i4 i5 i6 i7 i8 i9]
-            col1 [a1 b1 c1 d1 e1 f1 g1 h1 i1]
-            col2 [a2 b2 c2 d2 e2 f2 g2 h2 i2]
-            col3 [a3 b3 c3 d3 e3 f3 g3 h3 i3]
-            col4 [a4 b4 c4 d4 e4 f4 g4 h4 i4]
-            col5 [a5 b5 c5 d5 e5 f5 g5 h5 i5]
-            col6 [a6 b6 c6 d6 e6 f6 g6 h6 i6]
-            col7 [a7 b7 c7 d7 e7 f7 g7 h7 i7]
-            col8 [a8 b8 c8 d8 e8 f8 g8 h8 i8]
-            col9 [a9 b9 c9 d9 e9 f9 g9 h9 i9]
-            sq1 [a1 a2 a3 b1 b2 b3 c1 c2 c3]
-            sq2 [a4 a5 a6 b4 b5 b6 c4 c5 c6]
-            sq3 [a7 a8 a9 b7 b8 b9 c7 c8 c9]
-            sq4 [d1 d2 d3 e1 e2 e3 f1 f2 f3]
-            sq5 [d4 d5 d6 e4 e5 e6 f4 f5 f6]
-            sq6 [d7 d8 d9 e7 e8 e9 f7 f8 f9]
-            sq7 [g1 g2 g3 h1 h2 h3 i1 i2 i3]
-            sq8 [g4 g5 g6 h4 h5 h6 i4 i5 i6]
-            sq9 [g7 g8 g9 h7 h8 h9 i7 i8 i9]]
-        (distincto [row1 row2 row3 row4 row5 row6 row7 row8 row9
-                    col1 col2 col3 col4 col5 col6 col7 col8 col9
-                    sq1 sq2 sq3 sq4 sq5 sq6 sq7 sq8 sq9])))))
+(defn all-infd [xs d]
+  (if (seq xs)
+    (all
+     (domfd (first xs) d)
+     (all-infd (next xs) d))
+    s#))
+
+(defn get-square [grid x y]
+  (for [x (range x (+ x 3))
+        y (range y (+ y 3))]
+    (get-in grid [x y])))
+
+(defn init-all [grid inits]
+  (if (seq inits)
+    (let [[pos v] (first inits)]
+      (all
+       (== (get-in grid pos) v)
+       (init-all grid (next inits))))
+    s#))
+
+(defn big-sudokufd [init]
+  (let [vs (map #(lvar (symbol (str %))) (range 1 (inc (* 9 9))))
+        grid (->> vs
+                  (partition 9)
+                  (map vec)
+                  (into []))
+        rows grid
+        cols (apply map vector grid)
+        sqs (for [x (range 0 9 3)
+                  y (range 0 9 3)]
+              (get-square grid x y))]
+    (run-nc 1 [q]
+      (== q grid)
+      (all-infd vs (domain 1 2 3 4 5 6 7 8 9))
+      (init-all grid init)
+      (distincto rows)
+      (distincto cols)
+      (distincto sqs))))
 
 (comment
-  ;; ~946ms, about >3X faster than prior to optimize-distinctfd
-  ;; ~90ms to solve
+  (big-sudokufd
+   [[[0 4] 2] [[0 6] 9] [[1 4] 6] [[1 5] 3]
+    [[1 8] 8] [[2 0] 3] [[2 5] 8] [[2 6] 1] 
+    [[2 7] 4] [[3 4] 4] [[3 6] 8] [[3 8] 7] 
+    [[4 1] 8] [[4 2] 4] [[4 5] 6] [[4 6] 3]])
+
+  ;; ~950ms
+  ;; ~9.5ms to solve
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
-       (big-sudokufd))))
-
-  (big-sudokufd)
+       (big-sudokufd init0))))
   )
