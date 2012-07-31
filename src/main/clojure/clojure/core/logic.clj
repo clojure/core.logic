@@ -3338,55 +3338,52 @@
     (let [ncs (update-proc (.cs a) (id proc) proc)]
       (make-s (.s a) (.l a) ncs))))
 
-;; NOTE: this implementation attempts to optimize by sharing across all variables.
-;; however this not optimal since this is run when a particular var becomes a singleton.
-;; then we could just remove that single value from all the other domains instead of
-;; having to run set/difference and looping over all the vars
+(defn categorize [s]
+  (fn [ys ds ss]
+    (if ys
+      (let [y (first ys)
+            v (walk s y)]
+        (cond
+         (lvar? v) (recur (next ys) ds ss)
+         (singleton-dom? v) (recur (next ys) ds (conj ss v))
+         :else (recur (next ys) (conj ds y) ss)))
+      {:doms ds :singletons ss})))
 
 (defn -distinctfdc
-  ([y* n*] (-distinctfdc y* n* nil))
-  ([y* n* id]
+  ([x y* n*] (-distinctfdc x y* n* nil))
+  ([x y* n* id]
      (reify
        clojure.lang.IFn
        (invoke [this s]
-         (loop [y* (seq y*) n* n* x* #{}]
-           (if y*
-             (let [y (first y*)
-                   yv (walk s y)]
-               (if (singleton-dom? yv)
-                 (if (n* yv)
-                   nil
-                   (recur (next y*) (conj n* yv) x*))
-                 (recur (next y*) n* (conj x* y))))
-             ((composeg
-               (exclude-from-dom (sorted-set->domain n*) x* s)
-               (update-procg (-distinctfdc x* n* id))) s))))
-       INeedsStore
-       (needs-store? [_] true)
+         (let [x (walk s x)
+               {:keys [doms singletons]} ((categorize s) (seq y*) [] #{})]
+           (when-not (or (n* x) (singletons x))
+             (loop [doms (seq doms) s s]
+               (if doms
+                 (let [d (first doms)
+                       s ((process-dom d (difference (walk s d) x)) s)]
+                   (when s
+                     (recur (next doms) s)))
+                 s)))))
        IWithConstraintId
        (with-id [this id]
-         (-distinctfdc y* n* id))
+         (-distinctfdc x y* n* id))
        IConstraintId
        (id [this] id)
        IConstraintOp
        (rator [_] `-distinctfd)
-       (rands [_] [(seq y*) (seq n*)])
+       (rands [_] [x])
        IRelevant
        (relevant? [this s]
-         (pos? (count y*)))
+         (not (singleton-dom? (walk s x))))
        (relevant? [this x s]
-         (if (y* x)
-           true
-           false))
+         (relevant? this s))
        IRunnable
        (runnable? [this s]
-         (or (pos? (count n*))
-             (some (fn [y]
-                     (not (lvar? (walk s y))))
-                   y*))))))
+         (singleton-dom? (walk s x))))))
 
-(defn -distinctfd [y* n*]
-  (cgoal (fdc (-distinctfdc y* n*))))
+(defn -distinctfd [x y* n*]
+  (cgoal (fdc (-distinctfdc x y* n*))))
 
 (defn list-sorted? [pred ls]
   (if (empty? ls)
@@ -3407,7 +3404,14 @@
             {x* true n* false} (group-by lvar? v*)
             n* (sort < n*)]
         (when (list-sorted? < n*)
-          ((-distinctfd (into #{} x*) (apply sorted-set n*)) s))))
+          (let [x* (into #{} x*)
+                n* (into (sorted-set) n*)]
+            (loop [xs (seq x*) s s]
+              (if xs
+                (let [x (first xs)]
+                  (when-let [s ((-distinctfd x (disj x* x) n*) s)]
+                    (recur (next xs) s)))
+                s))))))
     IConstraintOp
     (rator [_] `distinctfd)
     (rands [_] [v*])

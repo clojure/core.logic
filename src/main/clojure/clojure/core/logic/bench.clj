@@ -461,6 +461,7 @@
 
 (comment
   ;; ~1668ms
+  ;; ~1171ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -499,6 +500,22 @@
             h1 h2 h3 h4 h5 h6 h7 h8 h9
             i1 i2 i3 i4 i5 i6 i7 i8 i9
             (domain 1 2 3 4 5 6 7 8 9))
+      (== a5 2)
+      (== a7 9)
+      (== b5 6)
+      (== b6 3)
+      (== b9 8)
+      (== c1 3)
+      (== c6 8)
+      (== c7 1)
+      (== c8 4)
+      (== d5 4)
+      (== d7 8)
+      (== d9 7)
+      (== e2 8)
+      (== e3 4)
+      (== e6 6)
+      (== e7 3)
       (let [row1 [a1 a2 a3 a4 a5 a6 a7 a8 a9]
             row2 [b1 b2 b3 b4 b5 b6 b7 b8 b9]
             row3 [c1 c2 c3 c4 c5 c6 c7 c8 c9]
@@ -531,28 +548,12 @@
                     sq1 sq2 sq3 sq4 sq5 sq6 sq7 sq8 sq9])))))
 
 (comment
-  ;; 2.2s w/ interval
+  ;; ~946ms, about >3X faster than prior to optimize-distinctfd
+  ;; ~90ms to solve
   (dotimes [_ 5]
-    (time (big-sudokufd)))
-  ;; ~1.4s w/ domain
-
-  ;; this is 1000X slower than the small sudoku
+    (time
+     (dotimes [_ 10]
+       (big-sudokufd))))
 
   (big-sudokufd)
-
-  ;; 27869 calls to run-constraint
-  ;; 13181 calls to run-constraints? because something is no longer refinable
-  ;; 27875 calls to distinctfd
-  ;; 137249 calls to process-dom
-  ;; 141053 calls to FD difference
-  ;; 6002 calls to -force-ans
-  ;; yet only 26 constraints in the store
-  ;; max running constraints - #{4 5 14 16 23}
-
-  ;; these numbers seem high
-
-  ;; not simple to make faster ops that sorted-set
-  ;; can we eliminate the # of calls
-
-  ;; 
   )
