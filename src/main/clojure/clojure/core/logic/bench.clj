@@ -517,12 +517,13 @@
   (sudokufd easy0)
 
   ;; ~600ms
-  ;; 6ms solve easy
+  ;; 6ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
        (sudokufd easy0))))
 
+  ;; Hardest Norvig Random
   (def hard0
     [0 0 0  0 0 6  0 0 0
      0 5 9  0 0 0  0 0 8
@@ -539,8 +540,32 @@
   (time (sudokufd hard0))
 
   ;; ~600ms
+  ;; ~60ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
        (sudokufd hard0))))
+
+  ;; from GeCode test suite
+  (def hard1
+    [0 0 0  0 0 3  0 6 0
+     0 0 0  0 0 0  0 1 0
+     0 9 7  5 0 0  0 8 0
+
+     0 0 0  0 9 0  2 0 0
+     0 0 8  0 7 0  4 0 0
+     0 0 3  0 6 0  0 0 0
+     
+     0 1 0  0 0 2  8 9 0
+     0 4 0  0 0 0  0 0 0
+     0 5 0  1 0 0  0 0 0])
+
+  (time (sudokufd hard1))
+
+  ;; ~1500ms
+  ;; ~150ms for 1
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 10]
+       (sudokufd hard1))))
   )
