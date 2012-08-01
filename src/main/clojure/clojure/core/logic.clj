@@ -99,8 +99,6 @@
   IRefinable
   (refinable? [_] false))
 
-;; TODO: think more about update-proc, works for now
-
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c])
@@ -136,8 +134,6 @@
 (defprotocol IRelevant
   (relevant? [this s] [this x s]))
 
-;; TODO: add IRelevantVar ?
-
 (defprotocol IReifiableConstraint
   (reifiable? [this])
   (reifyc [this v r]))
@@ -159,8 +155,6 @@
 ;; (extend-type Object
 ;;   INeedsStore
 ;;   (needs-store? [_] false))
-
-;; TODO: ICLPSet, half the below could be moved into this
 
 (defprotocol IInterval
   (lb [this])
