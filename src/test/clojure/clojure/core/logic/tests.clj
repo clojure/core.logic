@@ -1718,12 +1718,12 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
+        csp (addc (make-cs) c)
         sc (first (constraints-for csp u))]
     (is (= c sc))
     (is (= (id sc) 0))
-    (is (= (count (.km csp)) 2))
-    (is (= (count (.cm csp)) 1))))
+    (is (= (count (:km csp)) 2))
+    (is (= (count (:cm csp)) 1))))
 
 (deftest test-addc-2
   (let [u (lvar 'u)
@@ -1732,16 +1732,16 @@
         c0 (fdc (+fdc u v w))
         x (lvar 'x)
         c1 (fdc (+fdc w v x))
-        ^clojure.core.logic.ConstraintStore cs  (-> (make-cs )
-                                                    (addc c0)
-                                                    (addc c1))
-        sc0 (get (.cm cs) 0)
-        sc1 (get (.cm cs) 1)]
+        cs  (-> (make-cs )
+                (addc c0)
+                (addc c1))
+        sc0 (get (:cm cs) 0)
+        sc1 (get (:cm cs) 1)]
     (is (= sc0 c0)) (is (= (id sc0) 0))
     (is (= sc1 c1)) (is (= (id sc1) 1))
     (is (= (id sc0) 0))
-    (is (= (count (.km cs)) 3))
-    (is (= (count (.cm cs)) 2))))
+    (is (= (count (:km cs)) 3))
+    (is (= (count (:cm cs)) 2))))
 
 ;; FIXME: ext-cs no longer exists
 #_(deftest test-ext-cs

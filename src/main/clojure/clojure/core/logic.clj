@@ -193,6 +193,14 @@
   (rhs [this]))
 
 (deftype Pair [lhs rhs]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :lhs lhs
+      :rhs rhs
+      not-found))
   clojure.lang.Counted
   (count [_] 2)
   clojure.lang.Indexed
@@ -215,17 +223,15 @@
     (str "(" lhs " . " rhs ")"))
   (equals [_ o]
     (if (instance? Pair o)
-      (let [^Pair o o]
-        (and (= lhs (.lhs o))
-             (= rhs (.rhs o))))
+      (and (= lhs (:lhs o))
+           (= rhs (:rhs o)))
       false)))
 
 (defn- pair [lhs rhs]
   (Pair. lhs rhs))
 
 (defmethod print-method Pair [x ^Writer writer]
-  (let [^Pair x x]
-    (.write writer (str "(" (.lhs x) " . " (.rhs x) ")"))))
+  (.write writer (str "(" (:lhs x) " . " (:rhs x) ")")))
 
 ;; =============================================================================
 ;; Constraint Store
@@ -241,6 +247,15 @@
 (declare domain sorted-set->domain difference* intersection* member?* disjoint?*)
 
 (deftype FiniteDomain [s min max]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :s s
+      :min min
+      :max max
+      not-found))
   IInterval
   (lb [_] min)
   (ub [_] max)
@@ -269,27 +284,24 @@
      (integer? that)
        (if (s that) true false)
      (instance? FiniteDomain that)
-       (let [^FiniteDomain that that]
-         (set/subset? s (s that)))
+       (set/subset? s (:s that))
      :else (member?* this that)))
   (disjoint? [this that]
     (cond
      (integer? that)
        (if (s that) false true)
      (instance? FiniteDomain that)
-       (let [^FiniteDomain that that]
-         (cond
-          (< max (.min that)) true
-          (> min (.max that)) true
-          :else (empty? (set/intersection this (.s that)))))
+       (cond
+         (< max (:min that)) true
+         (> min (:max that)) true
+         :else (empty? (set/intersection this (:s that))))
      :else (disjoint?* this that)))
   (intersection [this that]
     (cond
      (integer? that)
        (when (member? this that) that)
      (instance? FiniteDomain that)
-       (let [^FiniteDomain that that]
-         (sorted-set->domain (set/intersection s (.s that))))
+       (sorted-set->domain (set/intersection s (:s that)))
      :else
        (intersection* this that)))
   (difference [this that]
@@ -297,8 +309,7 @@
      (integer? that)
        (sorted-set->domain (disj s that))
      (instance? FiniteDomain that)
-       (let [^FiniteDomain that that]
-         (sorted-set->domain (set/difference s (.s that))))
+       (sorted-set->domain (set/difference s (:s that)))
      :else
        (difference* this that)))
   IIntervals
@@ -320,8 +331,7 @@
     (sorted-set->domain (into (sorted-set) args))))
 
 (defmethod print-method FiniteDomain [x ^Writer writer]
-  (let [^FiniteDomain x x]
-    (.write writer (str "<domain:" (string/join " " (seq (.s x))) ">"))))
+  (.write writer (str "<domain:" (string/join " " (seq (:s x))) ">")))
 
 (declare interval?)
 
@@ -381,9 +391,8 @@
   Object
   (equals [_ o]
     (if (instance? IntervalFD o)
-      (let [^IntervalFD o o]
-        (and (= _lb (._lb o))
-             (= _ub (._ub o))))
+      (and (= _lb (lb o))
+           (= _ub (ub o)))
       false))
   (toString [this]
     (pr-str this))
@@ -625,6 +634,15 @@
 (declare normalize-intervals singleton-dom? multi-interval)
 
 (deftype MultiIntervalFD [min max is]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :is is
+      :min min
+      :max max
+      not-found))
   Object
   (equals [this j]
     (if (instance? MultiIntervalFD j)
@@ -711,8 +729,7 @@
        (MultiIntervalFD. (reduce min (map lb is)) (reduce max (map ub is)) is))))
 
 (defmethod print-method MultiIntervalFD [x ^Writer writer]
-  (let [^MultiIntervalFD x x]
-    (.write writer (str "<intervals:" (apply pr-str (.is x)) ">"))))
+  (.write writer (str "<intervals:" (apply pr-str (:is x)) ">")))
 
 (defn var-rands [c]
   (into [] (filter lvar? (flatten (rands c)))))
@@ -732,12 +749,22 @@
 (declare add-var)
 
 (deftype ConstraintStore [km cm cid running]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :km km
+      :cm cm
+      :cid cid
+      :running running
+      not-found))
   IConstraintStore
   (addc [this c]
     (let [vars (var-rands c)
           c (with-id c cid)
-          ^ConstraintStore cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
-      (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
+          cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
+      (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
   (updatec [this c]
     (ConstraintStore. km (assoc cm (id c) c) cid running))
   (checkc [this c s]
@@ -782,15 +809,15 @@
   (count [this]
     (count cm)))
 
-(defn add-var [^ConstraintStore cs x c]
+(defn add-var [cs x c]
   (when-not (lvar? x)
     (throw (Error. (str "constraint store assoc expected logic var key: " x))))
-  (let [cm (.cm cs)
-        km (.km cs)
-        cid (.cid cs)
+  (let [cm (:cm cs)
+        km (:km cs)
+        cid (:cid cs)
         nkm (update-in km [x] (fnil (fn [s] (conj s cid)) #{}))
         ncm (assoc cm cid c)]
-    (ConstraintStore. nkm ncm cid (.running cs))))
+    (ConstraintStore. nkm ncm cid (:running cs))))
 
 (defn make-cs []
   (ConstraintStore.
@@ -852,7 +879,15 @@
 (defn build [s u]
   (build-term u s))
 
-(deftype Refinable [v lvar])
+(deftype Refinable [v lvar]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :v v
+      :lvar lvar
+      not-found)))
 
 (deftype Substitutions [s l cs]
   Object
@@ -860,12 +895,21 @@
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
              (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
-
   ;; TODO: prn doesn't work anymore on empty-s, why not?
   (toString [_] (str s))
 
   clojure.lang.Counted
   (count [this] (count s))
+
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :s s
+      :l l
+      :cs cs
+      not-found))
 
   ISubstitutions
   (ext-no-check [this u v]
@@ -964,8 +1008,7 @@
     (ext s v u))
   IUnifyWithRefinable
   (unify-with-refinable [v u s]
-    (let [^Refinable u u]
-      (ext-no-check s v (.lvar u))))
+    (ext-no-check s v (:lvar u)))
   IReifyTerm
   (reify-term [v s]
     (if *reify-vars*
@@ -977,10 +1020,9 @@
   (occurs-check-term [v x s] (= (walk s v) x))
   IBuildTerm
   (build-term [u s]
-    (let [^Substitutions s s
-          m (.s s)
-          l (.l s)
-          cs (.cs s)
+    (let [m (:s s)
+          l (:l s)
+          cs (:cs s)
           lv (lvar 'ignore) ]
       (if (contains? m u)
         s
@@ -1252,8 +1294,7 @@
 
   Refinable
   (unify-with-lvar [v u s]
-    (let [^Refinable v v]
-     (ext-no-check s u (.lvar v)))))
+    (ext-no-check s u (:lvar v))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
@@ -1376,10 +1417,9 @@
 ;; Unify Refinable with X
 
 (defn unify-with-refinable* [u v s]
-  (let [^Refinable u u]
-    (if-let [r (refine (.v u) v)]
-      (update s (.lvar u) r)
-      false)))
+  (if-let [r (refine (:v u) v)]
+    (update s (:lvar u) r)
+    false))
 
 (extend-protocol IUnifyWithRefinable
   nil
@@ -1402,13 +1442,11 @@
 
   Refinable
   (unify-with-refinable [v u s]
-    (let [^Refinable u u
-          ^Refinable v v]
-      (if-let [r (refine (.v u) (.v v))]
-        (if-let [s (update s (.lvar u) r)]
-          (ext-no-check s (.lvar v) (.lvar u))
-          false)
-        false))))
+    (if-let [r (refine (:v u) (:v v))]
+      (if-let [s (update s (:lvar u) r)]
+        (ext-no-check s (:lvar v) (:lvar u))
+        false)
+      false)))
 
 (defn extend-type-to-unify-with-refinable [t]
   `(extend-type ~t
@@ -1684,7 +1722,7 @@
 
   Refinable
   (walk-term [v s]
-    (.v v)))
+    (walk-term (:v v) s)))
 
 ;; =============================================================================
 ;; Occurs Check Term
@@ -1824,15 +1862,15 @@
   (fn [a]
     (update a u v)))
 
-(defn update-prefix [^Substitutions a ^Substitutions ap]
-  (let [l (.l a)]
+(defn update-prefix [a ap]
+  (let [l (:l a)]
     ((fn loop [lp]
        (if (identical? l lp)
          s#
          (let [[lhs rhs] (first lp)]
           (composeg
            (updateg lhs rhs)
-           (loop (rest lp)))))) (.l ap))))
+           (loop (rest lp)))))) (:l ap))))
 
 ;; NOTE: this seems costly if the user introduces a constraint
 ;; update-prefix should be called only if we have a constraint
@@ -1841,9 +1879,9 @@
 (defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
-  (fn [^Substitutions a]
+  (fn [a]
     (when-let [ap (unify a u v)]
-      (if (pos? (count (.cs a)))
+      (if (pos? (count (:cs a)))
         ((update-prefix a ap) a)
         ap))))
 
@@ -2896,20 +2934,20 @@
 ;; http://github.com/calvis/cKanren
 
 (defn addcg [c]
-  (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (addc (.cs a) c))))
+  (fn [a]
+    (make-s (:s a) (:l a) (addc (:cs a) c))))
 
 (defn updatecg [c]
-  (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (updatec (.cs a) c))))
+  (fn [a]
+    (make-s (:s a) (:l a) (updatec (:cs a) c))))
 
 (defn checkcg [c]
-  (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (checkc (.cs a) c a))))
+  (fn [a]
+    (make-s (:s a) (:l a) (checkc (:cs a) c a))))
 
 (defn remcg [c]
-  (fn [^Substitutions a]
-    (make-s (.s a) (.l a) (remc (.cs a) c))))
+  (fn [a]
+    (make-s (:s a) (:l a) (remc (:cs a) c))))
 
 (defn process-dom [v dom]
   (fn [a]
@@ -2981,11 +3019,11 @@
     ((let [v (walk a x)]
        (-force-ans v x)) a)))
 
-(defn running [^Substitutions a c]
-  (make-s (.s a) (.l a) (runc (.cs a) c)))
+(defn running [a c]
+  (make-s (:s a) (:l a) (runc (:cs a) c)))
 
 (defn run-constraint [c]
-  (fn [^Substitutions a]
+  (fn [a]
     (if (runnable? c a)
       ((composeg c (checkcg c)) (running a c))
       a)))
@@ -3017,10 +3055,10 @@
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
 
-(defn enforceable-constrained [^Substitutions a]
-  (let [^ConstraintStore cs (.cs a)
-        km (.km cs)
-        cm (.cm cs)
+(defn enforceable-constrained [a]
+  (let [cs (:cs a)
+        km (:km cs)
+        cm (:cm cs)
         vs (keys km)]
     (filter (fn [v]
               (some (fn [cid]
@@ -3031,13 +3069,13 @@
 (defn enforce-constraints [x]
   (all
    (force-ans x)
-   (fn [^Substitutions a]
+   (fn [a]
      (let [constrained (enforceable-constrained a)]
        (verify-all-bound a constrained)
        ((onceo (force-ans constrained)) a)))))
 
-(defn reify-constraints [v r ^ConstraintStore cs]
-  (let [rcs (->> (vals (.cm cs))
+(defn reify-constraints [v r cs]
+  (let [rcs (->> (vals (:cm cs))
                  (filter reifiable?)
                  (map #(reifyc % v r)))]
     (if (empty? rcs)
@@ -3047,13 +3085,13 @@
 (defn reifyg [x]
   (all
    (enforce-constraints x)
-   (fn [^Substitutions a]
+   (fn [a]
      (let [v (walk* a x)
            r (-reify* empty-s v)]
        (if (zero? (count r))
          (choice (list v) empty-f)
          (let [v (walk* r v)]
-           (reify-constraints v r (.cs a))))))))
+           (reify-constraints v r (:cs a))))))))
 
 ;; NOTE: only used for goals that must be added to store to work
 ;; a simple way to add the goal to the store and return that goal
@@ -3101,9 +3139,8 @@
   Object
   (equals [this o]
     (if (instance? FDConstraint o)
-      (let [^FDConstraint o o]
-        (and (= (rator this) (rator o))
-             (= (rands this) (rands o))))
+      (and (= (rator this) (rator o))
+           (= (rands this) (rands o)))
       false))
   clojure.lang.IObj
   (meta [this]
@@ -3476,12 +3513,12 @@
 (defprotocol IWithPrefix
   (with-prefix [this p]))
 
-(defn prefix-s [^Substitutions s ^Substitutions <s]
+(defn prefix-s [s <s]
   (letfn [(prefix* [s <s]
             (if (identical? s <s)
               nil
               (cons (first s) (prefix* (rest s) <s))))]
-    (when-let [p (prefix* (.l s) (.l <s))]
+    (when-let [p (prefix* (:l s) (:l <s))]
       (with-meta p {:s s}))))
 
 ;; TODO: unify should return the prefix sub, then can eliminate l - David
@@ -3555,25 +3592,25 @@
          ((recover-vars p) x)))))
 
 (defn normalize-store [c]
-  (fn [^Substitutions a]
+  (fn [a]
     (let [p (prefix c)
           cid (id c)
-          ^ConstraintStore cs (.cs a)
+          cs (:cs a)
           cids (->> (seq (recover-vars p))
-                    (mapcat (.km cs))
+                    (mapcat (:km cs))
                     (remove nil?)
                     (into #{}))
           neqcs (->> (seq cids)
-                     (map (.cm cs))
+                     (map (:cm cs))
                      (filter tree-constraint?)
                      (remove #(= (id %) cid)))]
-      (loop [^Substitutions a a neqcs (seq neqcs)]
+      (loop [a a neqcs (seq neqcs)]
         (if neqcs
           (let [oc (first neqcs)
                 pp (prefix oc)]
             (cond
              (prefix-subsumes? pp p) ((remcg c) a)
-             (prefix-subsumes? p pp) (recur (make-s (.s a) (.l a) (remc cs oc))
+             (prefix-subsumes? p pp) (recur (make-s (:s a) (:l a) (remc cs oc))
                                             (next neqcs))
              :else (recur a (next neqcs))))
           ((updatecg c) a))))))
