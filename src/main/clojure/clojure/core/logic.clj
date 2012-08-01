@@ -317,7 +317,11 @@
      (= c 1) (first s)
      :else (FiniteDomain. s (first s) (first (rseq s))))))
 
-(defn domain [& args]
+(defn domain
+  "Construct a domain for assignment to a var. Arguments should 
+   be integers given in sorted order. domains may be more efficient 
+   than intervals when only a few values are possible."
+  [& args]
   (when (seq args)
     (sorted-set->domain (into (sorted-set) args))))
 
@@ -509,6 +513,9 @@
   (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
 
 (defn interval
+  "Construct an interval for an assignment to a var. intervals may
+   be more efficient that the domain type when the range of possiblities
+   is large."
   ([ub] (IntervalFD. 0 ub))
   ([lb ub]
      (if (zero? (- ub lb))
@@ -728,8 +735,6 @@
                     (flatten vs)))]
     (pair @purge vs)))
 
-;; TODO: map interface stinks, but a collection might be OK?
-;; conj, disj?
 
 (deftype ConstraintStore [km cm cid running]
   IConstraintStore
@@ -2399,11 +2404,13 @@
     (== (lcons a d) l)))
 
 (defn everyo
-  [g xs]
-  (if (seq xs)
+  "A pseudo-relation that takes a coll and ensures that the goal g
+   succeeds on every element of the collection."
+  [g coll]
+  (if (seq coll)
     (all
-     (g (first xs))
-     (everyo g (next xs)))
+     (g (first coll))
+     (everyo g (next coll)))
     s#))
 
 ;; =============================================================================
@@ -2469,7 +2476,10 @@
 
 (declare rembero)
 
-(defne permuteo [xl yl]
+(defne permuteo
+  "A relation that will permute xl into the yl. May not
+   terminate if xl is not ground."
+  [xl yl]
   ([() ()])
   ([[x . xs] _]
      (fresh [ys]
@@ -3146,7 +3156,9 @@
              "")]
     (.write writer (str "(" cid (rator (.proc x)) " " (apply str (interpose " " (rands (.proc x)))) ")"))))
 
-(defmacro infd [& xs-and-dom]
+(defmacro infd
+  "Assign vars to domain. The domain must come last."
+  [& xs-and-dom]
   (let [xs (butlast xs-and-dom)
         dom (last xs-and-dom)
         domsym (gensym "dom_")]
@@ -3156,7 +3168,9 @@
                  `(domfd ~x ~domsym))
                xs)))))
 
-(defn domfd [x dom]
+(defn domfd
+  "Assign a var x a domain."
+  [x dom]
   (fn [a]
     ((process-dom (walk a x) dom) a)))
 
@@ -3193,7 +3207,10 @@
     (relevant? [this x s]
       (not (singleton-dom? x)))))
 
-(defn =fd [u v]
+(defn =fd
+  "A finite domain constraint. u and v must be equal. u and v must
+   eventually be given domains if vars."
+  [u v]
   (cgoal (fdc (=fdc u v))))
 
 (defn !=fdc [u v]
@@ -3227,7 +3244,10 @@
              (or (singleton-dom? du)
                  (singleton-dom? dv)))))))
 
-(defn !=fd [u v]
+(defn !=fd
+  "A finite domain constraint. u and v must not be equal. u and v
+   must eventually be given domains if vars."
+  [u v]
   (cgoal (fdc (!=fdc u v))))
 
 (defn <=fdc [u v]
@@ -3253,10 +3273,16 @@
     (relevant? [this x s]
       (relevant? this s))))
 
-(defn <=fd [u v]
+(defn <=fd
+  "A finite domain constraint. u must be less than or equal to v.
+   u and v must eventually be given domains if vars."
+  [u v]
   (cgoal (fdc (<=fdc u v))))
 
-(defn <fd [u v]
+(defn <fd
+  "A finite domain constraint. u must be less than v. u and v
+   must eventually be given domains if vars."
+  [u v]
   (all
    (<=fd u v)
    (!=fd u v)))
@@ -3292,7 +3318,10 @@
     (relevant? [this x s]
       (relevant? this s))))
 
-(defn +fd [u v w]
+(defn +fd
+  "A finite domain constraint for addition and subtraction.
+   u, v & w must eventually be given domains if vars."
+  [u v w]
   (cgoal (fdc (+fdc u v w))))
 
 (defn *fdc [u v w]
@@ -3329,7 +3358,11 @@
      (relevant? [this x s]
        (relevant? this s)))))
 
-(defn *fd [u v w]
+(defn *fd
+  "A finite domain constraint for multiplication and
+   thus division. u, v & w must be eventually be given 
+   domains if vars."
+  [u v w]
   (cgoal (fdc (*fdc u v w))))
 
 ;; (defn update-procg [proc]
@@ -3425,7 +3458,12 @@
       (let [v* (walk s v*)]
         (not (lvar? v*))))))
 
-(defn distinctfd [v*]
+(defn distinctfd
+  "A finite domain constraint that will guarantee that 
+   all vars that occur in v* will be unified with unique 
+   values. v* need not be ground. Any vars in v* should
+   eventually be given a domain."
+  [v*]
   (cgoal (fdc (distinctfdc v*))))
 
 ;; =============================================================================
@@ -3546,7 +3584,10 @@
              :else (recur a (next neqcs))))
           ((updatecg c) a))))))
 
-(defn != [u v]
+(defn !=
+  "Disequality constraint. Ensures that u and v will never
+   unify. u and v can be complex terms."
+  [u v]
   (fn [a]
     (if-let [ap (unify a u v)]
       (let [p (prefix-s ap a)]
@@ -3564,7 +3605,10 @@
       (all-diffo (llist a dd))
       (all-diffo (llist ad dd)))]))
 
-(defne rembero [x l o]
+(defne rembero
+  "A relation between l and o where is removed from
+   l exactly one time."
+  [x l o]
   ([_ [x . xs] xs])
   ([_ [y . ys] [y . zs]]
      (!= y x)
