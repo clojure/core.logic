@@ -3157,6 +3157,13 @@
     (every? domain? (map #(walk s %) (rands c)))))
 
 (deftype FDConstraint [proc _id _meta]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :proc proc
+      not-found))
   Object
   (equals [this o]
     (if (instance? FDConstraint o)
@@ -3202,11 +3209,10 @@
   (FDConstraint. proc nil nil))
 
 (defmethod print-method FDConstraint [x ^Writer writer]
-  (let [^FDConstraint x x
-        cid (if-let [cid (id x)]
+  (let [cid (if-let [cid (id x)]
              (str cid ":")
              "")]
-    (.write writer (str "(" cid (rator (.proc x)) " " (apply str (interpose " " (rands (.proc x)))) ")"))))
+    (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
 (defmacro infd
   "Assign vars to domain. The domain must come last."
