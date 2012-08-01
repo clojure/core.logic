@@ -485,13 +485,22 @@
        (init (next vars) (next hints))))
     succeed))
 
+(defn ->rows [xs]
+  (->> xs (partition 9) (map vec) (into [])))
+
+(defn ->cols [rows]
+  (apply map vector rows))
+
+(defn ->squares [rows]
+  (for [x (range 0 9 3)
+        y (range 0 9 3)]
+    (get-square rows x y)))
+
 (defn sudokufd [hints]
   (let [vars (repeatedly 81 lvar) 
-        rows (->> vars (partition 9) (map vec) (into []))
-        cols (apply map vector rows)
-        sqs  (for [x (range 0 9 3)
-                   y (range 0 9 3)]
-               (get-square rows x y))]
+        rows (->rows vars)
+        cols (->cols rows)
+        sqs  (->squares rows)]
     (run-nc 1 [q]
       (== q rows)
       (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
@@ -499,6 +508,16 @@
       (everyo distinctfd rows)
       (everyo distinctfd cols)
       (everyo distinctfd sqs))))
+
+(defn verify [rows]
+  (let [cols (->cols rows)
+        sqs  (->squares rows)
+        verify-group (fn [group]
+                       (every? #(= (count (into #{} %)) 9)
+                          group))]
+    (and (verify-group rows)
+         (verify-group cols)
+         (verify-group sqs))))
 
 (comment
   (def easy0
@@ -515,6 +534,8 @@
      0 0 5  0 1 0  3 0 0])
   
   (sudokufd easy0)
+
+  (-> (sudokufd easy0) first verify)
 
   ;; ~600ms
   ;; 6ms for 1
@@ -539,6 +560,8 @@
 
   (time (sudokufd hard0))
 
+  (-> (sudokufd hard0) first verify)
+
   ;; ~600ms
   ;; ~60ms for 1
   (dotimes [_ 5]
@@ -561,6 +584,8 @@
      0 5 0  1 0 0  0 0 0])
 
   (time (sudokufd hard1))
+
+  (-> (sudokufd hard1) first verify)
 
   ;; ~1500ms
   ;; ~150ms for 1
