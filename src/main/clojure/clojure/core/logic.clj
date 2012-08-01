@@ -226,7 +226,7 @@
              (= rhs (.rhs o))))
       false)))
 
-(defn- ^Pair pair [lhs rhs]
+(defn- pair [lhs rhs]
   (Pair. lhs rhs))
 
 (defmethod print-method Pair [x ^Writer writer]
@@ -508,7 +508,7 @@
 (defmethod print-method IntervalFD [x ^Writer writer]
   (.write writer (str "<interval:" (lb x) ".." (ub x) ">")))
 
-(defn ^IntervalFD interval
+(defn interval
   ([ub] (IntervalFD. 0 ub))
   ([lb ub]
      (if (zero? (- ub lb))
@@ -797,7 +797,7 @@
       v
       not-found)))
 
-(defn ^ConstraintStore make-cs []
+(defn make-cs []
   (ConstraintStore.
    clojure.lang.PersistentHashMap/EMPTY
    clojure.lang.PersistentHashMap/EMPTY 0
@@ -907,19 +907,19 @@
   ITake
   (take* [this] this))
 
-(defn- ^Substitutions make-s
+(defn- make-s
   ([] (Substitutions. clojure.lang.PersistentHashMap/EMPTY () (make-cs)))
   ([m] (Substitutions. m () (make-cs)))
   ([m l] (Substitutions. m l (make-cs)))
   ([m l cs] (Substitutions. m l cs)))
 
-(def ^Substitutions empty-s (make-s))
+(def empty-s (make-s))
 (def empty-f (fn []))
 
-(defn- subst? [x]
+(defn subst? [x]
   (instance? Substitutions x))
 
-(defn ^Substitutions to-s [v]
+(defn to-s [v]
   (let [s (reduce (fn [m [k v]] (assoc m k v)) clojure.lang.PersistentHashMap/EMPTY v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l (make-cs))))
@@ -993,7 +993,7 @@
                 (cons (Pair. u lv) l)
                 cs)))))
 
-(defn ^LVar lvar
+(defn lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
        (LVar. name (.hashCode name) nil)))
@@ -1771,7 +1771,7 @@
   (take* [this]
     (lazy-seq (cons (first a) (lazy-seq (take* f))))))
 
-(defn ^Choice choice [a f]
+(defn choice [a f]
   (Choice. a f))
 
 ;; -----------------------------------------------------------------------------
@@ -2715,7 +2715,7 @@
   (ready? [this]
           (not= @cache ansv*)))
 
-(defn ^SuspendedStream make-ss [cache ansv* f]
+(defn make-ss [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
          (list? ansv*)
          (fn? f)]}
