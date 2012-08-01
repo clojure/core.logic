@@ -3118,10 +3118,10 @@
 ;; a simple way to add the goal to the store and return that goal
 ;; with its id assigned
 
-;; (defn addc* [^Substitutions a c]
-;;   (let [^ConstraintStore ncs (addc (.cs a) c)
-;;         c ((.cm ncs) (dec (.cid ncs)))
-;;         a (make-s (.s a) (.l a) ncs)]
+;; (defn addc* [a c]
+;;   (let [ncs (addc (:cs a) c)
+;;         c ((:cm ncs) (dec (:cid ncs)))
+;;         a (make-s (:s a) (:l a) ncs)]
 ;;     (pair c a)))
 
 ;; (defn cgoal [c]
@@ -3424,9 +3424,9 @@
   (cgoal (fdc (*fdc u v w))))
 
 ;; (defn update-procg [proc]
-;;   (fn [^Substitutions a]
-;;     (let [ncs (update-proc (.cs a) (id proc) proc)]
-;;       (make-s (.s a) (.l a) ncs))))
+;;   (fn [a]
+;;     (let [ncs (update-proc (:cs a) (id proc) proc)]
+;;       (make-s (:s a) (:l a) ncs))))
 
 (defn categorize [s]
   (fn [ys ds ss]
