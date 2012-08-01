@@ -2398,6 +2398,14 @@
   (fresh [a]
     (== (lcons a d) l)))
 
+(defn everyo
+  [g xs]
+  (if (seq xs)
+    (all
+     (g (first xs))
+     (everyo g (next xs)))
+    s#))
+
 ;; =============================================================================
 ;; Goal sugar syntax
 
@@ -3561,10 +3569,3 @@
   ([_ [y . ys] [y . zs]]
      (!= y x)
      (rembero x ys zs)))
-
-(defn everyo [g xs]
-  (if (seq xs)
-    (all
-     (g (first xs))
-     (everyo g (next xs)))
-    s#))
