@@ -201,8 +201,7 @@
 
 (defprotocol IInterval
   (lb [this])
-  (ub [this])
-  (bounds [this]))
+  (ub [this]))
 
 (defprotocol IIntervals
   (intervals [this]))
@@ -311,6 +310,9 @@
 
 (declare lvar? interval multi-interval)
 
+(defn bounds [i]
+  (pair (lb i) (ub i)))
+
 (defn interval-< [i j]
   (< (ub i) (lb j)))
 
@@ -332,7 +334,6 @@
   IInterval
   (lb [_] min)
   (ub [_] max)
-  (bounds [_] (pair min max))
   ISortedDomain
   (drop-one [_]
     (let [s (disj s min)
@@ -476,7 +477,6 @@
   IInterval
   (lb [_] _lb)
   (ub [_] _ub)
-  (bounds [_] (pair _lb _ub))
   ISortedDomain
   (drop-one [_]
     (let [nlb (inc _lb)]
@@ -734,7 +734,6 @@
   IInterval
   (lb [_] min)
   (ub [_] max)
-  (bounds [_] (pair min max))
   ISortedDomain
   (drop-one [_]
     (let [i (first is)]
