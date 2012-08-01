@@ -8,7 +8,6 @@
 (def ^{:dynamic true} *occurs-check* true)
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
-(def ^{:dynamic true} *expand-doms*)
 
 ;; =============================================================================
 ;; miniKanren Protocols
