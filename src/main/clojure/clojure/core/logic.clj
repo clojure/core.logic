@@ -894,7 +894,7 @@
   (equals [this o]
     (or (identical? this o)
         (and (.. this getClass (isInstance o))
-             (= s ^clojure.lang.PersistentHashMap (.s ^Substitutions o)))))
+             (= s (:s o)))))
   ;; TODO: prn doesn't work anymore on empty-s, why not?
   (toString [_] (str s))
 
@@ -967,6 +967,13 @@
 ;; Logic Variables
 
 (deftype LVar [name hash meta]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :name name
+      not-found))
   clojure.lang.IObj
   (meta [this]
     meta)
@@ -976,8 +983,7 @@
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
     (and (.. this getClass (isInstance o))
-         (let [^LVar o o]
-           (identical? name (.name o)))))
+         (identical? name (:name o))))
   (hashCode [_] hash)
   IUnifyTerms
   (unify-terms [u v s]
@@ -1044,7 +1050,7 @@
        (LVar. name (.hashCode name) cs))))
 
 (defmethod print-method LVar [x ^Writer writer]
-  (.write writer (str "<lvar:" (.name ^LVar x) ">")))
+  (.write writer (str "<lvar:" (:name x) ">")))
 
 (defn lvar? [x]
   (instance? LVar x))
@@ -1794,6 +1800,13 @@
 ;; TODO: Choice always holds a as a list, can we just remove that?
 
 (deftype Choice [a f]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :a a
+      not-found))
   IBind
   (bind [this g]
     (mplus (g a) (-inc (bind f g))))
@@ -2215,7 +2228,7 @@
   ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
-    (reduce bind (.a ^Choice b) gs)))
+    (reduce bind (:a b) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2761,6 +2774,14 @@
   (ready? [this]))
 
 (deftype SuspendedStream [cache ansv* f]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (case k
+      :cache cache
+      :f f
+      not-found))
   ISuspendedStream
   (ready? [this]
           (not= @cache ansv*)))
@@ -2786,8 +2807,8 @@
      (nil? w) (fk)
      (ready? (first w)) (sk
                          (fn []
-                           (let [^SuspendedStream ss (first w)
-                                 f (.f ss)
+                           (let [ss (first w)
+                                 f (:f ss)
                                  w (to-w (concat a (next w)))]
                              (if (empty? w)
                                (f)
@@ -2857,9 +2878,9 @@
         (w-check this
                  (fn [f] (bind f g))
                  (fn [] (to-w
-                         (map (fn [^SuspendedStream ss]
-                                (make-ss (.cache ss) (.ansv* ss)
-                                         (fn [] (bind ((.f ss)) g))))
+                         (map (fn [ss]
+                                (make-ss (:cache ss) (.ansv* ss)
+                                         (fn [] (bind ((:f ss)) g))))
                               this)))))
   IMPlus
   (mplus [this f]
