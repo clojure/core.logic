@@ -1719,7 +1719,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         ^clojure.core.logic.ConstraintStore csp (addc (make-cs) c)
-        sc (first (get csp u))]
+        sc (first (constraints-for csp u))]
     (is (= c sc))
     (is (= (id sc) 0))
     (is (= (count (.km csp)) 2))
@@ -1769,7 +1769,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (get (.cs s) u))
+        c (first (constraints-for (.cs s) u))
         s (-> s
               (ext-no-check u 1)
               (ext-no-check w 2))

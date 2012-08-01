@@ -107,7 +107,7 @@
   (checkc [this c s])
   (remc [this c])
   (runc [this c])
-  (constraints [this x])
+  (constraints-for [this x])
   ;;(update-proc [this id proc])
   )
 
@@ -775,8 +775,9 @@
       (ConstraintStore. nkm ncm cid running)))
   (runc [this c]
     (ConstraintStore. km cm cid (conj running (id c))))
-  (constraints [this x]
-    (map cm (get km x)))
+  (constraints-for [this x]
+    (when-let [ids (get km x)]
+      (map cm (remove running ids))))
   ;; (update-proc [this id proc]
   ;;   (if-let [c (get cm id)]
   ;;     (let [ncm (assoc cm id (with-proc c proc))]
@@ -792,15 +793,7 @@
       (throw (Error. (str "constraint store assoc expected logic var key: " k))))
     (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
           ncm (assoc cm cid v)]
-      (ConstraintStore. nkm ncm cid running)))
-  clojure.lang.ILookup
-  (valAt [this k]
-    (when-let [ids (get km k)]
-      (map cm (remove running ids))))
-  (valAt [this k not-found]
-    (if-let [v (.valAt this k)]
-      v
-      not-found)))
+      (ConstraintStore. nkm ncm cid running))))
 
 (defn make-cs []
   (ConstraintStore.
@@ -3007,7 +3000,7 @@
   (if (or (zero? (count cs))
           (nil? (seq xs)))
     s#
-    (let [xcs (get cs (first xs))]
+    (let [xcs (constraints-for cs (first xs))]
       (if (seq xcs)
         (composeg
          (run-constraints xcs)
