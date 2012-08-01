@@ -125,9 +125,9 @@
   IConstraintId
   (id [this] nil))
 
-(defprotocol IStorableConstraint
-  (with-proc [this proc])
-  (proc [this]))
+;; (defprotocol IStorableConstraint
+;;   (with-proc [this proc])
+;;   (proc [this]))
 
 (defprotocol IConstraintOp
   (rator [this])
@@ -3123,9 +3123,10 @@
   IConstraintId
   (id [this] _id)
   ;; TODO: not super happy about the naming here
-  IStorableConstraint
-  (with-proc [this proc] (FDConstraint. proc _id _meta))
-  (proc [this] proc))
+  ;; IStorableConstraint
+  ;; (with-proc [this proc] (FDConstraint. proc _id _meta))
+  ;; (proc [this] proc)
+  )
 
 (defn fdc [proc]
   (FDConstraint. proc nil nil))
@@ -3135,7 +3136,7 @@
         cid (if-let [cid (id x)]
              (str cid ":")
              "")]
-    (.write writer (str "(" cid (rator (proc x)) " " (apply str (interpose " " (rands (proc x)))) ")"))))
+    (.write writer (str "(" cid (rator (.proc x)) " " (apply str (interpose " " (rands (.proc x)))) ")"))))
 
 (defmacro infd [& xs-and-dom]
   (let [xs (butlast xs-and-dom)

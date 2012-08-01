@@ -2029,7 +2029,7 @@
         n* (sorted-set 1 3 5)
         c (with-id (fdc (-distinctfdc x #{y} (conj n* 7))) 1)]
     (is (= (id c) 1))
-    (is (= (id (proc c)) 1))))
+    (is (= (id (.proc c)) 1))))
 
 (deftest test-distinctfd
   (is (= (run* [q]
