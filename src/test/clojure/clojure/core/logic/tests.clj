@@ -1272,7 +1272,7 @@
   (is (= (run* [q] (== q #{1}))
          '(#{1}))))
 
-#_(deftest test-31-unifier-associative
+(deftest test-31-unifier-associative
   (is (= (binding [*reify-vars* false]
            (unifier '{:a ?x} '{:a ?y} '{:a 5}))
          {:a 5}))
@@ -1742,17 +1742,6 @@
     (is (= (id sc0) 0))
     (is (= (count (:km cs)) 3))
     (is (= (count (:cm cs)) 2))))
-
-;; FIXME: ext-cs no longer exists
-#_(deftest test-ext-cs
-  (let [u (lvar 'u)
-        v 1
-        w (lvar 'w)
-        c (fdc (+fdc u v w))
-        s empty-s
-        cs (ext-cs (:cs s) c s)]
-    (is (= (count (:km cs)) 2))
-    (is (= (count (:cm cs)) 1))))
 
 (deftest test-addcg
   (let [u (lvar 'u)

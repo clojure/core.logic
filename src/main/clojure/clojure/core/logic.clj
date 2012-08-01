@@ -1039,19 +1039,20 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name hash meta]
+(deftype LVar [name oname hash meta]
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
       :name name
+      :oname oname
       not-found))
   clojure.lang.IObj
   (meta [this]
     meta)
   (withMeta [this new-meta]
-    (LVar. name hash meta))
+    (LVar. name oname hash meta))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -1092,7 +1093,7 @@
   (reify-term [v s]
     (if *reify-vars*
       (ext s v (reify-lvar-name s))
-      (ext s v (:name meta))))
+      (ext s v (:oname v))))
   IWalkTerm
   (walk-term [v s] v)
   IOccursCheckTerm
@@ -1112,15 +1113,11 @@
 (defn lvar
   ([]
      (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
+       (LVar. name nil (.hashCode name) nil)))
   ([name]
      (let [oname name
            name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) nil)))
-  ([name cs]
-     (let [oname name
-           name (str name "_" (. clojure.lang.RT (nextID)))]
-       (LVar. name (.hashCode name) cs))))
+       (LVar. name oname (.hashCode name) nil))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (:name x) ">")))
