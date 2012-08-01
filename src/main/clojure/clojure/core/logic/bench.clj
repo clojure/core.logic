@@ -502,22 +502,42 @@
         cols (->cols rows)
         sqs  (->squares rows)]
     (run-nc 1 [q]
-      (== q rows)
+      (== q vars)
       (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
       (everyo distinctfd rows)
       (everyo distinctfd cols)
       (everyo distinctfd sqs))))
 
-(defn verify [rows]
-  (let [cols (->cols rows)
+;; Helpers
+
+(defn verify [vars]
+  (let [rows (->rows vars)
+        cols (->cols rows)
         sqs  (->squares rows)
         verify-group (fn [group]
-                       (every? #(= (count (into #{} %)) 9)
+                       (every? #(= (->> % (into #{}) count) 9)
                           group))]
     (and (verify-group rows)
          (verify-group cols)
          (verify-group sqs))))
+
+(defn print-solution [vars]
+  (doseq [row-group (->> vars
+                        (partition 9)
+                        (partition 3)
+                        (interpose "\n\n"))]
+    (if-not (string? row-group)
+      (doseq [row (interpose "\n" row-group)]
+        (if-not (string? row)
+          (doseq [x (->> row
+                         (partition 3)
+                         (map #(interpose " " %))
+                         (interpose "  "))]
+            (print (apply str x)))
+          (print row)))
+      (print row-group)))
+  (println) (println))
 
 (comment
   (def easy0
@@ -548,6 +568,8 @@
   
   (sudokufd easy0)
   (sudokufd easy1)
+
+  (-> (sudokufd easy0) first print-solution)
 
   (-> (sudokufd easy0) first verify)
 
@@ -630,6 +652,8 @@
      0 0 0  0 0 0  0 9 8])
 
   (time (sudokufd hard2))
+
+  (-> (sudokufd hard2) first print-solution)
 
   ;; ~570ms
   (dotimes [_ 5]
