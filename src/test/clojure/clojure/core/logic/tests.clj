@@ -434,7 +434,7 @@
         b (lvar 'b)
         c (lvar 'c)
         d (lvar 'd)
-        s (.s (unify empty-s #{a b 3 4 5} #{1 2 3 c d}))]
+        s (:s (unify empty-s #{a b 3 4 5} #{1 2 3 c d}))]
     (is (and (= (count s) 4)
              (= (set (keys s)) #{a b c d})
              (= (set (vals s)) #{1 2 4 5})))))
@@ -1750,9 +1750,9 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s empty-s
-        cs (ext-cs (.cs s) c s)]
-    (is (= (count (.km cs)) 2))
-    (is (= (count (.cm cs)) 1))))
+        cs (ext-cs (:cs s) c s)]
+    (is (= (count (:km cs)) 2))
+    (is (= (count (:cm cs)) 1))))
 
 (deftest test-addcg
   (let [u (lvar 'u)
@@ -1760,8 +1760,8 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)]
-    (is (= (count (.km (.cs s))) 2))
-    (is (= (count (.cm (.cs s))) 1))))
+    (is (= (count (:km (:cs s))) 2))
+    (is (= (count (:cm (:cs s))) 1))))
 
 (deftest test-purge-c
   (let [u (lvar 'u)
@@ -1769,13 +1769,13 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (constraints-for (.cs s) u))
+        c (first (constraints-for (:cs s) u))
         s (-> s
               (ext-no-check u 1)
               (ext-no-check w 2))
         s ((checkcg c) s)]
-    (is (zero? (count (.km (.cs s)))))
-    (is (zero? (count (.cm (.cs s)))))))
+    (is (zero? (count (:km (:cs s)))))
+    (is (zero? (count (:cm (:cs s)))))))
 
 (deftest test-=fd-1
   (let [x (lvar 'x)
@@ -1784,22 +1784,10 @@
               (unify x (interval 1 6))
               (unify y (interval 5 10)))
         s ((=fd x y) s)]
-    (is (= 2 (count (.km (.cs s)))))
-    (is (= 1 (count (.cm (.cs s)))))
+    (is (= 2 (count (:km (:cs s)))))
+    (is (= 1 (count (:cm (:cs s)))))
     (is (= (walk s x) (interval 5 6)))
     (is (= (walk s y) (interval 5 6)))))
-
-;; FIXME: test based on bad old behavior of !=fd
-#_(deftest test-!=fd-1
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s ((!=fd x y) empty-s)
-        s ((== x (interval 1 6)) s)
-        s ((== y (interval 5 10)) s)]
-    (is (= 0 (count (.km (.cs s)))))
-    (is (= 0 (count (.cm (.cs s)))))
-    (is (= (walk s x) (interval 1 4)))
-    (is (= (walk s y) (interval 7 10)))))
 
 (deftest test-multi-interval-1
   (let [mi (multi-interval (interval 1 3) (interval 7 10))]
@@ -1810,7 +1798,7 @@
   (is (= (run-constraints* [] []) s#)))
 
 (deftest test-drop-one-1
-  (is (= (.s (drop-one (domain 1 2 3)))
+  (is (= (:s (drop-one (domain 1 2 3)))
          #{2 3})))
 
 (deftest test-drop-one-2
@@ -2029,7 +2017,7 @@
         n* (sorted-set 1 3 5)
         c (with-id (fdc (-distinctfdc x #{y} (conj n* 7))) 1)]
     (is (= (id c) 1))
-    (is (= (id (.proc c)) 1))))
+    (is (= (id (:proc c)) 1))))
 
 (deftest test-distinctfd
   (is (= (run* [q]
@@ -2084,7 +2072,7 @@
         s (-> empty-s
               (ext-no-check x 1)
               (ext-no-check y 2))]
-    (is (= (recover-vars (.l s))
+    (is (= (recover-vars (:l s))
            #{x y}))))
 
 (deftest test-prefix-s []
@@ -2118,10 +2106,10 @@
         z (lvar 'z)
         c (fdc (+fdc x y z))
         cs (addc (make-cs) c)
-        cp (get (.cm cs) 0)
+        cp (get (:cm cs) 0)
         cs (remc cs cp)]
-    (is (= (.km cs) {}))
-    (is (= (.cm cs) {}))))
+    (is (= (:km cs) {}))
+    (is (= (:cm cs) {}))))
 
 (deftest test-treec-id-1 []
   (let [x (lvar 'x)
@@ -2134,8 +2122,8 @@
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
         cs (addc (make-cs) c)]
-    (is (tree-constraint? ((.cm cs) 0)))
-    (is (= (into #{} (keys (.km cs)))
+    (is (tree-constraint? ((:cm cs) 0)))
+    (is (= (into #{} (keys (:km cs)))
            #{x y}))))
 
 (deftest test-prefix-protocols []
@@ -2150,7 +2138,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)]
-    (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x y))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x y))))))
 
 (deftest test-!=-2 []
   (let [x (lvar 'x)
@@ -2165,8 +2153,8 @@
         s ((!= x y) empty-s)
         s ((== x 1) s)
         s ((== y 2) s)]
-    (is (empty? (.cm (.cs s))))
-    (is (empty? (.km (.cs s))))))
+    (is (empty? (:cm (:cs s))))
+    (is (empty? (:km (:cs s))))))
 
 (deftest test-!=-4 []
   (let [x (lvar 'x)
@@ -2174,8 +2162,8 @@
         s ((== x 1) empty-s)
         s ((== y 2) s)
         s ((!= x y) s)]
-    (is (empty? (.cm (.cs s))))
-    (is (empty? (.km (.cs s))))))
+    (is (empty? (:cm (:cs s))))
+    (is (empty? (:km (:cs s))))))
 
 (deftest test-!=-5 []
   (let [x (lvar 'x)
@@ -2183,14 +2171,14 @@
         s ((== x 1) empty-s)
         s ((!= x y) s)
         s ((== y 2) s)]
-    (is (empty? (.cm (.cs s))))
-    (is (empty? (.km (.cs s))))))
+    (is (empty? (:cm (:cs s))))
+    (is (empty? (:km (:cs s))))))
 
 (deftest test-!=-6 []
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x 1) empty-s)]
-    (is (= (prefix ((.cm (.cs s)) 0)) (list (pair x 1))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x 1))))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)
