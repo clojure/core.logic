@@ -1834,6 +1834,10 @@
            (updateg lhs rhs)
            (loop (rest lp)))))) (.l ap))))
 
+;; NOTE: this seems costly if the user introduces a constraint
+;; update-prefix should be called only if we have a constraint
+;; in the store that needs this
+
 (defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
