@@ -421,7 +421,10 @@
 ;; =============================================================================
 ;; Sudoku
 
-(defn sudokufd []
+;; -----------------------------------------------------------------------------
+;; small
+
+(defn small-sudokufd []
   (run-nc 1 [q]
     (fresh [a1 a2 a3 a4
             b1 b2 b3 b4
@@ -459,50 +462,85 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
-       (sudokufd))))
+       (small-sudokufd))))
 
-  (sudokufd)
+  (small-sudokufd)
   )
 
-(defn get-square [grid x y]
+;; -----------------------------------------------------------------------------
+;; 9x9
+
+(defn get-square [rows x y]
   (for [x (range x (+ x 3))
         y (range y (+ y 3))]
-    (get-in grid [x y])))
+    (get-in rows [x y])))
 
-(defn init [grid [pos value]]
-  (== (get-in grid pos) value))
+(defn init [vars hints]
+  (if (seq vars)
+    (let [hint (first hints)]
+      (all
+       (if-not (zero? hint)
+         (== (first vars) hint)
+         succeed)
+       (init (next vars) (next hints))))
+    succeed))
 
-(defn big-sudokufd [initial]
-  (let [vs   (repeatedly 81 lvar) 
-        grid (->> vs (partition 9) (map vec) (into []))
-        rows grid
-        cols (apply map vector grid)
+(defn sudokufd [hints]
+  (let [vars (repeatedly 81 lvar) 
+        rows (->> vars (partition 9) (map vec) (into []))
+        cols (apply map vector rows)
         sqs  (for [x (range 0 9 3)
                    y (range 0 9 3)]
-               (get-square grid x y))]
+               (get-square rows x y))]
     (run-nc 1 [q]
-      (== q grid)
-      (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vs)
-      (everyo (partial init grid) initial)
+      (== q rows)
+      (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
+      (init vars hints)
       (everyo distinctfd rows)
       (everyo distinctfd cols)
       (everyo distinctfd sqs))))
 
 (comment
-  (big-sudokufd
-   [[[0 4] 2] [[0 6] 9] [[1 4] 6] [[1 5] 3]
-    [[1 8] 8] [[2 0] 3] [[2 5] 8] [[2 6] 1] 
-    [[2 7] 4] [[3 4] 4] [[3 6] 8] [[3 8] 7] 
-    [[4 1] 8] [[4 2] 4] [[4 5] 6] [[4 6] 3]])
+  (def easy0
+    [0 0 3  0 2 0  6 0 0
+     9 0 0  3 0 5  0 0 1
+     0 0 1  8 0 6  4 0 0
 
-  ;; ~950ms
-  ;; ~95ms to solve
-  (let [initial [[[0 4] 2] [[0 6] 9] [[1 4] 6] [[1 5] 3]
-                 [[1 8] 8] [[2 0] 3] [[2 5] 8] [[2 6] 1] 
-                 [[2 7] 4] [[3 4] 4] [[3 6] 8] [[3 8] 7] 
-                 [[4 1] 8] [[4 2] 4] [[4 5] 6] [[4 6] 3]]]
-   (dotimes [_ 5]
-     (time
-      (dotimes [_ 10]
-        (big-sudokufd initial)))))
+     0 0 8  1 0 2  9 0 0
+     7 0 0  0 0 0  0 0 8
+     0 0 6  7 0 8  2 0 0
+
+     0 0 2  6 0 9  5 0 0
+     8 0 0  2 0 3  0 0 9
+     0 0 5  0 1 0  3 0 0])
+  
+  (sudokufd easy0)
+
+  ;; ~600ms
+  ;; 6ms solve easy
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 100]
+       (sudokufd easy0))))
+
+  (def hard0
+    [0 0 0  0 0 6  0 0 0
+     0 5 9  0 0 0  0 0 8
+     2 0 0  0 0 8  0 0 0
+
+     0 4 5  0 0 0  0 0 0
+     0 0 3  0 0 0  0 0 0
+     0 0 6  0 0 3  0 5 4
+
+     0 0 0  3 2 5  0 0 6
+     0 0 0  0 0 0  0 0 0
+     0 0 0  0 0 0  0 0 0])
+
+  (time (sudokufd hard0))
+
+  ;; ~600ms
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 10]
+       (sudokufd hard0))))
   )
