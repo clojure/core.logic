@@ -170,27 +170,23 @@
 (defprotocol IIntervals
   (intervals [this]))
 
+(defprotocol IFiniteDomain
+  (domain? [this]))
+
+(extend-type Object
+  IFiniteDomain
+  (domain? [x] false))
+
 (defprotocol ISortedDomain
   (drop-one [this])
   (drop-before [this n])
   (keep-before [this n]))
 
-(defprotocol IFiniteDomain
-  (domain? [this])
+(defprotocol ISet
   (member? [this that])
   (disjoint? [this that])
-  (intersects? [this that])
-  (subsumes? [this that]))
-
-(defprotocol IIntersection
-  (intersection [this that]))
-
-(defprotocol IDifference
+  (intersection [this that])
   (difference [this that]))
-
-(extend-type Object
-  IFiniteDomain
-  (domain? [x] false))
 
 (defprotocol IForceAnswerTerm
   (-force-ans [v x]))
@@ -273,6 +269,7 @@
   (refine [this other] (intersection this other))
   IFiniteDomain
   (domain? [_] true)
+  ISet
   (member? [this that]
     (cond
      (integer? that)
@@ -292,7 +289,6 @@
           (> min (.max that)) true
           :else (empty? (set/intersection this (.s that)))))
      :else (disjoint?* this that)))
-  IIntersection
   (intersection [this that]
     (cond
      (integer? that)
@@ -302,7 +298,6 @@
          (sorted-set->domain (set/intersection s (.s that))))
      :else
        (intersection* this that)))
-  IDifference
   (difference [this that]
     (cond
      (integer? that)
@@ -349,6 +344,7 @@
          this#))
      IFiniteDomain
      (~'domain? [this#] true)
+     ISet
      (~'member? [this# that#]
        (if (integer? that#)
          (= this# that#)
@@ -357,14 +353,12 @@
        (if (integer? that#)
          (not= this# that#)
          (disjoint? that# this#)))
-     IIntersection
      (~'intersection [this# that#]
        (cond
         (integer? that#) (when (= this# that#)
                            this#)
         (interval? that#) (intersection that# this#)
         :else (intersection* this# that#)))
-     IDifference
      (~'difference [this# that#]
        (cond
         (integer? that#) (if (= this# that#)
@@ -421,6 +415,7 @@
      :else (interval _lb (dec n))))
   IFiniteDomain
   (domain? [_] true)
+  ISet
   (member? [this that]
     (cond
      (integer? that)
@@ -449,7 +444,6 @@
            (< imax jmin)))
 
      :else (disjoint?* this that)))
-  IIntersection
   (intersection [this that]
     (cond
      (integer? that)
@@ -475,7 +469,6 @@
         :else (throw (Error. (str "Interval intersection not defined " i " " j)))))
 
      :else (intersection* this that)))
-  IDifference
   (difference [this that]
     (cond
      (integer? that)
@@ -680,14 +673,13 @@
             (apply multi-interval r))))))
   IFiniteDomain
   (domain? [_] true)
+  ISet
   (member? [this that]
     (member?* this that))
   (disjoint? [this that]
     (disjoint?* this that))
-  IIntersection
   (intersection [this that]
     (intersection* this that))
-  IDifference
   (difference [this that]
     (difference* this that))
   IIntervals
@@ -788,7 +780,7 @@
   clojure.lang.Counted
   (count [this]
     (count cm))
-  ;; TODO: do no expose a map interface
+  ;; TODO: do not expose a map interface
   clojure.lang.Associative
   (assoc [this k v]
     (when-not (lvar? k)
