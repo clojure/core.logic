@@ -735,13 +735,14 @@
                     (flatten vs)))]
     (pair @purge vs)))
 
+(declare add-var)
 
 (deftype ConstraintStore [km cm cid running]
   IConstraintStore
   (addc [this c]
     (let [vars (var-rands c)
           c (with-id c cid)
-          ^ConstraintStore cs (reduce (fn [cs v] (assoc cs v c)) this vars)]
+          ^ConstraintStore cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
       (ConstraintStore. (.km cs) (.cm cs) (inc cid) running)))
   (updatec [this c]
     (ConstraintStore. km (assoc cm (id c) c) cid running))
@@ -785,15 +786,17 @@
   ;;     this))
   clojure.lang.Counted
   (count [this]
-    (count cm))
-  ;; TODO: do not expose a map interface
-  clojure.lang.Associative
-  (assoc [this k v]
-    (when-not (lvar? k)
-      (throw (Error. (str "constraint store assoc expected logic var key: " k))))
-    (let [nkm (update-in km [k] (fnil (fn [s] (conj s cid)) #{}))
-          ncm (assoc cm cid v)]
-      (ConstraintStore. nkm ncm cid running))))
+    (count cm)))
+
+(defn add-var [^ConstraintStore cs x c]
+  (when-not (lvar? x)
+    (throw (Error. (str "constraint store assoc expected logic var key: " x))))
+  (let [cm (.cm cs)
+        km (.km cs)
+        cid (.cid cs)
+        nkm (update-in km [x] (fnil (fn [s] (conj s cid)) #{}))
+        ncm (assoc cm cid c)]
+    (ConstraintStore. nkm ncm cid (.running cs))))
 
 (defn make-cs []
   (ConstraintStore.
