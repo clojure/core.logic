@@ -532,8 +532,22 @@
      0 0 2  6 0 9  5 0 0
      8 0 0  2 0 3  0 0 9
      0 0 5  0 1 0  3 0 0])
+
+  (def easy1
+    [2 0 0  0 8 0  3 0 0
+     0 6 0  0 7 0  0 8 4
+     0 3 0  5 0 0  2 0 9
+
+     0 0 0  1 0 5  4 0 8
+     0 0 0  0 0 0  0 0 0
+     4 0 2  7 0 6  0 0 0
+
+     3 0 1  0 0 7  0 4 0
+     7 2 0  0 4 0  0 6 0
+     0 0 4  0 1 0  0 0 3])
   
   (sudokufd easy0)
+  (sudokufd easy1)
 
   (-> (sudokufd easy0) first verify)
 
@@ -543,6 +557,13 @@
     (time
      (dotimes [_ 100]
        (sudokufd easy0))))
+
+  ;; ~700ms
+  ;; 7ms for 1
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 100]
+       (sudokufd easy1))))
 
   ;; Hardest Norvig Random
   (def hard0
