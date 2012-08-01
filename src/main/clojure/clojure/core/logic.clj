@@ -11,10 +11,10 @@
 (def ^{:dynamic true} *expand-doms*)
 
 ;; =============================================================================
-;; Core Protocols
+;; miniKanren Protocols
 
 ;; -----------------------------------------------------------------------------
-;; miniKanren Protocols
+;; Unification protocols for core Clojure types
 
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
@@ -40,6 +40,26 @@
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
+;; -----------------------------------------------------------------------------
+;; Utility protocols
+
+(defprotocol LConsSeq
+  (lfirst [this])
+  (lnext [this]))
+
+(defprotocol LConsPrint
+  (toShortString [this]))
+
+;; -----------------------------------------------------------------------------
+;; Substitution
+
+(defprotocol ISubstitutions
+  (ext-no-check [this x v])
+  (walk [this x] [this x wrap?]))
+
+;; -----------------------------------------------------------------------------
+;; Protocols for terms
+
 (defprotocol IReifyTerm
   (reify-term [v s]))
 
@@ -52,6 +72,9 @@
 (defprotocol IBuildTerm
   (build-term [u s]))
 
+;; -----------------------------------------------------------------------------
+;; Goal protocols
+
 (defprotocol IBind
   (bind [this g]))
 
@@ -61,30 +84,57 @@
 (defprotocol ITake
   (take* [a]))
 
-(defprotocol ISubstitutions
-  (ext-no-check [this x v])
-  (walk [this x] [this x wrap?]))
+;; -----------------------------------------------------------------------------
+;; soft cut & committed choice protocols
+
+(defprotocol IIfA
+  (ifa [b gs c]))
+
+(defprotocol IIfU
+  (ifu [b gs c]))
+
+;; =============================================================================
+;; Rel protocols
+
+(defprotocol IRel
+  (setfn [this arity f])
+  (indexes-for [this arity])
+  (add-indexes [this arity index]))
+
+;; =============================================================================
+;; Tabling protocols
+
+(defprotocol ITabled
+  (-reify-tabled [this v])
+  (reify-tabled [this v])
+  (alpha-equiv? [this x y])
+  (reuse [this argv cache start end])
+  (subunify [this arg ans]))
+
+(defprotocol ISuspendedStream
+  (ready? [this]))
+
+;; =============================================================================
+;; cKanren protocols
 
 (defprotocol ISubstitutionsCLP
   (update [this x v]))
 
 ;; -----------------------------------------------------------------------------
-;; cKanren protocols
+;; Constraint Store
 
-(defprotocol IUnifyWithRefinable
-  (unify-with-refinable [v u s]))
+(defprotocol IConstraintStore
+  (addc [this c])
+  (updatec [this c])
+  (checkc [this c s])
+  (remc [this c])
+  (runc [this c])
+  (constraints-for [this x])
+  ;;(update-proc [this id proc])
+  )
 
-(defprotocol IUnifyWithInteger
-  (unify-with-integer [v u s]))
-
-(defprotocol IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]))
-
-(defprotocol IUnifyWithIntervalFD
-  (unify-with-interval [v u s]))
-
-(defprotocol IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]))
+;; -----------------------------------------------------------------------------
+;; Generic constraint protocols
 
 (defprotocol IRunnable
   (runnable? [c s]))
@@ -98,16 +148,6 @@
 (extend-type Object
   IRefinable
   (refinable? [_] false))
-
-(defprotocol IConstraintStore
-  (addc [this c])
-  (updatec [this c])
-  (checkc [this c s])
-  (remc [this c])
-  (runc [this c])
-  (constraints-for [this x])
-  ;;(update-proc [this id proc])
-  )
 
 (defprotocol IWithConstraintId
   (with-id [this id]))
@@ -156,6 +196,9 @@
 ;;   INeedsStore
 ;;   (needs-store? [_] false))
 
+;; -----------------------------------------------------------------------------
+;; Finite domain protocol types
+
 (defprotocol IInterval
   (lb [this])
   (ub [this])
@@ -181,6 +224,43 @@
   (disjoint? [this that])
   (intersection [this that])
   (difference [this that]))
+
+;; -----------------------------------------------------------------------------
+;; Unification for finite domains
+
+(defprotocol IUnifyWithRefinable
+  (unify-with-refinable [v u s]))
+
+(defprotocol IUnifyWithInteger
+  (unify-with-integer [v u s]))
+
+(defprotocol IUnifyWithFiniteDomain
+  (unify-with-domain [v u s]))
+
+(defprotocol IUnifyWithIntervalFD
+  (unify-with-interval [v u s]))
+
+(defprotocol IUnifyWithMultiIntervalFD
+  (unify-with-multi-interval [v u s]))
+
+;; -----------------------------------------------------------------------------
+;; Tree Constraints
+
+(defprotocol ITreeConstraint
+  (tree-constraint? [this]))
+
+(extend-type Object
+  ITreeConstraint
+  (tree-constraint? [this] false))
+
+(defprotocol IPrefix
+  (prefix [this]))
+
+(defprotocol IWithPrefix
+  (with-prefix [this p]))
+
+;; -----------------------------------------------------------------------------
+;; force-ans support
 
 (defprotocol IForceAnswerTerm
   (-force-ans [v x]))
@@ -1063,14 +1143,7 @@
     `(unchecked-add-int ~@args)
     `(unchecked-add ~@args)))
 
-(defprotocol LConsSeq
-  (lfirst [this])
-  (lnext [this]))
-
 ;; TODO: clean up the printing code
-
-(defprotocol LConsPrint
-  (toShortString [this]))
 
 (declare lcons?)
 
@@ -2154,12 +2227,6 @@
 
 ;; TODO : conda and condu should probably understanding logging
 
-(defprotocol IIfA
-  (ifa [b gs c]))
-
-(defprotocol IIfU
-  (ifu [b gs c]))
-
 ;; TODO : if -> when
 
 (defmacro ifa*
@@ -2593,11 +2660,6 @@
 
 (def-apply-to-helper 20)
 
-(defprotocol IRel
-  (setfn [this arity f])
-  (indexes-for [this arity])
-  (add-indexes [this arity index]))
-
 ;; TODO: consider moving the set/indexes inside Rel, perf implications?
 
 (defmacro RelHelper [arity]
@@ -2763,9 +2825,6 @@
 ;; Data Structures
 ;; (atom []) is cache, waiting streams are PersistentVectors
 
-(defprotocol ISuspendedStream
-  (ready? [this]))
-
 (deftype SuspendedStream [cache ansv* f]
   clojure.lang.ILookup
   (valAt [this k]
@@ -2810,13 +2869,6 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Extend Substitutions to support tabling
-
-(defprotocol ITabled
-  (-reify-tabled [this v])
-  (reify-tabled [this v])
-  (alpha-equiv? [this x y])
-  (reuse [this argv cache start end])
-  (subunify [this arg ans]))
 
 ;; CONSIDER: subunify, reify-term-tabled, extending all the necessary types to
 ;; them
@@ -3519,19 +3571,6 @@
 
 ;; =============================================================================
 ;; CLP(Tree)
-
-(defprotocol ITreeConstraint
-  (tree-constraint? [this]))
-
-(extend-type Object
-  ITreeConstraint
-  (tree-constraint? [this] false))
-
-(defprotocol IPrefix
-  (prefix [this]))
-
-(defprotocol IWithPrefix
-  (with-prefix [this p]))
 
 (defn prefix-s [s <s]
   (letfn [(prefix* [s <s]
