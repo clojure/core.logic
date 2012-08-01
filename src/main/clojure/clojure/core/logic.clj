@@ -188,10 +188,6 @@
 ;; =============================================================================
 ;; Pair
 
-(defprotocol IPair
-  (lhs [this])
-  (rhs [this]))
-
 (deftype Pair [lhs rhs]
   clojure.lang.ILookup
   (valAt [this k]
@@ -212,9 +208,6 @@
                              0 lhs
                              1 rhs
                              not-found))
-  IPair
-  (lhs [_] lhs)
-  (rhs [_] rhs)
   java.util.Map$Entry
   (getKey [_] lhs)
   (getValue [_] rhs)
