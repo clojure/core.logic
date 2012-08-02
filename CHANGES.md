@@ -1,3 +1,10 @@
+From 0.7.5 to 0.8-alpha1
+====
+
+Enhancements
+----
+* cKanren extensions implemented
+
 From 0.7.4 to 0.7.5
 ====
 
