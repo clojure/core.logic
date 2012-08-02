@@ -18,3 +18,10 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 
 * <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
 * <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
+
+License
+----
+
+Copyright © 2010-2012 David Nolen, Rich Hickey & contributors.
+
+Licensed under the EPL (see the file epl.html).
