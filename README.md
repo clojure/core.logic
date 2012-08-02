@@ -1,7 +1,7 @@
 core.logic
 ====
 
-A Logic Programming library for Clojure & ClojureScript. core.logic offers Prolog-like relational programming and constraint logic programming for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156) as well as the extensions described in [cKanren](http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf)).
+A Logic Programming library for Clojure & ClojureScript. core.logic offers Prolog-like relational programming and constraint logic programming for Clojure. At its heart is an original implementation of miniKanren as described in William Byrd's dissertation [Relational Programming in miniKanren: Techniques, Applications, and Implementations](http://pqdtopen.proquest.com/#abstract?dispub=3380156) as well as the extensions described in [cKanren](http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf).
 
 If you wish to work through [The Reasoned Schemer](http://mitpress.mit.edu/0262562146) with core.logic make sure to look over [this](http://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
 
