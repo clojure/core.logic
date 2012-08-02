@@ -2503,14 +2503,14 @@
   (fresh [a]
     (== (lcons a d) l)))
 
-(defn everyo
+(defn everyg
   "A pseudo-relation that takes a coll and ensures that the goal g
    succeeds on every element of the collection."
   [g coll]
   (if (seq coll)
     (all
      (g (first coll))
-     (everyo g (next coll)))
+     (everyg g (next coll)))
     s#))
 
 ;; =============================================================================
@@ -3680,15 +3680,16 @@
           ((cgoal (!=c p)) a)))
       a)))
 
-(defn all-diffo [l]
-  (conde
-    [(== l ())]
-    [(fresh (a) (== l [a]))]
-    [(fresh (a ad dd)
-      (== l (llist a ad dd))
-      (!=c a ad)
-      (all-diffo (llist a dd))
-      (all-diffo (llist ad dd)))]))
+(defne distincto
+  "A relation which guarantees no element of l will unify
+   with another element of l."
+  [l]
+  ([()])
+  ([[a]])
+  ([[a b . r]]
+     (!= a b)
+     (distincto (lcons a r))
+     (distincto (lcons b r))))
 
 (defne rembero
   "A relation between l and o where is removed from

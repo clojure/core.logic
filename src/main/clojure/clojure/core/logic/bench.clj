@@ -451,7 +451,7 @@
             sq2 [a3 a4 b3 b4]
             sq3 [c1 c2 d1 d2]
             sq4 [c3 c4 d3 d4]]
-        (everyo distinctfd
+        (everyg distinctfd
            [row1 row2 row3 row4
             col1 col2 col3 col4
             sq1 sq2 sq3 sq4])))))
@@ -503,11 +503,11 @@
         sqs  (->squares rows)]
     (run-nc 1 [q]
       (== q vars)
-      (everyo #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
+      (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
-      (everyo distinctfd rows)
-      (everyo distinctfd cols)
-      (everyo distinctfd sqs))))
+      (everyg distinctfd rows)
+      (everyg distinctfd cols)
+      (everyg distinctfd sqs))))
 
 ;; Helpers
 
