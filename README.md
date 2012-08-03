@@ -5,7 +5,7 @@ A Logic Programming library for Clojure & ClojureScript. core.logic offers Prolo
 
 If you wish to work through [The Reasoned Schemer](http://mitpress.mit.edu/0262562146) with core.logic make sure to look over [this](http://github.com/clojure/core.logic/wiki/Differences-from-The-Reasoned-Schemer) first.
 
-If you're interested in using core.logic from ClojureScript look [here](http://github.com/clojure/core.logic/wiki/Using-core.logic-with-ClojureScript).
+If you're interested in using core.logic from [ClojureScript](http://github.com/clojure/clojurescript/) look [here](http://github.com/clojure/core.logic/wiki/Using-core.logic-with-ClojureScript).
 
 For more information & documentation please consult the [wiki](http://github.com/clojure/core.logic/wiki).
 
