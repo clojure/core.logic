@@ -1,3 +1,14 @@
+From 0.8-alpha1 to 0.8-alpha2
+====
+
+Changes
+----
+* everyo was a pseudo goal, rename to everyg
+
+Enhancements
+----
+* add distincto relation, similar to distinctfd but uses !=
+
 From 0.7.5 to 0.8-alpha1
 ====
 
