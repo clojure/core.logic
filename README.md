@@ -19,7 +19,49 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 * <a href="http://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and
 * <a href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>.
 
-License
+Releases and dependency information
+----
+
+Latest stable release: 0.7.5
+
+* [All released versions](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
+* [Development snapshot version](http://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
+
+[Leiningen](http://github.com/technomancy/leiningen/) dependency information:
+
+```
+[org.clojure/core.logic "0.7.5"]
+```
+
+[Maven](http://maven.apache.org) dependency information:
+
+```
+<dependency>
+  <groupId>org.clojure</groupId>
+  <artifactId>core.logic</artifactId>
+  <version>0.7.5</version>
+</dependency>
+```
+
+Example usage
+----
+
+```clojure
+(use 'clojure.core.logic)
+
+(run* [q]
+  (== q true))  
+;;=> (true)
+```
+
+Developer information
+----
+
+* [Bug Tracker](http://dev.clojure.org/jira/browse/LOGIC)
+* [Continuous Integration](http://build.clojure.org/job/core.logic/)
+* [Compatibility Test Matrix](http://build.clojure.org/job/core.logic-test-matrix/)
+
+Copyright and license
 ----
 
 Copyright © 2010-2012 David Nolen, Rich Hickey & contributors.
