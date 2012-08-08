@@ -22,6 +22,8 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 Releases and dependency information
 ----
 
+Latest alpha: 0.8-alpha2
+
 Latest stable release: 0.7.5
 
 * [All released versions](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
