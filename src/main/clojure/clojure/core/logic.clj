@@ -3371,7 +3371,9 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
-        (let [[wmin wmax] (bounds dw)
+        (let [[wmin wmax] (if (domain? dw)
+                            (bounds dw)
+                            [(+ (lb du) (lb dv)) (+ (ub du) (ub dv))])
               [umin umax] (bounds du)
               [vmin vmax] (bounds dv)]
           ((composeg
@@ -3391,7 +3393,11 @@
         (not (singleton-dom? dw)) true
         :else (or (= du dw) (= dv dw)))))
     (relevant? [this x s]
-      (relevant? this s))))
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
+      (let-dom s [u du v dv]
+        (and (domain? du) (domain? dv))))))
 
 (defn +fd
   "A finite domain constraint for addition and subtraction.
@@ -3406,7 +3412,9 @@
      clojure.lang.IFn
      (invoke [this s]
        (let-dom s [u du v dv w dw]
-         (let [[wmin wmax] (bounds dw)
+         (let [[wmin wmax] (if (domain? dw)
+                             (bounds dw)
+                             [(* (lb du) (lb dv)) (* (ub du) (ub dv))])
                [umin umax] (bounds du)
                [vmin vmax] (bounds dv)
                ui (interval (safe-div vmax umin wmin)
@@ -3431,7 +3439,11 @@
           (not (singleton-dom? dw)) true
           :else (or (= du dw) (= dv dw)))))
      (relevant? [this x s]
-       (relevant? this s)))))
+       (relevant? this s))
+     IRunnable
+     (runnable? [this s]
+       (let-dom s [u du v dv]
+         (and (domain? du) (domain? dv)))))))
 
 (defn *fd
   "A finite domain constraint for multiplication and
@@ -3723,7 +3735,7 @@
 
 (defn ->fd [vars exprs]
   `(fresh [~@vars]
-     ~@exprs))
+     ~@(reverse exprs)))
 
 (defmacro eqfd [form]
   (let [vars (atom [])

@@ -267,11 +267,22 @@
 
 ;; =============================================================================
 ;; Cryptarithmetic Puzzle
+
+(defn cryptarithfd-1 []
+  (run* [q]
+    (fresh [vs s e n d m o r y]
+      (== q [[s e n d] [m o r e] [m o n e y]])
+      (infd s e n d m o r y (interval 0 9))
+      (distinctfd [s e n d m o r y])
+      (!=fd m 0) (!=fd s 0)
+      (eqfd
+        (= (+ (* 1000 s) (* 100 e) (* 10 n) d
+              (* 1000 m) (* 100 o) (* 10 r) e)
+           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
+
 ;; Bratko 3rd ed pg 343
 
-;; TODO: we want sugar for this
-
-#_(defn cryptarithfd []
+#_(defn cryptarithfd-2 []
   (run* [q]
     (fresh [d o n a l g e r b t]
       (== q [d o n a l g e r b t])
@@ -283,7 +294,17 @@
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
-  (cryptarithfd)
+  ;; works but is very slow, still much faster than original Prolog solution
+  (cryptarithfd-1)
+
+  ;; ah, we don't actually want the intermediate values to generate
+  ;; so many possibilities
+  (cryptarithfd-2)
+
+  ;; perhaps in the case where the domain is large? this needs a lot more
+  ;; thought
+
+  ;; we don't want "labeling" on generated vars?
   )
 
 ;; =============================================================================
