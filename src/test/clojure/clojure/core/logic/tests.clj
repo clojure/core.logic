@@ -1292,13 +1292,6 @@
                (== [x] [3])))))
 
 ;; =============================================================================
-;; nil & false to-stream
-
-(deftest nil-or-false-in-stream []
-  (is (= (take 1 (take* (to-stream [nil false (cons empty-s nil)])))
-         (cons empty-s nil))))
-
-;; =============================================================================
 ;; cKanren
 
 (deftest test-pair []

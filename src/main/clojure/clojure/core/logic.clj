@@ -2590,7 +2590,7 @@
 ;; Rel
 
 (defn to-stream [aseq]
-  (let [aseq (drop-while #(or (nil? %) (false? %)) aseq)]
+  (let [aseq (drop-while nil? aseq)]
     (when (seq aseq)
       (choice (first aseq)
               (fn [] (to-stream (next aseq)))))))
