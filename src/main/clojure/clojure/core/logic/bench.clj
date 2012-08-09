@@ -270,8 +270,8 @@
 
 (defn cryptarithfd-1 []
   (run* [q]
-    (fresh [vs s e n d m o r y]
-      (== q [[s e n d] [m o r e] [m o n e y]])
+    (fresh [s e n d m o r y]
+      (== q [s e n d m o r y])
       (infd s e n d m o r y (interval 0 9))
       (distinctfd [s e n d m o r y])
       (!=fd m 0) (!=fd s 0)
