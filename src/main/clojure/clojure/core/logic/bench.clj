@@ -294,6 +294,8 @@
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
+  ;; yep, 12917 force-ans calls, seems very excessive
+  
   ;; works but is very slow, still much faster than original Prolog solution
   (cryptarithfd-1)
 
