@@ -3676,3 +3676,56 @@
   ([_ [y . ys] [y . zs]]
      (!= y x)
      (rembero x ys zs)))
+
+;; -----------------------------------------------------------------------------
+;; FD Equation Sugar
+
+(def binops '#{+ * =})
+
+(def binops->fd
+  '{+ clojure.core.logic/+fd
+    * clojure.core.logic/*fd
+    = clojure.core.logic/==})
+
+(defn expand [form]
+  (if (seq? form)
+    (let [[op & args] form]
+     (if (and (binops op) (> (count args) 2))
+       (list op (expand (first args))
+             (expand (cons op (rest args))))
+       (cons op (map expand args))))
+    form))
+
+(defn eqfd*
+  ([form vars] (eqfd* form vars nil))
+  ([form vars out]
+     (if (seq? form)
+       (let [[op r1 r2] form
+             [outl outlv?] (if (seq? r1)
+                             (let [s (gensym)]
+                               (swap! vars conj s)
+                               [s true])
+                             [r1 false])
+             [outr outrv?] (if (seq? r2)
+                             (let [s (gensym)]
+                               (swap! vars conj s)
+                               [s true])
+                             [r2 false])
+             op (binops->fd op)]
+         (cons (if out
+                 (list op outr outl out)
+                 (list op outr outl))
+               (concat (when (seq? r1)
+                         (eqfd* r1 vars (when outlv? outl)))
+                       (when (seq? r2)
+                         (eqfd* r2 vars (when outrv? outr))))))
+       form)))
+
+(defn ->fd [vars exprs]
+  `(fresh [~@vars]
+     ~@exprs))
+
+(defmacro eqfd [form]
+  (let [vars (atom [])
+        exprs (eqfd* (expand form) vars)]
+    (->fd @vars exprs)))

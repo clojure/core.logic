@@ -272,23 +272,18 @@
 ;; TODO: we want sugar for this
 
 #_(defn cryptarithfd []
-  (run* [d o n a l d
-         g e r a l d
-         r o b e r t] :as q
-    (infd q (interval 0 9))
-    (distintfd q)
-    (eqfd
-     (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
-           (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
-        (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t)))))
+  (run* [q]
+    (fresh [d o n a l g e r b t]
+      (== q [d o n a l g e r b t])
+      (infd d o n a l g e r b t (interval 0 9))
+      (distinctfd q)
+      (eqfd
+        (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
+              (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
+           (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
-  ;; eqfd, codewalking convenience macro
-
-  (eqfd
-   (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
-         (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
-      (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t)))
+  (cryptarithfd)
   )
 
 ;; =============================================================================
