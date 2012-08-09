@@ -1,9 +1,7 @@
 core.logic projects
 
-* Unification
-** Make failed unification return nil not false
 * Sugar for FD equations, (eqfd (= (+ x y z) (+ a b c)))
-** Needs eqfd macro sugar
-** Needs domain inference
+** TODO Needs eqfd macro sugar
+** TODO Needs domain inference
 * Search tree tracing
-** cKanren-interp branch has a sketch
+** TODO cKanren-interp branch has a sketch
