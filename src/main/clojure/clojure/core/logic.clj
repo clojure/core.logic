@@ -1190,9 +1190,9 @@
   (unify-terms [u v s]
     (unify-with-lseq v u s))
   IUnifyWithNil
-  (unify-with-nil [v u s] false)
+  (unify-with-nil [v u s] nil)
   IUnifyWithObject
-  (unify-with-object [v u s] false)
+  (unify-with-object [v u s] nil)
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (loop [u u v v s s]
@@ -1203,15 +1203,15 @@
          (and (lcons? u) (lcons? v))
            (if-let [s (unify s (lfirst u) (lfirst v))]
              (recur (lnext u) (lnext v) s)
-             false)
+             nil)
          :else (unify s u v)))))
   IUnifyWithSequential
   (unify-with-seq [v u s]
     (unify-with-lseq u v s))
   IUnifyWithMap
-  (unify-with-map [v u s] false)
+  (unify-with-map [v u s] nil)
   IUnifyWithSet
-  (unify-with-set [v u s] false)
+  (unify-with-set [v u s] nil)
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
@@ -1331,18 +1331,18 @@
   (unify-with-nil [v u s] s)
 
   Object
-  (unify-with-nil [v u s] false))
+  (unify-with-nil [v u s] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Object with X
 
 (extend-protocol IUnifyWithObject
   nil
-  (unify-with-object [v u s] false)
+  (unify-with-object [v u s] nil)
 
   Object
   (unify-with-object [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   Refinable
   (unify-with-object [v u s]
@@ -1368,10 +1368,10 @@
 
 (extend-protocol IUnifyWithLSeq
   nil
-  (unify-with-lseq [v u s] false)
+  (unify-with-lseq [v u s] nil)
 
   Object
-  (unify-with-lseq [v u s] false)
+  (unify-with-lseq [v u s] nil)
 
   clojure.lang.Sequential
   (unify-with-lseq [v u s]
@@ -1380,21 +1380,21 @@
         (if (lcons? u)
           (if-let [s (unify s (lfirst u) (first v))]
             (recur (lnext u) (next v) s)
-            false)
+            nil)
           (unify s u v))
         (if (lvar? u)
           (unify s u '())
-          false)))))
+          nil)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Sequential with X
 
 (extend-protocol IUnifyWithSequential
   nil
-  (unify-with-seq [v u s] false)
+  (unify-with-seq [v u s] nil)
 
   Object
-  (unify-with-seq [v u s] false)
+  (unify-with-seq [v u s] nil)
 
   clojure.lang.Sequential
   (unify-with-seq [v u s]
@@ -1403,19 +1403,19 @@
         (if (seq v)
           (if-let [s (unify s (first u) (first v))]
             (recur (next u) (next v) s)
-            false)
-          false)
-        (if (seq v) false s)))))
+            nil)
+          nil)
+        (if (seq v) nil s)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
 (extend-protocol IUnifyWithMap
   nil
-  (unify-with-map [v u s] false)
+  (unify-with-map [v u s] nil)
 
   Object
-  (unify-with-map [v u s] false)
+  (unify-with-map [v u s] nil)
 
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
@@ -1425,12 +1425,12 @@
           (let [kf (first ks)
                 vf (get v kf ::not-found)]
             (if (= vf ::not-found)
-              false
+              nil
               (if-let [s (unify s (get u kf) vf)]
                 (recur (next ks) (dissoc u kf) (dissoc v kf) s)
-                false)))
+                nil)))
           (if (seq v)
-            false
+            nil
             s))))))
 
 ;; -----------------------------------------------------------------------------
@@ -1438,10 +1438,10 @@
 
 (extend-protocol IUnifyWithSet
   nil
-  (unify-with-set [v u s] false)
+  (unify-with-set [v u s] nil)
 
   Object
-  (unify-with-set [v u s] false)
+  (unify-with-set [v u s] nil)
 
   ;; TODO : improve speed, the following takes 890ms
   ;; 
@@ -1466,7 +1466,7 @@
               (if (contains? v uf)
                 (recur (disj u uf) (disj v uf) ulvars umissing)
                 (recur (disj u uf) v ulvars (conj umissing uf)))))
-          false)
+          nil)
         (if (seq v)
           (if (seq ulvars)
             (loop [v v vlvars [] vmissing []]
@@ -1477,7 +1477,7 @@
                     (recur (disj v vf) vlvars (conj vmissing vf))))
                 (unify s (concat ulvars umissing)
                        (concat vmissing vlvars))))
-            false)
+            nil)
           s)))))
 
 ;; -----------------------------------------------------------------------------
@@ -1486,14 +1486,14 @@
 (defn unify-with-refinable* [u v s]
   (if-let [r (refine (:v u) v)]
     (update s (:lvar u) r)
-    false))
+    nil))
 
 (extend-protocol IUnifyWithRefinable
   nil
-  (unify-with-refinable [v u s] false)
+  (unify-with-refinable [v u s] nil)
 
   Object
-  (unify-with-refinable [v u s] false)
+  (unify-with-refinable [v u s] nil)
 
   FiniteDomain
   (unify-with-refinable [v u s]
@@ -1512,8 +1512,8 @@
     (if-let [r (refine (:v u) (:v v))]
       (if-let [s (update s (:lvar u) r)]
         (ext-no-check s (:lvar v) (:lvar u))
-        false)
-      false)))
+        nil)
+      nil)))
 
 (defn extend-type-to-unify-with-refinable [t]
   `(extend-type ~t
@@ -1539,14 +1539,14 @@
 (defn unify-with-domain* [d u s]
   (if (refine d u)
     s
-    false))
+    nil))
 
 (extend-protocol IUnifyWithFiniteDomain
   nil
-  (unify-with-domain [v u s] false)
+  (unify-with-domain [v u s] nil)
 
   Object
-  (unify-with-domain [v u s] false)
+  (unify-with-domain [v u s] nil)
 
   Refinable
   (unify-with-domain [v u s]
@@ -1570,7 +1570,7 @@
      (~'unify-with-domain [~'v ~'u ~'s]
        (if (refine ~'u ~'v)
          ~'s
-         false))))
+         nil))))
 
 (defmacro extend-to-unify-with-domain [& ts]
   `(do
@@ -1589,10 +1589,10 @@
 
 (extend-protocol IUnifyWithIntervalFD
   nil
-  (unify-with-interval [v u s] false)
+  (unify-with-interval [v u s] nil)
 
   Object
-  (unify-with-interval [v u s] false)
+  (unify-with-interval [v u s] nil)
 
   Refinable
   (unify-with-interval [v u s]
@@ -1616,7 +1616,7 @@
      (~'unify-with-interval [~'v ~'u ~'s]
        (if (refine ~'u ~'v)
          ~'s
-         false))))
+         nil))))
 
 (defmacro extend-to-unify-with-interval [& ts]
   `(do
@@ -1635,10 +1635,10 @@
 
 (extend-protocol IUnifyWithMultiIntervalFD
   nil
-  (unify-with-multi-interval [v u s] false)
+  (unify-with-multi-interval [v u s] nil)
 
   Object
-  (unify-with-multi-interval [v u s] false)
+  (unify-with-multi-interval [v u s] nil)
 
   Refinable
   (unify-with-multi-interval [v u s]
@@ -1662,7 +1662,7 @@
      (~'unify-with-multi-interval [~'v ~'u ~'s]
        (if (refine ~'u ~'v)
          ~'s
-         false))))
+         nil))))
 
 (defmacro extend-to-unify-with-multi-interval [& ts]
   `(do
@@ -1681,34 +1681,34 @@
 
 (extend-protocol IUnifyWithInteger
   nil
-  (unify-with-integer [v u s] false)
+  (unify-with-integer [v u s] nil)
 
   Object
-  (unify-with-integer [v u s] false)
+  (unify-with-integer [v u s] nil)
 
   java.lang.Byte
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   java.lang.Short
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   java.lang.Integer
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   java.lang.Long
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   java.math.BigInteger
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   clojure.lang.BigInt
   (unify-with-integer [v u s]
-    (if (= u v) s false))
+    (if (= u v) s nil))
 
   FiniteDomain
   (unify-with-integer [v u s]

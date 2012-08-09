@@ -10,7 +10,7 @@
 ;; nil
 
 (deftest unify-nil-object-1
-  (is (= (unify empty-s nil 1) false)))
+  (is (= (unify empty-s nil 1) nil)))
 
 (deftest unify-nil-lvar-1
   (let [x (lvar 'x)
@@ -19,15 +19,15 @@
 
 (deftest unify-nil-lseq-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s nil (lcons 1 x)) false))))
+    (is (= (unify empty-s nil (lcons 1 x)) nil))))
 
 (deftest unify-nil-map-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s nil {}) false))))
+    (is (= (unify empty-s nil {}) nil))))
 
 (deftest unify-nil-set-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s nil #{}) false))))
+    (is (= (unify empty-s nil #{}) nil))))
 
 ;; -----------------------------------------------------------------------------
 ;; object
@@ -48,19 +48,19 @@
   (is (= (unify empty-s "foo" "foo") empty-s)))
 
 (deftest unify-object-object-5
-  (is (= (unify empty-s 1 2) false)))
+  (is (= (unify empty-s 1 2) nil)))
 
 (deftest unify-object-object-6
-  (is (= (unify empty-s 2 1) false)))
+  (is (= (unify empty-s 2 1) nil)))
 
 (deftest unify-object-object-7
-  (is (= (unify empty-s :foo :bar) false)))
+  (is (= (unify empty-s :foo :bar) nil)))
 
 (deftest unify-object-object-8
-  (is (= (unify empty-s 'foo 'bar) false)))
+  (is (= (unify empty-s 'foo 'bar) nil)))
 
 (deftest unify-object-object-9
-  (is (= (unify empty-s "foo" "bar") false)))
+  (is (= (unify empty-s "foo" "bar") nil)))
 
 (deftest unify-object-lvar-1
   (let [x (lvar 'x)
@@ -69,19 +69,19 @@
 
 (deftest unify-object-lcons-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s 1 (lcons 1 'x)) false))))
+    (is (= (unify empty-s 1 (lcons 1 'x)) nil))))
 
 (deftest unify-object-seq-1
-  (is (= (unify empty-s 1 '()) false)))
+  (is (= (unify empty-s 1 '()) nil)))
 
 (deftest unify-object-seq-2
-  (is (= (unify empty-s 1 '[]) false)))
+  (is (= (unify empty-s 1 '[]) nil)))
 
 (deftest unify-object-map-1
-  (is (= (unify empty-s 1 {}) false)))
+  (is (= (unify empty-s 1 {}) nil)))
 
 (deftest unify-object-set-1
-  (is (= (unify empty-s 1 #{}) false)))
+  (is (= (unify empty-s 1 #{}) nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; lvar
@@ -149,7 +149,7 @@
 
 (deftest unify-lcons-object-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s (lcons 1 x) 1) false))))
+    (is (= (unify empty-s (lcons 1 x) 1) nil))))
 
 (deftest unify-lcons-lvar-1
   (let [x (lvar 'x)
@@ -190,14 +190,14 @@
         y (lvar 'y)
         lc1 (lcons 1 (lcons 2 x))
         lc2 (lcons 1 (lcons 3 (lcons 4 y)))]
-    (is (= (unify empty-s lc1 lc2) false))))
+    (is (= (unify empty-s lc1 lc2) nil))))
 
 (deftest unify-lcons-lcons-5
   (let [x (lvar 'x)
         y (lvar 'y)
         lc2 (lcons 1 (lcons 2 x))
         lc1 (lcons 1 (lcons 3 (lcons 4 y)))]
-    (is (= (unify empty-s lc1 lc2) false))))
+    (is (= (unify empty-s lc1 lc2) nil))))
 
 (deftest unify-lcons-lcons-6
   (let [x (lvar 'x)
@@ -235,28 +235,28 @@
   (let [x (lvar 'x)
         lc1 (lcons 1 (lcons 3 x))
         l1 '(1 2 3 4)]
-    (is (= (unify empty-s lc1 l1) false))))
+    (is (= (unify empty-s lc1 l1) nil))))
 
 (deftest unify-lcons-seq-5
   (let [x (lvar 'x)
         lc1 (lcons 1 (lcons 2 x))
         l1 '(1 3 4 5)]
-    (is (= (unify empty-s lc1 l1) false))))
+    (is (= (unify empty-s lc1 l1) nil))))
 
 (deftest unify-lcons-map-1
-  (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) false)))
+  (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) nil)))
 
 (deftest unify-lcons-set-1
-  (is (= (unify empty-s (lcons 1 (lvar 'x)) #{}) false)))
+  (is (= (unify empty-s (lcons 1 (lvar 'x)) #{}) nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; seq
 
 (deftest unify-seq-object-1
-  (is (= (unify empty-s '() 1) false)))
+  (is (= (unify empty-s '() 1) nil)))
 
 (deftest unify-seq-object-2
-  (is (= (unify empty-s [] 1) false)))
+  (is (= (unify empty-s [] 1) nil)))
 
 (deftest unify-seq-lvar-1
   (let [x (lvar 'x)
@@ -285,28 +285,28 @@
     (is (= (unify empty-s `(1 ~x 3) `(1 2 3)) os))))
 
 (deftest unify-seq-seq-5
-  (is (= (unify empty-s [1 2] [1 2 3]) false)))
+  (is (= (unify empty-s [1 2] [1 2 3]) nil)))
 
 (deftest unify-seq-seq-6
-  (is (= (unify empty-s '(1 2) [1 2 3]) false)))
+  (is (= (unify empty-s '(1 2) [1 2 3]) nil)))
 
 (deftest unify-seq-seq-7
-  (is (= (unify empty-s [1 2 3] [3 2 1]) false)))
+  (is (= (unify empty-s [1 2 3] [3 2 1]) nil)))
 
 (deftest unify-seq-seq-8
   (is (= (unify empty-s '() '()) empty-s)))
 
 (deftest unify-seq-seq-9
-  (is (= (unify empty-s '() '(1)) false)))
+  (is (= (unify empty-s '() '(1)) nil)))
 
 (deftest unify-seq-seq-10
-  (is (= (unify empty-s '(1) '()) false)))
+  (is (= (unify empty-s '(1) '()) nil)))
 
 (deftest unify-seq-seq-11
   (is (= (unify empty-s [[1 2]] [[1 2]]) empty-s)))
 
 (deftest unify-seq-seq-12
-  (is (= (unify empty-s [[1 2]] [[2 1]]) false)))
+  (is (= (unify empty-s [[1 2]] [[2 1]]) nil)))
 
 (deftest unify-seq-seq-13
   (let [x (lvar 'x)
@@ -327,22 +327,22 @@
     (is (= (unify empty-s ['a x] [y 'b]) os))))
 
 (deftest unify-seq-map-1
-  (is (= (unify empty-s [] {}) false)))
+  (is (= (unify empty-s [] {}) nil)))
 
 (deftest unify-seq-map-2
-  (is (= (unify empty-s '() {}) false)))
+  (is (= (unify empty-s '() {}) nil)))
 
 (deftest unify-seq-set-1
-  (is (= (unify empty-s [] #{}) false)))
+  (is (= (unify empty-s [] #{}) nil)))
 
 (deftest unify-seq-set-2
-  (is (= (unify empty-s '() #{}) false)))
+  (is (= (unify empty-s '() #{}) nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; map
 
 (deftest unify-map-object-1
-  (is (= (unify empty-s {} 1) false)))
+  (is (= (unify empty-s {} 1) nil)))
 
 (deftest unify-map-lvar-1
   (let [x (lvar 'x)
@@ -351,10 +351,10 @@
 
 (deftest unify-map-lcons-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s {} (lcons 1 x)) false))))
+    (is (= (unify empty-s {} (lcons 1 x)) nil))))
 
 (deftest unify-map-seq-1
-  (is (= (unify empty-s {} '()) false)))
+  (is (= (unify empty-s {} '()) nil)))
 
 (deftest unify-map-map-1
   (is (= (unify empty-s {} {}) empty-s)))
@@ -363,7 +363,7 @@
   (is (= (unify empty-s {1 2 3 4} {1 2 3 4}) empty-s)))
 
 (deftest unify-map-map-3
-  (is (= (unify empty-s {1 2} {1 2 3 4}) false)))
+  (is (= (unify empty-s {1 2} {1 2 3 4}) nil)))
 
 (deftest unify-map-map-4
   (let [x (lvar 'x)
@@ -376,16 +376,16 @@
   (let [x (lvar 'x)
         m1 {1 2 3 4}
         m2 {1 4 3 x}]
-    (is (= (unify empty-s m1 m2) false))))
+    (is (= (unify empty-s m1 m2) nil))))
 
 (deftest unify-map-set-1
-  (is (= (unify empty-s {} #{}) false)))
+  (is (= (unify empty-s {} #{}) nil)))
 
 ;; -----------------------------------------------------------------------------
 ;; set
 
 (deftest unify-set-object-1
-  (is (= (unify empty-s #{} 1) false)))
+  (is (= (unify empty-s #{} 1) nil)))
 
 (deftest unify-set-lvar-1
   (let [x (lvar 'x)
@@ -394,19 +394,19 @@
 
 (deftest unify-set-lcons-1
   (let [x (lvar 'x)]
-    (is (= (unify empty-s #{} (lcons 1 x)) false))))
+    (is (= (unify empty-s #{} (lcons 1 x)) nil))))
 
 (deftest unify-set-seq-1
-  (is (= (unify empty-s #{} '()) false)))
+  (is (= (unify empty-s #{} '()) nil)))
 
 (deftest unify-set-map-1
-  (is (= (unify empty-s #{} {}) false)))
+  (is (= (unify empty-s #{} {}) nil)))
 
 (deftest unify-set-set-1
   (is (= (unify empty-s #{} #{}) empty-s)))
 
 (deftest unify-set-set-2
-  (is (= (unify empty-s #{} #{1}) false)))
+  (is (= (unify empty-s #{} #{1}) nil)))
 
 (deftest unify-set-set-3
   (let [x (lvar 'x)
@@ -444,7 +444,7 @@
         b (lvar 'b)
         c (lvar 'c)
         d (lvar 'd)]
-    (is (= (unify empty-s #{a b 9 4 5} #{1 2 3 c d}) false))))
+    (is (= (unify empty-s #{a b 9 4 5} #{1 2 3 c d}) nil))))
 
 ;; =============================================================================
 ;; walk
