@@ -1,5 +1,12 @@
 core.logic projects
 
+* Deeper support for more sophisticated fd equations
+** What we currently have are building blocks
+** There is no relationship between constratints
+** Hunch
+*** look for constraints that go together
+*** constraints that work together should run even if we don't have singleton domains
+*** need to look much closer at exactly how this works in Mozart/Oz
 * Sugar for FD equations, (eqfd (= (+ x y z) (+ a b c)))
 ** TODO Needs eqfd macro sugar
 ** TODO Needs domain inference

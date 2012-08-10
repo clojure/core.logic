@@ -389,6 +389,26 @@
   )
 
 ;; =============================================================================
+;; Simple
+
+(defn simplefd []
+  (run* [q]
+    (fresh [x y]
+      (== q [x y])
+      (infd x y (interval 0 9))
+      (+fd x y 9)
+      (fresh [p0 p1]
+        (*fd 2 x p0)
+        (*fd 4 y p1)
+        (+fd p0 p1 24)))))
+
+(comment
+  ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
+  ;; currently none of the constraints above trigger any refinements!
+  (simplefd)
+  )
+
+;; =============================================================================
 ;; Stone Problem
 
 (defne subchecko [w sl r o n]
