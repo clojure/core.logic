@@ -108,6 +108,39 @@
   )
 
 ;; =============================================================================
+;; cliques
+
+(defrel connected ^:index x ^:index y)
+(facts connected [[1 2] [1 5]])
+(facts connected [[2 1] [2 3] [2 5]])
+(facts connected [[3 2] [3 4]])
+(facts connected [[4 3] [4 5] [4 6]])
+(facts connected [[5 1] [5 2] [5 4]])
+(facts connected [[6 4]])
+
+(defn connected-to-allo [u l]
+  (conde [(emptyo l) succeed]
+    [(fresh [a d]
+       (conso a d l)
+       (connected u a)
+       (connected-to-allo u d))]))
+
+(defn all-connected-to-allo [l]
+  (conde [(emptyo l) succeed]
+    [(fresh [a d]
+       (conso a d l)
+       (connected-to-allo a d)
+       (all-connected-to-allo d))]))
+
+(comment
+  ;; 700ms
+  (dotimes [_ 5]
+    (time (run-nc 22 [q] (all-connected-to-allo q))))
+
+  ;; why doesn't tabling work here
+  )
+
+;; =============================================================================
 ;; nqueens
 
 ;; Bratko 3d pg 103
