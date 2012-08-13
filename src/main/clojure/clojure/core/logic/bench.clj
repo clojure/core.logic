@@ -143,21 +143,15 @@
       (bounded-listo q 6)
       (all-connected-to-allo q)))
   
+  ;; 350-400ms
   (dotimes [_ 5]
     (time
-     (run-nc* [q]
-       (fresh [a b d]
-         (== q (llist a b d))
-         (bounded-listo q 6)
-         (all-connected-to-allo q)))))
-
-  (dotimes [_ 5]
-    (time
-     (run-nc* [q]
-       (fresh [a b d]
-         (== q (llist a b d))
-         (bounded-listo q 6)
-         (all-connected-to-allo q)))))
+     (dotimes [_ 100]
+      (run-nc 20 [q]
+        (fresh [a b d]
+          (== q (llist a b d))
+          (bounded-listo q 6)
+          (all-connected-to-allo q))))))
 )
 
 ;; =============================================================================
