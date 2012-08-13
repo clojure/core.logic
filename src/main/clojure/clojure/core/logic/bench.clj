@@ -118,27 +118,47 @@
 (facts connected [[5 1] [5 2] [5 4]])
 (facts connected [[6 4]])
 
-(defn connected-to-allo [u l]
-  (conde [(emptyo l) succeed]
-    [(fresh [a d]
-       (conso a d l)
-       (connected u a)
-       (connected-to-allo u d))]))
+(defne connected-to-allo
+  "Ensure that vertex v is connected to all vertices
+   vs."
+  [v vs]
+  ([_ ()])
+  ([_ [vh . vr]]
+     (connected v vh)
+     (connected-to-allo v vr)))
 
-(defn all-connected-to-allo [l]
-  (conde [(emptyo l) succeed]
-    [(fresh [a d]
-       (conso a d l)
-       (connected-to-allo a d)
-       (all-connected-to-allo d))]))
+(defne all-connected-to-allo
+  "Collect all cliques in l. l must be bounded to ensure
+   termination."
+  [l]
+  ([()])
+  ([[h . t]]
+     (connected-to-allo h t)
+     (all-connected-to-allo t)))
 
 (comment
-  ;; 700ms
+  (run-nc* [q]
+    (fresh [a b d]
+      (== q (llist a b d))
+      (bounded-listo q 6)
+      (all-connected-to-allo q)))
+  
   (dotimes [_ 5]
-    (time (run-nc 22 [q] (all-connected-to-allo q))))
+    (time
+     (run-nc* [q]
+       (fresh [a b d]
+         (== q (llist a b d))
+         (bounded-listo q 6)
+         (all-connected-to-allo q)))))
 
-  ;; why doesn't tabling work here
-  )
+  (dotimes [_ 5]
+    (time
+     (run-nc* [q]
+       (fresh [a b d]
+         (== q (llist a b d))
+         (bounded-listo q 6)
+         (all-connected-to-allo q)))))
+)
 
 ;; =============================================================================
 ;; nqueens
