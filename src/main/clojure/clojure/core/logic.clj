@@ -3744,7 +3744,8 @@
      (rembero x ys zs)))
 
 (defne bounded-listo
-  "Ensure that the list l never grows beyond bound n."
+  "Ensure that the list l never grows beyond bound n.
+   n must be ground."
   [l n]
   ([() _] (<=fd 0 n))
   ([[h . t] n]
