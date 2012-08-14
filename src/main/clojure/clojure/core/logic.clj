@@ -3553,6 +3553,16 @@
   [v*]
   (cgoal (fdc (distinctfdc v*))))
 
+(defne bounded-listo
+  "Ensure that the list l never grows beyond bound n.
+   n must have been assigned a domain."
+  [l n]
+  ([() _] (<=fd 0 n))
+  ([[h . t] n]
+     (fresh [m]
+       (infd m (interval 0 Integer/MAX_VALUE))
+       (+fd m 1 n)
+       (bounded-listo t m))))
 
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar
@@ -3742,14 +3752,3 @@
   ([_ [y . ys] [y . zs]]
      (!= y x)
      (rembero x ys zs)))
-
-(defne bounded-listo
-  "Ensure that the list l never grows beyond bound n.
-   n must be ground."
-  [l n]
-  ([() _] (<=fd 0 n))
-  ([[h . t] n]
-     (fresh [m]
-       (infd m (interval 0 Integer/MAX_VALUE))
-       (+fd m 1 n)
-       (bounded-listo t m))))
