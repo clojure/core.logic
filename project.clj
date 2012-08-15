@@ -1,4 +1,4 @@
-(defproject core.logic "0.7.5" 
+(defproject core.logic "0.8-alpha3-SNAPSHOT" 
   :description "A logic/relational programming library for Clojure"
   :extra-classpath-dirs ["checkouts/clojurescript/src/clj"
                          "checkouts/clojurescript/src/cljs"]
@@ -8,7 +8,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.macro "0.1.1"]]
   :dev-dependencies [[lein-swank "1.4.4"]
-                     [lein-cljsbuild "0.2.2"]]
+                     [lein-cljsbuild "0.2.5"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
                                    :compiler {:optimizations :simple
                                               :pretty-print true
