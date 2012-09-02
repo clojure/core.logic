@@ -2769,7 +2769,7 @@
      (let [rel-ns (:ns (meta rel))
            rel-set (var-get (ns-resolve rel-ns (set-sym (.name rel) arity)))
            tuples (map vec tuples)]
-       (swap! rel-set (fn [s] (remove #(some #{%} tuples) s)))
+       (swap! rel-set (fn [s] (reduce disj s tuples)))
        (let [indexes (indexes-for rel arity)]
          (doseq [[o i] indexes]
            (let [index (var-get (ns-resolve rel-ns (index-sym (.name rel) arity o)))]
