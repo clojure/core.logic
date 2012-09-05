@@ -1,3 +1,10 @@
+From 0.8-alpha2 to 0.8-alpha3
+====
+
+Fixes
+----
+* CLJS-50: Rel relation PersistentHashSet becomes LazySeq after issuing a retraction
+
 From 0.8-alpha1 to 0.8-alpha2
 ====
 
