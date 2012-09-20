@@ -2472,7 +2472,8 @@
                          (if (contains? m k)
                            (if-let [nv (empty-is-nil (f (get m k) v))]
                              (assoc m k nv)
-                             (dissoc m k))))
+                             (dissoc m k))
+                           m))
           merge-map (fn [m1 m2] (reduce merge-entry (or m1 {}) (seq m2)))]
       (reduce merge-map maps))))
 
