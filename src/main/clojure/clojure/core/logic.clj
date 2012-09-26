@@ -2810,32 +2810,32 @@
   (ready? [this]
     (not= @cache ansv*)))
 
-(defn make-ss [cache ansv* f]
+(defn make-suspended-stream [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
          (list? ansv*)
          (fn? f)]}
   (SuspendedStream. cache ansv* f))
 
-(defn ss? [x]
+(defn suspended-stream? [x]
   (instance? SuspendedStream x))
 
-(defn to-w [s]
+(defn ->waiting-stream [s]
   (into [] s))
 
-(defn w? [x]
+(defn waiting-stream? [x]
   (vector? x))
 
-(defn w-check [w sk fk]
+(defn waiting-stream-check [w success-cont failure-cont]
   (loop [w w a []]
     (cond
-     (nil? w) (fk)
+     (nil? w) (failure-cont)
 
      (ready? (first w))
-     (sk
+     (success-cont
        (fn []
          (let [ss (first w)
                f  (:f ss)
-               w  (to-w (concat a (next w)))]
+               w  (->waiting-stream (concat a (next w)))]
            (if (empty? w)
              (f)
              (mplus (f) (fn [] w))))))
@@ -2872,7 +2872,7 @@
           end   (or end [])]
       (letfn [(reuse-loop [ansv*]
                 (if (= ansv* end)
-                  [(make-ss cache start
+                  [(make-suspended-stream cache start
                             (fn [] (reuse this argv cache @cache start)))]
                   (Choice. (subunify this argv
                                      (reify-tabled this (first ansv*)))
@@ -2895,28 +2895,28 @@
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
-    (w-check this
+    (waiting-stream-check this
       (fn [f] (bind f g))
       (fn []
-        (to-w
+        (->waiting-stream
           (map (fn [ss]
-                 (make-ss (:cache ss) (.ansv* ss)
+                 (make-suspended-stream (:cache ss) (.ansv* ss)
                    (fn [] (bind ((:f ss)) g))))
                this)))))
 
   IMPlus
   (mplus [this f]
-    (w-check this
+    (waiting-stream-check this
       (fn [fp] (mplus fp f))
       (fn []
         (let [a-inf (f)]
-          (if (w? a-inf)
-            (to-w (concat a-inf this))
+          (if (waiting-stream? a-inf)
+            (->waiting-stream (concat a-inf this))
             (mplus a-inf (fn [] this)))))))
 
   ITake
   (take* [this]
-    (w-check this (fn [f] (take* f)) (fn [] ()))))
+    (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
 
 (defn master [argv cache]
   (fn [a]
