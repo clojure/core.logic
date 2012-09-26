@@ -2835,7 +2835,7 @@
        (fn []
          (let [ss (first w)
                f  (:f ss)
-               w  (->waiting-stream (concat a (next w)))]
+               w  (into a (next w))]
            (if (empty? w)
              (f)
              (mplus (f) (fn [] w))))))
