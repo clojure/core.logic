@@ -2808,7 +2808,7 @@
       not-found))
   ISuspendedStream
   (ready? [this]
-          (not= @cache ansv*)))
+    (not= @cache ansv*)))
 
 (defn make-ss [cache ansv* f]
   {:pre [(instance? clojure.lang.Atom cache)
@@ -2829,14 +2829,17 @@
   (loop [w w a []]
     (cond
      (nil? w) (fk)
-     (ready? (first w)) (sk
-                         (fn []
-                           (let [ss (first w)
-                                 f (:f ss)
-                                 w (to-w (concat a (next w)))]
-                             (if (empty? w)
-                               (f)
-                               (mplus (f) (fn [] w))))))
+
+     (ready? (first w))
+     (sk
+       (fn []
+         (let [ss (first w)
+               f  (:f ss)
+               w  (to-w (concat a (next w)))]
+           (if (empty? w)
+             (f)
+             (mplus (f) (fn [] w))))))
+
      :else (recur (next w) (conj a (first w))))))
 
 ;; -----------------------------------------------------------------------------
@@ -2849,42 +2852,42 @@
   ITabled
 
   (-reify-tabled [this v]
-                 (let [v (walk this v)]
-                   (cond
-                    (lvar? v) (ext-no-check this v (lvar (count (.s this))))
-                    (coll? v) (-reify-tabled
-                               (-reify-tabled this (first v))
-                               (next v))
-                    :else this)))
+    (let [v (walk this v)]
+      (cond
+       (lvar? v) (ext-no-check this v (lvar (count (.s this))))
+       (coll? v) (-reify-tabled
+                  (-reify-tabled this (first v))
+                  (next v))
+       :else this)))
 
   (reify-tabled [this v]
-                (let [v (walk* this v)]
-                  (walk* (-reify-tabled empty-s v) v)))
+    (let [v (walk* this v)]
+      (walk* (-reify-tabled empty-s v) v)))
 
   (alpha-equiv? [this x y]
-                (= (-reify this x) (-reify this y)))
+    (= (-reify this x) (-reify this y)))
 
   (reuse [this argv cache start end]
-         (let [start (or start @cache)
-               end   (or end [])]
-           (letfn [(reuse-loop [ansv*]
-                     (if (= ansv* end)
-                       [(make-ss cache start
-                                 (fn [] (reuse this argv cache @cache start)))]
-                       (Choice. (subunify this argv
-                                          (reify-tabled this (first ansv*)))
-                                (fn [] (reuse-loop (rest ansv*))))))]
-             (reuse-loop start))))
+    (let [start (or start @cache)
+          end   (or end [])]
+      (letfn [(reuse-loop [ansv*]
+                (if (= ansv* end)
+                  [(make-ss cache start
+                            (fn [] (reuse this argv cache @cache start)))]
+                  (Choice. (subunify this argv
+                                     (reify-tabled this (first ansv*)))
+                           (fn [] (reuse-loop (rest ansv*))))))]
+        (reuse-loop start))))
 
   (subunify [this arg ans]
-            (let [arg (walk this arg)]
-              (cond
-               (= arg ans) this
-               (lvar? arg) (ext-no-check this arg ans)
-               (coll? arg) (subunify
-                            (subunify this (next arg) (next ans))
-                            (first arg) (first ans))
-               :else this))))
+    (let [arg (walk this arg)]
+      (cond
+       (= arg ans) this
+       (lvar? arg) (ext-no-check this arg ans)
+       (coll? arg) (subunify
+                    (subunify this (next arg) (next ans))
+                    (first arg) (first ans))
+       :else this))))
 
 ;; -----------------------------------------------------------------------------
 ;; Waiting Stream
@@ -2892,27 +2895,28 @@
 (extend-type clojure.lang.IPersistentVector
   IBind
   (bind [this g]
-        (w-check this
-                 (fn [f] (bind f g))
-                 (fn [] (to-w
-                         (map (fn [ss]
-                                (make-ss (:cache ss) (.ansv* ss)
-                                         (fn [] (bind ((:f ss)) g))))
-                              this)))))
+    (w-check this
+      (fn [f] (bind f g))
+      (fn []
+        (to-w
+          (map (fn [ss]
+                 (make-ss (:cache ss) (.ansv* ss)
+                   (fn [] (bind ((:f ss)) g))))
+               this)))))
+
   IMPlus
   (mplus [this f]
-         (w-check this
-                  (fn [fp] (mplus fp f))
-                  (fn []
-                    (let [a-inf (f)]
-                      (if (w? a-inf)
-                        (to-w (concat a-inf this))
-                        (mplus a-inf (fn [] this)))))))
+    (w-check this
+      (fn [fp] (mplus fp f))
+      (fn []
+        (let [a-inf (f)]
+          (if (w? a-inf)
+            (to-w (concat a-inf this))
+            (mplus a-inf (fn [] this)))))))
+
   ITake
   (take* [this]
-         (w-check this
-                  (fn [f] (take* f))
-                  (fn [] ()))))
+    (w-check this (fn [f] (take* f)) (fn [] ()))))
 
 (defn master [argv cache]
   (fn [a]
