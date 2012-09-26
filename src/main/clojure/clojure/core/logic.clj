@@ -2825,7 +2825,14 @@
 (defn waiting-stream? [x]
   (vector? x))
 
-(defn waiting-stream-check [w success-cont failure-cont]
+(defn waiting-stream-check
+  "Take a waiting stream, a success continuation, and a failure continuation.
+   If we don't find any ready suspended streams, invoke the failure continuation. 
+   If we find a ready suspended stream calculate the remainder of the waiting
+   stream. If we've reached the fixpoint just call the thunk of the suspended
+   stream, otherwise call mplus on the result of the thunk and the remainder
+   of the waiting stream. Pass this result to the success contination."
+  [w success-cont failure-cont]
   (loop [w w a []]
     (cond
      (nil? w) (failure-cont)
