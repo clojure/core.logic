@@ -2819,9 +2819,6 @@
 (defn suspended-stream? [x]
   (instance? SuspendedStream x))
 
-(defn ->waiting-stream [s]
-  (into [] s))
-
 (defn waiting-stream? [x]
   (vector? x))
 
@@ -2903,9 +2900,11 @@
   IBind
   (bind [this g]
     (waiting-stream-check this
+      ;; success continuation
       (fn [f] (bind f g))
+      ;; failure continuation
       (fn []
-        (->waiting-stream
+        (into []
           (map (fn [ss]
                  (make-suspended-stream (:cache ss) (.ansv* ss)
                    (fn [] (bind ((:f ss)) g))))
@@ -2914,11 +2913,13 @@
   IMPlus
   (mplus [this f]
     (waiting-stream-check this
+      ;; success continuation
       (fn [fp] (mplus fp f))
+      ;; failure continuation
       (fn []
         (let [a-inf (f)]
           (if (waiting-stream? a-inf)
-            (->waiting-stream (concat a-inf this))
+            (into a-inf this)
             (mplus a-inf (fn [] this)))))))
 
   ITake
