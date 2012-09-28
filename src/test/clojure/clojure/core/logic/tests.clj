@@ -25,10 +25,6 @@
   (let [x (lvar 'x)]
     (is (= (unify empty-s nil {}) nil))))
 
-(deftest unify-nil-set-1
-  (let [x (lvar 'x)]
-    (is (= (unify empty-s nil #{}) nil))))
-
 ;; -----------------------------------------------------------------------------
 ;; object
 
@@ -80,9 +76,6 @@
 (deftest unify-object-map-1
   (is (= (unify empty-s 1 {}) nil)))
 
-(deftest unify-object-set-1
-  (is (= (unify empty-s 1 #{}) nil)))
-
 ;; -----------------------------------------------------------------------------
 ;; lvar
 
@@ -133,16 +126,6 @@
   (let [x (lvar 'x)
         os (ext-no-check empty-s x {1 2 3 4})]
     (is (= (unify empty-s x {1 2 3 4}) os))))
-
-(deftest unify-lvar-set-1
-  (let [x (lvar 'x)
-        os (ext-no-check empty-s x #{})]
-    (is (= (unify empty-s x #{}) os))))
-
-(deftest unify-lvar-set-2
-  (let [x (lvar 'x)
-        os (ext-no-check empty-s x #{1 2 3})]
-    (is (= (unify empty-s x #{1 2 3}) os))))
 
 ;; -----------------------------------------------------------------------------
 ;; lcons
@@ -246,9 +229,6 @@
 (deftest unify-lcons-map-1
   (is (= (unify empty-s (lcons 1 (lvar 'x)) {}) nil)))
 
-(deftest unify-lcons-set-1
-  (is (= (unify empty-s (lcons 1 (lvar 'x)) #{}) nil)))
-
 ;; -----------------------------------------------------------------------------
 ;; seq
 
@@ -332,12 +312,6 @@
 (deftest unify-seq-map-2
   (is (= (unify empty-s '() {}) nil)))
 
-(deftest unify-seq-set-1
-  (is (= (unify empty-s [] #{}) nil)))
-
-(deftest unify-seq-set-2
-  (is (= (unify empty-s '() #{}) nil)))
-
 ;; -----------------------------------------------------------------------------
 ;; map
 
@@ -377,74 +351,6 @@
         m1 {1 2 3 4}
         m2 {1 4 3 x}]
     (is (= (unify empty-s m1 m2) nil))))
-
-(deftest unify-map-set-1
-  (is (= (unify empty-s {} #{}) nil)))
-
-;; -----------------------------------------------------------------------------
-;; set
-
-(deftest unify-set-object-1
-  (is (= (unify empty-s #{} 1) nil)))
-
-(deftest unify-set-lvar-1
-  (let [x (lvar 'x)
-        os (ext-no-check empty-s x #{})]
-    (is (= (unify empty-s #{} x) os))))
-
-(deftest unify-set-lcons-1
-  (let [x (lvar 'x)]
-    (is (= (unify empty-s #{} (lcons 1 x)) nil))))
-
-(deftest unify-set-seq-1
-  (is (= (unify empty-s #{} '()) nil)))
-
-(deftest unify-set-map-1
-  (is (= (unify empty-s #{} {}) nil)))
-
-(deftest unify-set-set-1
-  (is (= (unify empty-s #{} #{}) empty-s)))
-
-(deftest unify-set-set-2
-  (is (= (unify empty-s #{} #{1}) nil)))
-
-(deftest unify-set-set-3
-  (let [x (lvar 'x)
-        os (ext-no-check empty-s x 1)]
-    (is (= (unify empty-s #{x} #{1}) os))))
-
-(deftest unify-set-set-4
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        os (-> empty-s
-               (ext-no-check x 2)
-               (ext-no-check y 1))]
-    (is (= (unify empty-s #{1 x} #{2 y}) os))))
-
-(deftest unify-set-set-5
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        os (-> empty-s
-               (ext-no-check x 2)
-               (ext-no-check y 1))]
-    (is (= (unify empty-s #{x 1} #{2 y}) os))))
-
-(deftest unify-set-set-6
-  (let [a (lvar 'a)
-        b (lvar 'b)
-        c (lvar 'c)
-        d (lvar 'd)
-        s (:s (unify empty-s #{a b 3 4 5} #{1 2 3 c d}))]
-    (is (and (= (count s) 4)
-             (= (set (keys s)) #{a b c d})
-             (= (set (vals s)) #{1 2 4 5})))))
-
-(deftest unify-set-set-7
-  (let [a (lvar 'a)
-        b (lvar 'b)
-        c (lvar 'c)
-        d (lvar 'd)]
-    (is (= (unify empty-s #{a b 9 4 5} #{1 2 3 c d}) nil))))
 
 ;; =============================================================================
 ;; walk
@@ -1253,24 +1159,8 @@
            (match-map {:foo {:bar 1}} q))
          '(1))))
 
-(defne match-set [s o]
-  ([#{:cat :bird :dog} _]))
-
-(defn test-defne-set []
-  (is (= (run* [q]
-           (match-set #{:cat :bird :dog} q))
-         '(_.0))))
-
-(comment
-  ;; FIXME: for some reason set #{:cat :bird} works on match-set call - David
-  )
-
 ;; -----------------------------------------------------------------------------
 ;; Tickets
-
-(deftest test-32-unify-set
-  (is (= (run* [q] (== q #{1}))
-         '(#{1}))))
 
 (deftest test-31-unifier-associative
   (is (= (binding [*reify-vars* false]

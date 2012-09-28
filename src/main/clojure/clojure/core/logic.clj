@@ -1170,9 +1170,6 @@
   IUnifyWithMap
   (unify-with-map [v u s]
     (ext s v u))
-  IUnifyWithSet
-  (unify-with-set [v u s]
-    (ext s v u))
   IUnifyWithRefinable
   (unify-with-refinable [v u s]
     (ext-no-check s v (:lvar u)))
@@ -1299,8 +1296,6 @@
     (unify-with-lseq u v s))
   IUnifyWithMap
   (unify-with-map [v u s] nil)
-  IUnifyWithSet
-  (unify-with-set [v u s] nil)
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
@@ -1367,10 +1362,6 @@
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
     (unify-with-map v u s))
-
-  clojure.lang.IPersistentSet
-  (unify-terms [u v s]
-    (unify-with-set v u s))
 
   java.lang.Byte
   (unify-terms [u v s]
@@ -1497,53 +1488,6 @@
           (if (seq v)
             nil
             s))))))
-
-;; -----------------------------------------------------------------------------
-;; Unify IPersistentSet with X
-
-(extend-protocol IUnifyWithSet
-  nil
-  (unify-with-set [v u s] nil)
-
-  Object
-  (unify-with-set [v u s] nil)
-
-  ;; TODO : improve speed, the following takes 890ms
-  ;; 
-  ;; (let [a (lvar 'a)
-  ;;       b (lvar 'b)
-  ;;       c (lvar 'c)
-  ;;       d (lvar 'd)
-  ;;       s1 #{a b 3 4 5}
-  ;;       s2 #{1 2 3 c d}]
-  ;;     (dotimes [_ 10]
-  ;;       (time
-  ;;        (dotimes [_ 1e5]
-  ;;          (.s (unify empty-s s1 s2))))))
-  clojure.lang.IPersistentSet
-  (unify-with-set [v u s]
-    (loop [u u v v ulvars [] umissing []]
-      (if (seq u)
-        (if (seq v)
-          (let [uf (first u)]
-            (if (lvar? uf)
-              (recur (disj u uf) v (conj ulvars uf) umissing)
-              (if (contains? v uf)
-                (recur (disj u uf) (disj v uf) ulvars umissing)
-                (recur (disj u uf) v ulvars (conj umissing uf)))))
-          nil)
-        (if (seq v)
-          (if (seq ulvars)
-            (loop [v v vlvars [] vmissing []]
-              (if (seq v)
-                (let [vf (first v)]
-                  (if (lvar? vf)
-                    (recur (disj v vf) (conj vlvars vf) vmissing)
-                    (recur (disj v vf) vlvars (conj vmissing vf))))
-                (unify s (concat ulvars umissing)
-                       (concat vmissing vlvars))))
-            nil)
-          s)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify Refinable with X
