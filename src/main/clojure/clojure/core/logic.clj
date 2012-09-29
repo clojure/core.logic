@@ -2917,19 +2917,22 @@
   "Macro for defining a tabled goal. Prefer ^:tabled with the 
   defne/a/u forms over using this directly."
   [args & grest]
-  `(let [table# (atom {})]
-     (fn [~@args]
-       (let [argv# ~args]
-         (fn [a#]
-           (let [key# (-reify a# argv#)
-                 cache# (get @table# key#)]
-             (if (nil? cache#)
-               (let [cache# (atom ())]
-                 (swap! table# assoc key# cache#)
-                 ((fresh []
-                    ~@grest
-                    (master argv# cache#)) a#))
-               (reuse a# argv# cache# nil nil))))))))
+  (let [[spec grest] (if (symbol? args)
+                       [[args (first grest)] (rest grest)]
+                       [[args] grest])]
+   `(let [table# (atom {})]
+      (fn ~@spec
+        (let [argv# ~args]
+          (fn [a#]
+            (let [key# (-reify a# argv#)
+                  cache# (get @table# key#)]
+              (if (nil? cache#)
+                (let [cache# (atom ())]
+                  (swap! table# assoc key# cache#)
+                  ((fresh []
+                     ~@grest
+                     (master argv# cache#)) a#))
+                (reuse a# argv# cache# nil nil)))))))))
 
 ;; =============================================================================
 ;; cKanren
