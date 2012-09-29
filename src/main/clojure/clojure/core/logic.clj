@@ -916,6 +916,12 @@
 
 (declare singleton-dom?)
 
+;; TODO: we need the following new fields
+;; ws  - for the working constraint store
+;; wsi - for the index of the working constraint store
+;; ss  - for the vector of constraint stores
+;; cq  - for the constraint queue
+
 (deftype Substitutions [s l cs]
   Object
   (equals [this o]
