@@ -1492,37 +1492,37 @@
     (is (= (normalize-intervals (intervals d))
            [(interval 1 10)]))))
 
-(deftest test-unify-interval-and-number-1
+(deftest test-domfd-interval-and-number-1
    (is (= (run* [q]
-            (== q (interval 1 10))
+            (domfd q (interval 1 10))
             (== q 1))
           '(1)))
    (is (= (run* [q]
             (== q 1)
-            (== q (interval 1 10)))
+            (domfd q (interval 1 10)))
           '(1))))
 
-(deftest test-unify-interval-and-number-2
+(deftest test-domfd-interval-and-number-2
   (is (= (run* [q]
-           (== q (interval 1 10))
+           (domfd q (interval 1 10))
            (== q 11))
          '()))
   (is (= (run* [q]
            (== q 11)
-           (== q (interval 1 10)))
+           (domfd q (interval 1 10)))
          '())))
 
- (deftest test-unify-many-intervals-1
+ (deftest test-domfd-many-intervals-1
    (is (= (run* [q]
-            (== q (interval 1 100))
-            (== q (interval 30 60))
-            (== q (interval 50 55))
+            (domfd q (interval 1 100))
+            (domfd q (interval 30 60))
+            (domfd q (interval 50 55))
             (== q 51))
           '(51)))
    (is (= (run* [q]
-            (== q (interval 1 100))
-            (== q (interval 30 60))
-            (== q (interval 50 55))
+            (domfd q (interval 1 100))
+            (domfd q (interval 30 60))
+            (domfd q (interval 50 55))
             (== q 56))
           '())))
 
@@ -1652,9 +1652,9 @@
 (deftest test-=fd-1
   (let [x (lvar 'x)
         y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 6))
-              (unify y (interval 5 10)))
+        s ((composeg
+            (domfd x (interval 1 6))
+            (domfd y (interval 5 10))) empty-s)
         s ((=fd x y) s)]
     (is (= 2 (count (:km (:cs s)))))
     (is (= 1 (count (:cm (:cs s)))))
@@ -1713,7 +1713,7 @@
 
 (deftest test-map-sum-1
   (let [x (lvar 'x)
-        s (unify empty-s x (interval 1 10))]
+        s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
                ((map-sum (fn [v] (updateg x v)))
@@ -1722,7 +1722,7 @@
 
 (deftest test-force-ans-1
   (let [x (lvar 'x)
-        s (unify empty-s x (interval 1 10))]
+        s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
                (force-ans x)))
@@ -1730,7 +1730,7 @@
 
 (deftest test-force-ans-2
   (let [x (lvar 'x)
-        s (unify empty-s x (interval 1 10))]
+        s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
                (force-ans [x])))
@@ -1738,7 +1738,8 @@
 
 (deftest test-force-ans-3
   (let [x (lvar 'x)
-        s (unify empty-s x (multi-interval (interval 1 4) (interval 6 10)))]
+        s ((domfd x (multi-interval (interval 1 4) (interval 6 10)))
+            empty-s)]
     (is (= (take 10
              (solutions s x
                (force-ans x)))
@@ -1747,22 +1748,20 @@
 (deftest test-verify-all-bound-1
   (let [x (lvar 'x)
         y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 10))
-              (unify y (interval 1 10)))]
+        s ((composeg
+            (domfd x (interval 1 10))
+            (domfd y (interval 1 10))) empty-s)]
     (is (nil? (verify-all-bound s [x y])))))
 
 (deftest test-verify-all-bound-2
   (let [x (lvar 'x)
         y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 10)))]
+        s ((domfd x (interval 1 10)) empty-s)]
     (is (thrown? Exception (verify-all-bound s [x y])))))
 
 (deftest test-enforce-constraints-1
   (let [x (lvar 'x)
-        s (-> empty-s
-              (unify x (interval 1 3)))]
+        s ((domfd x (interval 1 3)) empty-s)]
     (is (= (solutions s x
              (enforce-constraints x))
            '(1 2 3)))))
@@ -1770,18 +1769,18 @@
 (deftest test-reifyg-1
   (let [x (lvar 'x)
         y (lvar 'y)
-        s (-> empty-s
-              (unify x (interval 1 10))
-              (unify y (interval 1 5)))
+        s ((composeg
+            (domfd x (interval 1 10))
+            (domfd y (interval 1 5))) empty-s)
         s ((=fd x y) s)]
     (is (= (take* ((reifyg x) s))
            '(1 2 3 4 5)))))
 
-(deftest test-unify-interval-smaller-1
+(deftest test-process-interval-smaller-1
   (let [x (lvar 'x)
-        s (-> empty-s
-              (unify x (interval 1 10))
-              (unify x (interval 2 10)))]
+        s ((composeg
+            (domfd x (interval 1 10))
+            (domfd x (interval 2 10))) empty-s)]
     (walk s x)))
 
 (deftest test-boundary-interval-1
@@ -1792,14 +1791,14 @@
   (is (difference (interval 1 10) 10)
       (interval 1 9)))
 
-(deftest test-unify-imi-1
+(deftest test-process-imi-1
   (let [x (lvar 'x)
-        s (-> empty-s
-              (unify x (interval 2 10))
-              (unify x (multi-interval (interval 1 4) (interval 6 10))))]
+        s ((composeg
+            (domfd x (interval 2 10))
+            (domfd x (multi-interval (interval 1 4) (interval 6 10))))
+           empty-s)]
     (is (= (walk s x)
            (multi-interval (interval 2 4) (interval 6 10))))))
-
 
 ;; -----------------------------------------------------------------------------
 ;; cKanren
