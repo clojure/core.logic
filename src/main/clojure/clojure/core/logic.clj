@@ -2739,7 +2739,7 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
-;; (atom []) is cache, waiting streams are PersistentVectors
+;; (atom ()) is cache, waiting streams are PersistentVectors
 
 (deftype SuspendedStream [cache ansv* f]
   clojure.lang.ILookup
@@ -2817,9 +2817,9 @@
 
   (reuse [this argv cache start end]
     (let [start (or start @cache)
-          end   (or end [])]
+          end   (or end ())]
       (letfn [(reuse-loop [ansv*]
-                (if (= ansv* end)
+                (if (identical? ansv* end)
                   [(make-suspended-stream cache start
                             (fn [] (reuse this argv cache @cache start)))]
                   (Choice. (subunify this argv
