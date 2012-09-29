@@ -1049,6 +1049,8 @@
   (walk-term [v s]
     (walk-term (:v v) s)))
 
+(declare empty-s)
+
 (deftype Substitutions [s l cs]
   Object
   (equals [this o]
@@ -1070,6 +1072,31 @@
       :l l
       :cs cs
       not-found))
+
+  clojure.lang.IPersistentCollection
+  (cons [this [k v]]
+    (if (lvar? k)
+      (assoc this k v)
+      (throw (Exception. (str "key must be a logic var")))))
+  (empty [this] empty-s)
+  (equiv [this o]
+    (.equals this o))
+
+  clojure.lang.Associative
+  (containsKey [this k]
+    (contains? #{:s :l :cs} k))
+  (entryAt [this k]
+    (case k
+      :s  [:s s]
+      :l  [:l l]
+      :cs [:cs cs]
+      nil))
+  (assoc [this k v]
+    (case k
+      :s  (Substitutions. v l cs)
+      :l  (Substitutions. s v cs)
+      :cs (Substitutions. s l v)
+      (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
   (ext-no-check [this u v]
