@@ -54,7 +54,7 @@
 
 (defprotocol ISubstitutions
   (ext-no-check [this x v])
-  (walk [this x] [this x wrap?]))
+  (walk [this x]))
 
 ;; -----------------------------------------------------------------------------
 ;; Protocols for terms
@@ -138,16 +138,6 @@
 (defprotocol IRunnable
   (runnable? [c s]))
 
-(defprotocol IRefinable
-  (refinable? [x]))
-
-(defprotocol IRefine
-  (refine [x v]))
-
-(extend-type Object
-  IRefinable
-  (refinable? [_] false))
-
 (defprotocol IWithConstraintId
   (with-id [this id]))
 
@@ -222,24 +212,6 @@
   (disjoint? [this that])
   (intersection [this that])
   (difference [this that]))
-
-;; -----------------------------------------------------------------------------
-;; Unification for finite domains
-
-(defprotocol IUnifyWithRefinable
-  (unify-with-refinable [v u s]))
-
-(defprotocol IUnifyWithInteger
-  (unify-with-integer [v u s]))
-
-(defprotocol IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]))
-
-(defprotocol IUnifyWithIntervalFD
-  (unify-with-interval [v u s]))
-
-(defprotocol IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]))
 
 ;; -----------------------------------------------------------------------------
 ;; Tree Constraints
@@ -320,7 +292,7 @@
 
 (declare domain sorted-set->domain
          difference* intersection* member?* disjoint?*
-         unify-with-domain* unify-with-refinable*)
+         unify-with-domain*)
 
 (deftype FiniteDomain [s min max]
   clojure.lang.ILookup
@@ -347,10 +319,6 @@
     (apply domain (drop-while #(< % n) s)))
   (keep-before [this n]
     (apply domain (take-while #(< % n) s)))
-  IRefinable
-  (refinable? [_] true)
-  IRefine
-  (refine [this other] (intersection this other))
   IFiniteDomain
   (domain? [_] true)
   ISet
@@ -388,25 +356,7 @@
      :else
        (difference* this that)))
   IIntervals
-  (intervals [_] (seq s))
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-domain v u s))
-  IUnifyWithRefinable
-  (unify-with-refinable [v u s]
-    (unify-with-refinable* u v s))
-  IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithIntervalFD
-  (unify-with-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithInteger
-  (unify-with-integer [v u s]
-    (unify-with-domain* v u s)))
+  (intervals [_] (seq s)))
 
 (defn sorted-set->domain [s]
   (let [c (count s)]
@@ -489,10 +439,6 @@
       false))
   (toString [this]
     (pr-str this))
-  IRefinable
-  (refinable? [_] true)
-  IRefine
-  (refine [this other] (intersection this other))
   IInterval
   (lb [_] _lb)
   (ub [_] _ub)
@@ -599,25 +545,7 @@
      :else (difference* this that)))
   IIntervals
   (intervals [this]
-    (list this))
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-interval v u s))
-  IUnifyWithRefinable
-  (unify-with-refinable [v u s]
-    (unify-with-refinable* u v s))
-  IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithIntervalFD
-  (unify-with-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithInteger
-  (unify-with-integer [v u s]
-    (unify-with-domain* v u s)))
+    (list this)))
 
 (defn interval? [x]
   (instance? IntervalFD x))
@@ -764,10 +692,6 @@
             (= is js))
           false))
       false))
-  IRefinable
-  (refinable? [_] true)
-  IRefine
-  (refine [this other] (intersection this other))
   IInterval
   (lb [_] min)
   (ub [_] max)
@@ -812,25 +736,7 @@
     (difference* this that))
   IIntervals
   (intervals [this]
-    (seq is))
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-multi-interval v u s))
-  IUnifyWithRefinable
-  (unify-with-refinable [v u s]
-    (unify-with-refinable* u v s))
-  IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithIntervalFD
-  (unify-with-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]
-    (unify-with-domain* v u s))
-  IUnifyWithInteger
-  (unify-with-integer [v u s]
-    (unify-with-domain* v u s)))
+    (seq is)))
 
 ;; union where possible
 (defn normalize-intervals [is]
@@ -979,8 +885,8 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [u (walk s u true)
-          v (walk s v true)]
+    (let [u (walk s u)
+          v (walk s v)]
       (if (identical? u v)
         s
         (unify-terms u v s)))))
@@ -1006,48 +912,7 @@
 (defn build [s u]
   (build-term u s))
 
-(declare unify-with-refinable*)
-
-(deftype Refinable [v lvar]
-  clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [this k not-found]
-    (case k
-      :v v
-      :lvar lvar
-      not-found))
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-refinable v u s))
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (unify-with-refinable u v s))
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext-no-check s u (:lvar v)))
-  IUnifyWithRefinable
-  (unify-with-refinable [v u s]
-    (if-let [r (refine (:v u) (:v v))]
-      (if-let [s (update s (:lvar u) r)]
-        (ext-no-check s (:lvar v) (:lvar u))
-        nil)
-      nil))
-  IUnifyWithFiniteDomain
-  (unify-with-domain [v u s]
-     (unify-with-refinable* v u s))
-  IUnifyWithIntervalFD
-  (unify-with-interval [v u s]
-    (unify-with-refinable* v u s))
-  IUnifyWithMultiIntervalFD
-  (unify-with-multi-interval [v u s]
-    (unify-with-refinable* v u s))
-  IUnifyWithInteger
-  (unify-with-integer [v u s]
-    (unify-with-refinable* v u s))
-  IWalkTerm
-  (walk-term [v s]
-    (walk-term (:v v) s)))
+(declare singleton-dom?)
 
 (deftype Substitutions [s l cs]
   Object
@@ -1078,19 +943,15 @@
                     cs))
 
   (walk [this v]
-    (walk this v false))
-
-  (walk [this v wrap?]
     (loop [lv v [v vp] (find s v)]
       (cond
        (nil? v) lv
-       (and wrap? (refinable? vp)) (if (lvar? lv) (Refinable. vp lv) vp)
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
   ISubstitutionsCLP
   (update [this x v]
-    ((if-not (refinable? v)
+    ((if-not (singleton-dom? v)
        (run-constraints* (if (lvar? v) [x v] [x]) cs)
        identity)
      (if *occurs-check*
@@ -1155,9 +1016,6 @@
   IUnifyWithObject
   (unify-with-object [v u s]
     (ext s v u))
-  IUnifyWithInteger
-  (unify-with-integer [v u s]
-    (ext-no-check s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (ext-no-check s u v))
@@ -1170,9 +1028,6 @@
   IUnifyWithMap
   (unify-with-map [v u s]
     (ext s v u))
-  IUnifyWithRefinable
-  (unify-with-refinable [v u s]
-    (ext-no-check s v (:lvar u)))
   IReifyTerm
   (reify-term [v s]
     (if *reify-vars*
@@ -1361,31 +1216,7 @@
 
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
-    (unify-with-map v u s))
-
-  java.lang.Byte
-  (unify-terms [u v s]
-    (unify-with-integer v u s))
-
-  java.lang.Short
-  (unify-terms [u v s]
-    (unify-with-integer v u s))
-
-  java.lang.Integer
-  (unify-terms [u v s]
-    (unify-with-integer v u s))
-
-  java.lang.Long
-  (unify-terms [u v s]
-    (unify-with-integer v u s))
-
-  java.math.BigInteger
-  (unify-terms [u v s]
-    (unify-with-integer v u s))
-
-  clojure.lang.BigInt
-  (unify-terms [u v s]
-    (unify-with-integer v u s)))
+    (unify-with-map v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
@@ -1488,168 +1319,6 @@
           (if (seq v)
             nil
             s))))))
-
-;; -----------------------------------------------------------------------------
-;; Unify Refinable with X
-
-(defn unify-with-refinable* [u v s]
-  (if-let [r (refine (:v u) v)]
-    (update s (:lvar u) r)
-    nil))
-
-(extend-protocol IUnifyWithRefinable
-  nil
-  (unify-with-refinable [v u s] nil)
-
-  Object
-  (unify-with-refinable [v u s] nil))
-
-(defn extend-type-to-unify-with-refinable [t]
-  `(extend-type ~t
-     IUnifyWithRefinable
-     (~'unify-with-refinable [~'v ~'u ~'s]
-       (~'unify-with-refinable* ~'u ~'v ~'s))))
-
-(defmacro extend-to-unify-with-refinable [& ts]
-  `(do
-     ~@(map extend-type-to-unify-with-refinable ts)))
-
-(extend-to-unify-with-refinable
-  java.lang.Byte
-  java.lang.Short
-  java.lang.Integer
-  java.lang.Long
-  java.math.BigInteger
-  clojure.lang.BigInt)
-
-;; -----------------------------------------------------------------------------
-;; Unify FiniteDomain with X
-
-(defn unify-with-domain* [d u s]
-  (if (refine d u)
-    s
-    nil))
-
-(extend-protocol IUnifyWithFiniteDomain
-  nil
-  (unify-with-domain [v u s] nil)
-
-  Object
-  (unify-with-domain [v u s] nil))
-
-(defn extend-type-to-unify-with-domain [t]
-  `(extend-type ~t
-     IUnifyWithFiniteDomain
-     (~'unify-with-domain [~'v ~'u ~'s]
-       (if (refine ~'u ~'v)
-         ~'s
-         nil))))
-
-(defmacro extend-to-unify-with-domain [& ts]
-  `(do
-     ~@(map extend-type-to-unify-with-domain ts)))
-
-(extend-to-unify-with-domain
-  java.lang.Byte
-  java.lang.Short
-  java.lang.Integer
-  java.lang.Long
-  java.math.BigInteger
-  clojure.lang.BigInt)
-
-;; -----------------------------------------------------------------------------
-;; Unify IntervalFD with X
-
-(extend-protocol IUnifyWithIntervalFD
-  nil
-  (unify-with-interval [v u s] nil)
-
-  Object
-  (unify-with-interval [v u s] nil))
-
-(defn extend-type-to-unify-with-interval [t]
-  `(extend-type ~t
-     IUnifyWithIntervalFD
-     (~'unify-with-interval [~'v ~'u ~'s]
-       (if (refine ~'u ~'v)
-         ~'s
-         nil))))
-
-(defmacro extend-to-unify-with-interval [& ts]
-  `(do
-     ~@(map extend-type-to-unify-with-interval ts)))
-
-(extend-to-unify-with-interval
-  java.lang.Byte
-  java.lang.Short
-  java.lang.Integer
-  java.lang.Long
-  java.math.BigInteger
-  clojure.lang.BigInt)
-
-;; -----------------------------------------------------------------------------
-;; Unify MultiIntervalFD with X
-
-(extend-protocol IUnifyWithMultiIntervalFD
-  nil
-  (unify-with-multi-interval [v u s] nil)
-
-  Object
-  (unify-with-multi-interval [v u s] nil))
-
-(defn extend-type-to-unify-with-multi-interval [t]
-  `(extend-type ~t
-     IUnifyWithMultiIntervalFD
-     (~'unify-with-multi-interval [~'v ~'u ~'s]
-       (if (refine ~'u ~'v)
-         ~'s
-         nil))))
-
-(defmacro extend-to-unify-with-multi-interval [& ts]
-  `(do
-     ~@(map extend-type-to-unify-with-multi-interval ts)))
-
-(extend-to-unify-with-multi-interval
-  java.lang.Byte
-  java.lang.Short
-  java.lang.Integer
-  java.lang.Long
-  java.math.BigInteger
-  clojure.lang.BigInt)
-
-;; -----------------------------------------------------------------------------
-;; Unify Integer with X
-
-(extend-protocol IUnifyWithInteger
-  nil
-  (unify-with-integer [v u s] nil)
-
-  Object
-  (unify-with-integer [v u s] nil)
-
-  java.lang.Byte
-  (unify-with-integer [v u s]
-    (if (= u v) s nil))
-
-  java.lang.Short
-  (unify-with-integer [v u s]
-    (if (= u v) s nil))
-
-  java.lang.Integer
-  (unify-with-integer [v u s]
-    (if (= u v) s nil))
-
-  java.lang.Long
-  (unify-with-integer [v u s]
-    (if (= u v) s nil))
-
-  java.math.BigInteger
-  (unify-with-integer [v u s]
-    (if (= u v) s nil))
-
-  clojure.lang.BigInt
-  (unify-with-integer [v u s]
-    (if (= u v) s nil)))
 
 ;; =============================================================================
 ;; Reification
@@ -2959,7 +2628,7 @@
 (defn process-dom [v dom]
   (fn [a]
     (cond
-     (lvar? v) (if-let [a (unify a v dom)] ;; TODO: why we really return nil from unify
+     (lvar? v) (if-let [a (unify a v dom)] ;; TODO: use ext-d
                  a nil)
      (member? dom v) a
      :else nil)))
@@ -3227,7 +2896,7 @@
 
 (defn singleton-dom? [x]
   (and (not (lvar? x))
-       (not (refinable? x))))
+       (not (integer? x))))
 
 (defn =fdc [u v]
   (reify
