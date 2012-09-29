@@ -2799,42 +2799,54 @@
 (extend-type Substitutions
   ITabled
 
+  ;; returns a substitution that maps fresh vars to
+  ;; new ones. similar to Prolog's copy_term/2. this is to avoid
+  ;; prematurely grounding vars.
   (-reify-tabled [this v]
     (let [v (walk this v)]
       (cond
        (lvar? v) (ext-no-check this v (lvar (count (.s this))))
        (coll? v) (-reify-tabled
-                  (-reify-tabled this (first v))
-                  (next v))
+                   (-reify-tabled this (first v))
+                   (next v))
        :else this)))
 
+  ;; returns the term v with all fresh vars replaced with copies.
+  ;; this is to avoid prematurely grounding vars.
   (reify-tabled [this v]
     (let [v (walk* this v)]
       (walk* (-reify-tabled empty-s v) v)))
 
+  ;; check that two terms are equivalent modulo fresh logic vars.
   (alpha-equiv? [this x y]
     (= (-reify this x) (-reify this y)))
 
+  ;; argv are the actual parameters passed to a goal. cache
+  ;; is the cache from the table for reified argv. on initial
+  ;; call start is nil and end nil - so internally they will be
+  ;; initialized to the contents of the cache and and an empty
+  ;; vector.
   (reuse [this argv cache start end]
     (let [start (or start @cache)
           end   (or end ())]
       (letfn [(reuse-loop [ansv*]
                 (if (identical? ansv* end)
                   [(make-suspended-stream cache start
-                            (fn [] (reuse this argv cache @cache start)))]
+                     (fn [] (reuse this argv cache @cache start)))]
                   (Choice. (subunify this argv
-                                     (reify-tabled this (first ansv*)))
+                             (reify-tabled this (first ansv*)))
                            (fn [] (reuse-loop (rest ansv*))))))]
         (reuse-loop start))))
 
+  ;; unify an argument with an answer from a cache
   (subunify [this arg ans]
     (let [arg (walk this arg)]
       (cond
        (= arg ans) this
        (lvar? arg) (ext-no-check this arg ans)
        (coll? arg) (subunify
-                    (subunify this (next arg) (next ans))
-                    (first arg) (first ans))
+                     (subunify this (next arg) (next ans))
+                     (first arg) (first ans))
        :else this))))
 
 ;; -----------------------------------------------------------------------------
