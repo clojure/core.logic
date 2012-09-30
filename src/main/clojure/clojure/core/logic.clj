@@ -943,9 +943,13 @@
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
-      :s s
-      :l l
-      :cs cs
+      :s   s
+      :l   l
+      :cs  cs
+      :ws  ws
+      :wsi wsi
+      :ss  ss
+      :cq  cq
       not-found))
 
   clojure.lang.IPersistentCollection
@@ -959,12 +963,16 @@
 
   clojure.lang.Associative
   (containsKey [this k]
-    (contains? #{:s :l :cs} k))
+    (contains? #{:s :l :cs :ws :wsi :ss :cq} k))
   (entryAt [this k]
     (case k
-      :s  [:s s]
-      :l  [:l l]
-      :cs [:cs cs]
+      :s   [:s s]
+      :l   [:l l]
+      :cs  [:cs cs]
+      :ws  [:ws ws]
+      :wsi [:wsi wsi]
+      :ss  [:ss ss]
+      :cq  [:cq cq]
       nil))
   (assoc [this k v]
     (case k
