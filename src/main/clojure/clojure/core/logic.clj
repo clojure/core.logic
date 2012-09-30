@@ -296,6 +296,16 @@
          difference* intersection* member?* disjoint?*
          unify-with-domain*)
 
+;; FiniteDomain
+;; -----
+;; wrapper around Clojure sorted sets. Used to represent small
+;; domains. Optimization when interval arithmetic provides little
+;; benefit.
+;;
+;; s - a sorted set
+;; min - the minimum value, an optimization
+;; max - the maximum value, an optimization
+
 (deftype FiniteDomain [s min max]
   clojure.lang.ILookup
   (valAt [this k]
@@ -782,6 +792,14 @@
     (pair @purge vs)))
 
 (declare add-var)
+
+;; ConstraintStore
+;; -----
+;; km  - mapping logic vars to constraints ids
+;; cm  - mapping constraint ids to to actual constraints
+;; cid - the current constraint id, an integer, incremented
+;;       everytime we add a constraint to the store
+;; running - set of running constraint ids
 
 (deftype ConstraintStore [km cm cid running]
   clojure.lang.ILookup
