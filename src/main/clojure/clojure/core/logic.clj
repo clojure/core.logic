@@ -2736,9 +2736,9 @@
 
 (defn resolve-storable-dom
   "Given a domain update its value in the finite domain store by
-   calculating the intersection. If a the domain is already a singleton
+   calculating the intersection. If the domain is already a singleton
    move the value into the subsitution."
-  [a dom x]
+  [a x dom]
   (if (singleton-dom? dom)
     (update a x dom)
     (ext-ws a ::fd x dom)))
@@ -2749,8 +2749,8 @@
     (if dom'
       (let [i (intersection dom dom')]
         (when i
-          (resolve-storable-dom a dom x)))
-      (resolve-storable-dom a dom x))))
+          (resolve-storable-dom a x dom)))
+      (resolve-storable-dom a x dom))))
 
 (defn process-dom [x dom]
   (fn [a]
