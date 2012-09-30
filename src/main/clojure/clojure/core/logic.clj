@@ -442,6 +442,13 @@
 
 (declare interval interval?)
 
+;; IntervalFD
+;; -----
+;; Type optimized for interval arithmetic. Only stores bounds.
+;;
+;; _lb - lower bound
+;; _ub - upper bound
+
 (deftype IntervalFD [_lb _ub]
   Object
   (equals [_ o]
@@ -682,6 +689,15 @@
                :else false)))))))
 
 (declare normalize-intervals singleton-dom? multi-interval)
+
+;; MultiIntervalFD
+;; -----
+;; Running difference operations on IntervalFD will result in
+;; a series of intervals.
+;;
+;; min - minimum value of all contained intervals
+;; max - maximum value of all contained intervals
+;; is  - the intervals
 
 (deftype MultiIntervalFD [min max is]
   clojure.lang.ILookup
