@@ -856,11 +856,6 @@
   (constraints-for [this x]
     (when-let [ids (get km x)]
       (map cm (remove running ids))))
-  ;; (update-proc [this id proc]
-  ;;   (if-let [c (get cm id)]
-  ;;     (let [ncm (assoc cm id (with-proc c proc))]
-  ;;       (ConstraintStore. km ncm cid running))
-  ;;     this))
   clojure.lang.Counted
   (count [this]
     (count cm)))
@@ -1451,15 +1446,6 @@
           (let [[vfk vfv] (first v)]
             (recur (next v) (assoc! r vfk (walk* s vfv))))
           (persistent! r)))
-      (meta v)))
-
-  clojure.lang.IPersistentSet
-  (walk-term [v s]
-    (with-meta
-      (loop [v v r #{}]
-        (if (seq v)
-          (recur (next v) (conj r (walk* s (first v))))
-          r))
       (meta v))))
 
 ;; =============================================================================
@@ -1502,8 +1488,7 @@
   ([g0 g1]
      (fn [a]
        (let [a (g0 a)]
-         (and a
-              (g1 a))))))
+         (and a (g1 a))))))
 
 (defmacro composeg*
   ([g0] g0)
@@ -2789,7 +2774,6 @@
       (loop (seq v))))
 
   ;; clojure.lang.IPersistentMap
-  ;; clojure.lang.IPersistentSet
 
   FiniteDomain
   (-force-ans [v x]
