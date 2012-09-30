@@ -855,10 +855,7 @@
     (ConstraintStore. nkm ncm cid (:running cs))))
 
 (defn make-cs []
-  (ConstraintStore.
-   clojure.lang.PersistentHashMap/EMPTY
-   clojure.lang.PersistentHashMap/EMPTY 0
-   #{}))
+  (ConstraintStore. {} {} 0 #{}))
 
 ;; =============================================================================
 ;; Substitutions
@@ -916,15 +913,20 @@
 
 (declare singleton-dom?)
 
-;; TODO: we need the following new fields
+(declare empty-s make-s)
+
+;; Substitutions
+;; -----
+;; s   - persistent hashmap to store logic var bindings
+;; l   - persistent list of var bindings to support disequality constraints
+;; cs  - constraint store
 ;; ws  - for the working constraint store
+;;       (optimization so we don't have to update-in ss)
 ;; wsi - for the index of the working constraint store
 ;; ss  - for the vector of constraint stores
 ;; cq  - for the constraint queue
 
-(declare empty-s)
-
-(deftype Substitutions [s l cs]
+(deftype Substitutions [s l cs ws wsi ss cq]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -966,16 +968,19 @@
       nil))
   (assoc [this k v]
     (case k
-      :s  (Substitutions. v l cs)
-      :l  (Substitutions. s v cs)
-      :cs (Substitutions. s l v)
+      :s   (Substitutions. v l cs ws wsi ss cq)
+      :l   (Substitutions. s v cs ws wsi ss cq)
+      :cs  (Substitutions. s l  v ws wsi ss cq)
+      :ws  (Substitutions. s l cs  v wsi ss cq)
+      :wsi (Substitutions. s l cs ws   v ss cq)
+      :ss  (Substitutions. s l cs ws wsi  v cq)
+      :cq  (Substitutions. s l cs ws wsi ss  v)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
   (ext-no-check [this u v]
-    (Substitutions. (assoc s u v)
-                    (cons (pair u v) l)
-                    cs))
+    (Substitutions.
+      (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq))
 
   (walk [this v]
     (loop [lv v [v vp] (find s v)]
@@ -1003,10 +1008,10 @@
   (take* [this] this))
 
 (defn- make-s
-  ([] (Substitutions. clojure.lang.PersistentHashMap/EMPTY () (make-cs)))
-  ([m] (Substitutions. m () (make-cs)))
-  ([m l] (Substitutions. m l (make-cs)))
-  ([m l cs] (Substitutions. m l cs)))
+  ([] (Substitutions. {} () (make-cs) nil nil {} []))
+  ([m] (Substitutions. m () (make-cs) nil nil {} []))
+  ([m l] (Substitutions. m l (make-cs) nil nil {} []))
+  ([m l cs] (Substitutions. m l cs nil nil {} [])))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -1015,7 +1020,7 @@
   (instance? Substitutions x))
 
 (defn to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) clojure.lang.PersistentHashMap/EMPTY v)
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l (make-cs))))
 
@@ -2646,19 +2651,19 @@
 
 (defn addcg [c]
   (fn [a]
-    (make-s (:s a) (:l a) (addc (:cs a) c))))
+    (assoc a :cs (addc (:cs a) c))))
 
 (defn updatecg [c]
   (fn [a]
-    (make-s (:s a) (:l a) (updatec (:cs a) c))))
+    (assoc a :cs (updatec (:cs a) c))))
 
 (defn checkcg [c]
   (fn [a]
-    (make-s (:s a) (:l a) (checkc (:cs a) c a))))
+    (assoc a :cs (checkc (:cs a) c a))))
 
 (defn remcg [c]
   (fn [a]
-    (make-s (:s a) (:l a) (remc (:cs a) c))))
+    (assoc a :cs (remc (:cs a) c))))
 
 (defn process-dom [v dom]
   (fn [a]
@@ -2731,7 +2736,7 @@
        (-force-ans v x)) a)))
 
 (defn running [a c]
-  (make-s (:s a) (:l a) (runc (:cs a) c)))
+  (assoc a :cs (runc (:cs a) c)))
 
 (defn run-constraint [c]
   (fn [a]
@@ -3390,8 +3395,7 @@
                 pp (prefix oc)]
             (cond
              (prefix-subsumes? pp p) ((remcg c) a)
-             (prefix-subsumes? p pp) (recur (make-s (:s a) (:l a) (remc cs oc))
-                                            (next neqcs))
+             (prefix-subsumes? p pp) (recur (assoc a :cs (remc cs oc)) (next neqcs))
              :else (recur a (next neqcs))))
           ((updatecg c) a))))))
 
