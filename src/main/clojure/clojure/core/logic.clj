@@ -2703,6 +2703,22 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
+(defn wsi? [a wsi]
+  (= (:wsi a) wsi))
+
+(defn getv
+  "Get the current value for a logic var using the working store."
+  [a wsi x]
+  {:pre [(wsi? a wsi) (lvar? x)]}
+  (get (:ws a) x))
+
+(defn ext-ws
+  "Update the current value for a logic var using the working
+   store. Returns the updated substitution."
+  [a wsi x v]
+  {:pre [(wsi? a wsi) (lvar? x)]}
+  (assoc a (assoc (:ws a) x v)))
+
 (defn addcg [c]
   (fn [a]
     (assoc a :cs (addc (:cs a) c))))
