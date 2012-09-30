@@ -890,6 +890,18 @@
         s
         (unify-terms u v s)))))
 
+(defn use-ws [a id]
+  (if (= (:wsi a) id)
+    a
+    (-> a
+        (assoc :ss (let [ss (:ss a)
+                         wsi (:wsi a)]
+                     (if wsi
+                       (assoc ss wsi (:ws a))
+                       ss))) 
+        (assoc :ws (or (get (:ss a) id) {}))
+        (assoc :wsi id))))
+
 (def unbound-names
   (let [r (range 100)]
     (zipmap r (map (comp symbol str) (repeat "_.") r))))
