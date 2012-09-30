@@ -2695,6 +2695,7 @@
                (reuse a# argv# cache# nil nil))))))))
 
 
+
 ;; =============================================================================
 ;; cKanren
 
@@ -2735,12 +2736,29 @@
   (fn [a]
     (assoc a :cs (remc (:cs a) c))))
 
-(defn process-dom [v dom]
+(defn resolve-storable-dom
+  "Given a domain update its value in the finite domain store by
+   calculating the intersection. If a the domain is already a singleton
+   move the value into the subsitution."
+  [a dom x]
+  (if (singleton-dom? dom)
+    (update a x dom)
+    (ext-ws a ::fd x dom)))
+
+(defn update-var-dom [a x dom]
+  (let [a    (use-ws a ::fd)
+        dom' (getv a ::fd x)]
+    (if dom'
+      (let [i (intersection dom dom')]
+        (when i
+          (resolve-storable-dom a dom x)))
+      (resolve-storable-dom a dom x))))
+
+(defn process-dom [x dom]
   (fn [a]
     (cond
-     (lvar? v) (if-let [a (unify a v dom)] ;; TODO: use ext-d
-                 a nil)
-     (member? dom v) a
+     (lvar? x) (update-var-dom a x dom)
+     (member? dom x) a
      :else nil)))
 
 (defn to-vals [dom]
