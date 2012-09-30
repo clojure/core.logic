@@ -924,8 +924,8 @@
         s
         (unify-terms u v s)))))
 
-(defn use-ws [a id]
-  (if (= (:wsi a) id)
+(defn use-ws [a wsi]
+  (if (= (:wsi a) wsi)
     a
     (-> a
         (assoc :ss (let [ss (:ss a)
@@ -933,8 +933,8 @@
                      (if wsi
                        (assoc ss wsi (:ws a))
                        ss))) 
-        (assoc :ws (or (get (:ss a) id) {}))
-        (assoc :wsi id))))
+        (assoc :ws (or (get (:ss a) wsi) {}))
+        (assoc :wsi wsi))))
 
 (def unbound-names
   (let [r (range 100)]
