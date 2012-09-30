@@ -128,9 +128,7 @@
   (checkc [this c s])
   (remc [this c])
   (runc [this c])
-  (constraints-for [this x])
-  ;;(update-proc [this id proc])
-  )
+  (constraints-for [this x]))
 
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
@@ -151,10 +149,6 @@
 (extend-type Object
   IConstraintId
   (id [this] nil))
-
-;; (defprotocol IStorableConstraint
-;;   (with-proc [this proc])
-;;   (proc [this]))
 
 (defprotocol IConstraintOp
   (rator [this])
@@ -177,13 +171,6 @@
 (extend-type Object
   IEnforceableConstraint
   (enforceable? [x] false))
-
-;; (defprotocol INeedsStore
-;;   (needs-store? [this]))
-
-;; (extend-type Object
-;;   INeedsStore
-;;   (needs-store? [_] false))
 
 ;; -----------------------------------------------------------------------------
 ;; Finite domain protocol types
@@ -2895,29 +2882,6 @@
          (let [v (walk* r v)]
            (reify-constraints v r (:cs a))))))))
 
-;; NOTE: only used for goals that must be added to store to work
-;; a simple way to add the goal to the store and return that goal
-;; with its id assigned
-
-;; (defn addc* [a c]
-;;   (let [ncs (addc (:cs a) c)
-;;         c ((:cm ncs) (dec (:cid ncs)))
-;;         a (make-s (:s a) (:l a) ncs)]
-;;     (pair c a)))
-
-;; (defn cgoal [c]
-;;   (fn [a]
-;;     (if (runnable? c a)
-;;       (if (needs-store? c)
-;;         (let [[c a] (addc* a c)]
-;;           (when-let [a (c (running a c))]
-;;             ((checkcg c) a)))
-;;         (when-let [a (c a)]
-;;           (if (relevant? c a)
-;;             ((addcg c) a)
-;;             a)))
-;;       ((addcg c) a))))
-
 (defn cgoal [c]
   (fn [a]
     (if (runnable? c a)
@@ -2979,12 +2943,7 @@
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
-  (id [this] _id)
-  ;; TODO: not super happy about the naming here
-  ;; IStorableConstraint
-  ;; (with-proc [this proc] (FDConstraint. proc _id _meta))
-  ;; (proc [this] proc)
-  )
+  (id [this] _id))
 
 (defn fdc [proc]
   (FDConstraint. proc nil nil))
@@ -3215,11 +3174,6 @@
    domains if vars."
   [u v w]
   (cgoal (fdc (*fdc u v w))))
-
-;; (defn update-procg [proc]
-;;   (fn [a]
-;;     (let [ncs (update-proc (:cs a) (id proc) proc)]
-;;       (make-s (:s a) (:l a) ncs))))
 
 (defn categorize [s]
   (fn [ys ds ss]
