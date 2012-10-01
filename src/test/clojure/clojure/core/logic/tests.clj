@@ -1188,6 +1188,31 @@
   (is (= (pair 1 2)
          (pair 1 2))))
 
+(deftest test-domfd-1 []
+  (let [x (lvar 'x)
+        s ((domfd x 1) empty-s)]
+    (is (= (:s s) {x 1}))))
+
+(deftest test-domfd-2 []
+  (let [x (lvar 'x)
+        s ((domfd x (interval 1 10)) empty-s)]
+    (is (= (:ws s) {x (interval 1 10)}))))
+
+(deftest test-domfd-3 []
+  (let [x (lvar 'x)
+        s ((composeg
+            (domfd x (interval 1 10))
+            (domfd x (interval 3 6))) empty-s)]
+    (is (= (:ws s) {x (interval 3 6)}))))
+
+(deftest test-domfd-4 []
+  (let [x (lvar 'x)
+        s ((composeg
+            (domfd x (interval 1 5))
+            (domfd x (interval 5 9))) empty-s)]
+    (is (= (:s s) {x 5}))
+    (is (= (:ws s) {}))))
+
 (deftest test-keep-before-1 []
   (is (= (keep-before (interval 1 10) 5)
          (interval 1 4)))
