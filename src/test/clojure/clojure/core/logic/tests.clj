@@ -1559,32 +1559,20 @@
 (deftest test-process-dom-2
   (let [x (lvar 'x)
         s ((process-dom x (interval 1 10)) empty-s)]
-    (is (= (walk s x) (interval 1 10)))))
-
-(deftest test-process-dom-3
-  (let [x (lvar 'x)
-        s (ext-no-check empty-s x (interval 1 10))
-        s ((process-dom x 1) s)]
-    (is (= (walk s x) 1))))
-
-(deftest test-process-dom-4
-  (let [x (lvar 'x)
-        s (ext-no-check empty-s x 1)
-        s ((process-dom x (interval 1 10)) s)]
-    (is (= (walk s x) 1))))
+    (is (= (get-dom s x) (interval 1 10)))))
 
 (deftest test-domfd-1
   (let [x (lvar 'x)
         s ((domfd x (interval 1 10)) empty-s)]
-    (is (= (walk s x) (interval 1 10)))))
+    (is (= (get-dom s x) (interval 1 10)))))
 
 (deftest test-infd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         f ((infd x y (interval 1 10)) empty-s)
         s (f)]
-    (is (= (walk s x) (interval 1 10)))
-    (is (= (walk s y) (interval 1 10)))))
+    (is (= (get-dom s x) (interval 1 10)))
+    (is (= (get-dom s y) (interval 1 10)))))
 
 (deftest test-make-fdc-prim-1
   (let [u (lvar 'u)
