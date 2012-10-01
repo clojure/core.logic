@@ -2710,6 +2710,10 @@
   (fn [a]
     (assoc a :cs (remc (:cs a) c))))
 
+(defn get-dom [a x]
+  (let [a (use-ws a ::fd)]
+    (getv a ::fd x)))
+
 (defn resolve-storable-dom
   "Given a domain update its value in the finite domain store by
    calculating the intersection. If the domain is already a singleton
@@ -2963,11 +2967,35 @@
   (fn [a]
     ((process-dom (walk a x) dom) a)))
 
-(defn walk-var [a [v b]]
-  `(~b (walk ~a ~v)))
+(defn -domfdc [x dom]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let-dom s [x xd]
+        (let [v (walk s x)
+              i (intersection v xd)]
+          (when i
+            (remv s ::fd x)))))
+    IRelevant
+    (relevant? [this s]
+      (let [dom (get-dom x)]
+        (not (nil? dom))))
+    (relevant? [this x s]
+      (relevant? this s))
+    IRunnable
+    (runnable? [this s]
+      (let [v (walk s x)]
+        (not (lvar? v))))))
+
+(defn domfdc [x dom]
+  (cgoal (fdc (-domfdc x dom))))
+
+(defn get-var-dom [a [v b]]
+  `(~b (get-dom ~a ~v)))
 
 (defmacro let-dom [a vars & body]
-  `(let [~@(mapcat (partial walk-var a) (partition 2 vars))]
+  `(let [~a (use-ws ~a ::fd)
+         ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
      ~@body))
 
 (defn singleton-dom? [x]
