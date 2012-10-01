@@ -2711,11 +2711,15 @@
     (assoc a :cs (remc (:cs a) c))))
 
 (defn get-dom [a x]
-  (let [a (use-ws a ::fd)]
-    (getv a ::fd x)))
+  (if (lvar? x)
+    (let [a (use-ws a ::fd)]
+      (getv a ::fd x))
+    x))
 
 (defn get-dom-safe [a x]
-  (getv a ::fd x))
+  (if (lvar? x)
+    (getv a ::fd x)
+    x))
 
 (defn resolve-storable-dom
   "Given a domain update its value in the finite domain store by
