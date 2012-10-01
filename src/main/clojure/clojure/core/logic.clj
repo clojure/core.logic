@@ -906,18 +906,6 @@
         s
         (unify-terms u v s)))))
 
-(defn use-ws [a wsi]
-  (if (= (:wsi a) wsi)
-    a
-    (-> a
-        (assoc :ss (let [ss (:ss a)
-                         wsi (:wsi a)]
-                     (if wsi
-                       (assoc ss wsi (:ws a))
-                       ss))) 
-        (assoc :ws (or (get (:ss a) wsi) {}))
-        (assoc :wsi wsi))))
-
 (def unbound-names
   (let [r (range 100)]
     (zipmap r (map (comp symbol str) (repeat "_.") r))))
@@ -2674,6 +2662,18 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
+(defn use-ws [a wsi]
+  (if (= (:wsi a) wsi)
+    a
+    (-> a
+        (assoc :ss (let [ss (:ss a)
+                         wsi (:wsi a)]
+                     (if wsi
+                       (assoc ss wsi (:ws a))
+                       ss))) 
+        (assoc :ws (or (get (:ss a) wsi) {}))
+        (assoc :wsi wsi))))
+
 (defn wsi? [a wsi]
   (= (:wsi a) wsi))
 
@@ -2715,7 +2715,9 @@
     (update a x dom)
     (ext-ws a ::fd x dom)))
 
-(defn update-var-dom [a x dom]
+(defn update-var-dom
+  "Update a vars domain in the finite domain working store."
+  [a x dom]
   (let [a    (use-ws a ::fd)
         dom' (getv a ::fd x)]
     (if dom'
