@@ -3008,17 +3008,19 @@
   (reify
     clojure.lang.IFn
     (invoke [this s]
-      (let-dom s [x xd]
-        (let [v (walk s x)
-              i (intersection v xd)]
-          (when i
-            (remv s ::fd x)))))
+      (let [s  (use-ws s ::fd)
+            v  (walk s x)
+            xd (get-dom-safe s x)
+            i  (intersection v xd)]
+        (when i
+          (remv s ::fd x))))
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
     IRelevant
     (relevant? [this s]
-      (let-dom s [x xd]
+      (let [s  (use-ws s ::fd)
+            xd (get-dom-safe s x )]
         (not (nil? xd))))
     (relevant? [this x s]
       (relevant? this s))
