@@ -936,10 +936,10 @@
 ;; s   - persistent hashmap to store logic var bindings
 ;; l   - persistent list of var bindings to support disequality constraints
 ;; cs  - constraint store
-;; ws  - for the working constraint store
+;; ws  - the working constraint store
 ;;       (optimization so we don't have to update-in ss)
-;; wsi - for the index of the working constraint store
-;; ss  - for the vector of constraint stores
+;; wsi - the index of the working constraint store in ss
+;; ss  - the persistent hashmap of constraint stores
 ;; cq  - for the constraint queue
 
 (deftype Substitutions [s l cs ws wsi ss cq]
