@@ -2710,6 +2710,110 @@
   (fn [a]
     (assoc a :cs (remc (:cs a) c))))
 
+(defn running [a c]
+  (assoc a :cs (runc (:cs a) c)))
+
+(defn run-constraint [c]
+  (fn [a]
+    (if (runnable? c a)
+      ((composeg c (checkcg c)) (running a c))
+      a)))
+
+(defn run-constraints [xcs]
+  (if xcs
+    (composeg
+     (run-constraint (first xcs))
+     (run-constraints (next xcs)))
+    s#))
+
+(defn run-constraints* [xs cs]
+  (if (or (zero? (count cs))
+          (nil? (seq xs)))
+    s#
+    (let [xcs (constraints-for cs (first xs))]
+      (if (seq xcs)
+        (composeg
+         (run-constraints xcs)
+         (run-constraints* (next xs) cs))
+        (run-constraints* (next xs) cs))) ))
+
+;; TODO: we've hard coded finite domains here
+
+(defn verify-all-bound [a constrained]
+  (letfn [(verify-all-bound* [a constrained]
+            (when constrained
+              (let [f (first constrained)]
+                (if (and (lvar? f) (= f (walk a f)))
+                  (throw (Exception. (str "Constrained variable " f " without domain")))
+                  (recur a (next constrained))))))]
+    (verify-all-bound* a (seq constrained))))
+
+(defn enforceable-constrained [a]
+  (let [cs (:cs a)
+        km (:km cs)
+        cm (:cm cs)
+        vs (keys km)]
+    (filter (fn [v]
+              (some (fn [cid]
+                      (enforceable? (get cm cid)))
+                    (get km v)))
+            vs)))
+
+;; TODO: we've hard coded force-ans here
+
+(declare force-ans)
+
+(defn enforce-constraints [x]
+  (all
+   (force-ans x)
+   (fn [a]
+     (let [constrained (enforceable-constrained a)]
+       (verify-all-bound a constrained)
+       ((onceo (force-ans constrained)) a)))))
+
+(defn reify-constraints [v r cs]
+  (let [rcs (->> (vals (:cm cs))
+                 (filter reifiable?)
+                 (map #(reifyc % v r)))]
+    (if (empty? rcs)
+      (choice (list v) empty-f)
+      (choice (list `(~v :- ~@rcs)) empty-f))))
+
+(defn reifyg [x]
+  (all
+   (enforce-constraints x)
+   (fn [a]
+     (let [v (walk* a x)
+           r (-reify* empty-s v)]
+       (if (zero? (count r))
+         (choice (list v) empty-f)
+         (let [v (walk* r v)]
+           (reify-constraints v r (:cs a))))))))
+
+(defn cgoal [c]
+  (fn [a]
+    (if (runnable? c a)
+      (when-let [a (c a)]
+        (if (relevant? c a)
+          ((addcg c) a)
+          a))
+      ((addcg c) a))))
+
+;; =============================================================================
+;; CLP(FD)
+
+;; NOTE: aliasing FD? for solving problems like zebra - David
+
+(defn singleton-dom? [x]
+  (integer? x))
+
+(defmacro let-dom [a vars & body]
+  (let [get-var-dom (fn [a [v b]]
+                      `(~b (get-dom-safe ~a ~v)))]
+   `(let [~a (use-ws ~a ::fd)
+          ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
+      ~@body)))
+
 (defn get-dom [a x]
   (if (lvar? x)
     (let [a (use-ws a ::fd)]
@@ -2748,6 +2852,28 @@
      (lvar? x) (update-var-dom a x dom)
      (member? dom x) a
      :else nil)))
+
+(declare domfdc)
+
+(defn domfd
+  "Assign a var x a domain."
+  [x dom]
+  (fn [a]
+    ((composeg
+      (process-dom (walk a x) dom)
+      (domfdc x dom)) a)))
+
+(defmacro infd
+  "Assign vars to domain. The domain must come last."
+  [& xs-and-dom]
+  (let [xs (butlast xs-and-dom)
+        dom (last xs-and-dom)
+        domsym (gensym "dom_")]
+    `(let [~domsym ~dom]
+      (fresh []
+        ~@(map (fn [x]
+                 `(domfd ~x ~domsym))
+               xs)))))
 
 (defn to-vals [dom]
   (letfn [(to-vals* [is]
@@ -2810,97 +2936,6 @@
     ((let [v (walk a x)]
        (-force-ans v x)) a)))
 
-(defn running [a c]
-  (assoc a :cs (runc (:cs a) c)))
-
-(defn run-constraint [c]
-  (fn [a]
-    (if (runnable? c a)
-      ((composeg c (checkcg c)) (running a c))
-      a)))
-
-(defn run-constraints [xcs]
-  (if xcs
-    (composeg
-     (run-constraint (first xcs))
-     (run-constraints (next xcs)))
-    s#))
-
-(defn run-constraints* [xs cs]
-  (if (or (zero? (count cs))
-          (nil? (seq xs)))
-    s#
-    (let [xcs (constraints-for cs (first xs))]
-      (if (seq xcs)
-        (composeg
-         (run-constraints xcs)
-         (run-constraints* (next xs) cs))
-        (run-constraints* (next xs) cs))) ))
-
-(defn verify-all-bound [a constrained]
-  (letfn [(verify-all-bound* [a constrained]
-            (when constrained
-              (let [f (first constrained)]
-                (if (and (lvar? f) (= f (walk a f)))
-                  (throw (Exception. (str "Constrained variable " f " without domain")))
-                  (recur a (next constrained))))))]
-    (verify-all-bound* a (seq constrained))))
-
-(defn enforceable-constrained [a]
-  (let [cs (:cs a)
-        km (:km cs)
-        cm (:cm cs)
-        vs (keys km)]
-    (filter (fn [v]
-              (some (fn [cid]
-                      (enforceable? (get cm cid)))
-                    (get km v)))
-            vs)))
-
-(defn enforce-constraints [x]
-  (all
-   (force-ans x)
-   (fn [a]
-     (let [constrained (enforceable-constrained a)]
-       (verify-all-bound a constrained)
-       ((onceo (force-ans constrained)) a)))))
-
-(defn reify-constraints [v r cs]
-  (let [rcs (->> (vals (:cm cs))
-                 (filter reifiable?)
-                 (map #(reifyc % v r)))]
-    (if (empty? rcs)
-      (choice (list v) empty-f)
-      (choice (list `(~v :- ~@rcs)) empty-f))))
-
-(defn reifyg [x]
-  (all
-   (enforce-constraints x)
-   (fn [a]
-     (let [v (walk* a x)
-           r (-reify* empty-s v)]
-       (if (zero? (count r))
-         (choice (list v) empty-f)
-         (let [v (walk* r v)]
-           (reify-constraints v r (:cs a))))))))
-
-(defn cgoal [c]
-  (fn [a]
-    (if (runnable? c a)
-      (when-let [a (c a)]
-        (if (relevant? c a)
-          ((addcg c) a)
-          a))
-      ((addcg c) a))))
-
-;; =============================================================================
-;; CLP(FD)
-
-;; NOTE: aliasing FD? for solving problems like zebra - David
-
-(defn singleton-dom? [x]
-  (integer? x))
-
 ;; TODO: this was done to remove boilerplate, but unwise since we're
 ;; hardcoding to finite domains, there will be many other constraints
 
@@ -2962,26 +2997,6 @@
              "")]
     (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
-(defmacro infd
-  "Assign vars to domain. The domain must come last."
-  [& xs-and-dom]
-  (let [xs (butlast xs-and-dom)
-        dom (last xs-and-dom)
-        domsym (gensym "dom_")]
-    `(let [~domsym ~dom]
-      (fresh []
-        ~@(map (fn [x]
-                 `(domfd ~x ~domsym))
-               xs)))))
-
-(defn domfd
-  "Assign a var x a domain."
-  [x dom]
-  (fn [a]
-    ((composeg
-      (process-dom (walk a x) dom)
-      (domfdc x dom)) a)))
-
 (defn -domfdc [x dom]
   (reify
     clojure.lang.IFn
@@ -3008,13 +3023,6 @@
 
 (defn domfdc [x dom]
   (cgoal (fdc (-domfdc x dom))))
-
-(defmacro let-dom [a vars & body]
-  (let [get-var-dom (fn [a [v b]]
-                      `(~b (get-dom-safe ~a ~v)))]
-   `(let [~a (use-ws ~a ::fd)
-          ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
-      ~@body)))
 
 (defn =fdc [u v]
   (reify
