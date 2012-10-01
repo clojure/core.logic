@@ -2817,13 +2817,19 @@
           ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
 
-(defn get-dom [a x]
+(defn get-dom
+  "Get the domain for a logic var. Sugar over getv, but ensures
+   that we're using the finite domain working store."
+  [a x]
   (if (lvar? x)
     (let [a (use-ws a ::fd)]
       (getv a ::fd x))
     x))
 
-(defn get-dom-safe [a x]
+(defn get-dom-safe
+  "Like get-dom but assumes we're alread using the finite domain
+   working store, a performance optimization."
+  [a x]
   (if (lvar? x)
     (getv a ::fd x)
     x))
