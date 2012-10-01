@@ -1656,8 +1656,8 @@
         s ((addcg c) empty-s)
         c (first (constraints-for (:cs s) u))
         s (-> s
-              (ext-no-check u 1)
-              (ext-no-check w 2))
+            (ext-no-check u 1)
+            (ext-no-check w 2))
         s ((checkcg c) s)]
     (is (zero? (count (:km (:cs s)))))
     (is (zero? (count (:cm (:cs s)))))))
