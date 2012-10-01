@@ -2842,7 +2842,7 @@
   "Update a vars domain in the finite domain working store."
   [a x dom]
   (let [a    (use-ws a ::fd)
-        dom' (getv a ::fd x)]
+        dom' (get-dom-safe a x)]
     (if dom'
       (let [i (intersection dom dom')]
         (when i
