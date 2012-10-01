@@ -2809,7 +2809,10 @@
 
 (defmacro let-dom [a vars & body]
   (let [get-var-dom (fn [a [v b]]
-                      `(~b (get-dom-safe ~a ~v)))]
+                      `(~b (let [v# (walk ~a ~v)]
+                             (if (lvar? v#)
+                               (get-dom-safe ~a ~v)
+                               v#))))]
    `(let [~a (use-ws ~a ::fd)
           ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
