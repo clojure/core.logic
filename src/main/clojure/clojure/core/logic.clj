@@ -2898,6 +2898,12 @@
 
 ;; NOTE: aliasing FD? for solving problems like zebra - David
 
+(defn singleton-dom? [x]
+  (integer? x))
+
+;; TODO: this was done to remove boilerplate, but unwise since we're
+;; hardcoding to finite domains, there will be many other constraints
+
 (extend-type Object
   IRunnable
   (runnable? [c s]
@@ -2939,6 +2945,8 @@
     (relevant? proc x s))
   IRunnable
   (runnable? [this s]
+    ;; TODO: we can put the boilerplate here if the proc doesn't
+    ;; satisfy IRunnable
     (runnable? proc s))
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
@@ -3007,9 +3015,6 @@
    `(let [~a (use-ws ~a ::fd)
           ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
-
-(defn singleton-dom? [x]
-  (integer? x))
 
 (defn =fdc [u v]
   (reify
