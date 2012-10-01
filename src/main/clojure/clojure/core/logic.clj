@@ -1015,9 +1015,7 @@
 
   ISubstitutionsCLP
   (update [this x v]
-    ((if-not (singleton-dom? v)
-       (run-constraints* (if (lvar? v) [x v] [x]) cs)
-       identity)
+    ((run-constraints* (if (lvar? v) [x v] [x]) cs)
      (if *occurs-check*
        (ext this x v)
        (ext-no-check this x v))))
