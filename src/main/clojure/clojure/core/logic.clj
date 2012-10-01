@@ -2966,7 +2966,9 @@
   "Assign a var x a domain."
   [x dom]
   (fn [a]
-    ((process-dom (walk a x) dom) a)))
+    ((composeg
+      (process-dom (walk a x) dom)
+      (domfdc x dom)) a)))
 
 (defn -domfdc [x dom]
   (reify
@@ -2977,16 +2979,20 @@
               i (intersection v xd)]
           (when i
             (remv s ::fd x)))))
+    IConstraintOp
+    (rator [_] `domfdc)
+    (rands [_] [x])
     IRelevant
     (relevant? [this s]
-      (let [dom (get-dom x)]
-        (not (nil? dom))))
+      (let-dom s [x xd]
+        (not (nil? xd))))
     (relevant? [this x s]
       (relevant? this s))
     IRunnable
     (runnable? [this s]
-      (let [v (walk s x)]
-        (not (lvar? v))))))
+      (let-dom s [x xd]
+        (and (not (nil? xd))
+             (not (lvar? (walk s x))))))))
 
 (defn domfdc [x dom]
   (cgoal (fdc (-domfdc x dom))))
