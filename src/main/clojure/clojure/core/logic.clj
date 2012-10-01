@@ -2714,6 +2714,9 @@
   (let [a (use-ws a ::fd)]
     (getv a ::fd x)))
 
+(defn get-dom-safe [a x]
+  (getv a ::fd x))
+
 (defn resolve-storable-dom
   "Given a domain update its value in the finite domain store by
    calculating the intersection. If the domain is already a singleton
@@ -2991,7 +2994,7 @@
   (cgoal (fdc (-domfdc x dom))))
 
 (defn get-var-dom [a [v b]]
-  `(~b (get-dom ~a ~v)))
+  `(~b (get-dom-safe ~a ~v)))
 
 (defmacro let-dom [a vars & body]
   `(let [~a (use-ws ~a ::fd)
