@@ -2993,13 +2993,12 @@
 (defn domfdc [x dom]
   (cgoal (fdc (-domfdc x dom))))
 
-(defn get-var-dom [a [v b]]
-  `(~b (get-dom-safe ~a ~v)))
-
 (defmacro let-dom [a vars & body]
-  `(let [~a (use-ws ~a ::fd)
-         ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
-     ~@body))
+  (let [get-var-dom (fn [a [v b]]
+                      `(~b (get-dom-safe ~a ~v)))]
+   `(let [~a (use-ws ~a ::fd)
+          ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
+      ~@body)))
 
 (defn singleton-dom? [x]
   (integer? x))
