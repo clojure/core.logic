@@ -2688,7 +2688,7 @@
    store. Returns the updated substitution."
   [a wsi x v]
   {:pre [(wsi? a wsi) (lvar? x)]}
-  (assoc a (assoc (:ws a) x v)))
+  (assoc a :ws (assoc (:ws a) x v)))
 
 (defn addcg [c]
   (fn [a]
@@ -2964,8 +2964,7 @@
      ~@body))
 
 (defn singleton-dom? [x]
-  (and (not (lvar? x))
-       (not (integer? x))))
+  (integer? x))
 
 (defn =fdc [u v]
   (reify
