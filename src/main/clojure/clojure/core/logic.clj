@@ -2681,6 +2681,12 @@
   {:pre [(wsi? a wsi) (lvar? x)]}
   (get (:ws a) x))
 
+(defn remv
+  "Remove a binding from the working store."
+  [a wsi x]
+  {:pre [(wsi? a wsi) (lvar? x)]}
+  (assoc a :ws (dissoc (:ws a) x)))
+
 (defn ext-ws
   "Update the current value for a logic var using the working
    store. Returns the updated substitution."
@@ -2710,7 +2716,8 @@
    move the value into the subsitution."
   [a x dom]
   (if (singleton-dom? dom)
-    (update a x dom)
+    (let [a (remv a ::fd x)]
+      (update a x dom))
     (ext-ws a ::fd x dom)))
 
 (defn update-var-dom
