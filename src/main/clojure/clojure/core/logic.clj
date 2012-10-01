@@ -2928,8 +2928,6 @@
   IConstraintOp
   (rator [_] (rator proc))
   (rands [_] (rands proc))
-  ;; INeedsStore
-  ;; (needs-store? [_] (needs-store? proc))
   IRelevant
   (relevant? [this s]
     (relevant? proc s))
@@ -3425,8 +3423,6 @@
        IConstraintOp
        (rator [_] `!=)
        (rands [_] (seq (recover-vars p)))
-       ;; INeedsStore
-       ;; (needs-store? [_] true)
        IRunnable
        (runnable? [this s]
          (some #(not= (walk s %) %) (recover-vars p)))
