@@ -2721,7 +2721,7 @@
     (if dom'
       (let [i (intersection dom dom')]
         (when i
-          (resolve-storable-dom a x dom)))
+          (resolve-storable-dom a x i)))
       (resolve-storable-dom a x dom))))
 
 (defn process-dom [x dom]
