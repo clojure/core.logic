@@ -185,8 +185,11 @@
 (defprotocol IFiniteDomain
   (domain? [this]))
 
-(extend-type Object
-  IFiniteDomain
+(extend-protocol IFiniteDomain
+  nil
+  (domain? [x] false)
+
+  Object
   (domain? [x] false))
 
 (defprotocol ISortedDomain
