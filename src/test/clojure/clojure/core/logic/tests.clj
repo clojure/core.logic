@@ -1668,11 +1668,12 @@
         s ((composeg
             (domfd x (interval 1 6))
             (domfd y (interval 5 10))) empty-s)
-        s ((=fd x y) s)]
-    (is (= 2 (count (:km (:cs s)))))
-    (is (= 1 (count (:cm (:cs s)))))
-    (is (= (walk s x) (interval 5 6)))
-    (is (= (walk s y) (interval 5 6)))))
+        s ((=fd x y) s)
+        cs (:cs s)]
+    (is (= 2 (count (:km (:cs s))))) ;; works
+    (is (= 3 (count (:cm (:cs s)))))
+    (is (= (get-dom s x) (interval 5 6)))
+    (is (= (get-dom s y) (interval 5 6)))))
 
 (deftest test-multi-interval-1
   (let [mi (multi-interval (interval 1 3) (interval 7 10))]
