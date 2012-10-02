@@ -1577,7 +1577,7 @@
 (deftest test-make-fdc-prim-1
   (let [u (lvar 'u)
         w (lvar 'w)
-        c (=fdc u w)]
+        c (fdc (=fdc u w))]
     (is (= (var-rands c)
            [u w]))
     (is (= (rator c)
