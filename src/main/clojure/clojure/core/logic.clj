@@ -3015,8 +3015,8 @@
 ;; a constraint so that domfd and unification can come in any order.
 ;; this constraint only runs when the var has a value in the
 ;; the substitution map. domfdc needs to distinguish between the var's
-;; binding in the substiution and it's domain in the domain store
-;; so we can't leverage the convenience of let-dom
+;; binding in the substitution and its domain in the domain store
+;; - thus we can't leverage the convenience of let-dom
 
 (defn -domfdc [x dom]
   (reify
