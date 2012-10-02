@@ -2949,14 +2949,6 @@
     ((let [v (walk a x)]
        (-force-ans v x)) a)))
 
-;; TODO: this was done to remove boilerplate, but unwise since we're
-;; hardcoding to finite domains, there will be many other constraints
-
-(extend-type Object
-  IRunnable
-  (runnable? [c s]
-    (every? domain? (map #(walk s %) (rands c)))))
-
 (deftype FDConstraint [proc _id _meta]
   clojure.lang.ILookup
   (valAt [this k]
@@ -2993,9 +2985,14 @@
     (relevant? proc x s))
   IRunnable
   (runnable? [this s]
-    ;; TODO: we can put the boilerplate here if the proc doesn't
-    ;; satisfy IRunnable
-    (runnable? proc s))
+    (if (satisfies? IRunnable proc)
+      (runnable? proc s)
+      (let [s (use-ws s ::fd)]
+        (letfn [(dom-or-val? [x]
+                  (let [v (walk s x)]
+                    (or (not (lvar? v))
+                        (not (nil? (get-dom-safe s x))))))]
+          (every? identity (map dom-or-val? (rands proc)))))))
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
@@ -3059,7 +3056,7 @@
          (not (singleton-dom? dv)) true
          :else false)))
     (relevant? [this x s]
-      (not (singleton-dom? x)))))
+      (if (get-dom s x) true false))))
 
 (defn =fd
   "A finite domain constraint. u and v must be equal. u and v must
