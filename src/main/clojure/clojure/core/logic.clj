@@ -36,6 +36,9 @@
 (defprotocol IUnifyWithMap
   (unify-with-map [v u s]))
 
+;; WARNING: implement at your own peril. How to efficiently unify sets
+;; is an open research problem.
+
 (defprotocol IUnifyWithSet
   (unify-with-set [v u s]))
 
