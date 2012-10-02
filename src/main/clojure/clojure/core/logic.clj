@@ -3014,7 +3014,10 @@
 
 ;; a constraint so that domfd and unification can come in any order.
 ;; this constraint only runs when the var has a value in the
-;; the substitution map.
+;; the substitution map. domfdc needs to distinguish between the var's
+;; binding in the substiution and it's domain in the domain store
+;; so we can't leverage the convenience of let-dom
+
 (defn -domfdc [x dom]
   (reify
     clojure.lang.IFn
@@ -3037,7 +3040,7 @@
       (relevant? this s))
     IRunnable
     (runnable? [this s]
-      (let-dom s [x xd]
+      (let [xd (get-dom s x)]
         (and (not (nil? xd))
              (not (lvar? (walk s x))))))))
 
