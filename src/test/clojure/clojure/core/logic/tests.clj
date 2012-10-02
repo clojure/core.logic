@@ -1795,7 +1795,8 @@
         s ((composeg
             (domfd x (interval 1 10))
             (domfd x (interval 2 10))) empty-s)]
-    (walk s x)))
+    (is (= (get-dom s x)
+           (interval 2 10)))))
 
 (deftest test-boundary-interval-1
   (is (difference (interval 1 10) 1)
@@ -1811,7 +1812,7 @@
             (domfd x (interval 2 10))
             (domfd x (multi-interval (interval 1 4) (interval 6 10))))
            empty-s)]
-    (is (= (walk s x)
+    (is (= (get-dom s x)
            (multi-interval (interval 2 4) (interval 6 10))))))
 
 ;; -----------------------------------------------------------------------------

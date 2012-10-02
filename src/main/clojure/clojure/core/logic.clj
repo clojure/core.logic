@@ -2715,9 +2715,11 @@
 
 (defn run-constraint [c]
   (fn [a]
-    (if (runnable? c a)
-      ((composeg c (checkcg c)) (running a c))
-      a)))
+    (if (relevant? c a)
+      (if (runnable? c a)
+        ((composeg c (checkcg c)) (running a c))
+        a)
+      ((remcg c) a))))
 
 (defn run-constraints [xcs]
   (if xcs
@@ -3007,6 +3009,9 @@
              "")]
     (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
+;; a constraint so that domfd and unification can come in any order.
+;; this constraint only runs when the var has a value in the
+;; the substitution map.
 (defn -domfdc [x dom]
   (reify
     clojure.lang.IFn
@@ -3023,7 +3028,7 @@
     IRelevant
     (relevant? [this s]
       (let [s  (use-ws s ::fd)
-            xd (get-dom-safe s x )]
+            xd (get-dom-safe s x)]
         (not (nil? xd))))
     (relevant? [this x s]
       (relevant? this s))
