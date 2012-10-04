@@ -1730,15 +1730,6 @@
           (let [[vfk vfv] (first v)]
             (recur (next v) (assoc! r vfk (walk* s vfv))))
           (persistent! r)))
-      (meta v)))
-
-  clojure.lang.IPersistentSet
-  (walk-term [v s]
-    (with-meta
-      (loop [v v r #{}]
-        (if (seq v)
-          (recur (next v) (conj r (walk* s (first v))))
-          r))
       (meta v))))
 
 ;; =============================================================================
@@ -3036,7 +3027,6 @@
       (loop (seq v))))
 
   ;; clojure.lang.IPersistentMap
-  ;; clojure.lang.IPersistentSet
 
   FiniteDomain
   (-force-ans [v x]
