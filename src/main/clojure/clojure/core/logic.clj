@@ -1502,6 +1502,7 @@
 
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
+    ;; TODO: the key count of v & u must be the same
     (let [ks (keys u)]
       (loop [ks ks u u v v s s]
         (if (seq ks)
@@ -1510,6 +1511,7 @@
             (if (= vf ::not-found)
               nil
               (if-let [s (unify s (get u kf) vf)]
+                ;; TODO: there's no need to dissoc the keys - breaks struct maps
                 (recur (next ks) (dissoc u kf) (dissoc v kf) s)
                 nil)))
           (if (seq v)
