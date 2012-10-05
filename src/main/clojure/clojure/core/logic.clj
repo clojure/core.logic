@@ -106,7 +106,6 @@
 (defprotocol ITabled
   (-reify-tabled [this v])
   (reify-tabled [this v])
-  (alpha-equiv? [this x y])
   (reuse [this argv cache start end])
   (subunify [this arg ans]))
 
@@ -2759,7 +2758,7 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
-;; (atom ()) is cache, waiting streams are PersistentVectors
+;; (atom #{}) is cache, waiting streams are PersistentVectors
 
 (deftype SuspendedStream [cache ansv* f]
   clojure.lang.ILookup
@@ -2775,9 +2774,6 @@
     (not= @cache ansv*)))
 
 (defn make-suspended-stream [cache ansv* f]
-  {:pre [(instance? clojure.lang.Atom cache)
-         (list? ansv*)
-         (fn? f)]}
   (SuspendedStream. cache ansv* f))
 
 (defn suspended-stream? [x]
@@ -2837,10 +2833,6 @@
     (let [v (walk* this v)]
       (walk* (-reify-tabled empty-s v) v)))
 
-  ;; check that two terms are equivalent modulo fresh logic vars.
-  (alpha-equiv? [this x y]
-    (= (-reify this x) (-reify this y)))
-
   ;; argv are the actual parameters passed to a goal. cache
   ;; is the cache from the table for reified argv. on initial
   ;; call start is nil and end nil - so internally they will be
@@ -2848,14 +2840,16 @@
   ;; vector.
   (reuse [this argv cache start end]
     (let [start (or start @cache)
-          end   (or end ())]
+          end   (or end 0)]
       (letfn [(reuse-loop [ansv*]
-                (if (identical? ansv* end)
+                (if (= (count ansv*) end)
+                  ;; we've run out of answers terms to reuse in the cache
                   [(make-suspended-stream cache start
-                     (fn [] (reuse this argv cache @cache start)))]
-                  (Choice. (subunify this argv
-                             (reify-tabled this (first ansv*)))
-                           (fn [] (reuse-loop (rest ansv*))))))]
+                     (fn [] (reuse this argv cache @cache (count start))))]
+                  ;; we have answer terms to reuse in the cache
+                  (let [ans (first ansv*)]
+                    (Choice. (subunify this argv (reify-tabled this ans))
+                      (fn [] (reuse-loop (disj ansv* ans)))))))]
         (reuse-loop start))))
 
   ;; unify an argument with an answer from a cache
@@ -2902,13 +2896,16 @@
   (take* [this]
     (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
 
-(defn master [argv cache]
+(defn master
+  "Take the argument to the goal and check that we don't
+   have an alpha equivalent cached answer term in the cache.
+   If it doesn't already exist in the cache add the new
+   answer term."
+  [argv cache]
   (fn [a]
-    (when (every? (fn [ansv]
-                    (not (alpha-equiv? a argv ansv)))
-                  @cache)
-      (do (swap! cache conj (reify-tabled a argv))
-          a))))
+    (when-not (contains? @cache (-reify a argv))
+      (swap! cache conj (reify-tabled a argv))
+      a)))
 
 ;; -----------------------------------------------------------------------------
 ;; Syntax
@@ -2926,7 +2923,7 @@
           (let [key (-reify a argv)
                 cache (get @table key)]
             (if (nil? cache)
-              (let [cache (atom ())]
+              (let [cache (atom #{})]
                 (swap! table assoc key cache)
                 ((fresh []
                    (apply goal args)
@@ -2941,10 +2938,10 @@
      (fn [~@args]
        (let [argv# ~args]
          (fn [a#]
-           (let [key# (-reify a# argv#)
+           (let [key#   (-reify a# argv#)
                  cache# (get @table# key#)]
              (if (nil? cache#)
-               (let [cache# (atom ())]
+               (let [cache# (atom #{})]
                  (swap! table# assoc key# cache#)
                  ((fresh []
                     ~@grest
