@@ -1725,6 +1725,10 @@
   clojure.lang.IPersistentMap
   (walk-term [v s]
     (with-meta
+      ;; TODO: call empty here on v to preserve the type
+      ;; we were given, we can have the transient bit
+      ;; for the cases where we have a concrete Clojure map
+      ;; type, and just usy empty + assoc for everything else
       (loop [v v r (transient {})]
         (if (seq v)
           (let [[vfk vfv] (first v)]
