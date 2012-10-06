@@ -1035,10 +1035,10 @@
   (take* [this] this))
 
 (defn- make-s
-  ([] (Substitutions. {} () (make-cs) nil nil {} []))
-  ([m] (Substitutions. m () (make-cs) nil nil {} []))
-  ([m l] (Substitutions. m l (make-cs) nil nil {} []))
-  ([m l cs] (Substitutions. m l cs nil nil {} [])))
+  ([] (Substitutions. {} () (make-cs) nil nil {} nil))
+  ([m] (Substitutions. m () (make-cs) nil nil {} nil))
+  ([m l] (Substitutions. m l (make-cs) nil nil {} nil))
+  ([m l cs] (Substitutions. m l cs nil nil {} nil)))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
