@@ -2476,6 +2476,7 @@
   (valAt [this k not-found]
     (case k
       :cache cache
+      :ansv* ansv*
       :f f
       not-found))
   ISuspendedStream
@@ -2585,7 +2586,7 @@
       (fn []
         (into []
           (map (fn [ss]
-                 (make-suspended-stream (:cache ss) (.ansv* ss)
+                 (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind ((:f ss)) g))))
                this)))))
 
