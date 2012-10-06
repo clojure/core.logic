@@ -2546,8 +2546,7 @@
   ;; argv are the actual parameters passed to a goal. cache
   ;; is the cache from the table for reified argv. on initial
   ;; call start is nil and end nil - so internally they will be
-  ;; initialized to the contents of the cache and and an empty
-  ;; vector.
+  ;; initialized to the contents of the cache & 0
   (reuse [this argv cache start end]
     (let [start (or start @cache)
           end   (or end 0)]
