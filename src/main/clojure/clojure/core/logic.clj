@@ -2783,9 +2783,11 @@
 (defn verify-all-bound [a constrained]
   (letfn [(verify-all-bound* [a constrained]
             (when constrained
-              (let [f (first constrained)]
-                (if (and (lvar? f) (= f (walk a f)))
-                  (throw (Exception. (str "Constrained variable " f " without domain")))
+              (let [x (first constrained)]
+                (if (and (lvar? x)
+                         (and (lvar? (walk a x))
+                              (= (get-dom a x ::not-found) ::not-found)))
+                  (throw (Exception. (str "Constrained variable " x " without domain")))
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
 
