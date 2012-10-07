@@ -2699,7 +2699,7 @@
         a (assoc a :ws (assoc ws x v))]
     (if me
       (if (not= v vp)
-        ((run-constraints* [x]) a))
+        ((run-constraints* [x] (:cs a)) a))
       a)))
 
 (defn addcg [c]
@@ -2724,7 +2724,7 @@
 (defn relevant? [c a]
   (let [id (id c)]
     (and (or (nil? id)
-             (-> a :cs :cm id))
+             (-> a :cs :cm (get id)))
          (-relevant? c a))))
 
 (defn run-constraint [c]
