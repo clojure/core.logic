@@ -157,7 +157,7 @@
   (rands [this]))
 
 (defprotocol IRelevant
-  (relevant? [this s] [this x s]))
+  (-relevant? [this s] [this x s]))
 
 (defprotocol IReifiableConstraint
   (reifiable? [this])
@@ -792,7 +792,7 @@
         vs (doall
             (filter (fn [x]
                       (when (lvar? x)
-                        (let [remove? (not (relevant? c x s))]
+                        (let [remove? (not (-relevant? c x s))]
                           (when-not remove?
                             (reset! purge false))
                           remove?)))
@@ -2720,6 +2720,12 @@
 (defn running [a c]
   (assoc a :cs (runc (:cs a) c)))
 
+(defn relevant? [c a]
+  (let [id (id c)]
+    (and (or (nil? id)
+             (-> a :cs :cm id))
+         (-relevant? c a))))
+
 (defn run-constraint [c]
   (fn [a]
     (if (relevant? c a)
@@ -3001,10 +3007,10 @@
   (rator [_] (rator proc))
   (rands [_] (rands proc))
   IRelevant
-  (relevant? [this s]
-    (relevant? proc s))
-  (relevant? [this x s]
-    (relevant? proc x s))
+  (-relevant? [this s]
+    (-relevant? proc s))
+  (-relevant? [this x s]
+    (-relevant? proc x s))
   IRunnable
   (runnable? [this s]
     (if (satisfies? IRunnable proc)
@@ -3049,12 +3055,12 @@
     (rator [_] `domfdc)
     (rands [_] [x])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let [s  (use-ws s ::fd)
             xd (get-dom-safe s x)]
         (not (nil? xd))))
-    (relevant? [this x s]
-      (relevant? this s))
+    (-relevant? [this x s]
+      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let [xd (get-dom s x)]
@@ -3077,13 +3083,13 @@
     (rator [_] `=fd)
     (rands [_] [u v])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let-dom s [u du v dv]
         (cond
          (not (singleton-dom? du)) true
          (not (singleton-dom? dv)) true
          :else false)))
-    (relevant? [this x s]
+    (-relevant? [this x s]
       (if (get-dom s x) true false))))
 
 (defn =fd
@@ -3111,11 +3117,11 @@
     (rator [_] `!=fd)
     (rands [_] [u v])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let-dom s [u du v dv]
         (not (disjoint? du dv))))
-    (relevant? [this x s]
-      (relevant? this s))
+    (-relevant? [this x s]
+      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
@@ -3143,14 +3149,14 @@
     (rator [_] `<=fd)
     (rands [_] [u v])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let-dom s [u du v dv]
        (cond
         (not (singleton-dom? du)) true
         (not (singleton-dom? dv)) true
         :else (not (<= du dv)))))
-    (relevant? [this x s]
-      (relevant? this s))))
+    (-relevant? [this x s]
+      (-relevant? this s))))
 
 (defn <=fd
   "A finite domain constraint. u must be less than or equal to v.
@@ -3189,15 +3195,15 @@
     (rator [_] `+fd)
     (rands [_] [u v w])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let-dom s [u du v dv w dw]
        (cond
         (not (singleton-dom? du)) true
         (not (singleton-dom? dv)) true
         (not (singleton-dom? dw)) true
         :else (or (= du dw) (= dv dw)))))
-    (relevant? [this x s]
-      (relevant? this s))
+    (-relevant? [this x s]
+      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
@@ -3235,15 +3241,15 @@
      (rator [_] `*fd)
      (rands [_] [u v w])
      IRelevant
-     (relevant? [this s]
+     (-relevant? [this s]
        (let-dom s [u du v dv w dw]
          (cond
           (not (singleton-dom? du)) true
           (not (singleton-dom? dv)) true
           (not (singleton-dom? dw)) true
           :else (or (= du dw) (= dv dw)))))
-     (relevant? [this x s]
-       (relevant? this s))
+     (-relevant? [this x s]
+       (-relevant? this s))
      IRunnable
      (runnable? [this s]
        (let-dom s [u du v dv]
@@ -3292,10 +3298,10 @@
        (rator [_] `-distinctfd)
        (rands [_] [x])
        IRelevant
-       (relevant? [this s]
+       (-relevant? [this s]
          (not (singleton-dom? (walk s x))))
-       (relevant? [this x s]
-         (relevant? this s))
+       (-relevant? [this x s]
+         (-relevant? this s))
        IRunnable
        (runnable? [this s]
          (singleton-dom? (walk s x))))))
@@ -3334,11 +3340,11 @@
     (rator [_] `distinctfd)
     (rands [_] [v*])
     IRelevant
-    (relevant? [this s]
+    (-relevant? [this s]
       (let [v* (walk s v*)]
         (lvar? v*)))
-    (relevant? [this x s]
-      (relevant? this s))
+    (-relevant? [this x s]
+      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let [v* (walk s v*)]
@@ -3490,9 +3496,9 @@
        (runnable? [this s]
          (some #(not= (walk s %) %) (recover-vars p)))
        IRelevant
-       (relevant? [this s]
+       (-relevant? [this s]
          (not (empty? p)))
-       (relevant? [this x s]
+       (-relevant? [this x s]
          ((recover-vars p) x)))))
 
 (defn normalize-store [c]
