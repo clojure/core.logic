@@ -2682,8 +2682,10 @@
 
 (defn getv
   "Get the current value for a logic var using the working store."
-  [a wsi x]
-  (get (:ws a) x))
+  ([a wsi x]
+     (getv a wsi x nil))
+  ([a wsi x not-found]
+     (get (:ws a) x not-found)))
 
 (defn remv
   "Remove a binding from the working store."
@@ -2859,19 +2861,21 @@
 (defn get-dom
   "Get the domain for a logic var. Sugar over getv, but ensures
    that we're using the finite domain working store."
-  [a x]
-  (if (lvar? x)
-    (let [a (use-ws a ::fd)]
-      (getv a ::fd x))
-    x))
+  ([a x] (get-dom a x nil))
+  ([a x not-found]
+     (if (lvar? x)
+       (let [a (use-ws a ::fd)]
+         (getv a ::fd x not-found))
+       x)))
 
 (defn get-dom-safe
   "Like get-dom but assumes we're alread using the finite domain
    working store, a performance optimization."
-  [a x]
-  (if (lvar? x)
-    (getv a ::fd x)
-    x))
+  ([a x] (get-dom-safe a x nil))
+  ([a x not-found]
+     (if (lvar? x)
+       (getv a ::fd x not-found)
+       x)))
 
 (defn resolve-storable-dom
   "Given a domain update its value in the finite domain store by
