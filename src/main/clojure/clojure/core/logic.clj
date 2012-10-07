@@ -2683,24 +2683,24 @@
 (defn getv
   "Get the current value for a logic var using the working store."
   [a wsi x]
-  {:pre [(wsi? a wsi) (lvar? x)]}
   (get (:ws a) x))
 
 (defn remv
   "Remove a binding from the working store."
   [a wsi x]
-  {:pre [(wsi? a wsi) (lvar? x)]}
   (assoc a :ws (dissoc (:ws a) x)))
-
-;; TODO: this should probably rerun constraints, but only if the value
-;; is different from the one already in the working store
 
 (defn ext-ws
   "Update the current value for a logic var using the working
    store. Returns the updated substitution."
   [a wsi x v]
-  {:pre [(wsi? a wsi) (lvar? x)]}
-  (assoc a :ws (assoc (:ws a) x v)))
+  (let [ws (:ws a)
+        [k vp :as me] (find ws x)
+        a (assoc a :ws (assoc ws x v))]
+    (if me
+      (if (not= v vp)
+        ((run-constraints* [x]) a))
+      a)))
 
 (defn addcg [c]
   (fn [a]
@@ -2750,12 +2750,18 @@
               ((run-constraint c)
                (assoc a :cq (subvec (:cq a) 1))))))))))
 
+;; (defn run-constraints [xcs]
+;;   (if xcs
+;;     (composeg
+;;      (run-constraint (first xcs))
+;;      (run-constraints (next xcs)))
+;;     s#))
+
 (defn run-constraints [xcs]
-  (if xcs
-    (composeg
-     (run-constraint (first xcs))
-     (run-constraints (next xcs)))
-    s#))
+  (fn [a]
+    (fix-constraints
+      (let [cq (or (:cq a) [])]
+        (assoc a :cq (into cq xcs))))))
 
 (defn run-constraints* [xs cs]
   (if (or (zero? (count cs))
