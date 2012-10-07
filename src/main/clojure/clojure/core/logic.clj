@@ -2692,6 +2692,8 @@
   {:pre [(wsi? a wsi) (lvar? x)]}
   (assoc a :ws (dissoc (:ws a) x)))
 
+;; TODO: this should probably rerun constraints
+
 (defn ext-ws
   "Update the current value for a logic var using the working
    store. Returns the updated substitution."
