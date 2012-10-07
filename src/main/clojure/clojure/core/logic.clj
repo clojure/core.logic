@@ -2893,9 +2893,9 @@
   "Update a vars domain in the finite domain working store."
   [a x dom]
   (let [a    (use-ws a ::fd)
-        dom' (get-dom-safe a x)]
-    (if dom'
-      (let [i (intersection dom dom')]
+        domp (get-dom-safe a x)]
+    (if domp
+      (let [i (intersection dom domp)]
         (when i
           (resolve-storable-dom a x i)))
       (resolve-storable-dom a x dom))))
