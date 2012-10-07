@@ -2692,7 +2692,8 @@
   {:pre [(wsi? a wsi) (lvar? x)]}
   (assoc a :ws (dissoc (:ws a) x)))
 
-;; TODO: this should probably rerun constraints
+;; TODO: this should probably rerun constraints, but only if the value
+;; is different from the one already in the working store
 
 (defn ext-ws
   "Update the current value for a logic var using the working
@@ -2735,7 +2736,9 @@
       ((remcg c) a))))
 
 (defn fix-constraints
-  "A goal to run the constraints in cq until it is empty."
+  "A goal to run the constraints in cq until it is empty. Of
+   course running a constraint may grow cq so this function
+   finds the fixpoint."
   [a]
   (loop [a a]
     (when a
