@@ -2728,6 +2728,19 @@
         a)
       ((remcg c) a))))
 
+(defn fix-constraints
+  "A goal to run the constraints in cq until it is empty."
+  [a]
+  (loop [a a]
+    (when a
+      (let [cq (:cq a)]
+        (if (zero? (count cq))
+          a
+          (let [c (first cq)]
+            (recur
+              ((run-constraint c)
+               (assoc a :cq (subvec (:cq a) 1))))))))))
+
 (defn run-constraints [xcs]
   (if xcs
     (composeg
