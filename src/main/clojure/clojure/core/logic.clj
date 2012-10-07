@@ -2989,7 +2989,7 @@
 
 (defn force-ans [x]
   (fn [a]
-    ((let [v (walk a x)]
+    ((let-dom a [x v]
        (-force-ans v x)) a)))
 
 (deftype FDConstraint [proc _id _meta]
