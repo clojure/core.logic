@@ -2744,7 +2744,7 @@
     (when a
       (let [cq (:cq a)]
         (if (zero? (count cq))
-          a
+          (assoc a :cq nil)
           (let [c (first cq)]
             (recur
               ((run-constraint c)
@@ -2759,9 +2759,11 @@
 
 (defn run-constraints [xcs]
   (fn [a]
-    (fix-constraints
-      (let [cq (or (:cq a) [])]
-        (assoc a :cq (into cq xcs))))))
+    (let [cq (:cq a)
+          a  (assoc a :cq (into (or cq []) xcs))]
+     (if cq
+       a
+       (fix-constraints a)))))
 
 (defn run-constraints* [xs cs]
   (if (or (zero? (count cs))
