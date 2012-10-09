@@ -1920,6 +1920,8 @@
     (is (= (id c) 1))
     (is (= (id (:proc c)) 1))))
 
+;; FIXME
+
 (deftest test-distinctfd
   (is (= (run* [q]
            (fresh [x y z]
@@ -1951,10 +1953,11 @@
              (infd n m (interval 1 10))
              (*fd n 2 m)
              (== q [n m])))
-         '([1 2] [2 4] [3 6] [4 8] [ 5 10]))))
+         '([1 2] [2 4] [3 6] [4 8] [5 10]))))
 
+;; FIXME
 
-(deftest test0-<fd-2
+(deftest test-<fd-2
   (is (= (run* [q]
            (fresh [x y z]
              (infd x y z (interval 1 10))
