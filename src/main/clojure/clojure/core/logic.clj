@@ -932,9 +932,7 @@
 (defn build [s u]
   (build-term u s))
 
-(declare singleton-dom?)
-
-(declare empty-s make-s)
+(declare singleton-dom? empty-s make-s)
 
 ;; Substitutions
 ;; -----
