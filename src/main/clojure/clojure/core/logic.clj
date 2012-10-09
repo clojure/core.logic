@@ -2778,6 +2778,8 @@
          (run-constraints* (next xs) cs))
         (run-constraints* (next xs) cs))) ))
 
+(declare get-dom)
+
 ;; TODO: we've hard coded finite domains here
 
 (defn verify-all-bound [a constrained]
