@@ -1844,7 +1844,7 @@
   (is (= (run* [q]
            (fresh [x y z]
              (infd x z (interval 1 5))
-             (== y (interval 3 5))
+             (infd y (interval 3 5))
              (+fd x y z)
              (== q [x y z])))
          '([1 3 4] [2 3 5] [1 4 5]))))
