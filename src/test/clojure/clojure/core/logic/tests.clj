@@ -1955,8 +1955,6 @@
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [5 10]))))
 
-;; FIXME
-
 (deftest test-<fd-2
   (is (= (run* [q]
            (fresh [x y z]
