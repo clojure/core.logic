@@ -654,6 +654,8 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
+;; TODO: finish this!
+
 (defn member?* [is js]
   (if (disjoint? (interval (lb is) (ub is))
                  (interval (lb js) (ub js)))
