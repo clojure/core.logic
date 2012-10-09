@@ -2751,13 +2751,6 @@
               ((run-constraint c)
                (assoc a :cq (subvec (:cq a) 1))))))))))
 
-;; (defn run-constraints [xcs]
-;;   (if xcs
-;;     (composeg
-;;      (run-constraint (first xcs))
-;;      (run-constraints (next xcs)))
-;;     s#))
-
 (defn run-constraints [xcs]
   (fn [a]
     (let [cq (:cq a)
