@@ -2697,9 +2697,8 @@
   (let [ws (:ws a)
         [k vp :as me] (find ws x)
         a (assoc a :ws (assoc ws x v))]
-    (if me
-      (if (not= v vp)
-        ((run-constraints* [x] (:cs a)) a))
+    (if (and me (not= v vp))
+      ((run-constraints* [x] (:cs a)) a)
       a)))
 
 (defn addcg [c]
@@ -3033,11 +3032,12 @@
     (if (satisfies? IRunnable proc)
       (runnable? proc s)
       (let [s (use-ws s ::fd)]
-        (letfn [(dom-or-val? [x]
-                  (let [v (walk s x)]
-                    (or (not (lvar? v))
-                        (not (nil? (get-dom-safe s x))))))]
-          (every? identity (map dom-or-val? (rands proc)))))))
+        (letfn [(has-dom? [x]
+                  (let [x (walk s x)]
+                    (if (lvar? x)
+                      (get-dom-safe s x)
+                      x)))]
+          (every? identity (map has-dom? (rands proc)))))))
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
