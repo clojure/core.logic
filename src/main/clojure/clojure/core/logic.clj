@@ -2903,10 +2903,11 @@
 
 (defn process-dom [x dom]
   (fn [a]
-    (cond
-     (lvar? x) (update-var-dom a x dom)
-     (member? dom x) a
-     :else nil)))
+    (when dom
+      (cond
+       (lvar? x) (update-var-dom a x dom)
+       (member? dom x) a
+       :else nil))))
 
 (declare domfdc)
 
