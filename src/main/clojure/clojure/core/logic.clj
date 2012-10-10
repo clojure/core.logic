@@ -3318,8 +3318,12 @@
              (loop [dom-vars (seq dom-vars) s s]
                (if dom-vars
                  (let [dom-var (first dom-vars)
-                       s ((process-dom dom-var
-                            (difference (get-dom-safe s dom-var) x)) s)]
+                       ;; a previous process-dom call may have
+                       ;; have moved the value since we started
+                       ;; iterating
+                       dom-var (or (get-dom-safe s dom-var)
+                                   (walk s dom-var))
+                       s ((process-dom dom-var (difference dom-var x)) s)]
                    (when s
                      (recur (next dom-vars) s)))
                  ((remcg this) s))))))
