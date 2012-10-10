@@ -1969,14 +1969,13 @@
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [5 10]))))
 
-;; FIXME: error about ratios
-
 (deftest test-*fd-2
   (is (= (run* [q]
            (fresh [n m]
              (infd n m (interval 1 10))
              (*fd n m 10)
-             (== q [n m]))))))
+             (== q [n m])))
+         '([1 10] [2 5] [5 2] [10 1]))))
 
 (deftest test-<fd-2
   (is (= (run* [q]
