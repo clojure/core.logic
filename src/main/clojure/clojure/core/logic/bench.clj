@@ -453,6 +453,9 @@
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
+
+  ;; this is simply wrong, the only answer is [6 3]
+  ;; we get 4 answers back
   )
 
 ;; =============================================================================
