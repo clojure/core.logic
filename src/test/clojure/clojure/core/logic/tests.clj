@@ -1956,7 +1956,7 @@
   (is (= (run* [q]
            (fresh [x y]
              (== x 3)
-             (== y (multi-interval 2 4))
+             (infd y (multi-interval 2 4))
              (<=fd x y)
              (== q y)))
          '(4))))
@@ -1968,6 +1968,16 @@
              (*fd n 2 m)
              (== q [n m])))
          '([1 2] [2 4] [3 6] [4 8] [5 10]))))
+
+;; FIXME: error about ratios
+
+;; (deftest test-*fd-2
+;;   (is (= (run* [q]
+;;            (fresh [n m]
+;;              (infd n m (interval 1 10))
+;;              (*fd n m 10)
+;;              (== q [n m])))
+;;          )))
 
 (deftest test-<fd-2
   (is (= (run* [q]
