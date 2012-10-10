@@ -3321,9 +3321,10 @@
                        ;; a previous process-dom call may have
                        ;; have moved the value since we started
                        ;; iterating
-                       dom-var (or (get-dom-safe s dom-var)
-                                   (walk s dom-var))
-                       s ((process-dom dom-var (difference dom-var x)) s)]
+                       s ((process-dom dom-var
+                            (difference (or (get-dom-safe s dom-var)
+                                            (walk s dom-var))
+                                        x)) s)]
                    (when s
                      (recur (next dom-vars) s)))
                  ((remcg this) s))))))
