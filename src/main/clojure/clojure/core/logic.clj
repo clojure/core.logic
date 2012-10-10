@@ -3132,15 +3132,12 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv]
-        (not (disjoint? du dv))))
+        (cond
+         (not (singleton-dom? du)) true
+         (not (singleton-dom? dv)) true
+         :else (= du dv))))
     (-relevant? [this x s]
-      (-relevant? this s))
-    IRunnable
-    (runnable? [this s]
-      (let-dom s [u du v dv]
-        (and (domain? du) (domain? dv)
-             (or (singleton-dom? du)
-                 (singleton-dom? dv)))))))
+      (-relevant? this s)))) 
 
 (defn !=fd
   "A finite domain constraint. u and v must not be equal. u and v
