@@ -3101,7 +3101,7 @@
         (cond
          (not (singleton-dom? du)) true
          (not (singleton-dom? dv)) true
-         :else false)))
+         :else (not= du dv))))
     (-relevant? [this x s]
       (if (get-dom s x) true false))))
 
