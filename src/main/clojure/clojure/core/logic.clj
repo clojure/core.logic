@@ -3315,7 +3315,7 @@
                             (difference (get-dom-safe s dom-var) x)) s)]
                    (when s
                      (recur (next dom-vars) s)))
-                 s)))))
+                 ((remcg this) s))))))
        IWithConstraintId
        (with-id [this id]
          (-distinctfdc x y* n* id))
@@ -3325,12 +3325,12 @@
        (rator [_] `-distinctfd)
        (rands [_] [x])
        IRelevant
-       (-relevant? [this s]
-         (not (singleton-dom? (walk s x))))
-       (-relevant? [this x s]
-         (-relevant? this s))
+       (-relevant? [this s] true) ;; we are relevant until we get to run
+       (-relevant? [this x s] true)
        IRunnable
        (runnable? [this s]
+         ;; we can only run if x is is bound to
+         ;; a single value
          (singleton-dom? (walk s x))))))
 
 (defn -distinctfd [x y* n*]
