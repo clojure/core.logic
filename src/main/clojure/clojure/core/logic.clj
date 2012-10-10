@@ -3212,11 +3212,11 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv w dw]
-       (cond
-        (not (singleton-dom? du)) true
-        (not (singleton-dom? dv)) true
-        (not (singleton-dom? dw)) true
-        :else (or (= du dw) (= dv dw)))))
+        (cond
+         (not (singleton-dom? du)) true
+         (not (singleton-dom? dv)) true
+         (not (singleton-dom? dw)) true
+         :else (not= (+ du dv) dw))))
     (-relevant? [this x s]
       (-relevant? this s))
     IRunnable
@@ -3264,7 +3264,7 @@
           (not (singleton-dom? du)) true
           (not (singleton-dom? dv)) true
           (not (singleton-dom? dw)) true
-          :else (or (= du dw) (= dv dw)))))
+          :else (not= (* du dv) dw))))
      (-relevant? [this x s]
        (-relevant? this s))
      IRunnable
