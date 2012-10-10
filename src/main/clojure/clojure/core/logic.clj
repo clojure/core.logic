@@ -3282,9 +3282,8 @@
   (cgoal (fdc (*fdc u v w))))
 
 (defn categorize
-  "Groups values y* into var bound to non-singleton domains and singleton 
-   domain values. This will produce from y* the remaining vars bound to 
-   non-singleton domains and the latest singleton domain values."
+  "Groups values y* into vars bound to non-singleton domains and singleton 
+   domain values."
   [s y*]
   (loop [y* (seq y*) ds [] vs #{}]
     (if y*
@@ -3305,7 +3304,7 @@
    that existed at the construction of the constraint. We use categorize to 
    determine the current non-singleton bound vars and singleton vlaues. if x
    is in n* or the new singletons we have failed. If not we simply remove 
-   ourselves the remaining non-singleton domains bound to vars."
+   the value of x from the remaining non-singleton domains bound to vars."
   ([x y* n*] (-distinctfdc x y* n* nil))
   ([x y* n* id]
      (reify
@@ -3337,7 +3336,7 @@
        (rator [_] `-distinctfd)
        (rands [_] [x])
        IRelevant
-       (-relevant? [this s] true) ;; we are relevant until we get to run
+       (-relevant? [this s] true) ;; we are relevant until we run
        (-relevant? [this x s] true)
        IRunnable
        (runnable? [this s]
