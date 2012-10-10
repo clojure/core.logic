@@ -496,6 +496,8 @@
       (== q [a b c d]))))
 
 (comment
+  ;; FIXME
+
   (time (matches 40))
   
   ;; ~2970ms much faster
@@ -653,9 +655,6 @@
      3 0 1  0 0 7  0 4 0
      7 2 0  0 4 0  0 6 0
      0 0 4  0 1 0  0 0 3])
-  
-  ;; run-constraint gets call 18701 times
-  ;; cq never grows more than 4!
   
   (sudokufd easy0)
   (time (sudokufd easy0))
