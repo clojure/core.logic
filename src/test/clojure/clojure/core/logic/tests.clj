@@ -1952,6 +1952,16 @@
              (== q [a b c])))
          '([1 2 3]))))
 
+(deftest test-<fd-2
+  (is (= (run* [q]
+           (fresh [x y z]
+             (infd x y z (interval 1 10))
+             (+fd x y z)
+             (<fd x y)
+             (== z 10)
+             (== q [x y z])))
+         '([1 9 10] [2 8 10] [3 7 10] [4 6 10]))))
+
 (deftest test-<=fd-1
   (is (= (run* [q]
            (fresh [x y]
@@ -1976,16 +1986,6 @@
              (*fd n m 10)
              (== q [n m])))
          '([1 10] [2 5] [5 2] [10 1]))))
-
-(deftest test-<fd-2
-  (is (= (run* [q]
-           (fresh [x y z]
-             (infd x y z (interval 1 10))
-             (+fd x y z)
-             (<fd x y)
-             (== z 10)
-             (== q [x y z])))
-         '([1 9 10] [2 8 10] [3 7 10] [4 6 10]))))
 
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
