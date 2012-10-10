@@ -1971,13 +1971,12 @@
 
 ;; FIXME: error about ratios
 
-;; (deftest test-*fd-2
-;;   (is (= (run* [q]
-;;            (fresh [n m]
-;;              (infd n m (interval 1 10))
-;;              (*fd n m 10)
-;;              (== q [n m])))
-;;          )))
+(deftest test-*fd-2
+  (is (= (run* [q]
+           (fresh [n m]
+             (infd n m (interval 1 10))
+             (*fd n m 10)
+             (== q [n m]))))))
 
 (deftest test-<fd-2
   (is (= (run* [q]
