@@ -3275,32 +3275,45 @@
   [u v w]
   (cgoal (fdc (*fdc u v w))))
 
-(defn categorize [s]
-  (fn [ys ds ss]
-    (if ys
-      (let [y (first ys)
+(defn categorize
+  "Groups values y* into var bound to non-singleton domains and singleton 
+   domain values. This will produce from y* the remaining vars bound to 
+   non-singleton domains and the latest singleton domain values."
+  [s y*]
+  (loop [y* (seq y*) ds [] ss #{}]
+    (if y*
+      (let [y (first y*)
             v (walk s y)]
         (cond
-         (lvar? v) (recur (next ys) ds ss)
-         (singleton-dom? v) (recur (next ys) ds (conj ss v))
-         :else (recur (next ys) (conj ds y) ss)))
-      {:doms ds :singletons ss})))
+         (lvar? v) (recur (next y*) ds ss)
+         (singleton-dom? v) (recur (next y*) ds (conj ss v))
+         :else (recur (next y*) (conj ds y) ss)))
+      {:dom-vars ds :singleton-vals ss})))
 
 (defn -distinctfdc
+  "The real *individual* distinctfd constraint. x is a var that now is bound to
+   a single value. y* were the non-singleton bound vars that existed at the
+   construction of the constraint. n* is the set of singleton domain values 
+   that existed at the construction of the constraint. We use categorize to 
+   determine the current non-singleton bound vars and singleton vlaues. if x
+   is in n* or the new singletons we have failed. If not we simply remove 
+   ourselves the remaining non-singleton domains bound to vars."
   ([x y* n*] (-distinctfdc x y* n* nil))
   ([x y* n* id]
      (reify
        clojure.lang.IFn
        (invoke [this s]
-         (let [x (walk s x)
-               {:keys [doms singletons]} ((categorize s) (seq y*) [] #{})]
-           (when-not (or (n* x) (singletons x))
-             (loop [doms (seq doms) s s]
-               (if doms
-                 (let [d (first doms)
-                       s ((process-dom d (difference (walk s d) x)) s)]
+         (let [s (use-ws s ::fd)
+               x (walk s x)
+               {:keys [dom-vars singleton-vals]} (categorize s y*)]
+           (when-not (or (n* x) (singleton-vals x))
+             (loop [dom-vars (seq dom-vars) s s]
+               (if dom-vars
+                 (let [dom-var (first dom-vars)
+                       s ((process-dom dom-var
+                            (difference (get-dom-safe s dom-var) x)) s)]
                    (when s
-                     (recur (next doms) s)))
+                     (recur (next dom-vars) s)))
                  s)))))
        IWithConstraintId
        (with-id [this id]
@@ -3333,7 +3346,13 @@
            false))
         true))))
 
-(defn distinctfdc [v*]
+(defn distinctfdc
+  "The real distinctfd constraint. v* can be seq of logic vars and
+   values or it can be a logic var itself. This constraint does not 
+   run until v* has become ground. When it has become ground we group
+   v* into a set of logic vars and a sorted set of known singleton 
+   values. We then construct the individual constraint for each var."
+  [v*]
   (reify
     clojure.lang.IFn
     (invoke [this s]
