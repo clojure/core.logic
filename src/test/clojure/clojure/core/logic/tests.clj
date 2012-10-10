@@ -1928,6 +1928,22 @@
              (== q [x y z])))
          '([1 2 3] [1 3 2] [2 1 3] [3 1 2] [2 3 1] [3 2 1]))))
 
+(deftest test-=fd-1
+  (is (= (run* [q]
+           (fresh [a b]
+             (infd a b (interval 1 3))
+             (=fd a b)
+             (== q [a b])))
+         '([1 1] [2 2] [3 3]))))
+
+(deftest test-!=fd-1
+  (is (= (run* [q]
+           (fresh [a b]
+             (infd a b (interval 1 3))
+             (!=fd a b)
+             (== q [a b])))
+         '([1 2] [1 3] [2 1] [2 3] [3 1] [3 2]))))
+
 (deftest test-<fd-1
   (is (= (run* [q]
            (fresh [a b c]
