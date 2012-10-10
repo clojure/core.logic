@@ -3219,6 +3219,8 @@
       (-relevant? this s))
     IRunnable
     (runnable? [this s]
+      ;; we want to run even if w doesn't have a domain
+      ;; this is to support eqfd
       (let-dom s [u du v dv]
         (and (domain? du) (domain? dv))))))
 
@@ -3265,6 +3267,8 @@
        (-relevant? this s))
      IRunnable
      (runnable? [this s]
+       ;; we want to run even if w doesn't have a domain
+       ;; this is to support eqfd
        (let-dom s [u du v dv]
          (and (domain? du) (domain? dv)))))))
 
