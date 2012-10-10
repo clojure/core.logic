@@ -3286,15 +3286,17 @@
    domain values. This will produce from y* the remaining vars bound to 
    non-singleton domains and the latest singleton domain values."
   [s y*]
-  (loop [y* (seq y*) ds [] ss #{}]
+  (loop [y* (seq y*) ds [] vs #{}]
     (if y*
       (let [y (first y*)
-            v (walk s y)]
-        (cond
-         (lvar? v) (recur (next y*) ds ss)
-         (singleton-dom? v) (recur (next y*) ds (conj ss v))
-         :else (recur (next y*) (conj ds y) ss)))
-      {:dom-vars ds :singleton-vals ss})))
+            yd (get-dom-safe s y)]
+        (if yd
+          (recur (next y*) (conj ds y) vs)
+          (let [y (walk s y)] 
+            (if (lvar? y)
+              (recur (next y*) ds vs)
+              (recur (next y*) ds (conj vs y))))))
+      {:dom-vars ds :singleton-vals vs})))
 
 (defn -distinctfdc
   "The real *individual* distinctfd constraint. x is a var that now is bound to
