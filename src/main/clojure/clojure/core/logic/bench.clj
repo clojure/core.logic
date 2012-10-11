@@ -469,19 +469,19 @@
   ([_ () _ _ _]
      (fresh [hr]
        (infd hr (interval 1 n))
-       ;; we add w to the output list only if head of r+1 is w
        (matche [r o]
-         ;; r is not empty, we add w to the output
-         ;; only if we are one greater than the value at the head of r
+         ;; r is not empty, we add w to the output only if
+         ;; w is head of r + 1
          ([[hr . _] [w . r]] (+fd hr 1 w))
          ;; r is empty, just add the weight
+         ;; only works for w == 1
          ([() [w . r]]))))
   ;; we have stones to in sl to test w with
   ([_ [hsl . rsl] _ _ _]
      (fresh [w-hsl w+hsl o0 o1 nw]
        (infd hsl w-hsl w+hsl (interval 1 n))
        (+fd hsl w-hsl w) (+fd hsl w w+hsl)
-       ;; attempt to construct values prior  w
+       ;; attempt to construct values prior w
        (subchecko w-hsl rsl r  o0 n)
        ;; attempt to construct values around w
        (subchecko w     rsl o0 o1 n)
@@ -504,7 +504,7 @@
        (checko wr nsl nr n))))
 
 (defn matches [n]
-  (run* [q]
+  (run 1 [q]
     (fresh [a b c d s1 s2]
       (infd a b c d s1 s2 (interval 1 n)) 
       (distinctfd [a b c d])
