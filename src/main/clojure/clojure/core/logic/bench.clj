@@ -453,35 +453,52 @@
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
-
-  ;; this is simply wrong, the only answer is [6 3]
-  ;; we get 4 answers back
   )
 
 ;; =============================================================================
 ;; Stone Problem
 
+;; w  - is a stone (weight)
+;; sl - stone (weight) list
+;; r  - the input range we can construct
+;; o  - the output range we can construct
+;; n  - the bound
+
 (defne subchecko [w sl r o n]
+  ;; we have no more stones to test in sl to test w with
   ([_ () _ _ _]
-     (fresh [a]
-       (infd a (interval 1 n))
+     (fresh [hr]
+       (infd hr (interval 1 n))
+       ;; we add w to the output list only if head of r+1 is w
        (matche [r o]
-         ([[a . d] [w . r]] (+fd a 1 w))
+         ;; r is not empty, we add w to the output
+         ;; only if we are one greater than the value at the head of r
+         ([[hr . _] [w . r]] (+fd hr 1 w))
+         ;; r is empty, just add the weight
          ([() [w . r]]))))
-  ([_ [a . nsl] _ _ _]
-     (fresh [b c ro0 ro1 nw]
-       (infd a b c (interval 1 n))
-       (+fd a b w) (+fd a w c)
-       (subchecko b nsl r ro0 n)
-       (subchecko w nsl ro0 ro1 n)
-       (subchecko c nsl ro1 o n))))
+  ;; we have stones to in sl to test w with
+  ([_ [hsl . rsl] _ _ _]
+     (fresh [w-hsl w+hsl o0 o1 nw]
+       (infd hsl w-hsl w+hsl (interval 1 n))
+       (+fd hsl w-hsl w) (+fd hsl w w+hsl)
+       ;; attempt to construct values prior  w
+       (subchecko w-hsl rsl r  o0 n)
+       ;; attempt to construct values around w
+       (subchecko w     rsl o0 o1 n)
+       ;; attempt to construct values after w
+       (subchecko w+hsl rsl o1 o  n))))
 
 (defne checko [ws sl r n]
+  ;; if ws is empty, the first element of r must be n
   ([() _ [a . _] a])
+  ;; otherwise we check the first weight
   ([[w . wr] _ _ _]
      (fresh [nsl nr]
+       ;; check the first weight with subchecko
        (subchecko w sl r nr n)
+       ;; if it succeeds we add w to the new stone list
        (conso w sl nsl)
+       ;; check remaining weights
        (checko wr nsl nr n))))
 
 (defn matches [n]
@@ -497,8 +514,17 @@
 
 (comment
   ;; FIXME
-
+  
   (time (matches 40))
+
+  ;; somehow we are losing constraints, some how
+  ;; the constraints are consider no longer relevant
+
+  ;; invariant not possible? it's possible for var to have
+  ;; singleton value in subst while still having domain in
+  ;; in working store
+
+  (count (matches 40))
   
   ;; ~2970ms much faster
   ;; so >2X faster than cKanren under Petite Chez
