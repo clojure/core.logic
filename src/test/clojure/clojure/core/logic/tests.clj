@@ -1906,6 +1906,19 @@
              (== q [x y])))
          '([1 2] [2 3] [1 3]))))
 
+(defn subgoal [x]
+  (fresh [y]
+    (== y x)
+    (+fd 1 y 3)))
+
+(deftest test-ckanren-10
+  (is (= (run* [q]
+           (fresh [a]
+             (infd a (interval 1 10))
+             (subgoal a)
+             (== q a)))
+         '(2))))
+
 (deftest test-list-sorted
   (is (true? (list-sorted? < [1 2 3])))
   (is (true? (list-sorted? < [1 3 5])))
