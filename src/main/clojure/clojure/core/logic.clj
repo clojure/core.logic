@@ -118,6 +118,8 @@
 ;; =============================================================================
 ;; cKanren protocols
 
+;; TODO NOW: add root-var
+
 (defprotocol ISubstitutionsCLP
   (update [this x v]))
 
@@ -2652,6 +2654,9 @@
 (defn wsi? [a wsi]
   (= (:wsi a) wsi))
 
+;; TODO NOW: in order to avoid forcing people to understand root-var
+;; we will call it from getv, remv and ext-ws
+
 (defn getv
   "Get the current value for a logic var using the working store."
   ([a wsi x]
@@ -2881,6 +2886,12 @@
 
 (declare domfdc)
 
+;; TODO NOW: if a dom doesn't already exist for a var we add
+;; the domfdc constraint and set the dom in the working
+;; store. if it does exist we simply process-dom the working
+;; store with the dom. there is only ever one domfdc constraint
+;; on any given var
+
 (defn domfd
   "Assign a var x a domain."
   [x dom]
@@ -3024,7 +3035,10 @@
              "")]
     (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
-;; NOTE: what happens when multiple domfdc on the same var
+;; TODO NOW: -domfdc only runs if x becomes a sigleton it simply
+;; checks that the value of x intersects with the value we have in the
+;; working store. if it does we remove the var from the store, it is relevant as
+;; long as we have a dom value in the store
 
 (defn -domfdc [x dom]
   (reify
@@ -3034,8 +3048,6 @@
             v  (walk s x)
             xd (get-dom-safe s x)
             i  (intersection v xd)]
-        ;; TODO: we should only remove if x is now a singleton in subst
-        ;; otherwise just process-dom
         (when i
           (remv s ::fd x))))
     IConstraintOp
@@ -3048,7 +3060,6 @@
         (not (nil? xd))))
     IRunnable
     (runnable? [this s]
-      ;; TODO: actually we should run if we have a dom OR a singleton
       (let [xd (get-dom s x)]
         (and (not (nil? xd))
              (not (lvar? (walk s x))))))))
