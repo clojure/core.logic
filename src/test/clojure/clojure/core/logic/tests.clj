@@ -1663,7 +1663,7 @@
     (is (= (count (:km (:cs s))) 2))
     (is (= (count (:cm (:cs s))) 1))))
 
-(deftest test-purge-c
+#_(deftest test-purge-c
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
@@ -2084,7 +2084,11 @@
         s ((== x y) s)]
     (is (= s nil))))
 
-(deftest test-!=-3 []
+;; NOTE: we removed -relevant? protocol fn used for purging individual
+;; vars from the constraint store. This may return but as a finer grained
+;; protocol IRelevantLVar or some such
+
+#_(deftest test-!=-3 []
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)

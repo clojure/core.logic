@@ -127,9 +127,8 @@
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c])
-  (checkc [this c s])
   (remc [this c])
-  (runc [this c])
+  (runc [this c state])
   (constraints-for [this x]))
 
 ;; -----------------------------------------------------------------------------
@@ -157,7 +156,7 @@
   (rands [this]))
 
 (defprotocol IRelevant
-  (-relevant? [this s] [this x s]))
+  (-relevant? [this s]))
 
 (defprotocol IReifiableConstraint
   (reifiable? [this])
@@ -789,18 +788,6 @@
 (defn var-rands [c]
   (into [] (filter lvar? (flatten (rands c)))))
 
-(defn vars-to-remove [c vs s]
-  (let [purge (atom true)
-        vs (doall
-            (filter (fn [x]
-                      (when (lvar? x)
-                        (let [remove? (not (-relevant? c x s))]
-                          (when-not remove?
-                            (reset! purge false))
-                          remove?)))
-                    (flatten vs)))]
-    (pair @purge vs)))
-
 (declare add-var)
 
 ;; ConstraintStore
@@ -830,23 +817,6 @@
       (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
   (updatec [this c]
     (ConstraintStore. km (assoc cm (id c) c) cid running))
-  (checkc [this c s]
-    (let [ocid (id c)
-          oc (get cm ocid)]
-      ;; the constraint may no longer be in the store
-      (if oc
-        (let [[purge? vs] (vars-to-remove oc (rands c) s)
-              nkm (reduce (fn [m v]
-                            (let [kcs (disj (get m v) ocid)]
-                              (if (empty? kcs)
-                                (dissoc m v)
-                                (assoc m v kcs))))
-                          km vs)
-              ncm (if purge?
-                    (dissoc cm ocid)
-                    cm)]
-          (ConstraintStore. nkm ncm cid (disj running ocid)))
-        (ConstraintStore. km cm cid (disj running ocid)))))
   (remc [this c]
     (let [vs (var-rands c)
           ocid (id c)
@@ -858,8 +828,10 @@
                       km vs)
           ncm (dissoc cm ocid)]
       (ConstraintStore. nkm ncm cid running)))
-  (runc [this c]
-    (ConstraintStore. km cm cid (conj running (id c))))
+  (runc [this c state]
+    (if state
+      (ConstraintStore. km cm cid (conj running (id c)))
+      (ConstraintStore. km cm cid (disj running (id c)))))
   (constraints-for [this x]
     (when-let [ids (get km x)]
       (map cm (remove running ids))))
@@ -2711,16 +2683,17 @@
   (fn [a]
     (assoc a :cs (updatec (:cs a) c))))
 
-(defn checkcg [c]
-  (fn [a]
-    (assoc a :cs (checkc (:cs a) c a))))
-
 (defn remcg [c]
   (fn [a]
     (assoc a :cs (remc (:cs a) c))))
 
-(defn running [a c]
-  (assoc a :cs (runc (:cs a) c)))
+(defn runcg [c]
+  (fn [a]
+    (assoc a :cs (runc (:cs a) c true))))
+
+(defn stopcg [c]
+  (fn [a]
+    (assoc a :cs (runc (:cs a) c false))))
 
 (defn relevant? [c a]
   (let [id (id c)]
@@ -2732,7 +2705,7 @@
   (fn [a]
     (if (relevant? c a)
       (if (runnable? c a)
-        ((composeg c (checkcg c)) (running a c))
+        ((composeg* (runcg c) c (stopcg c)) a)
         a)
       ((remcg c) a))))
 
@@ -3026,8 +2999,6 @@
   IRelevant
   (-relevant? [this s]
     (-relevant? proc s))
-  (-relevant? [this x s]
-    (-relevant? proc x s))
   IRunnable
   (runnable? [this s]
     (if (satisfies? IRunnable proc)
@@ -3053,11 +3024,7 @@
              "")]
     (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
-;; a constraint so that domfd and unification can come in any order.
-;; this constraint only runs when the var has a value in the
-;; the substitution map. domfdc needs to distinguish between the var's
-;; binding in the substitution and its domain in the domain store
-;; - thus we can't leverage the convenience of let-dom
+;; NOTE: what happens when multiple domfdc on the same var
 
 (defn -domfdc [x dom]
   (reify
@@ -3067,6 +3034,8 @@
             v  (walk s x)
             xd (get-dom-safe s x)
             i  (intersection v xd)]
+        ;; TODO: we should only remove if x is now a singleton in subst
+        ;; otherwise just process-dom
         (when i
           (remv s ::fd x))))
     IConstraintOp
@@ -3077,10 +3046,9 @@
       (let [s  (use-ws s ::fd)
             xd (get-dom-safe s x)]
         (not (nil? xd))))
-    (-relevant? [this x s]
-      (-relevant? this s))
     IRunnable
     (runnable? [this s]
+      ;; TODO: actually we should run if we have a dom OR a singleton
       (let [xd (get-dom s x)]
         (and (not (nil? xd))
              (not (lvar? (walk s x))))))))
@@ -3106,9 +3074,7 @@
         (cond
          (not (singleton-dom? du)) true
          (not (singleton-dom? dv)) true
-         :else (not= du dv))))
-    (-relevant? [this x s]
-      (if (get-dom s x) true false))))
+         :else (not= du dv))))))
 
 (defn =fd
   "A finite domain constraint. u and v must be equal. u and v must
@@ -3138,8 +3104,6 @@
     (-relevant? [this s]
       (let-dom s [u du v dv]
         (not (disjoint? du dv))))
-    (-relevant? [this x s]
-      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
@@ -3174,9 +3138,7 @@
        (cond
         (not (singleton-dom? du)) true
         (not (singleton-dom? dv)) true
-        :else (not (<= du dv)))))
-    (-relevant? [this x s]
-      (-relevant? this s))))
+        :else (not (<= du dv)))))))
 
 (defn <=fd
   "A finite domain constraint. u must be less than or equal to v.
@@ -3222,8 +3184,6 @@
          (not (singleton-dom? dv)) true
          (not (singleton-dom? dw)) true
          :else (not= (+ du dv) dw))))
-    (-relevant? [this x s]
-      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       ;; we want to run even if w doesn't have a domain
@@ -3270,8 +3230,6 @@
           (not (singleton-dom? dv)) true
           (not (singleton-dom? dw)) true
           :else (not= (* du dv) dw))))
-     (-relevant? [this x s]
-       (-relevant? this s))
      IRunnable
      (runnable? [this s]
        ;; we want to run even if w doesn't have a domain
@@ -3342,7 +3300,6 @@
        (rands [_] [x])
        IRelevant
        (-relevant? [this s] true) ;; we are relevant until we run
-       (-relevant? [this x s] true)
        IRunnable
        (runnable? [this s]
          ;; we can only run if x is is bound to
@@ -3392,8 +3349,6 @@
     (-relevant? [this s]
       (let [v* (walk s v*)]
         (lvar? v*)))
-    (-relevant? [this x s]
-      (-relevant? this s))
     IRunnable
     (runnable? [this s]
       (let [v* (walk s v*)]
@@ -3546,9 +3501,7 @@
          (some #(not= (walk s %) %) (recover-vars p)))
        IRelevant
        (-relevant? [this s]
-         (not (empty? p)))
-       (-relevant? [this x s]
-         ((recover-vars p) x)))))
+         (not (empty? p))))))
 
 (defn normalize-store [c]
   (fn [a]
