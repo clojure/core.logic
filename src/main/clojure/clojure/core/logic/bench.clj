@@ -488,6 +488,8 @@
        ;; attempt to construct values after w
        (subchecko w+hsl rsl o1 o  n))))
 
+;; checks that list of weight can produce the list
+;; of integers from 1 to 40, in reverse order (40 ... 1)
 (defne checko [ws sl r n]
   ;; if ws is empty, the first element of r must be n
   ([() _ [a . _] a])
