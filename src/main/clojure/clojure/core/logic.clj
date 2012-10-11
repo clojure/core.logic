@@ -2913,9 +2913,10 @@
   [x dom]
   (fn [a]
     (let [a      (use-ws a ::fd)
+          x      (walk a x)
           first? (nil? (get-dom-safe a x))]
       ((composeg
-        (process-dom (walk a x) dom)
+        (process-dom x dom)
         (if first?
           (domfdc x dom)
           identity)) a))))
