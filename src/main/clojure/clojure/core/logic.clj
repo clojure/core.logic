@@ -2844,7 +2844,11 @@
 (defn singleton-dom? [x]
   (integer? x))
 
-(defmacro let-dom [a vars & body]
+(defmacro let-dom
+  "Convenience macro. Should only be used in the goal portion
+   of a finite domain constraint where the vars are known to
+   have domains."
+  [a vars & body]
   (let [get-var-dom (fn [a [v b]]
                       `(~b (let [v# (walk ~a ~v)]
                              (if (lvar? v#)
