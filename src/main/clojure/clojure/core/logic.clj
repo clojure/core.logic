@@ -2902,14 +2902,11 @@
   "Assign a var x a domain."
   [x dom]
   (fn [a]
-    (let [a      (use-ws a ::fd)
-          x      (walk a x)
-          first? (nil? (get-dom-safe a x))]
-      ((composeg
-        (process-dom x dom)
-        (if first?
-          (domfdc x dom)
-          identity)) a))))
+    ((composeg
+      (process-dom x dom)
+      (if (nil? (get-dom a x))
+        (domfdc x)
+        identity)) a)))
 
 (defmacro infd
   "Assign vars to domain. The domain must come last."
