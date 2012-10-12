@@ -1002,10 +1002,11 @@
        :else (recur vp (find s vp)))))
   
   (update [this x v]
-    ((run-constraints* (if (lvar? v) [x v] [x]) cs)
-     (if *occurs-check*
-       (ext this x v)
-       (ext-no-check this x v))))
+    (let [x (root-var this x)]
+      ((run-constraints* (if (lvar? v) [x (root-var this v)] [x]) cs)
+       (if *occurs-check*
+         (ext this x v)
+         (ext-no-check this x v)))))
 
   IBind
   (bind [this g]
