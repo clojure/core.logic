@@ -3218,6 +3218,9 @@
   [u v w]
   (cgoal (fdc (+fdc u v w))))
 
+;; TODO NOW: we run into trouble with division this is why
+;; simplefd in bench.clj needs map-sum when it should not
+
 (defn *fdc [u v w]
   (letfn [(safe-div [n c a]
             (if (zero? n) c (quot a n)))]
