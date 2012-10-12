@@ -2892,12 +2892,6 @@
 
 (declare domfdc)
 
-;; TODO NOW: if a dom doesn't already exist for a var we add
-;; the domfdc constraint and set the dom in the working
-;; store. if it does exist we simply process-dom the working
-;; store with the dom. there is only ever one domfdc constraint
-;; on any given var
-
 (defn domfd
   "Assign a var x a domain."
   [x dom]
