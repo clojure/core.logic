@@ -2662,26 +2662,24 @@
 (defn wsi? [a wsi]
   (= (:wsi a) wsi))
 
-;; TODO NOW: in order to avoid forcing people to understand root-var
-;; we will call it from getv, remv and ext-ws
-
 (defn getv
   "Get the current value for a logic var using the working store."
   ([a wsi x]
      (getv a wsi x nil))
   ([a wsi x not-found]
-     (get (:ws a) x not-found)))
+     (get (:ws a) (root-var a x) not-found)))
 
 (defn remv
   "Remove a binding from the working store."
   [a wsi x]
-  (assoc a :ws (dissoc (:ws a) x)))
+  (assoc a :ws (dissoc (:ws a) (root-var a x))))
 
 (defn ext-ws
   "Update the current value for a logic var using the working
    store. Returns the updated substitution."
   [a wsi x v]
-  (let [ws (:ws a)
+  (let [x (root-var a x)
+        ws (:ws a)
         [k vp :as me] (find ws x)
         a (assoc a :ws (assoc ws x v))]
     (if (and me (not= v vp))
