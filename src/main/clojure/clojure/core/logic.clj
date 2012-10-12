@@ -118,11 +118,10 @@
 ;; =============================================================================
 ;; cKanren protocols
 
-;; TODO NOW: add queue
-
 (defprotocol ISubstitutionsCLP
   (root-var [this x])
-  (update [this x v]))
+  (update [this x v])
+  (queue [this c]))
 
 ;; -----------------------------------------------------------------------------
 ;; Constraint Store
@@ -921,8 +920,9 @@
 ;; wsi - the index of the working constraint store in ss
 ;; ss  - the persistent hashmap of constraint stores
 ;; cq  - for the constraint queue
+;; cqs - constraint ids in the queue
 
-(deftype Substitutions [s l cs ws wsi ss cq]
+(deftype Substitutions [s l cs ws wsi ss cq cqs]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -946,6 +946,7 @@
       :wsi wsi
       :ss  ss
       :cq  cq
+      :cqs cqs
       not-found))
 
   clojure.lang.IPersistentCollection
@@ -959,7 +960,7 @@
 
   clojure.lang.Associative
   (containsKey [this k]
-    (contains? #{:s :l :cs :ws :wsi :ss :cq} k))
+    (contains? #{:s :l :cs :ws :wsi :ss :cq :cqs} k))
   (entryAt [this k]
     (case k
       :s   [:s s]
@@ -969,22 +970,24 @@
       :wsi [:wsi wsi]
       :ss  [:ss ss]
       :cq  [:cq cq]
+      :cqs [:cqs cqs]
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v l cs ws wsi ss cq)
-      :l   (Substitutions. s v cs ws wsi ss cq)
-      :cs  (Substitutions. s l  v ws wsi ss cq)
-      :ws  (Substitutions. s l cs  v wsi ss cq)
-      :wsi (Substitutions. s l cs ws   v ss cq)
-      :ss  (Substitutions. s l cs ws wsi  v cq)
-      :cq  (Substitutions. s l cs ws wsi ss  v)
+      :s   (Substitutions. v l cs ws wsi ss cq cqs)
+      :l   (Substitutions. s v cs ws wsi ss cq cqs)
+      :cs  (Substitutions. s l  v ws wsi ss cq cqs)
+      :ws  (Substitutions. s l cs  v wsi ss cq cqs)
+      :wsi (Substitutions. s l cs ws   v ss cq cqs)
+      :ss  (Substitutions. s l cs ws wsi  v cq cqs)
+      :cq  (Substitutions. s l cs ws wsi ss  v cqs)
+      :cqs (Substitutions. s l cs ws wsi ss cq v)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
   (ext-no-check [this u v]
     (Substitutions.
-      (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq))
+      (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs))
 
   (walk [this v]
     (loop [lv v [v vp] (find s v)]
@@ -1008,6 +1011,14 @@
          (ext this x v)
          (ext-no-check this x v)))))
 
+  (queue [this c]
+    (let [id (id c)]
+      (if-not (cqs id)
+        (-> this
+          (assoc :cq (conj cq c))
+          (assoc :cqs (conj cqs id)))
+        this)))
+
   IBind
   (bind [this g]
     (g this))
@@ -1018,10 +1029,10 @@
   (take* [this] this))
 
 (defn- make-s
-  ([] (Substitutions. {} () (make-cs) nil nil {} nil))
-  ([m] (Substitutions. m () (make-cs) nil nil {} nil))
-  ([m l] (Substitutions. m l (make-cs) nil nil {} nil))
-  ([m l cs] (Substitutions. m l cs nil nil {} nil)))
+  ([] (Substitutions. {} () (make-cs) nil nil {} nil #{}))
+  ([m] (Substitutions. m () (make-cs) nil nil {} nil #{}))
+  ([m l] (Substitutions. m l (make-cs) nil nil {} nil #{}))
+  ([m l cs] (Substitutions. m l cs nil nil {} nil #{})))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -2734,12 +2745,16 @@
           (let [c (first cq)]
             (recur
               ((run-constraint c)
-               (assoc a :cq (subvec (:cq a) 1))))))))))
+               (-> a
+                 (assoc :cq (subvec (:cq a) 1))
+                 (assoc :cqs (disj (:cqs a) (id c))))))))))))
 
 (defn run-constraints [xcs]
   (fn [a]
     (let [cq (:cq a)
-          a  (assoc a :cq (into (or cq []) xcs))]
+          a  (reduce (fn [a c]
+                       (queue a c))
+               (assoc a :cq (or cq [])) xcs)]
      (if cq
        a
        (fix-constraints a)))))
