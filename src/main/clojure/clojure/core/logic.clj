@@ -2686,6 +2686,11 @@
   [a wsi x]
   (assoc a :ws (dissoc (:ws a) (root-var a x))))
 
+;; TODO NOW: we should not add anything to ws if
+;; x already has a value in subst. should double
+;; check this is a problem by counting how many times
+;; we add to ws when x has a value in subst
+
 (defn ext-ws
   "Update the current value for a logic var using the working
    store. Returns the updated substitution."
