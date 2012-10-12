@@ -2883,7 +2883,7 @@
    move the value into the subsitution."
   [a x dom]
   (if (singleton-dom? dom)
-    (let [a (remv a ::fd x)]
+    (let [a (remv a ::fd x)] ;; TODO: we don't need to remove it domfdc will
       (update a x dom))
     (ext-ws a ::fd x dom)))
 
