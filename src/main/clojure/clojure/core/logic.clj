@@ -118,6 +118,8 @@
 ;; =============================================================================
 ;; cKanren protocols
 
+;; TODO NOW: add queue
+
 (defprotocol ISubstitutionsCLP
   (root-var [this x])
   (update [this x v]))
