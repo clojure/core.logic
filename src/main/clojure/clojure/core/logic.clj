@@ -2735,7 +2735,10 @@
 ;; TODO NOW: try an implementation that allows constraints
 ;; to run roughly in the order they normaly would. reverse
 ;; xcs in run-constraints, (into cq (reverse xcs)), cq should
-;; be persistent list
+;; be persistent list.
+
+;; TRIED: but causes overflow errors, if we switch to BigInt
+;; outof memory errors
 
 (defn fix-constraints
   "A goal to run the constraints in cq until it is empty. Of
