@@ -3566,3 +3566,11 @@
   ([_ [y . ys] [y . zs]]
      (!= y x)
      (rembero x ys zs)))
+
+
+
+
+
+
+
+(load "logic/partial_map")

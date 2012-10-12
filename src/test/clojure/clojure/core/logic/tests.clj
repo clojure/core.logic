@@ -1196,6 +1196,14 @@
                (== z [x y])
                (== [x] [3])))))
 
+(deftest test-49-partial-map-unification
+  (is (= '[{:a 1}]
+         (run* [q]
+               (fresh [pm x]
+                      (== pm (partial-map {:a x}))
+                      (== pm {:a 1 :b 2})
+                      (== pm q))))))
+
 ;; =============================================================================
 ;; cKanren
 
