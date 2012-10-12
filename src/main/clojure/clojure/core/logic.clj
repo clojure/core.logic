@@ -3262,7 +3262,7 @@
   (loop [y* (seq y*) ds [] vs #{}]
     (if y*
       (let [y (first y*)
-            yd (get-dom-safe s y)]
+            yd (get-dom s y)]
         (if yd
           (recur (next y*) (conj ds y) vs)
           (let [y (walk s y)] 
@@ -3284,8 +3284,7 @@
      (reify
        clojure.lang.IFn
        (invoke [this s]
-         (let [s (use-ws s ::fd)
-               x (walk s x)
+         (let [x (walk s x)
                {:keys [dom-vars singleton-vals]} (categorize s y*)]
            (when-not (or (n* x) (singleton-vals x))
              (loop [dom-vars (seq dom-vars) s s]
@@ -3295,7 +3294,7 @@
                        ;; have moved the value since we started
                        ;; iterating
                        s ((process-dom dom-var
-                            (difference (or (get-dom-safe s dom-var)
+                            (difference (or (get-dom s dom-var)
                                             (walk s dom-var))
                                         x)) s)]
                    (when s
