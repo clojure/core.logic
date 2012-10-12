@@ -1833,6 +1833,14 @@
 ;; -----------------------------------------------------------------------------
 ;; cKanren
 
+(deftest test-root-var-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+              (ext-no-check x 1)
+              (ext-no-check y x))]
+    (is (= (root-var s y) x))))
+
 (deftest test-ckanren-1
   (is (= (run* [q]
            (fresh [x]

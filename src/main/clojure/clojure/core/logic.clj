@@ -118,9 +118,8 @@
 ;; =============================================================================
 ;; cKanren protocols
 
-;; TODO NOW: add root-var
-
 (defprotocol ISubstitutionsCLP
+  (root-var [this x])
   (update [this x v]))
 
 ;; -----------------------------------------------------------------------------
@@ -993,6 +992,13 @@
        :else (recur vp (find s vp)))))
 
   ISubstitutionsCLP
+  (root-var [this v]
+    (loop [lv v [v vp] (find s v)]
+      (cond
+       (nil? v) lv
+       (not (lvar? vp)) v
+       :else (recur vp (find s vp)))))
+  
   (update [this x v]
     ((run-constraints* (if (lvar? v) [x v] [x]) cs)
      (if *occurs-check*
