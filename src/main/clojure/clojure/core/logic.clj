@@ -3038,37 +3038,24 @@
              "")]
     (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
 
-;; TODO NOW: -domfdc only runs if x becomes a sigleton it simply
-;; checks that the value of x intersects with the value we have in the
-;; working store. if it does we remove the var from the store, it is relevant as
-;; long as we have a dom value in the store
-
-(defn -domfdc [x dom]
+(defn -domfdc [x]
   (reify
     clojure.lang.IFn
     (invoke [this s]
-      (let [s  (use-ws s ::fd)
-            v  (walk s x)
-            xd (get-dom-safe s x)
-            i  (intersection v xd)]
-        (when i
-          (remv s ::fd x))))
+      (when (intersection (walk s x) (get-dom s x))
+        (remv s ::fd x)))
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
     IRelevant
     (-relevant? [this s]
-      (let [s  (use-ws s ::fd)
-            xd (get-dom-safe s x)]
-        (not (nil? xd))))
+      (not (nil? (get-dom s x))))
     IRunnable
     (runnable? [this s]
-      (let [xd (get-dom s x)]
-        (and (not (nil? xd))
-             (not (lvar? (walk s x))))))))
+      (not (lvar? (walk s x))))))
 
-(defn domfdc [x dom]
-  (cgoal (fdc (-domfdc x dom))))
+(defn domfdc [x]
+  (cgoal (fdc (-domfdc x))))
 
 (defn =fdc [u v]
   (reify
