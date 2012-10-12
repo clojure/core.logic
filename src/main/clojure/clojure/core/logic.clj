@@ -2737,6 +2737,11 @@
         a)
       ((remcg c) a))))
 
+;; TODO NOW: try an implementation that allows constraints
+;; to run roughly in the order they normaly would. reverse
+;; xcs in run-constraints, (into cq (reverse xcs)), cq should
+;; be persistent list
+
 (defn fix-constraints
   "A goal to run the constraints in cq until it is empty. Of
    course running a constraint may grow cq so this function
