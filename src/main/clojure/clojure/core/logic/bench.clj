@@ -449,6 +449,17 @@
         (*fd 4 y p1)
         (+fd p0 p1 24)))))
 
+;; FIXME: should be able to solve this this way
+
+#_(defn simple-eqfd []
+  (run* [q]
+    (fresh [x y]
+      (== q [x y])
+      (infd x y (interval 0 9))
+      (eqfd
+         (= (+ x y) 9)
+         (= (+ (* x 2) (* y 4)) 24)))))
+
 (comment
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
