@@ -182,6 +182,9 @@
   (lb [this])
   (ub [this]))
 
+(defprotocol IMemberCount
+  (member-count [this]))
+
 (defprotocol IIntervals
   (intervals [this]))
 
@@ -309,6 +312,8 @@
       :min min
       :max max
       not-found))
+  IMemberCount
+  (member-count [this] (count s))
   IInterval
   (lb [_] min)
   (ub [_] max)
@@ -385,6 +390,8 @@
 
 (defmacro extend-to-fd [t]
   `(extend-type ~t
+     IMemberCount
+     (~'member-count [this#] 1)
      IInterval
      (~'lb [this#] this#)
      (~'ub [this#] this#)
@@ -451,6 +458,8 @@
       false))
   (toString [this]
     (pr-str this))
+  IMemberCount
+  (member-count [this] (inc (- _ub _lb)))
   IInterval
   (lb [_] _lb)
   (ub [_] _ub)
@@ -715,6 +724,9 @@
             (= is js))
           false))
       false))
+  IMemberCount
+  (member-count [this]
+    (reduce + 0 (map member-count is)))
   IInterval
   (lb [_] min)
   (ub [_] max)
