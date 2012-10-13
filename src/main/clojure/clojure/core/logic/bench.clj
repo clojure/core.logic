@@ -451,7 +451,7 @@
 
 ;; FIXME: should be able to solve this this way
 
-#_(defn simple-eqfd []
+(defn simple-eqfd []
   (run* [q]
     (fresh [x y]
       (== q [x y])
@@ -464,6 +464,8 @@
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
+  
+  (simple-eqfd)
   )
 
 ;; =============================================================================

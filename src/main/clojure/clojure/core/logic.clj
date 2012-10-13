@@ -3454,10 +3454,14 @@
   `(fresh [~@vars]
      ~@(reverse exprs)))
 
-(defmacro eqfd [form]
+(defn eqfd-form [form]
   (let [vars (atom [])
         exprs (eqfd* (expand form) vars)]
     (->fd @vars exprs)))
+
+(defmacro eqfd [& forms]
+  `(all
+    ~@(map eqfd-form forms)))
 
 ;; =============================================================================
 ;; CLP(Tree)
