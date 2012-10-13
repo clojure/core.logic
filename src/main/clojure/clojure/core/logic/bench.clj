@@ -454,11 +454,11 @@
 (defn simple-eqfd []
   (run* [q]
     (fresh [x y]
-      (== q [x y])
       (infd x y (interval 0 9))
       (eqfd
          (= (+ x y) 9)
-         (= (+ (* x 2) (* y 4)) 24)))))
+         (= (+ (* x 2) (* y 4)) 24))
+      (== q [x y]))))
 
 (comment
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
