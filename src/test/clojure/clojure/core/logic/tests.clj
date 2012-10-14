@@ -2151,3 +2151,29 @@
              (+fd x y z)
              (== q [x y z])))
          '([1 1 2]))))
+
+;; =============================================================================
+;; eqfd
+
+(defn test-eqfd-1 []
+  (is (= (run* [q]
+           (fresh [x y]
+             (infd x y (interval 0 9))
+             (eqfd
+              (= (+ x y) 9)
+              (= (+ (* x 2) (* y 4)) 24))
+             (== q [x y])))
+         '([6 3]))))
+
+(defn test-eqfd-2 []
+  (is (= (run* [q]
+           (fresh [s e n d m o r y]
+             (== q [s e n d m o r y])
+             (infd s e n d m o r y (interval 0 9))
+             (distinctfd [s e n d m o r y])
+             (!=fd m 0) (!=fd s 0)
+             (eqfd
+              (= (+ (* 1000 s) (* 100 e) (* 10 n) d
+                    (* 1000 m) (* 100 o) (* 10 r) e)
+                 (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))))
+         '([9 5 6 7 1 0 8 2]))))
