@@ -1391,9 +1391,7 @@
 
 (deftest test-member?-mimi-1
   (is (false? (member? 20 (multi-interval (interval 1 3) 5 (interval 7 10)))))
-  (is (false? (member? (multi-interval (interval 1 3) 5 (interval 7 10)) 20)))
-  (is (false? (member? (interval 20 30) (multi-interval (interval 1 3) 5 (interval 7 10)))))
-  (is (false? (member? (multi-interval (interval 1 3) 5 (interval 7 10)) (interval 20 30)))))
+  (is (false? (member? (multi-interval (interval 1 3) 5 (interval 7 10)) 20))))
 
 (deftest test-disjoint?-mimi-1
   (is (true? (disjoint? 20 (multi-interval (interval 1 3) 5 (interval 7 10)))))
