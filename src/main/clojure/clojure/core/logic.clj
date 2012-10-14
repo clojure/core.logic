@@ -1003,18 +1003,14 @@
        :else (recur vp (find s vp)))))
   
   (update [this x v]
-    (let [xv (walk this x)]
-      (if (lvar? xv)
-        (let [x  (root-var this x)
-              xs (if (lvar? v)
-                   [x (root-var this v)]
-                   [x])]
-          ((run-constraints* xs cs ::subst)
-           (if *occurs-check*
-             (ext this x v)
-             (ext-no-check this x v))))
-        (when (= xv v) ;; NOTE: replace with unify?
-          this))))
+    (let [x  (root-var this x)
+          xs (if (lvar? v)
+               [x (root-var this v)]
+               [x])]
+      ((run-constraints* xs cs ::subst)
+       (if *occurs-check*
+         (ext this x v)
+         (ext-no-check this x v)))))
 
   (queue [this c]
     (let [id (id c)]
