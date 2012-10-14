@@ -346,6 +346,11 @@
   ;; works but is very slow, still much faster than original Prolog solution
   (cryptarithfd-1)
 
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 100] 
+       (cryptarithfd-1))))
+
   ;; ah, we don't actually want the intermediate values to generate
   ;; so many possibilities
   (cryptarithfd-2)
