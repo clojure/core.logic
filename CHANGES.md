@@ -1,9 +1,28 @@
+From 0.8-alpha2 to 0.8.0-beta1
+====
+
+Enhancements
+----
+* Improve performance of interval constraints
+* LOGIC-49: Partial unfication with maps now possible with partial-map
+* LOGIC-57: Improve performance of tabled goals
+* eqfd sugar for easy declaration of equations
+
+Fixes
+----
+* LOGIC-46: Unification with struct maps supported
+
+Changes
+----
+* Unification with domain types no longer supported
+* Unification with sets no longer supported: LOGIC-54 through 56
+
 From 0.8-alpha2 to 0.8-alpha3
 ====
 
 Fixes
 ----
-* CLJS-50: Rel relation PersistentHashSet becomes LazySeq after issuing a retraction
+* LOGIC-50: Rel relation PersistentHashSet becomes LazySeq after issuing a retraction
 
 From 0.8-alpha1 to 0.8-alpha2
 ====
