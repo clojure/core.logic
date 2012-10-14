@@ -126,13 +126,6 @@
 ;; -----------------------------------------------------------------------------
 ;; Constraint Store
 
-;; TODO NOW: change the constraint store so that constraints-for
-;; takes a ws so we can filter out irrelevant constraints. This
-;; means we should add a new protocol for constraints to implement
-;; which is which working store they belong to. update will ask
-;; for ::subst and ext-ws will ask for what ever working store
-;; is being worked on!
-
 (defprotocol IConstraintStore
   (addc [this c])
   (updatec [this c])
@@ -674,7 +667,7 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
-;; TODO: finish this!
+;; TODO NOW: finish this!
 
 (defn member?* [is js]
   (if (disjoint? (interval (lb is) (ub is))
