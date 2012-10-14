@@ -2728,8 +2728,8 @@
 ;; xcs in run-constraints, (into cq (reverse xcs)), cq should
 ;; be persistent list.
 
-;; TRIED: but causes overflow errors, if we switch to BigInt
-;; outof memory errors
+;; TRIED: but causes overflow errors for crypt1, and if we switch to BigInt
+;; for crypt1 out of memory errors, needs more investigation
 
 (defn fix-constraints
   "A goal to run the constraints in cq until it is empty. Of
