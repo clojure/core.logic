@@ -207,7 +207,7 @@
   (keep-before [this n]))
 
 (defprotocol ISet
-  (member? [this that])
+  (member? [this n])
   (disjoint? [this that])
   (intersection [this that])
   (difference [this that]))
@@ -292,7 +292,7 @@
   (> (lb i) (ub j)))
 
 (declare domain sorted-set->domain
-         difference* intersection* member?* disjoint?*
+         difference* intersection* disjoint?*
          unify-with-domain*)
 
 ;; FiniteDomain
@@ -335,13 +335,8 @@
   IFiniteDomain
   (domain? [_] true)
   ISet
-  (member? [this that]
-    (cond
-     (integer? that)
-       (if (s that) true false)
-     (instance? FiniteDomain that)
-       (set/subset? s (:s that))
-     :else (member?* this that)))
+  (member? [this n]
+    (if (s n) true false))
   (disjoint? [this that]
     (cond
      (integer? that)
@@ -485,20 +480,8 @@
   IFiniteDomain
   (domain? [_] true)
   ISet
-  (member? [this that]
-    (cond
-     (integer? that)
-     (and (>= that _lb) (<= that _ub))
-     
-     (interval? that)
-     (let [i this
-           j that
-           [imin imax] (bounds i)
-           [jmin jmax] (bounds j)]
-       (and (>= jmin imin)
-            (<= jmax imax)))
-     
-     :else (member?* this that)))
+  (member? [this n]
+    (and (>= n _lb) (<= n _ub)))
   (disjoint? [this that]
     (cond
      (integer? that)
@@ -667,18 +650,6 @@
           (apply multi-interval (into r is)))
         (apply multi-interval r))))
 
-;; TODO NOW: finish this!
-
-(defn member?* [is js]
-  (if (disjoint? (interval (lb is) (ub is))
-                 (interval (lb js) (ub js)))
-    false
-    (let [d0 (intervals is)
-          d1 (intervals js)]
-      (loop [d0 d0 d1 d1 r []]
-        (if (nil? d0)
-          true)))))
-
 (defn disjoint?* [is js]
   (if (disjoint? (interval (lb is) (ub is))
                  (interval (lb js) (ub js)))
@@ -764,8 +735,10 @@
   IFiniteDomain
   (domain? [_] true)
   ISet
-  (member? [this that]
-    (member?* this that))
+  (member? [this n]
+    (if (some #(member? % n) is)
+      true
+      false))
   (disjoint? [this that]
     (disjoint?* this that))
   (intersection [this that]
