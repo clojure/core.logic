@@ -341,8 +341,6 @@
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
-  ;; FIXME NOW: not sure how y can be -18 with the distinctfd constraint
-
   (cryptarithfd-1)
 
   (dotimes [_ 5]
