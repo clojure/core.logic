@@ -3192,6 +3192,14 @@
 ;; the constraint in the body again which were trying to get
 ;; away from
 
+(defn +fdc-guard [u v w]
+  (fn [s]
+    (let-dom s [u du v dv w dw]
+      (if (every? singleton-dom? [du dv dw])
+        (when (= (+ du dv) dw)
+          s)
+        s))))
+
 (defn +fdc [u v w]
   (reify 
     clojure.lang.IFn
@@ -3202,11 +3210,12 @@
                             [(+ (lb du) (lb dv)) (+ (ub du) (ub dv))])
               [umin umax] (bounds du)
               [vmin vmax] (bounds dv)]
-          ((composeg
-             (process-dom w (interval (+ umin vmin) (+ umax vmax)))
-             (composeg
-               (process-dom u (interval (- wmin vmax) (- wmax vmin)))
-               (process-dom v (interval (- wmin umax) (- wmax umin))))) s))))
+          ((composeg*
+            (process-dom w (interval (+ umin vmin) (+ umax vmax)))
+            (process-dom u (interval (- wmin vmax) (- wmax vmin)))
+            (process-dom v (interval (- wmin umax) (- wmax umin)))
+            (+fdc-guard u v w))
+           s))))
     IConstraintOp
     (rator [_] `+fd)
     (rands [_] [u v w])
@@ -3234,6 +3243,14 @@
 ;; TODO NOW: we run into trouble with division this is why
 ;; simplefd in bench.clj needs map-sum when it should not
 
+(defn *fdc-guard [u v w]
+  (fn [s]
+    (let-dom s [u du v dv w dw]
+      (if (every? singleton-dom? [du dv dw])
+        (when (= (* du dv) dw)
+          s)
+        s))))
+
 (defn *fdc [u v w]
   (letfn [(safe-div [n c a]
             (if (zero? n) c (quot a n)))]
@@ -3251,11 +3268,11 @@
                vi (interval (safe-div umax vmin wmin)
                             (safe-div umin vmax wmax))
                wi (interval (* umin vmin) (* umax vmax))]
-           ((composeg
+           ((composeg*
              (process-dom w wi)
-             (composeg
-              (process-dom u ui)
-              (process-dom v vi))) s))))
+             (process-dom u ui)
+             (process-dom v vi)
+             (*fdc-guard u v w)) s))))
      IConstraintOp
      (rator [_] `*fd)
      (rands [_] [u v w])
