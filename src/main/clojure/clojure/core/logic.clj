@@ -138,7 +138,7 @@
   (updatec [this c])
   (remc [this c])
   (runc [this c state])
-  (constraints-for [this x]))
+  (constraints-for [this x ws]))
 
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
@@ -159,6 +159,9 @@
 (extend-type Object
   IConstraintId
   (id [this] nil))
+
+(defprotocol IConstraintWatchedStores
+  (watched-stores [this]))
 
 (defprotocol IConstraintOp
   (rator [this])
@@ -853,9 +856,9 @@
     (if state
       (ConstraintStore. km cm cid (conj running (id c)))
       (ConstraintStore. km cm cid (disj running (id c)))))
-  (constraints-for [this x]
+  (constraints-for [this x ws]
     (when-let [ids (get km x)]
-      (map cm (remove running ids))))
+      (filter #((watched-stores %) ws) (map cm (remove running ids)))))
   clojure.lang.Counted
   (count [this]
     (count cm)))
@@ -1024,8 +1027,11 @@
        :else (recur vp (find s vp)))))
   
   (update [this x v]
-    (let [x (root-var this x)]
-      ((run-constraints* (if (lvar? v) [x (root-var this v)] [x]) cs)
+    (let [x  (root-var this x)
+          xs (if (lvar? v)
+               [x (root-var this v)]
+               [x])]
+      ((run-constraints* xs cs ::subst)
        (if *occurs-check*
          (ext this x v)
          (ext-no-check this x v)))))
@@ -2714,7 +2720,7 @@
         [k vp :as me] (find ws x)
         a (assoc a :ws (assoc ws x v))]
     (if (and me (not= v vp))
-      ((run-constraints* [x] (:cs a)) a)
+      ((run-constraints* [x] (:cs a) wsi) a)
       a)))
 
 (defn addcg [c]
@@ -2786,16 +2792,16 @@
        a
        (fix-constraints a)))))
 
-(defn run-constraints* [xs cs]
+(defn run-constraints* [xs cs ws]
   (if (or (zero? (count cs))
           (nil? (seq xs)))
     s#
-    (let [xcs (constraints-for cs (first xs))]
+    (let [xcs (constraints-for cs (first xs) ws)]
       (if (seq xcs)
         (composeg
          (run-constraints xcs)
-         (run-constraints* (next xs) cs))
-        (run-constraints* (next xs) cs))) ))
+         (run-constraints* (next xs) cs ws))
+        (run-constraints* (next xs) cs ws)))))
 
 (declare get-dom)
 
@@ -3064,7 +3070,12 @@
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
-  (id [this] _id))
+  (id [this] _id)
+  IConstraintWatchedStores
+  (watched-stores [this]
+    (if (satisfies? IConstraintWatchedStores proc)
+      (watched-stores proc)
+      #{::subst ::fd})))
 
 (defn fdc [proc]
   (FDConstraint. proc nil nil))
@@ -3089,7 +3100,9 @@
       (not (nil? (get-dom s x))))
     IRunnable
     (runnable? [this s]
-      (not (lvar? (walk s x))))))
+      (not (lvar? (walk s x))))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 (defn domfdc [x]
   (cgoal (fdc (-domfdc x))))
@@ -3344,7 +3357,9 @@
        (runnable? [this s]
          ;; we can only run if x is is bound to
          ;; a single value
-         (singleton-dom? (walk s x))))))
+         (singleton-dom? (walk s x)))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
 
 (defn -distinctfd [x y* n*]
   (cgoal (fdc (-distinctfdc x y* n*))))
@@ -3545,7 +3560,9 @@
          (some #(not= (walk s %) %) (recover-vars p)))
        IRelevant
        (-relevant? [this s]
-         (not (empty? p))))))
+         (not (empty? p)))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
 
 (defn normalize-store [c]
   (fn [a]

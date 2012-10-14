@@ -1637,12 +1637,12 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        csp (addc (make-cs) c)
-        sc (first (constraints-for csp u))]
+        cs (addc (make-cs) c)
+        sc (first (constraints-for cs u :clojure.core.logic/fd))]
     (is (= c sc))
     (is (= (id sc) 0))
-    (is (= (count (:km csp)) 2))
-    (is (= (count (:cm csp)) 1))))
+    (is (= (count (:km cs)) 2))
+    (is (= (count (:cm cs)) 1))))
 
 (deftest test-addc-2
   (let [u (lvar 'u)
@@ -1677,7 +1677,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (constraints-for (:cs s) u))
+        c (first (constraints-for (:cs s) u ::fd))
         s (-> s
             (ext-no-check u 1)
             (ext-no-check w 2))
@@ -1704,7 +1704,7 @@
     (is (= 10 (ub mi)))))
 
 (deftest test-run-constraints*
-  (is (= (run-constraints* [] []) s#)))
+  (is (= (run-constraints* [] [] ::subst) s#)))
 
 (deftest test-drop-one-1
   (is (= (:s (drop-one (domain 1 2 3)))
