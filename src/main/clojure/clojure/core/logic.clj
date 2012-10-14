@@ -2924,7 +2924,10 @@
           (resolve-storable-dom a x i)))
       (resolve-storable-dom a x dom))))
 
-(defn process-dom [x dom]
+(defn process-dom
+  "If x is a var we update its domain. If it's an integer
+   we check that it's a member of the given domain."
+  [x dom]
   (fn [a]
     (when dom
       (cond
