@@ -724,7 +724,7 @@
 
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10]
+     (dotimes [_ 1]
        (sudokufd hard0))))
 
   ;; from GeCode test suite

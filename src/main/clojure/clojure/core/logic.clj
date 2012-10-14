@@ -293,7 +293,7 @@
 
 (declare domain sorted-set->domain
          difference* intersection* disjoint?*
-         unify-with-domain*)
+         unify-with-domain* finite-domain?)
 
 ;; FiniteDomain
 ;; -----
@@ -306,6 +306,13 @@
 ;; max - the maximum value, an optimization
 
 (deftype FiniteDomain [s min max]
+  Object
+  (equals [this that]
+    (if (finite-domain? that)
+      (if (= (member-count this) (member-count that))
+        (= s (:s that))
+        false)
+      false))
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
@@ -365,6 +372,9 @@
        (difference* this that)))
   IIntervals
   (intervals [_] (seq s)))
+
+(defn finite-domain? [x]
+  (instance? FiniteDomain x))
 
 (defn sorted-set->domain [s]
   (let [c (count s)]
