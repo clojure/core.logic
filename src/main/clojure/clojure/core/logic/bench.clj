@@ -329,7 +329,7 @@
 
 ;; Bratko 3rd ed pg 343
 
-#_(defn cryptarithfd-2 []
+(defn cryptarithfd-2 []
   (run* [q]
     (fresh [d o n a l g e r b t]
       (== q [d o n a l g e r b t])
@@ -341,9 +341,8 @@
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
-  ;; yep, 12917 force-ans calls, seems very excessive
-  
-  ;; works but is very slow, still much faster than original Prolog solution
+  ;; FIXME NOW: not sure how y can be -18 with the distinctfd constraint
+
   (cryptarithfd-1)
 
   (dotimes [_ 5]
@@ -351,14 +350,8 @@
      (dotimes [_ 100] 
        (cryptarithfd-1))))
 
-  ;; ah, we don't actually want the intermediate values to generate
-  ;; so many possibilities
+  ;; FIXME: overflow
   (cryptarithfd-2)
-
-  ;; perhaps in the case where the domain is large? this needs a lot more
-  ;; thought
-
-  ;; we don't want "labeling" on generated vars?
   )
 
 ;; =============================================================================
@@ -430,7 +423,6 @@
        (map second)))
 
 (comment
-  ;; ~2250ms
   ;; close to 2X faster than Petite Chez
   (dotimes [_ 5]
     (time
@@ -454,7 +446,7 @@
         (*fd 4 y p1)
         (+fd p0 p1 24)))))
 
-;; FIXME: should be able to solve this this way
+;; with eqfd sugar
 
 (defn simple-eqfd []
   (run* [q]
@@ -471,6 +463,11 @@
   (simplefd)
   
   (simple-eqfd)
+
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1e3] 
+       (simple-eqfd))))
   )
 
 ;; =============================================================================
@@ -533,21 +530,8 @@
       (== q [a b c d]))))
 
 (comment
-  ;; FIXME
-  
   (time (matches 40))
 
-  ;; somehow we are losing constraints, some how
-  ;; the constraints are consider no longer relevant
-
-  ;; invariant not possible? it's possible for var to have
-  ;; singleton value in subst while still having domain in
-  ;; in working store
-
-  (count (matches 40))
-  
-  ;; ~2970ms much faster
-  ;; so >2X faster than cKanren under Petite Chez
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -593,8 +577,6 @@
             sq1 sq2 sq3 sq4])))))
 
 (comment
-  ;; ~1668ms
-  ;; ~1171ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -712,15 +694,11 @@
 
   (-> (sudokufd easy0) first verify)
 
-  ;; ~600ms
-  ;; 6ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
        (sudokufd easy0))))
 
-  ;; ~700ms
-  ;; 7ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
@@ -744,8 +722,6 @@
 
   (-> (sudokufd hard0) first verify)
 
-  ;; ~600ms
-  ;; ~60ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
@@ -769,8 +745,6 @@
 
   (-> (sudokufd hard1) first verify)
 
-  ;; ~1500ms
-  ;; ~150ms for 1
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
@@ -794,7 +768,6 @@
 
   (-> (sudokufd hard2) first print-solution)
 
-  ;; ~570ms
   (dotimes [_ 5]
     (time
      (sudokufd hard2)))
