@@ -9,7 +9,7 @@
                  "src/test/clojure"]
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.macro "0.1.1"]
-                 [com.datomic/datomic-free "0.8.3551"]]
+                 [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
   :dev-dependencies [[lein-swank "1.4.4"]
                      [lein-cljsbuild "0.2.5"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
