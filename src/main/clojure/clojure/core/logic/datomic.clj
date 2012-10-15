@@ -28,13 +28,13 @@
   (unify-with-seq [v u s]
     (unify-with-datum* u v s)))
 
-(defn datomic-rel [conn index q]
+(defn datomic-rel [db index q]
   (fn [a]
     (let [components (walk* a (take-while #(not (lvar? (walk a %))) q))]
       (to-stream
         (map (fn [datom]
                (unify a q datom))
-          (apply d/datoms (db conn) index components))))))
+           (apply d/datoms db index components))))))
 
 (comment
   ;; start transactor from datomic directory
@@ -63,9 +63,8 @@
 
   (run* [q]
     (fresh [e a v t]
-      (== e 2)
-      (== v :db/retract)
-      (datomic-rel conn :eavt [e a v t])
+      (== e 17592186045418)
+      (datomic-rel (db conn) :eavt [e a v t])
       (== q [e a v t])))
 
   (last (d/datoms (db conn) :aevt))
