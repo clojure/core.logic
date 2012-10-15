@@ -4,10 +4,12 @@
                          "checkouts/clojurescript/src/cljs"]
   :parent [org.clojure/pom.contrib "0.0.25"]
   :source-path "src/main/clojure"
+  :test-path "src/test/clojure"
   :source-paths ["src/main/clojure"
                  "src/test/clojure"]
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [org.clojure/tools.macro "0.1.1"]]
+                 [org.clojure/tools.macro "0.1.1"]
+                 [com.datomic/datomic-free "0.8.3551"]]
   :dev-dependencies [[lein-swank "1.4.4"]
                      [lein-cljsbuild "0.2.5"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
