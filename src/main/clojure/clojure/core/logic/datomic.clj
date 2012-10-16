@@ -60,14 +60,21 @@
   (let [[e a v t] (fillq q)]
     [:vaet [v a e t]]))
 
-(defn datomic-rel [db q]
+(defn query [db q]
   (fn [a]
-    (let [q (walk a q)
+    (let [->id (fn [x]
+                 (if (keyword? x)
+                   (or (d/entid db x) x)
+                   x))
+          q (walk a q)
           [index components] (index-and-components-for a q)
-          ground-components (walk* a (take-while #(not (lvar? (walk a %))) components))]
+          ground-components (->> components
+                              (take-while #(not (lvar? (walk a %))))
+                              (walk* a)
+                              (map ->id))]
       (to-stream
         (map (fn [datom]
-               (unify a q datom))
+               (unify a (into [] (map ->id q)) datom))
            (apply d/datoms db index ground-components))))))
 
 (comment
@@ -101,14 +108,10 @@
   (q '[:find ?id :where [?id :db/ident :db.install/attribute]]
      (db conn))
 
-  (let [db       (db conn)
-        attr-id  (d/entid db :db.install/attribute)
-        ident-id (d/entid db :db/ident)]
+  (let [db (db conn)]
     (run* [q]
-      (fresh [q0 q1 e a name]
-        (== q0 [e attr-id a])
-        (datomic-rel db q0)
-        (== q1 [a ident-id name])
-        (datomic-rel db q1)
+      (fresh [e a name]
+        (query db [e :db.install/attribute a])
+        (query db [a :db/ident name])
         (== q name))))
  )
