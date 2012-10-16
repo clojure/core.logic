@@ -105,7 +105,7 @@
         attr-id  (d/entid db :db.install/attribute)
         ident-id (d/entid db :db/ident)]
     (run* [q]
-      (fresh [q0 q1 q2 e a name]
+      (fresh [q0 q1 e a name]
         (== q0 [e attr-id a])
         (datomic-rel db q0)
         (== q1 [a ident-id name])
