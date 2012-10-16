@@ -348,7 +348,7 @@
      (dotimes [_ 100] 
        (cryptarithfd-1))))
 
-  ;; FIXME: overflow
+  ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
   (cryptarithfd-2)
   )
 
