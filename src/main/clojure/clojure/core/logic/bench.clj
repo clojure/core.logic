@@ -349,7 +349,8 @@
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
-  (cryptarithfd-2)
+  ;; 5 mins
+  (time (cryptarithfd-2))
   )
 
 ;; =============================================================================
