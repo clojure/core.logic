@@ -3240,6 +3240,10 @@
   [u v w]
   (cgoal (fdc (+fdc u v w))))
 
+(defn -fd
+  [u v w]
+  (+fd v w u))
+
 ;; TODO NOW: we run into trouble with division this is why
 ;; simplefd in bench.clj needs map-sum when it should not
 
@@ -3297,6 +3301,9 @@
    domains if vars."
   [u v w]
   (cgoal (fdc (*fdc u v w))))
+
+(defn quotfd [u v w]
+  (*fd v w u))
 
 (defn categorize
   "Groups values y* into vars bound to non-singleton domains and singleton 
