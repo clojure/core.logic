@@ -3438,11 +3438,13 @@
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar
 
-(def binops '#{+ * =})
+(def binops '#{+ - * / =})
 
 (def binops->fd
   '{+ clojure.core.logic/+fd
+    - clojure.core.logic/-fd
     * clojure.core.logic/*fd
+    / clojure.core.logic/quotfd
     = clojure.core.logic/==})
 
 (defn expand [form]
@@ -3471,8 +3473,8 @@
                              [r2 false])
              op (binops->fd op)]
          (cons (if out
-                 (list op outr outl out)
-                 (list op outr outl))
+                 (list op outl outr out)
+                 (list op outl outr))
                (concat (when (seq? r1)
                          (eqfd* r1 vars (when outlv? outl)))
                        (when (seq? r2)
