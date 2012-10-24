@@ -943,8 +943,8 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [u (walk s u)
-          v (walk s v)]
+    (let [u (-walk s u)
+          v (-walk s v)]
       (if (identical? u v)
         s
         (-unify-terms u v s)))))
