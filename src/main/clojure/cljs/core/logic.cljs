@@ -858,19 +858,19 @@
 
   cljs.core.logic.LVar
   (unify-with-pmap [v u s]
-    (ext s v u))
+    (-ext s v u))
 
   ObjMap
   (unify-with-pmap [v u s]
-    (unify-with-map u v s))
+    (-unify-with-map u v s))
 
   PersistentArrayMap
   (unify-with-pmap [v u s]
-    (unify-with-map u v s))
+    (-unify-with-map u v s))
 
   PersistentHashMap
   (unify-with-pmap [v u s]
-    (unify-with-map u v s)))
+    (-unify-with-map u v s)))
 
 (defn partial-map
   "Given map m, returns partial map that unifies with maps even if it doesn't share all of the keys of that map.
