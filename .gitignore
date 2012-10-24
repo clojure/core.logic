@@ -2,4 +2,6 @@
 *.jar
 *.org
 *.patch
+*.diff
+*.swp
 target/

@@ -9,7 +9,8 @@
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
            -reify-lvar-name empty-s to-s succeed fail s# u# conso
-           nilo firsto resto emptyo appendo membero *occurs-check*]]))
+           nilo firsto resto emptyo appendo membero *occurs-check*
+           unifier, binding-map, partial-map]]))
 
 (defn js-print [& args]
   (if (js* "typeof console != 'undefined'")
@@ -821,6 +822,71 @@
            '({nil :foo})))
 
 ;; -----------------------------------------------------------------------------
+;; Unifier
+
+(println "simple unifier")
+
+; test-unifier-1
+(assert (= (unifier '(?x ?y) '(1 2))
+         '(1 2)))
+
+; test-unifier-2
+(assert (= (unifier '(?x ?y 3) '(1 2 ?z))
+         '(1 2 3)))
+
+; test-unifier-3
+(assert (= (unifier '[(?x . ?y) 3] [[1 2] 3])
+         '[(1 2) 3]))
+
+; test-unifier-4
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (unifier '(?x . ?y) '(1 . ?z))
+;         (lcons 1 '_.0)))
+
+; test-unifier-5
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
+;         '(1 2 3 4 5)))
+
+; test-unifier-6
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+;         nil))
+
+; test-binding-map-1
+(assert (= (binding-map '(?x ?y) '(1 2))
+         '{?x 1 ?y 2}))
+
+; test-binding-map-2
+(assert (= (binding-map '(?x ?y 3) '(1 2 ?z))
+         '{?x 1 ?y 2 ?z 3}))
+
+; test-binding-map-3
+(assert (= (binding-map '[(?x . ?y) 3] [[1 2] 3])
+         '{?x 1 ?y (2)}))
+
+; test-binding-map-4
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (binding-map '(?x . ?y) '(1 . ?z))
+;         '{?z _.0, ?x 1, ?y _.0}))
+
+; test-binding-map-5
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
+;         '{?x 1 ?y (3 4 5)}))
+
+; test-binding-map-6
+;; Currently failes with:
+; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
+;(assert (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
+;         nil))
+
+;; -----------------------------------------------------------------------------
 ;; Occurs Check
 
 (println "occurs check")
@@ -874,6 +940,27 @@
 (assert (= (run* [q]
              (match-set #{:cat :bird :dog} q))
            '(_.0)))
+
+;; -----------------------------------------------------------------------------
+;; Partial maps
+
+(println "partial maps")
+
+;; Currently fails, unifies to: (#PMap {:a <lvar:x_3>}}
+;(assert (= '({:a 1})
+;         (run* [q]
+;               (fresh [pm x]
+;                      (== pm (partial-map {:a x}))
+;                      (== pm {:a 1 :b 2})
+;                      (== pm q)))))
+
+(assert (= '(1)
+         (run* [q]
+               (fresh [pm x]
+                      (== pm (partial-map {:a x}))
+                      (== pm {:a 1 :b 2})
+                      (== x q)))))
+
 
 (comment
   ;; FIXME: for some reason set #{:cat :bird} works on match-set call - David
