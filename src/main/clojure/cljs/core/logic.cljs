@@ -3,7 +3,8 @@
   (:use-macros [cljs.core.logic.macros :only
                 [defne defna defnu fresh == -inc]])
   (:require-macros [cljs.core.logic.macros :as m])
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set])
+  (:use [clojure.walk :only [postwalk]]))
 
 (def ^{:dynamic true} *occurs-check* true)
 
@@ -812,3 +813,176 @@
   (if (= s <s)
     ()
     (conj (prefix (rest s) <s) (first s))))
+
+;; ==============================================================================
+;; partial-maps
+
+(defprotocol IUnifyWithPMap
+  (unify-with-pmap [pmap u s]))
+
+(defrecord PMap []
+  IUnifyWithMap
+  (-unify-with-map [v u s]
+    (loop [ks (keys v) s s]
+      (if (seq ks)
+        (let [kf (first ks)
+              uf (get u kf ::not-found)]
+          (if (= uf ::not-found)
+            nil
+            (if-let [s (unify s (get v kf) uf)]
+              (recur (next ks) s)
+              nil)))
+        s)))
+
+  IUnifyWithPMap
+  (unify-with-pmap [v u s]
+    (-unify-with-map v u s))
+
+  IUnifyTerms
+  (-unify-terms [u v s]
+    (-unify-with-pmap v u s))
+
+  IUnifyWithLVar
+  (-unify-with-lvar [v u s]
+    (-ext-no-check s u v)))
+
+(extend-protocol IUnifyWithPMap
+  nil
+  (unify-with-pmap [v u s] nil)
+
+  Object
+  (unify-with-pmap [v u s] nil)
+
+  clojure.core.logic.LVar
+  (unify-with-pmap [v u s]
+    (ext s v u))
+
+  clojure.lang.IPersistentMap
+  (unify-with-pmap [v u s]
+    (unify-with-map u v s)))
+
+(defn partial-map
+  "Given map m, returns partial map that unifies with maps even if it doesn't share all of the keys of that map.
+   Only the keys of the partial map will be unified:
+
+   (m/run* [q]
+         (fresh [pm x]
+                (== pm (partial-map {:a x}))
+                (== pm {:a 1 :b 2})
+                (== pm q)))
+   ;;=> ({:a 1})"
+  [m]
+  (map->PMap m))
+
+;; =============================================================================
+;; Easy Unification
+
+(defn- lvarq-sym? [s]
+  (and (symbol? s) (= (first (str s)) \?)))
+
+(defn- proc-lvar [lvar-expr store]
+  (let [v (if-let [u (@store lvar-expr)]
+            u
+            (lvar lvar-expr))]
+    (swap! store conj [lvar-expr v])
+    v))
+
+(defn- lcons-expr? [expr]
+  (and (seq? expr) (some '#{.} (set expr))))
+
+(declare prep*)
+
+(defn- replace-lvar [store]
+  (fn [expr]
+    (if (lvarq-sym? expr)
+      (proc-lvar expr store)
+      (if (lcons-expr? expr)
+        (prep* expr store)
+        expr))))
+
+(defn- prep*
+  ([expr store] (prep* expr store false false))
+  ([expr store lcons?] (prep* expr store lcons? false))
+  ([expr store lcons? last?]
+     (let [expr (if (and last? (seq expr))
+                  (first expr)
+                  expr)]
+       (cond
+        (lvarq-sym? expr) (proc-lvar expr store)
+        (seq? expr) (if (or lcons? (lcons-expr? expr))
+                      (let [[f & n] expr
+                            skip (= f '.)
+                            tail (prep* n store lcons? skip)]
+                        (if skip
+                          tail
+                          (lcons (prep* f store) tail)))
+                      (postwalk (replace-lvar store) expr))
+        :else expr))))
+
+(defn prep
+  "Prep a quoted expression. All symbols preceded by ? will
+  be replaced with logic vars."
+  [expr]
+  (let [lvars (atom {})
+        prepped (if (lcons-expr? expr)
+                  (prep* expr lvars true)
+                  (postwalk (replace-lvar lvars) expr))]
+    (with-meta prepped {:lvars @lvars})))
+
+(defn unify [s u v]
+  (if (identical? u v)
+    s
+    (let [u (walk s u)
+          v (walk s v)]
+      (if (identical? u v)
+        s
+        (-unify-terms u v s)))))
+
+(defn unifier*
+  "Unify the terms u and w."
+  ([u w]
+     (first
+      (m/run* [q]
+        (== u w)
+        (== u q))))
+  ([u w & ts]
+     (apply unifier* (unifier* u w) ts)))
+
+(defn binding-map*
+  "Return the binding map that unifies terms u and w.
+  u and w should prepped terms."
+  ([u w]
+     (let [lvars (merge (-> u meta :lvars)
+                        (-> w meta :lvars))
+           s (unify empty-s u w)]
+       (when s
+         (into {} (map (fn [[k v]]
+                         [k (-reify s v)])
+                       lvars)))))
+  ([u w & ts]
+     (apply binding-map* (binding-map* u w) ts)))
+
+(defn unifier
+  "Unify the terms u and w. Will prep the terms."
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (unifier* up wp)))
+  ([u w & ts]
+     (apply unifier (unifier u w) ts)))
+
+(defn binding-map
+  "Return the binding map that unifies terms u and w.
+  Will prep the terms."
+  ([u w]
+     {:pre [(not (lcons? u))
+            (not (lcons? w))]}
+     (let [up (prep u)
+           wp (prep w)]
+       (binding-map* up wp)))
+  ([u w & ts]
+     (apply binding-map (binding-map u w) ts)))
+
+
