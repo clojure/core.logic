@@ -299,9 +299,12 @@
   LConsSeq
   (-lfirst [_] a)
   (-lnext [_] d)
-  IPrintable
-  (-pr-seq [this opts]
-    (pr-sequential pr-seq "(" " " ")" opts (lcons-pr-seq this)))
+  ;;IPrintable
+  ;;(-pr-seq [this opts]
+  ;;  (pr-sequential pr-seq "(" " " ")" opts (lcons-pr-seq this)))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    ^:deprecation-nowarn  (pr-sequential-writer writer pr-writer "(" " " ")" opts (lcons-pr-seq this)))
   IEquiv
   (-equiv [this o]
     (or (identical? this o)
@@ -840,7 +843,7 @@
 
   IUnifyTerms
   (-unify-terms [u v s]
-    (-unify-with-pmap v u s))
+    (unify-with-pmap v u s))
 
   IUnifyWithLVar
   (-unify-with-lvar [v u s]
@@ -850,14 +853,22 @@
   nil
   (unify-with-pmap [v u s] nil)
 
-  Object
+  js/Object
   (unify-with-pmap [v u s] nil)
 
-  clojure.core.logic.LVar
+  cljs.core.logic.LVar
   (unify-with-pmap [v u s]
     (ext s v u))
 
-  clojure.lang.IPersistentMap
+  ObjMap
+  (unify-with-pmap [v u s]
+    (unify-with-map u v s))
+
+  PersistentArrayMap
+  (unify-with-pmap [v u s]
+    (unify-with-map u v s))
+
+  PersistentHashMap
   (unify-with-pmap [v u s]
     (unify-with-map u v s)))
 
@@ -866,10 +877,10 @@
    Only the keys of the partial map will be unified:
 
    (m/run* [q]
-         (fresh [pm x]
-                (== pm (partial-map {:a x}))
-                (== pm {:a 1 :b 2})
-                (== pm q)))
+         (m/fresh [pm x]
+                (m/== pm (partial-map {:a x}))
+                (m/== pm {:a 1 :b 2})
+                (m/== pm q)))
    ;;=> ({:a 1})"
   [m]
   (map->PMap m))
