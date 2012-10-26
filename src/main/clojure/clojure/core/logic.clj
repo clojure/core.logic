@@ -119,6 +119,7 @@
 ;; cKanren protocols
 
 (defprotocol ISubstitutionsCLP
+  (walk-unbound [this x])
   (root-var [this x])
   (update [this x v])
   (queue [this c]))
@@ -131,7 +132,8 @@
   (updatec [this c])
   (remc [this c])
   (runc [this c state])
-  (constraints-for [this x ws]))
+  (constraints-for [this x ws])
+  (migrate [this u v]))
 
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
@@ -786,7 +788,15 @@
   (.write writer (str "<intervals:" (apply pr-str (:is x)) ">")))
 
 (defn var-rands [c]
-  (into [] (filter lvar? (flatten (rands c)))))
+  (->> (rands c)
+    flatten
+    (filter lvar?)
+    (into [])))
+
+(defn unbound-rands [a c]
+  (->> (rands c)
+    flatten
+    (filter #(lvar? (walk a %)))))
 
 (declare add-var)
 
@@ -835,6 +845,11 @@
   (constraints-for [this x ws]
     (when-let [ids (get km x)]
       (filter #((watched-stores %) ws) (map cm (remove running ids)))))
+  (migrate [this u v]
+    (let [ucs (km u)
+          vcs (km v)
+          nkm (assoc (dissoc km u) v (into vcs ucs))]
+      (ConstraintStore. nkm cm cid running)))
   clojure.lang.Counted
   (count [this]
     (count cm)))
@@ -990,11 +1005,18 @@
   (walk [this v]
     (loop [lv v [v vp :as me] (find s v)]
       (cond
-       (nil? me) lv
+       (or (nil? me) (= vp ::unbound)) lv
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
   ISubstitutionsCLP
+  (walk-unbound [this v]
+    (loop [lv v [v vp :as me] (find s v)]
+      (cond
+       (nil? me) lv
+       (not (lvar? vp)) vp
+       :else (recur vp (find s vp)))))
+
   (root-var [this v]
     (loop [lv v [v vp :as me] (find s v)]
       (cond
@@ -1084,7 +1106,14 @@
     (ext s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
-    (ext-no-check s u v))
+    (let [uv (walk-unbound s u)]
+      (if (= uv ::unbound)
+        (let [vv (walk-unbound s v)
+              s  (if (= vv ::unbound)
+                   (assoc s :cs (migrate (:cs s) v u))
+                   s)]
+          (ext-no-check s v u))
+        (ext-no-check s u v))))
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (ext s v u))
@@ -2705,7 +2734,10 @@
 
 (defn addcg [c]
   (fn [a]
-    (assoc a :cs (addc (:cs a) c))))
+    (let [a (reduce (fn [a x]
+                      (ext-no-check a x ::unbound))
+              a (unbound-rands a c))]
+      (assoc a :cs (addc (:cs a) c)))))
 
 (defn updatecg [c]
   (fn [a]
