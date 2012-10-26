@@ -14,6 +14,11 @@ Fixes
   store we need a stable root var. constrained vars are now added as ::unbound in the
   substitution map. This information is used to know if a var is a root.
 * partial map unification and easy unification now support in ClojureScript
+* LOGIC-61: fix partial map support for CLJS
+* LOGIC-63: fix simple unification support for CLJS
+* removed deprecated IPrintable from core.logic CLJS, implemented
+  IPrintWithWriter
+* distinctfdc only needs to watch ::subst
 
 From 0.8-alpha2 to 0.8.0-beta1
 ====
