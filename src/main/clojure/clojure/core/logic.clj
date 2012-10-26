@@ -165,6 +165,9 @@
 (defprotocol IRelevant
   (-relevant? [this s]))
 
+(defprotocol IRelevantVar
+  (-relevant-var? [this x]))
+
 (defprotocol IReifiableConstraint
   (reifiable? [this])
   (reifyc [this v r]))
@@ -793,13 +796,6 @@
     (filter lvar?)
     (into [])))
 
-(declare walk-unbound)
-
-(defn unbound-rands [a c]
-  (->> (rands c)
-    flatten
-    (filter #(lvar? (walk-unbound a %)))))
-
 (declare add-var)
 
 ;; ConstraintStore
@@ -828,7 +824,15 @@
           cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
       (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
   (updatec [this c]
-    (ConstraintStore. km (assoc cm (id c) c) cid running))
+    (let [oc (cm (id c))
+          nkm (if (satisfies? IRelevantVar c)
+                (reduce (fn [km x]
+                          (if-not (-relevant-var? c x)
+                            (dissoc km x)
+                            km))
+                        km (var-rands oc))
+                km)]
+      (ConstraintStore. nkm (assoc cm (id c) c) cid running)))
   (remc [this c]
     (let [vs (var-rands c)
           ocid (id c)
@@ -1073,6 +1077,11 @@
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l (make-cs))))
+
+(defn unbound-rands [a c]
+  (->> (rands c)
+    flatten
+    (filter #(lvar? (walk-unbound a %)))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -3609,6 +3618,9 @@
        IRelevant
        (-relevant? [this s]
          (not (empty? p)))
+       IRelevantVar
+       (-relevant-var? [this x]
+         ((recover-vars p) x))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -3651,11 +3663,11 @@
    with another element of l."
   [l]
   ([()])
-  ([[a]])
-  ([[a b . r]]
-     (!= a b)
-     (distincto (lcons a r))
-     (distincto (lcons b r))))
+  ([[h]])
+  ([[h0 h1 . t]]
+     (!= h0 h1)
+     (distincto (lcons h0 t))
+     (distincto (lcons h1 t))))
 
 (defne rembero
   "A relation between l and o where is removed from
