@@ -1,3 +1,20 @@
+From 0.8-beta1 to 0.8.0-beta2
+====
+
+Enhancements
+----
+* Datomic support
+* eqfd now supports - and /
+
+Fixes
+----
+* distinctfd goal behaved badly if argument wasn't ground
+* LOGIC-62: distincto bug reveals much larger issues around how we look up constraints.
+  because vars can be bound in any order and we use vars to map to constraints in the
+  store we need a stable root var. constrained vars are now added as ::unbound in the
+  substitution map. This information is used to know if a var is a root.
+* partial map unification and easy unification now support in ClojureScript
+
 From 0.8-alpha2 to 0.8.0-beta1
 ====
 
