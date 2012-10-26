@@ -988,17 +988,17 @@
       (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs))
 
   (walk [this v]
-    (loop [lv v [v vp] (find s v)]
+    (loop [lv v [v vp :as me] (find s v)]
       (cond
-       (nil? v) lv
+       (nil? me) lv
        (not (lvar? vp)) vp
        :else (recur vp (find s vp)))))
 
   ISubstitutionsCLP
   (root-var [this v]
-    (loop [lv v [v vp] (find s v)]
+    (loop [lv v [v vp :as me] (find s v)]
       (cond
-       (nil? v) lv
+       (nil? me) lv
        (not (lvar? vp)) v
        :else (recur vp (find s vp)))))
   
