@@ -79,9 +79,9 @@
   IPair
   (-lhs [_] lhs)
   (-rhs [_] rhs)
-  IPrintable
-  (-pr-seq [coll options]
-    (list "(" (str lhs) " . " (str rhs) ")")))
+  IPrintWithWriter
+  (-pr-writer [coll writer opts]
+    (-write writer (str "(" lhs " . " rhs ")"))))
 
 (defn pair [lhs rhs]
   (Pair. lhs rhs))
@@ -129,9 +129,9 @@
         (and (instance? Substitutions o)
              (= s (.-s o)))))
 
-  IPrintable
-  (-pr-seq [this opts]
-    (-pr-seq s opts))
+  IPrintWithWriter
+  (-pr-writer [this writer opts]
+    (-pr-writer s writer opts))
 
   ISubstitutions
   (-occurs-check [this u v]
@@ -219,9 +219,9 @@
   IWithMeta
   (-with-meta [this new-meta]
     (LVar. name meta))
-  IPrintable
-  (-pr-seq [_ opts]
-    (list "<lvar:" (str name) ">"))
+  IPrintWithWriter
+  (-pr-writer [_ writer opts]
+    (-write writer (str "<lvar:" name ">")))
   IEquiv
   (-equiv [this o]
     (and (instance? LVar o)
@@ -299,12 +299,9 @@
   LConsSeq
   (-lfirst [_] a)
   (-lnext [_] d)
-  ;;IPrintable
-  ;;(-pr-seq [this opts]
-  ;;  (pr-sequential pr-seq "(" " " ")" opts (lcons-pr-seq this)))
   IPrintWithWriter
   (-pr-writer [this writer opts]
-    ^:deprecation-nowarn  (pr-sequential-writer writer pr-writer "(" " " ")" opts (lcons-pr-seq this)))
+    (pr-sequential-writer writer pr-writer "(" " " ")" opts (lcons-pr-seq this)))
   IEquiv
   (-equiv [this o]
     (or (identical? this o)
