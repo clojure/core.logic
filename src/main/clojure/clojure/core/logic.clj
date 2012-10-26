@@ -793,10 +793,12 @@
     (filter lvar?)
     (into [])))
 
+(declare walk-unbound)
+
 (defn unbound-rands [a c]
   (->> (rands c)
     flatten
-    (filter #(lvar? (walk a %)))))
+    (filter #(lvar? (walk-unbound a %)))))
 
 (declare add-var)
 
