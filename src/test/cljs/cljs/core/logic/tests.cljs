@@ -934,20 +934,19 @@
 
 (println "partial maps")
 
-;; Currently fails, unifies to: (#PMap {:a <lvar:x_3>}}
-;(assert (= '({:a 1})
-;         (run* [q]
-;               (fresh [pm x]
-;                      (== pm (partial-map {:a x}))
-;                      (== pm {:a 1 :b 2})
-;                      (== pm q)))))
+(assert (= '({:a 1})
+           (run* [q]
+             (fresh [pm x]
+               (== pm (partial-map {:a x}))
+               (== pm {:a 1 :b 2})
+               (== pm q)))))
 
 (assert (= '(1)
-         (run* [q]
-               (fresh [pm x]
-                      (== pm (partial-map {:a x}))
-                      (== pm {:a 1 :b 2})
-                      (== x q)))))
+           (run* [q]
+             (fresh [pm x]
+               (== pm (partial-map {:a x}))
+               (== pm {:a 1 :b 2})
+               (== x q)))))
 
 
 (comment

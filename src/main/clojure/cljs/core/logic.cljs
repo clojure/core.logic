@@ -844,7 +844,11 @@
 
   IUnifyWithLVar
   (-unify-with-lvar [v u s]
-    (-ext-no-check s u v)))
+    (-ext-no-check s u v))
+
+  IWalkTerm
+  (-walk-term [v s]
+    (walk-term-map* v s)))
 
 (extend-protocol IUnifyWithPMap
   nil
