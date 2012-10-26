@@ -453,7 +453,7 @@
 (extend-to-fd java.math.BigInteger)
 (extend-to-fd clojure.lang.BigInt)
 
-(declare interval interval?)
+(declare interval)
 
 ;; IntervalFD
 ;; -----
@@ -876,13 +876,7 @@
 ;; =============================================================================
 ;; Substitutions
 
-(declare empty-s)
-(declare choice)
-(declare lvar)
-(declare lvar?)
-(declare pair)
-(declare lcons)
-(declare run-constraints*)
+(declare empty-s choice lvar lvar? pair lcons run-constraints*)
 
 (defn occurs-check [s u v]
   (let [v (walk s v)]
@@ -3007,8 +3001,6 @@
       (conde
         [(f (first ls))]
         [(loop (rest ls))]))))
-
-(declare force-ans)
 
 ;; TODO: handle all Clojure tree types
 (extend-protocol IForceAnswerTerm
