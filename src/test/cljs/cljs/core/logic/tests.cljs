@@ -839,22 +839,16 @@
          '[(1 2) 3]))
 
 ; test-unifier-4
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (unifier '(?x . ?y) '(1 . ?z))
-;         (lcons 1 '_.0)))
+(assert (= (unifier '(?x . ?y) '(1 . ?z))
+           (lcons 1 '_.0)))
 
 ; test-unifier-5
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
-;         '(1 2 3 4 5)))
+(assert (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
+           '(1 2 3 4 5)))
 
 ; test-unifier-6
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
-;         nil))
+(assert (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+           nil))
 
 ; test-binding-map-1
 (assert (= (binding-map '(?x ?y) '(1 2))
@@ -869,22 +863,16 @@
          '{?x 1 ?y (2)}))
 
 ; test-binding-map-4
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (binding-map '(?x . ?y) '(1 . ?z))
-;         '{?z _.0, ?x 1, ?y _.0}))
+(assert (= (binding-map '(?x . ?y) '(1 . ?z))
+           '{?z _.0, ?x 1, ?y _.0}))
 
 ; test-binding-map-5
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
-;         '{?x 1 ?y (3 4 5)}))
+(assert (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
+           '{?x 1 ?y (3 4 5)}))
 
 ; test-binding-map-6
-;; Currently failes with:
-; Error: No protocol method IWithMeta.-with-meta defined for type object: [object Object]
-;(assert (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
-;         nil))
+(assert (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
+           nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check

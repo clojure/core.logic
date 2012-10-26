@@ -294,7 +294,7 @@
   (-meta [this]
     meta)
   IWithMeta
-  (-withMeta [this new-meta]
+  (-with-meta [this new-meta]
     (LCons. a d new-meta))
   LConsSeq
   (-lfirst [_] a)
