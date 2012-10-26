@@ -2203,3 +2203,12 @@
               (= (- (* 3 x) y) 5))
              (== q [x y])))
          '([4 7]))))
+
+(defn test-distinctfd-1 []
+  (is (= (run 1 [q]
+           (fresh [x y]
+             (distinctfd q)
+             (== q [x y])
+             (== x 1)
+             (== y 1)))
+         ())))
