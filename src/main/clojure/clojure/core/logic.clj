@@ -3388,33 +3388,38 @@
    run until v* has become ground. When it has become ground we group
    v* into a set of logic vars and a sorted set of known singleton 
    values. We then construct the individual constraint for each var."
-  [v*]
-  (reify
-    clojure.lang.IFn
-    (invoke [this s]
-      (let [v* (walk s v*)
-            {x* true n* false} (group-by lvar? v*)
-            n* (sort < n*)]
-        (when (list-sorted? < n*)
-          (let [x* (into #{} x*)
-                n* (into (sorted-set) n*)]
-            (loop [xs (seq x*) s s]
-              (if xs
-                (let [x (first xs)]
-                  (when-let [s ((-distinctfd x (disj x* x) n*) s)]
-                    (recur (next xs) s)))
-                s))))))
-    IConstraintOp
-    (rator [_] `distinctfd)
-    (rands [_] [v*])
-    IRelevant
-    (-relevant? [this s]
-      (let [v* (walk s v*)]
-        (lvar? v*)))
-    IRunnable
-    (runnable? [this s]
-      (let [v* (walk s v*)]
-        (not (lvar? v*))))))
+  ([v*] (distinctfdc v* nil))
+  ([v* id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this s]
+         (let [v* (walk s v*)
+               {x* true n* false} (group-by lvar? v*)
+               n* (sort < n*)]
+           (when (list-sorted? < n*)
+             (let [x* (into #{} x*)
+                   n* (into (sorted-set) n*)]
+               (loop [xs (seq x*) s s]
+                 (if xs
+                   (let [x (first xs)]
+                     (when-let [s ((-distinctfd x (disj x* x) n*) s)]
+                       (recur (next xs) s)))
+                   ((remcg this) s)))))))
+       IWithConstraintId
+       (with-id [this id]
+         (distinctfdc v* id))
+       IConstraintId
+       (id [this] id)
+       IConstraintOp
+       (rator [_] `distinctfd)
+       (rands [_] [v*])
+       IRelevant
+       (-relevant? [this s]
+         true)
+       IRunnable
+       (runnable? [this s]
+         (let [v* (walk s v*)]
+           (not (lvar? v*)))))))
 
 (defn distinctfd
   "A finite domain constraint that will guarantee that 
