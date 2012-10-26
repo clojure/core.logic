@@ -2152,7 +2152,7 @@
              (== q [x y z])))
          '([1 1 2]))))
 
-(defn test--fd-1 []
+(deftest test--fd-1 []
   (is (= (run* [q]
            (infd q (interval 1 10))
            (-fd 4 q 1))
@@ -2162,7 +2162,7 @@
            (-fd 4 2 q))
          '(2))))
 
-(defn test-quotfd-1 []
+(deftest test-quotfd-1 []
   (is (= (run* [q]
            (infd q (interval 1 10))
            (quotfd 4 2 q))
@@ -2171,7 +2171,7 @@
 ;; =============================================================================
 ;; eqfd
 
-(defn test-eqfd-1 []
+(deftest test-eqfd-1 []
   (is (= (run* [q]
            (fresh [x y]
              (infd x y (interval 0 9))
@@ -2181,7 +2181,7 @@
              (== q [x y])))
          '([6 3]))))
 
-(defn test-eqfd-2 []
+(deftest test-eqfd-2 []
   (is (= (run* [q]
            (fresh [s e n d m o r y]
              (== q [s e n d m o r y])
@@ -2194,7 +2194,7 @@
                  (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))))
          '([9 5 6 7 1 0 8 2]))))
 
-(defn test-eqfd-3 []
+(deftest test-eqfd-3 []
   (is (= (run* [q]
            (fresh [x y]
              (infd x y (interval 1 20))
@@ -2204,7 +2204,7 @@
              (== q [x y])))
          '([4 7]))))
 
-(defn test-distinctfd-1 []
+(deftest test-distinctfd-1 []
   (is (= (run 1 [q]
            (fresh [x y]
              (distinctfd q)
@@ -2212,3 +2212,32 @@
              (== x 1)
              (== y 1)))
          ())))
+
+(deftest test-logic-62-fd []
+  (is (= (run 1 [q]
+           (fresh [x y a b]
+             (distinctfd [x y])
+             (== [x y] [a b])
+             (== q [a b])
+             (== a 1)
+             (== b 1)))
+         ()))
+  (is (= (run 1 [q]
+           (fresh [x y a b]
+             (== [x y] [a b])
+             (== q [a b])
+             (== a 1)
+             (== b 1)
+             (distinctfd [x y])))
+         ())))
+
+(deftest test-distincto-1 []
+  (is (= (run 1 [q]
+           (fresh [x y a b]
+             (distincto q)
+             (== [x y] [a b])
+             (== q [a b])
+             (== x 1)
+             (== y 2)))
+         '([1 2]))))
+
