@@ -3454,7 +3454,9 @@
        IRunnable
        (runnable? [this s]
          (let [v* (walk s v*)]
-           (not (lvar? v*)))))))
+           (not (lvar? v*))))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
 
 (defn distinctfd
   "A finite domain constraint that will guarantee that 
