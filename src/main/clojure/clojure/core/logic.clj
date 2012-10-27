@@ -3223,6 +3223,18 @@
    (<=fd u v)
    (!=fd u v)))
 
+(defn >fd
+  "A finite domain constraint. u must be greater than v. u and v
+   must eventually be given domains if vars."
+  [u v]
+  (<=fd v u))
+
+(defn >=fd
+  "A finite domain constraint. u must be greater than or equal to v.
+   u and v must eventually be given domains if vars."
+  [u v]
+  (<fd v u))
+
 ;; NOTE: we could put logic right back in but then we're managing
 ;; the constraint in the body again which were trying to get
 ;; away from
@@ -3480,14 +3492,19 @@
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar
 
-(def binops '#{+ - * / =})
-
 (def binops->fd
-  '{+ clojure.core.logic/+fd
-    - clojure.core.logic/-fd
-    * clojure.core.logic/*fd
-    / clojure.core.logic/quotfd
-    = clojure.core.logic/==})
+  '{+  clojure.core.logic/+fd
+    -  clojure.core.logic/-fd
+    *  clojure.core.logic/*fd
+    /  clojure.core.logic/quotfd
+    =  clojure.core.logic/==
+    != clojure.core.logic/!=fd
+    <= clojure.core.logic/<=fd
+    <  clojure.core.logic/<fd
+    >= clojure.core.logic/>=fd
+    >  clojure.core.logic/>fd})
+
+(def binops (set (keys binops->fd)))
 
 (defn expand [form]
   (if (seq? form)
