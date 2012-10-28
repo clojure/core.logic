@@ -825,7 +825,7 @@
       (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
   (updatec [this c]
     (let [oc (cm (id c))
-          nkm (if (satisfies? IRelevantVar c)
+          nkm (if (instance? clojure.core.logic.IRelevantVar c)
                 (reduce (fn [km x]
                           (if-not (-relevant-var? c x)
                             (dissoc km x)
@@ -3078,7 +3078,7 @@
     (-relevant? proc s))
   IRunnable
   (runnable? [this s]
-    (if (satisfies? IRunnable proc)
+    (if (instance? clojure.core.logic.IRunnable proc)
       (runnable? proc s)
       (let [s (use-ws s ::fd)]
         (letfn [(has-dom? [x]
@@ -3093,7 +3093,7 @@
   (id [this] _id)
   IConstraintWatchedStores
   (watched-stores [this]
-    (if (satisfies? IConstraintWatchedStores proc)
+    (if (instance? clojure.core.logic.IConstraintWatchedStores proc)
       (watched-stores proc)
       #{::subst ::fd})))
 

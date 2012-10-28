@@ -343,6 +343,7 @@
 (comment
   (cryptarithfd-1)
 
+  ;; ~2700ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
@@ -531,6 +532,7 @@
 (comment
   (time (matches 40))
 
+  ;; ~8200ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -693,11 +695,13 @@
 
   (-> (sudokufd easy0) first verify)
 
+  ;; ~2250ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
        (sudokufd easy0))))
 
+  ;; ~2800ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
@@ -717,6 +721,7 @@
      0 0 0  0 0 0  0 0 0
      0 0 0  0 0 0  0 0 0])
 
+  ;; ~14.2s
   (time (sudokufd hard0))
 
   (-> (sudokufd hard0) first verify)
@@ -740,6 +745,7 @@
      0 4 0  0 0 0  0 0 0
      0 5 0  1 0 0  0 0 0])
 
+  ;; ~900ms
   (time (sudokufd hard1))
 
   (-> (sudokufd hard1) first verify)
@@ -763,6 +769,7 @@
      0 0 7  0 0 0  0 0 5
      0 0 0  0 0 0  0 9 8])
 
+  ;; ~3.5s
   (time (sudokufd hard2))
 
   (-> (sudokufd hard2) first print-solution)
