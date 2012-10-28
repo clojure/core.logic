@@ -1003,11 +1003,14 @@
       (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs))
 
   (walk [this v]
-    (loop [lv v [v vp :as me] (find s v)]
-      (cond
-       (or (nil? me) (= vp ::unbound)) lv
-       (not (lvar? vp)) vp
-       :else (recur vp (find s vp)))))
+    (if (lvar? v)
+      (loop [lv v [v vp :as me] (find s v)]
+        (cond
+         (nil? me) lv
+         (= vp ::unbound) v
+         (not (lvar? vp)) vp
+         :else (recur vp (find s vp))))
+      v))
 
   ISubstitutionsCLP
   (walk-unbound [this v]
@@ -1021,6 +1024,7 @@
     (loop [lv v [v vp :as me] (find s v)]
       (cond
        (nil? me) lv
+       (= vp ::unbound) v
        (not (lvar? vp)) v
        :else (recur vp (find s vp)))))
   
@@ -1093,7 +1097,7 @@
   (meta [this]
     meta)
   (withMeta [this new-meta]
-    (LVar. name oname hash meta))
+    (LVar. name oname hash new-meta))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -1111,14 +1115,12 @@
     (ext s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
-    (let [uv (walk-unbound s u)]
-      (if (= uv ::unbound)
-        (let [vv (walk-unbound s v)
-              s  (if (= vv ::unbound)
-                   (assoc s :cs (migrate (:cs s) v u))
-                   s)]
-          (ext-no-check s v u))
-        (ext-no-check s u v))))
+    (if (-> u clojure.core/meta :unbound)
+      (let [s (if (-> v clojure.core/meta :unbound)
+                (assoc s :cs (migrate (:cs s) v u))
+                s)]
+        (ext-no-check s v u))
+      (ext-no-check s u v)))
   IUnifyWithLSeq
   (unify-with-lseq [v u s]
     (ext s v u))
@@ -2740,7 +2742,7 @@
 (defn addcg [c]
   (fn [a]
     (let [a (reduce (fn [a x]
-                      (ext-no-check a x ::unbound))
+                      (ext-no-check a (vary-meta x assoc :unbound true) ::unbound))
               a (unbound-rands a c))]
       (assoc a :cs (addc (:cs a) c)))))
 
