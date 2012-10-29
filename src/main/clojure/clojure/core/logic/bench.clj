@@ -622,6 +622,7 @@
         sqs  (->squares rows)]
     (run-nc 1 [q]
       (== q vars)
+      (distribute q ::ff)
       (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
       (everyg distinctfd rows)
@@ -722,6 +723,8 @@
      0 0 0  0 0 0  0 0 0])
 
   ;; ~14.2s
+  ;; this one behaves very badly w/ distribute
+  ;; it would be very interesting to determine why
   (time (sudokufd hard0))
 
   (-> (sudokufd hard0) first verify)
@@ -750,6 +753,8 @@
 
   (-> (sudokufd hard1) first verify)
 
+  ;; 8.7s seconds w/o distribute
+  ;; < 800ms w/ distribute, 10X faster
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
@@ -770,6 +775,7 @@
      0 0 0  0 0 0  0 9 8])
 
   ;; ~3.5s
+  ;; 900ms w/ distribute
   (time (sudokufd hard2))
 
   (-> (sudokufd hard2) first print-solution)

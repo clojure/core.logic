@@ -1081,6 +1081,18 @@
     flatten
     (filter #(lvar? (walk-unbound a %)))))
 
+(defn add-attr [a x attr val]
+  (let [s  (:s a)
+        x  (root-var a x)
+        xv (get s x ::not-found)
+        sp (if (not= xv ::not-found)
+             (assoc (dissoc s x) (vary-meta x assoc attr val) xv)
+             (assoc s (with-meta x {:unbound true attr val}) ::unbound))]
+    (assoc a :s sp)))
+
+(defn attrs [a x]
+  (meta (root-var a x)))
+
 ;; =============================================================================
 ;; Logic Variables
 
@@ -3039,10 +3051,21 @@
   (-force-ans [v x]
     ((map-sum (fn [n] (updateg x n))) (to-vals v))))
 
+(defn sort-by-member-count [a]
+  (fn [x y]
+    (let-dom a [x dx y dy]
+      (< (member-count dx) (member-count dy)))))
+
 (defn force-ans [x]
   (fn [a]
-    ((let-dom a [x v]
-       (-force-ans v x)) a)))
+    ((let [v (walk a x)]
+       (if (lvar? v)
+         (-force-ans (get-dom a x) x)
+         (if (sequential? v)
+           (case (::strategy (attrs a x))
+             ::ff (-force-ans (sort (sort-by-member-count a) v) x)
+             (-force-ans v x))
+           (-force-ans v x)))) a)))
 
 (deftype FDConstraint [proc _id _meta]
   clojure.lang.ILookup
@@ -3490,6 +3513,10 @@
        (infd m (interval 0 Integer/MAX_VALUE))
        (+fd m 1 n)
        (bounded-listo t m))))
+
+(defn distribute [v* strategy]
+  (fn [a]
+    (add-attr a v* ::strategy ::ff)))
 
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar
