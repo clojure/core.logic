@@ -3282,8 +3282,12 @@
         (let [[wmin wmax] (if (domain? dw)
                             (bounds dw)
                             [(+ (lb du) (lb dv)) (+ (ub du) (ub dv))])
-              [umin umax] (bounds du)
-              [vmin vmax] (bounds dv)]
+              [umin umax] (if (domain? du)
+                            (bounds du)
+                            [(- (lb dw) (ub dv)) (- (ub dw) (lb dv))])
+              [vmin vmax] (if (domain? dv)
+                            (bounds dv)
+                            [(- (lb dw) (ub du)) (- (ub dw) (lb du))])]
           ((composeg*
             (process-dom w (interval (+ umin vmin) (+ umax vmax)))
             (process-dom u (interval (- wmin vmax) (- wmax vmin)))
@@ -3305,8 +3309,12 @@
     (runnable? [this s]
       ;; we want to run even if w doesn't have a domain
       ;; this is to support eqfd
-      (let-dom s [u du v dv]
-        (and (domain? du) (domain? dv))))))
+      (let-dom s [u du v dv w dw]
+        (cond
+          (domain? du) (or (domain? dv) (domain? dw))
+          (domain? dv) (or (domain? du) (domain? dw))
+          (domain? dw) (or (domain? du) (domain? dv))
+          :else false)))))
 
 (defn +fd
   "A finite domain constraint for addition and subtraction.
@@ -3339,13 +3347,19 @@
          (let [[wmin wmax] (if (domain? dw)
                              (bounds dw)
                              [(* (lb du) (lb dv)) (* (ub du) (ub dv))])
-               [umin umax] (bounds du)
-               [vmin vmax] (bounds dv)
+               [umin umax] (if (domain? du)
+                             (bounds du)
+                             [(safe-div (ub dv) (lb du) (lb dw))
+                              (safe-div (lb dv) (ub dv) (ub dw))])
+               [vmin vmax] (if (domain? dv)
+                             (bounds dv)
+                             [(safe-div (ub du) (lb dv) (lb dw))
+                              (safe-div (lb du) (ub dv) (ub dw))])
+               wi (interval (* umin vmin) (* umax vmax))
                ui (interval (safe-div vmax umin wmin)
                             (safe-div vmin umax wmax))
                vi (interval (safe-div umax vmin wmin)
-                            (safe-div umin vmax wmax))
-               wi (interval (* umin vmin) (* umax vmax))]
+                            (safe-div umin vmax wmax))]
            ((composeg*
              (process-dom w wi)
              (process-dom u ui)
@@ -3366,8 +3380,12 @@
      (runnable? [this s]
        ;; we want to run even if w doesn't have a domain
        ;; this is to support eqfd
-       (let-dom s [u du v dv]
-         (and (domain? du) (domain? dv)))))))
+       (let-dom s [u du v dv w dw]
+         (cond
+          (domain? du) (or (domain? dv) (domain? dw))
+          (domain? dv) (or (domain? du) (domain? dw))
+          (domain? dw) (or (domain? du) (domain? dv))
+          :else false))))))
 
 (defn *fd
   "A finite domain constraint for multiplication and

@@ -788,7 +788,7 @@
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
 
 (defn safefd []
-  (run 1 [q]
+  (run* [q]
     (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
       (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
       (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
@@ -797,9 +797,18 @@
         (= (- c4 c6) c7)
         (= (* c1 c2 c3) (+ c8 c9))
         (< (+ c2 c3 c6) c8)
-        (< c9 c8)
-        (!= c1 1) (!= c9 9)))))
+        (< c9 c8))
+      (!= c1 1) (!= c2 2) (!= c3 3)
+      (!= c4 4) (!= c5 5) (!= c6 6)
+      (!= c7 7) (!= c8 8) (!= c9 9))))
 
 (comment
-  (time (safefd))
+  ; FIXME: too many answers, negative answers escape, non-distinct answers
+
+  (safefd)
+  
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1] 
+       (safefd))))
   )
