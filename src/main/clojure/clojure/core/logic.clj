@@ -1085,7 +1085,7 @@
         xv (get s x ::not-found)
         sp (if (not= xv ::not-found)
              (assoc (dissoc s x) (vary-meta x assoc attr val) xv)
-             (assoc s (with-meta x {:unbound true attr val}) ::unbound))]
+             (assoc s (with-meta x {::unbound true attr val}) ::unbound))]
     (assoc a :s sp)))
 
 (defn attrs [a x]
@@ -1125,8 +1125,8 @@
     (ext s v u))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
-    (if (-> u clojure.core/meta :unbound)
-      (let [s (if (-> v clojure.core/meta :unbound)
+    (if (-> u clojure.core/meta ::unbound)
+      (let [s (if (-> v clojure.core/meta ::unbound)
                 (assoc s :cs (migrate (:cs s) v u))
                 s)]
         (ext-no-check s v u))
@@ -2752,7 +2752,7 @@
 (defn addcg [c]
   (fn [a]
     (let [a (reduce (fn [a x]
-                      (ext-no-check a (vary-meta x assoc :unbound true) ::unbound))
+                      (ext-no-check a (vary-meta x assoc ::unbound true) ::unbound))
               a (unbound-rands a c))]
       (assoc a :cs (addc (:cs a) c)))))
 
