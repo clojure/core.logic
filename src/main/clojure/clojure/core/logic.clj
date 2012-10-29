@@ -3016,6 +3016,16 @@
         [(f (first ls))]
         [(loop (rest ls))]))))
 
+(defn sort-by-member-count [a]
+  (fn [x y]
+    (let-dom a [x dx y dy]
+      (< (member-count dx) (member-count dy)))))
+
+(defn sort-by-strategy [v x a]
+  (case (-> x meta ::strategy)
+    ::ff (seq (sort (sort-by-member-count a) v))
+    v))
+
 ;; TODO: handle all Clojure tree types
 (extend-protocol IForceAnswerTerm
   nil
@@ -3029,11 +3039,14 @@
 
   clojure.lang.Sequential
   (-force-ans [v x]
-    (letfn [(loop [xs]
-              (if xs
+    (letfn [(loop [ys]
+              (if ys
                 (all
-                 (force-ans (first xs))
-                 (loop (next xs)))
+                  (force-ans (first ys))
+                  (fn [a]
+                    (if-let [ys (sort-by-strategy (next ys) x a)]
+                      ((loop ys) a)
+                      a)))
                 s#))]
       (loop (seq v))))
 
@@ -3051,20 +3064,13 @@
   (-force-ans [v x]
     ((map-sum (fn [n] (updateg x n))) (to-vals v))))
 
-(defn sort-by-member-count [a]
-  (fn [x y]
-    (let-dom a [x dx y dy]
-      (< (member-count dx) (member-count dy)))))
-
 (defn force-ans [x]
   (fn [a]
     ((let [v (walk a x)]
        (if (lvar? v)
          (-force-ans (get-dom a x) x)
          (if (sequential? v)
-           (case (::strategy (attrs a x))
-             ::ff (-force-ans (sort (sort-by-member-count a) v) x)
-             (-force-ans v x))
+           (-force-ans (sort-by-strategy v x a) (root-var a x))
            (-force-ans v x)))) a)))
 
 (deftype FDConstraint [proc _id _meta]
