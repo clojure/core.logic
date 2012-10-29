@@ -169,12 +169,10 @@
   (-relevant-var? [this x]))
 
 (defprotocol IReifiableConstraint
-  (reifiable? [this])
   (reifyc [this v r]))
 
-(extend-type Object
-  IReifiableConstraint
-  (reifiable? [this] false))
+(defn reifiable? [x]
+  (instance? clojure.core.logic.IReifiableConstraint x))
 
 (defprotocol IEnforceableConstraint
   (enforceable? [c]))
@@ -3097,8 +3095,6 @@
     (proc s))
   IEnforceableConstraint
   (enforceable? [_] true)
-  IReifiableConstraint
-  (reifiable? [_] false)
   IConstraintOp
   (rator [_] (rator proc))
   (rands [_] (rands proc))
@@ -3645,7 +3641,6 @@
        IEnforceableConstraint
        (enforceable? [_] false)
        IReifiableConstraint
-       (reifiable? [_] true)
        (reifyc [this v r]
          (let [p* (walk* r (map (fn [[lhs rhs]] `(~lhs ~rhs)) p))]
            (if (empty? p*)
