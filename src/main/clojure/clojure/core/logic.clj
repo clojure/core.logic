@@ -3255,13 +3255,13 @@
   "A finite domain constraint. u must be greater than v. u and v
    must eventually be given domains if vars."
   [u v]
-  (<=fd v u))
+  (<fd v u))
 
 (defn >=fd
   "A finite domain constraint. u must be greater than or equal to v.
    u and v must eventually be given domains if vars."
   [u v]
-  (<fd v u))
+  (<=fd v u))
 
 ;; NOTE: we could put logic right back in but then we're managing
 ;; the constraint in the body again which were trying to get

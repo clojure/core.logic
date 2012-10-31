@@ -2005,6 +2005,16 @@
              (== q [x y z])))
          '([1 9 10] [2 8 10] [3 7 10] [4 6 10]))))
 
+(deftest test->fd-1
+  (is (= (run* [q]
+           (fresh [x y z]
+             (infd x y z (interval 1 10))
+             (+fd x y z)
+             (>fd x y)
+             (== z 10)
+             (== q [x y z])))
+         '([6 4 10] [7 3 10] [8 2 10] [9 1 10]))))
+
 (deftest test-<=fd-1
   (is (= (run* [q]
            (fresh [x y]
@@ -2013,6 +2023,15 @@
              (<=fd x y)
              (== q y)))
          '(4))))
+
+(deftest test->=fd-1
+  (is (= (run* [q]
+           (fresh [x y]
+             (== x 3)
+             (infd y (multi-interval 2 4))
+             (>=fd x y)
+             (== q y)))
+         '(2))))
 
 (deftest test-*fd-1
   (is (= (run* [q]
