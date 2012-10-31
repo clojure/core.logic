@@ -351,8 +351,8 @@
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
-  ;; 5 mins
-  ;; 17.7s w/ distribute
+  ;; 128797.253
+  ;; 17.7s w/ distribute 7X faster
   (time (cryptarithfd-2))
   )
 
