@@ -3436,10 +3436,11 @@
                        ;; a previous process-dom call may have
                        ;; have moved the value since we started
                        ;; iterating
-                       s ((process-dom dom-var
-                            (difference (or (get-dom s dom-var)
-                                            (walk s dom-var))
-                                        x)) s)]
+                       dom (or (get-dom s dom-var)
+                               (walk s dom-var))
+                       s (if (member? dom x)
+                           ((process-dom dom-var (difference dom x)) s)
+                           s)]
                    (when s
                      (recur (next dom-vars) s)))
                  ((remcg this) s))))))
