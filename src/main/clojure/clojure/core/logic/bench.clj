@@ -800,9 +800,9 @@
         (= (* c1 c2 c3) (+ c8 c9))
         (< (+ c2 c3 c6) c8)
         (< c9 c8))
-      (!= c1 1) (!= c2 2) (!= c3 3)
-      (!= c4 4) (!= c5 5) (!= c6 6)
-      (!= c7 7) (!= c8 8) (!= c9 9))))
+      (!=fd c1 1) (!=fd c2 2) (!=fd c3 3)
+      (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
+      (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
 (comment
   ; FIXME: too many answers, negative answers escape, non-distinct answers
