@@ -333,6 +333,7 @@
   (run* [q]
     (fresh [d o n a l g e r b t]
       (== q [d o n a l g e r b t])
+      (distribute q :ff)
       (infd d o n a l g e r b t (interval 0 9))
       (distinctfd q)
       (eqfd
@@ -343,7 +344,7 @@
 (comment
   (cryptarithfd-1)
 
-  ;; ~2700ms
+  ;; ~2700ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
@@ -351,6 +352,7 @@
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
   ;; 5 mins
+  ;; 17.7s w/ distribute
   (time (cryptarithfd-2))
   )
 
