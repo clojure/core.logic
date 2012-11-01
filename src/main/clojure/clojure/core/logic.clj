@@ -13,6 +13,14 @@
 ;; miniKanren Protocols
 
 ;; -----------------------------------------------------------------------------
+;; Attributed Logic Vars
+
+(defprotocol IAttributedLVar
+  (-add-attr [this k v])
+  (-rem-attr [this k])
+  (-get-attr [this k]))
+
+;; -----------------------------------------------------------------------------
 ;; Unification protocols for core Clojure types
 
 (defprotocol IUnifyTerms
@@ -997,8 +1005,9 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (Substitutions.
-      (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs))
+    (let [u (-add-attr u ::root true)]
+      (Substitutions.
+        (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs)))
 
   (walk [this v]
     (if (lvar? v)
@@ -1012,19 +1021,25 @@
 
   ISubstitutionsCLP
   (walk-unbound [this v]
-    (loop [lv v [v vp :as me] (find s v)]
-      (cond
-       (nil? me) lv
-       (not (lvar? vp)) vp
-       :else (recur vp (find s vp)))))
+    (if (lvar? v)
+      (loop [lv v [v vp :as me] (find s v)]
+        (cond
+          (nil? me) lv
+          (not (lvar? vp)) vp
+          :else (recur vp (find s ))))
+      v))
 
   (root-var [this v]
-    (loop [lv v [v vp :as me] (find s v)]
-      (cond
-       (nil? me) lv
-       (= vp ::unbound) v
-       (not (lvar? vp)) v
-       :else (recur vp (find s vp)))))
+    (if (lvar? v)
+      (if (-get-attr v ::root)
+        v
+        (loop [lv v [v vp :as me] (find s v)]
+          (cond
+            (nil? me) lv
+            (= vp ::unbound) v
+            (not (lvar? vp)) v
+            :else (recur vp (find s vp)))))
+      v))
   
   (update [this x v]
     (let [xv (walk this x)]
@@ -1084,7 +1099,7 @@
         x  (root-var a x)
         xv (get s x ::not-found)
         sp (if (not= xv ::not-found)
-             (assoc (dissoc s x) (vary-meta x assoc attr val) xv)
+             (assoc (dissoc s x) (-add-attr x attr val) xv)
              (assoc s (with-meta x {::unbound true attr val}) ::unbound))]
     (assoc a :s sp)))
 
@@ -1108,6 +1123,13 @@
     meta)
   (withMeta [this new-meta]
     (LVar. name oname hash new-meta))
+  IAttributedLVar
+  (-add-attr [this k v]
+    (LVar. name oname hash (assoc meta k v)))
+  (-rem-attr [this k]
+    (LVar. name oname hash (dissoc meta k)))
+  (-get-attr [this k]
+    (get meta k))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -2753,7 +2775,7 @@
 (defn addcg [c]
   (fn [a]
     (let [a (reduce (fn [a x]
-                      (ext-no-check a (vary-meta x assoc ::unbound true) ::unbound))
+                      (ext-no-check a (-add-attr x ::unbound true) ::unbound))
               a (unbound-rands a c))]
       (assoc a :cs (addc (:cs a) c)))))
 
