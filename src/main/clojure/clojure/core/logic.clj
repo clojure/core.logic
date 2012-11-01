@@ -2727,10 +2727,11 @@
 
 (defn ext-dom
   [a x dom]
-  (let [x    (root-var a x)
-        domp (get-dom a x)
-        a    (update-var a (-add-attr x ::fd dom))]
-    (if (not= domp dom)
+  (let [no-prop (-get-attr x ::no-propagate)
+        x       (root-var a x)
+        domp    (get-dom a x)
+        a       (update-var a (-add-attr x ::fd dom))]
+    (if (and (not no-prop) (not= domp dom))
       ((run-constraints* [x] (:cs a) ::fd) a)
       a)))
 
@@ -2759,8 +2760,8 @@
 
 (defn relevant? [c a]
   (let [id (id c)]
-    (and (or (nil? id)
-             (-> a :cs :cm (get id)))
+    (and (or ((-> a :cs :cm) id)
+             (nil? id))
          (-relevant? c a))))
 
 (defn run-constraint [c]
@@ -3375,7 +3376,9 @@
                        s (if-not (lvar? v)
                            (cond
                              (= x v) nil
-                             (member? v x) ((process-dom y (difference v x)) s)
+                             (member? v x) ((process-dom
+                                              (-add-attr y ::no-propagate true)
+                                              (difference v x)) s)
                              :else s)
                            s)]
                    (when s
