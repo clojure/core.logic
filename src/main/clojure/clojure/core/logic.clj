@@ -3091,7 +3091,7 @@
   (reify
     clojure.lang.IFn
     (invoke [this s]
-      (when (intersection (walk s x) (get-dom s x))
+      (when (member? (get-dom s x) (walk s x))
         (update-var s (-rem-attr x ::fd))))
     IConstraintOp
     (rator [_] `domfdc)
@@ -3353,22 +3353,6 @@
 (defn quotfd [u v w]
   (*fd v w u))
 
-(defn categorize
-  "Groups values y* into vars bound to non-singleton domains and singleton 
-   domain values."
-  [s y*]
-  (loop [y* (seq y*) ds [] vs #{}]
-    (if y*
-      (let [y (first y*)
-            yd (get-dom s y)]
-        (if yd
-          (recur (next y*) (conj ds y) vs)
-          (let [y (walk s y)] 
-            (if (lvar? y)
-              (recur (next y*) ds vs)
-              (recur (next y*) ds (conj vs y))))))
-      {:dom-vars ds :singleton-vals vs})))
-
 (defn -distinctfdc
   "The real *individual* distinctfd constraint. x is a var that now is bound to
    a single value. y* were the non-singleton bound vars that existed at the
@@ -3382,22 +3366,20 @@
      (reify
        clojure.lang.IFn
        (invoke [this s]
-         (let [x (walk s x)
-               {:keys [dom-vars singleton-vals]} (categorize s y*)]
-           (when-not (or (n* x) (singleton-vals x))
-             (loop [dom-vars (seq dom-vars) s s]
-               (if dom-vars
-                 (let [dom-var (first dom-vars)
-                       ;; a previous process-dom call may have
-                       ;; have moved the value since we started
-                       ;; iterating
-                       dom (or (get-dom s dom-var)
-                               (walk s dom-var))
-                       s (if (member? dom x)
-                           ((process-dom dom-var (difference dom x)) s)
+         (let [x (walk s x)]
+           (when-not (n* x)
+             (loop [y* (seq y*) s s]
+               (if y*
+                 (let [y (first y*)
+                       v (or (get-dom s y) (walk s y))
+                       s (if-not (lvar? v)
+                           (cond
+                             (= x v) nil
+                             (member? v x) ((process-dom y (difference v x)) s)
+                             :else s)
                            s)]
                    (when s
-                     (recur (next dom-vars) s)))
+                     (recur (next y*) s)))
                  ((remcg this) s))))))
        IWithConstraintId
        (with-id [this id]
