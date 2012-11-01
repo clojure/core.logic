@@ -934,14 +934,10 @@
 ;; s   - persistent hashmap to store logic var bindings
 ;; l   - persistent list of var bindings to support disequality constraints
 ;; cs  - constraint store
-;; ws  - the working constraint store
-;;       (optimization so we don't have to update-in ss)
-;; wsi - the index of the working constraint store in ss
-;; ss  - the persistent hashmap of constraint stores
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
 
-(deftype Substitutions [s l cs ws wsi ss cq cqs]
+(deftype Substitutions [s l cs cq cqs]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -961,9 +957,6 @@
       :s   s
       :l   l
       :cs  cs
-      :ws  ws
-      :wsi wsi
-      :ss  ss
       :cq  cq
       :cqs cqs
       not-found))
@@ -979,35 +972,28 @@
 
   clojure.lang.Associative
   (containsKey [this k]
-    (contains? #{:s :l :cs :ws :wsi :ss :cq :cqs} k))
+    (contains? #{:s :l :cs :cq :cqs} k))
   (entryAt [this k]
     (case k
       :s   [:s s]
       :l   [:l l]
       :cs  [:cs cs]
-      :ws  [:ws ws]
-      :wsi [:wsi wsi]
-      :ss  [:ss ss]
       :cq  [:cq cq]
       :cqs [:cqs cqs]
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v l cs ws wsi ss cq cqs)
-      :l   (Substitutions. s v cs ws wsi ss cq cqs)
-      :cs  (Substitutions. s l  v ws wsi ss cq cqs)
-      :ws  (Substitutions. s l cs  v wsi ss cq cqs)
-      :wsi (Substitutions. s l cs ws   v ss cq cqs)
-      :ss  (Substitutions. s l cs ws wsi  v cq cqs)
-      :cq  (Substitutions. s l cs ws wsi ss  v cqs)
-      :cqs (Substitutions. s l cs ws wsi ss cq v)
+      :s   (Substitutions. v l cs cq cqs)
+      :l   (Substitutions. s v cs cq cqs)
+      :cs  (Substitutions. s l  v cq cqs)
+      :cq  (Substitutions. s l cs  v cqs)
+      :cqs (Substitutions. s l cs cq v)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
   (ext-no-check [this u v]
     (let [u (-add-attr u ::root true)]
-      (Substitutions.
-        (assoc s u v) (cons (pair u v) l) cs ws wsi ss cq cqs)))
+      (Substitutions. (assoc s u v) (cons (pair u v) l) cs cq cqs)))
 
   (walk [this v]
     (if (lvar? v)
@@ -1026,7 +1012,7 @@
         (cond
           (nil? me) lv
           (not (lvar? vp)) vp
-          :else (recur vp (find s ))))
+          :else (recur vp (find s vp))))
       v))
 
   (root-var [this v]
@@ -1073,10 +1059,10 @@
   (take* [this] this))
 
 (defn- make-s
-  ([] (Substitutions. {} () (make-cs) nil nil {} nil #{}))
-  ([m] (Substitutions. m () (make-cs) nil nil {} nil #{}))
-  ([m l] (Substitutions. m l (make-cs) nil nil {} nil #{}))
-  ([m l cs] (Substitutions. m l cs nil nil {} nil #{})))
+  ([] (Substitutions. {} () (make-cs) nil #{}))
+  ([m] (Substitutions. m () (make-cs) nil #{}))
+  ([m l] (Substitutions. m l (make-cs) nil #{}))
+  ([m l cs] (Substitutions. m l cs nil #{})))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -1094,13 +1080,13 @@
     flatten
     (filter #(lvar? (walk-unbound a %)))))
 
-(defn add-attr [a x attr val]
+;; NOTE: assumption here that x is a root var
+(defn update-var [a x]
   (let [s  (:s a)
-        x  (root-var a x)
         xv (get s x ::not-found)
         sp (if (not= xv ::not-found)
-             (assoc (dissoc s x) (-add-attr x attr val) xv)
-             (assoc s (with-meta x {::unbound true attr val}) ::unbound))]
+             (assoc (dissoc s x) x xv)
+             (assoc s (-> x (-add-attr ::unbound true) (-add-attr ::root true)) ::unbound))]
     (assoc a :s sp)))
 
 (defn attrs [a x]
@@ -2733,43 +2719,19 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn use-ws [a wsi]
-  (if (= (:wsi a) wsi)
-    a
-    (-> a
-        (assoc :ss (let [ss (:ss a)
-                         wsi (:wsi a)]
-                     (if wsi
-                       (assoc ss wsi (:ws a))
-                       ss))) 
-        (assoc :ws (or (get (:ss a) wsi) {}))
-        (assoc :wsi wsi))))
+(defn get-dom
+  [a x]
+  (if (lvar? x)
+    (-get-attr (root-var a x) ::fd)
+    x))
 
-(defn wsi? [a wsi]
-  (= (:wsi a) wsi))
-
-(defn getv
-  "Get the current value for a logic var using the working store."
-  ([a wsi x]
-     (getv a wsi x nil))
-  ([a wsi x not-found]
-     (get (:ws a) (root-var a x) not-found)))
-
-(defn remv
-  "Remove a binding from the working store."
-  [a wsi x]
-  (assoc a :ws (dissoc (:ws a) (root-var a x))))
-
-(defn ext-ws
-  "Update the current value for a logic var using the working
-   store. Returns the updated substitution."
-  [a wsi x v]
-  (let [x (root-var a x)
-        ws (:ws a)
-        [k vp :as me] (find ws x)
-        a (assoc a :ws (assoc ws x v))]
-    (if (and me (not= v vp))
-      ((run-constraints* [x] (:cs a) wsi) a)
+(defn ext-dom
+  [a x dom]
+  (let [x    (root-var a x)
+        domp (get-dom a x)
+        a    (update-var a (-add-attr x ::fd dom))]
+    (if (not= domp dom)
+      ((run-constraints* [x] (:cs a) ::fd) a)
       a)))
 
 (defn addcg [c]
@@ -2865,7 +2827,7 @@
               (let [x (first constrained)]
                 (if (and (lvar? x)
                          (and (lvar? (walk a x))
-                              (= (get-dom a x ::not-found) ::not-found)))
+                              (nil? (get-dom a x))))
                   (throw (Exception. (str "Constrained variable " x " without domain")))
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
@@ -2930,53 +2892,24 @@
   (integer? x))
 
 (defmacro let-dom
-  "Convenience macro. Should only be used in the goal portion
-   of a finite domain constraint where the vars are known to
-   have domains."
   [a vars & body]
   (let [get-var-dom (fn [a [v b]]
                       `(~b (let [v# (walk ~a ~v)]
                              (if (lvar? v#)
-                               (get-dom-safe ~a v#)
+                               (get-dom ~a v#)
                                v#))))]
-   `(let [~a (use-ws ~a ::fd)
-          ~@(mapcat (partial get-var-dom a) (partition 2 vars))]
+   `(let [~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
 
-(defn get-dom
-  "Get the domain for a logic var. Sugar over getv, but ensures
-   that we're using the finite domain working store."
-  ([a x] (get-dom a x nil))
-  ([a x not-found]
-     (if (lvar? x)
-       (let [a (use-ws a ::fd)]
-         (getv a ::fd x not-found))
-       x)))
-
-(defn get-dom-safe
-  "Like get-dom but assumes we're alread using the finite domain
-   working store, a performance optimization."
-  ([a x] (get-dom-safe a x nil))
-  ([a x not-found]
-     (if (lvar? x)
-       (getv a ::fd x not-found)
-       x)))
-
 (defn resolve-storable-dom
-  "Given a domain update its value in the finite domain store by
-   calculating the intersection. If the domain is already a singleton
-   move the value into the subsitution."
   [a x dom]
   (if (singleton-dom? dom)
-    (let [a (remv a ::fd x)] ;; TODO: we don't need to remove it domfdc will
-      (update a x dom))
-    (ext-ws a ::fd x dom)))
+    (update a (-rem-attr x ::fd) dom)
+    (ext-dom a x dom)))
 
 (defn update-var-dom
-  "Update a vars domain in the finite domain working store."
   [a x dom]
-  (let [a    (use-ws a ::fd)
-        domp (get-dom-safe a x)]
+  (let [domp (get-dom a x)]
     (if domp
       (let [i (intersection dom domp)]
         (when i
@@ -3091,7 +3024,8 @@
        (if (lvar? v)
          (-force-ans (get-dom a x) x)
          (if (sequential? v)
-           (-force-ans (sort-by-strategy v x a) (root-var a x))
+           (let [x (root-var a x)]
+             (-force-ans (sort-by-strategy v x a) x))
            (-force-ans v x)))) a)))
 
 (deftype FDConstraint [proc _id _meta]
@@ -3128,13 +3062,12 @@
   (runnable? [this s]
     (if (instance? clojure.core.logic.IRunnable proc)
       (runnable? proc s)
-      (let [s (use-ws s ::fd)]
-        (letfn [(has-dom? [x]
-                  (let [x (walk s x)]
-                    (if (lvar? x)
-                      (get-dom-safe s x)
-                      x)))]
-          (every? identity (map has-dom? (rands proc)))))))
+      (letfn [(has-dom? [x]
+                (let [x (walk s x)]
+                  (if (lvar? x)
+                    (get-dom s x)
+                    x)))]
+        (every? identity (map has-dom? (rands proc))))))
   IWithConstraintId
   (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
   IConstraintId
@@ -3159,7 +3092,7 @@
     clojure.lang.IFn
     (invoke [this s]
       (when (intersection (walk s x) (get-dom s x))
-        (remv s ::fd x)))
+        (update-var s (-rem-attr x ::fd))))
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
@@ -3560,7 +3493,7 @@
 
 (defn distribute [v* strategy]
   (fn [a]
-    (add-attr a v* ::strategy ::ff)))
+    (update-var a (-add-attr v* ::strategy ::ff))))
 
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar
