@@ -2759,7 +2759,7 @@
 
 (defn ext-dom
   [a x dom]
-  (let [no-prop (get-attr a x ::no-propagate)
+  (let [no-prop (-> x meta ::no-propagate)
         x       (root-var a x)
         domp    (get-dom a x)
         a       (add-attr a x ::fd dom)]
