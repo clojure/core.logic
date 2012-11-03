@@ -10,15 +10,16 @@
 (def ^{:dynamic true} *locals*)
 
 ;; =============================================================================
+;; Utilities
+
+(defn assoc-meta [x k v]
+  (with-meta x (assoc (meta x) k v)))
+
+(defn dissoc-meta [x k]
+  (with-meta x (dissoc (meta x) k)))
+
+;; =============================================================================
 ;; miniKanren Protocols
-
-;; -----------------------------------------------------------------------------
-;; Attributed Logic Vars
-
-(defprotocol IAttributedLVar
-  (-add-attr [this k v])
-  (-rem-attr [this k])
-  (-get-attr [this k]))
 
 ;; -----------------------------------------------------------------------------
 ;; Unification protocols for core Clojure types
@@ -127,10 +128,14 @@
 ;; cKanren protocols
 
 (defprotocol ISubstitutionsCLP
-  (walk-unbound [this x])
+  (root-val [this x])
   (root-var [this x])
   (update [this x v])
-  (queue [this c]))
+  (queue [this c])
+  (update-var [this x v])
+  (add-attr [this x attr attrv])
+  (rem-attr [this x attr])
+  (get-attr [this x attro]))
 
 ;; -----------------------------------------------------------------------------
 ;; Constraint Store
@@ -880,6 +885,18 @@
   (ConstraintStore. {} {} 0 #{}))
 
 ;; =============================================================================
+;; SubstValue
+
+(defrecord SubstValue [v])
+
+(defn subst-val? [x]
+  (instance? SubstValue x))
+
+(defn subst-val
+  ([x] (SubstValue. x))
+  ([x _meta] (with-meta (SubstValue. x) _meta)))
+
+;; =============================================================================
 ;; Substitutions
 
 (declare empty-s choice lvar lvar? pair lcons run-constraints*)
@@ -889,7 +906,7 @@
     (occurs-check-term v u s)))
 
 (defn ext [s u v]
-  (if (and *occurs-check* (occurs-check s u v))
+  (if (and *occurs-check* (occurs-check s u (if (subst-val? v) (:v v) v)))
     nil
     (ext-no-check s u v)))
 
@@ -992,21 +1009,27 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (-add-attr u ::root true)]
+    (let [u (assoc-meta u ::root true)]
       (Substitutions. (assoc s u v) (cons (pair u v) l) cs cq cqs)))
 
   (walk [this v]
     (if (lvar? v)
       (loop [lv v [v vp :as me] (find s v)]
         (cond
-         (nil? me) lv
-         (= vp ::unbound) v
-         (not (lvar? vp)) vp
-         :else (recur vp (find s vp))))
+          (nil? me) lv
+          
+          (not (lvar? vp))
+          (if-let [sv (and (subst-val? vp) (:v vp))]
+            (if (= sv ::unbound)
+              (with-meta v (assoc (meta vp) ::unbound true))
+              sv)
+            vp)
+          
+          :else (recur vp (find s vp))))
       v))
 
   ISubstitutionsCLP
-  (walk-unbound [this v]
+  (root-val [this v]
     (if (lvar? v)
       (loop [lv v [v vp :as me] (find s v)]
         (cond
@@ -1017,28 +1040,33 @@
 
   (root-var [this v]
     (if (lvar? v)
-      (if (-get-attr v ::root)
+      (if (-> v meta ::root)
         v
         (loop [lv v [v vp :as me] (find s v)]
           (cond
             (nil? me) lv
-            (= vp ::unbound) v
-            (not (lvar? vp)) v
+
+            (not (lvar? vp))
+            (if (subst-val? vp)
+              (with-meta v (meta vp))
+              v)
+
             :else (recur vp (find s vp)))))
       v))
   
   (update [this x v]
-    (let [xv (walk this x)]
-      (if (lvar? xv)
+    (let [xv (root-val this x)]
+      (if (or (lvar? xv) (and (subst-val? xv) (= (:v xv) ::unbound)))
         (let [x  (root-var this x)
               xs (if (lvar? v)
                    [x (root-var this v)]
                    [x])]
           ((run-constraints* xs cs ::subst)
-           (if *occurs-check*
-             (ext this x v)
-             (ext-no-check this x v))))
-        (when (= xv v) ;; NOTE: replace with unify?
+           (let [v (if (subst-val? xv) (assoc xv :v v) v)]
+             (if *occurs-check*
+               (ext this x v)
+               (ext-no-check this x v)))))
+        (when (= (if (subst-val? xv) (:v xv) v) v) ;; NOTE: replace with unify?
           this))))
 
   (queue [this c]
@@ -1048,6 +1076,29 @@
           (assoc :cq (conj cq c))
           (assoc :cqs (conj cqs id)))
         this)))
+
+  (update-var [this x v]
+    (assoc this :s (assoc (:s this) x v)))
+
+  (add-attr [this x attr attrv]
+    (let [x (root-var this x)
+          v (root-val this x)]
+      (if (subst-val? v)
+        (update-var this x (assoc-meta v attr attrv))
+        (let [v (if (lvar? v) ::unbound v)]
+          (ext-no-check this x (subst-val v {attr attrv}))))))
+
+  (rem-attr [this x attr]
+    (let [x (root-var this x)
+          v (root-val this x)]
+      (if (subst-val? v)
+        (update-var this x (dissoc-meta v attr))
+        this)))
+
+  (get-attr [this x attr]
+    (let [v (root-val this x)]
+      (if (subst-val? v)
+        (-> v meta attr))))
 
   IBind
   (bind [this g]
@@ -1078,19 +1129,7 @@
 (defn unbound-rands [a c]
   (->> (rands c)
     flatten
-    (filter #(lvar? (walk-unbound a %)))))
-
-;; NOTE: assumption here that x is a root var
-(defn update-var [a x]
-  (let [s  (:s a)
-        xv (get s x ::not-found)
-        sp (if (not= xv ::not-found)
-             (assoc (dissoc s x) x xv)
-             (assoc s (-> x (-add-attr ::unbound true) (-add-attr ::root true)) ::unbound))]
-    (assoc a :s sp)))
-
-(defn attrs [a x]
-  (meta (root-var a x)))
+    (filter #(lvar? (root-val a %)))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -1109,13 +1148,6 @@
     meta)
   (withMeta [this new-meta]
     (LVar. name oname hash new-meta))
-  IAttributedLVar
-  (-add-attr [this k v]
-    (LVar. name oname hash (assoc meta k v)))
-  (-rem-attr [this k]
-    (LVar. name oname hash (dissoc meta k)))
-  (-get-attr [this k]
-    (get meta k))
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
@@ -2722,15 +2754,15 @@
 (defn get-dom
   [a x]
   (if (lvar? x)
-    (-get-attr (root-var a x) ::fd)
+    (get-attr a x ::fd)
     x))
 
 (defn ext-dom
   [a x dom]
-  (let [no-prop (-get-attr x ::no-propagate)
+  (let [no-prop (get-attr a x ::no-propagate)
         x       (root-var a x)
         domp    (get-dom a x)
-        a       (update-var a (-add-attr x ::fd dom))]
+        a       (add-attr a x ::fd dom)]
     (if (and (not no-prop) (not= domp dom))
       ((run-constraints* [x] (:cs a) ::fd) a)
       a)))
@@ -2738,7 +2770,7 @@
 (defn addcg [c]
   (fn [a]
     (let [a (reduce (fn [a x]
-                      (ext-no-check a (-add-attr x ::unbound true) ::unbound))
+                      (ext-no-check a x (subst-val ::unbound)))
               a (unbound-rands a c))]
       (assoc a :cs (addc (:cs a) c)))))
 
@@ -2905,7 +2937,7 @@
 (defn resolve-storable-dom
   [a x dom]
   (if (singleton-dom? dom)
-    (update a (-rem-attr x ::fd) dom)
+    (update (rem-attr a x ::fd) x dom)
     (ext-dom a x dom)))
 
 (defn update-var-dom
@@ -3093,7 +3125,7 @@
     clojure.lang.IFn
     (invoke [this s]
       (when (member? (get-dom s x) (walk s x))
-        (update-var s (-rem-attr x ::fd))))
+        (rem-attr s x ::fd)))
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
@@ -3377,7 +3409,7 @@
                            (cond
                              (= x v) nil
                              (member? v x) ((process-dom
-                                              (-add-attr y ::no-propagate true)
+                                              (assoc-meta y ::no-propagate true)
                                               (difference v x)) s)
                              :else s)
                            s)]
@@ -3478,7 +3510,7 @@
 
 (defn distribute [v* strategy]
   (fn [a]
-    (update-var a (-add-attr v* ::strategy ::ff))))
+    (add-attr a v* ::strategy ::ff)))
 
 ;; -----------------------------------------------------------------------------
 ;; FD Equation Sugar

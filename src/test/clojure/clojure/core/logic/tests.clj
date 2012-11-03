@@ -1,7 +1,8 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
-  (:use [clojure.core.logic :exclude [is]] :reload)
-  (:use clojure.test))
+  (:use [clojure.core.logic :exclude [is]]
+        clojure.test :reload)
+  (:require [clojure.pprint :as pp]))
 
 ;; =============================================================================
 ;; unify
@@ -2126,6 +2127,8 @@
         s ((!= x y) empty-s)]
     (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x y))))))
 
+;; FIXME
+
 (deftest test-!=-2 []
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -2216,6 +2219,8 @@
              (== q [x y])))
          '([6 3]))))
 
+;; FIXME
+
 (deftest test-eqfd-2 []
   (is (= (run* [q]
            (fresh [s e n d m o r y]
@@ -2276,3 +2281,58 @@
              (== y 2)))
          '([1 2]))))
 
+
+
+
+
+;; =============================================================================
+;; Implementation Specific Tests - Subject To Change
+
+(deftest test-attrs-1 []
+  (let [x (lvar 'x)
+        s (add-attr empty-s x :foo 'bar)]
+    (is (= (get-attr s x :foo) 'bar))))
+
+(deftest test-attrs-2 []
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x 1)
+        s (add-attr s x :foo 'bar)
+        s (add-attr s x :baz 'woz)]
+    (is (= (get-attr s x :foo) 'bar))
+    (is (= (get-attr s x :baz) 'woz))))
+
+(deftest test-attrs-2 []
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x 1)
+        s (add-attr s x :foo 'bar)
+        s (add-attr s x :baz 'woz)
+        s (rem-attr s x :foo)]
+    (is (= (get-attr s x :foo) nil))))
+
+(deftest test-root-1 []
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x 1)]
+    (= (root-var s x) x)
+    (= (root-val s x) 1)))
+
+(deftest test-root-2 []
+  (let [x (lvar 'x)
+        s (add-attr empty-s x :foo 'bar)]
+    (is (subst-val? (root-val s x)))))
+
+(deftest test-root-3 []
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+           (ext-no-check x 1)
+           (ext-no-check y x))]
+    (is (= (root-var s y) x))))
+
+(deftest test-update-1 []
+  (let [x (lvar 'x)
+        s (ext-no-check empty-s x (subst-val :clojure.core.logic/unbound))
+        s (add-attr s x ::fd (domain 1 2 3))
+        s (update s x 1)]
+    (is (= (:v (root-val s x)) 1))
+    (is (= (get-attr s x ::fd) (domain 1 2 3)))
+    (is (= (walk s x) 1))))
