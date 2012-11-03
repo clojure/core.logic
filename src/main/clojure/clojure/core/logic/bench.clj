@@ -529,7 +529,7 @@
       (distinctfd [a b c d])
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
-      (+fd a b s1) (+fd s1 c s2) (+fd s2 d n)
+      (eqfd (= (+ a b c d) n))
       (checko [a b c d] () () n)
       (== q [a b c d]))))
 
