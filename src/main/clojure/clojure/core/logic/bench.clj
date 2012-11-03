@@ -426,6 +426,7 @@
 
 (comment
   ;; close to 2X faster than Petite Chez
+  ;; ~3500ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -466,6 +467,7 @@
   
   (simple-eqfd)
 
+  ;; 900ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
