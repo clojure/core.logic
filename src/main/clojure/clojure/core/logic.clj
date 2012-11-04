@@ -1067,18 +1067,19 @@
       v))
   
   (update [this x v]
-    (let [xv (root-val this x)]
-      (if (or (lvar? xv) (and (subst-val? xv) (= (:v xv) ::unbound)))
+    (let [xv (root-val this x)
+          sval? (subst-val? xv)]
+      (if (or (lvar? xv) (and sval? (= (:v xv) ::unbound)))
         (let [x  (root-var this x)
               xs (if (lvar? v)
                    [x (root-var this v)]
                    [x])]
           ((run-constraints* xs cs ::subst)
-           (let [v (if (subst-val? xv) (assoc xv :v v) v)]
+           (let [v (if sval? (assoc xv :v v) v)]
              (if *occurs-check*
                (ext this x v)
                (ext-no-check this x v)))))
-        (when (= (if (subst-val? xv) (:v xv) v) v) ;; NOTE: replace with unify?
+        (when (= (if sval? (:v xv) v) v) ;; NOTE: replace with unify?
           this))))
 
   (queue [this c]
