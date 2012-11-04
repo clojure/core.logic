@@ -887,7 +887,10 @@
 ;; =============================================================================
 ;; SubstValue
 
-(defrecord SubstValue [v])
+(defrecord SubstValue [v]
+  Object
+  (toString [_]
+    (str v)))
 
 (defn subst-val? [x]
   (instance? SubstValue x))
@@ -895,6 +898,9 @@
 (defn subst-val
   ([x] (SubstValue. x))
   ([x _meta] (with-meta (SubstValue. x) _meta)))
+
+(defmethod print-method SubstValue [x ^Writer writer]
+  (.write writer (str (:v x))))
 
 ;; =============================================================================
 ;; Substitutions
