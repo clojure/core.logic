@@ -1009,8 +1009,12 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (assoc-meta u ::root true)]
-      (Substitutions. (assoc s u v) (cons (pair u v) l) cs cq cqs)))
+    (let [u (assoc-meta u ::root true)
+          l (if (and (subst-val? v)
+                     (= (:v v) ::unbound))
+              l
+              (cons (pair u v) l))]
+      (Substitutions. (assoc s u v) l cs cq cqs)))
 
   (walk [this v]
     (if (lvar? v)
