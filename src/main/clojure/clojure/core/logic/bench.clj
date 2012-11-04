@@ -810,9 +810,10 @@
   ; FIXME: too many answers, negative answers escape, non-distinct answers
 
   (safefd)
-  
+
+  ;; 2800ms
   (dotimes [_ 5]
     (time
-     (dotimes [_ 1] 
+     (dotimes [_ 100] 
        (safefd))))
   )
