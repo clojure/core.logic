@@ -925,8 +925,10 @@
     s
     (let [u (walk s u)
           v (walk s v)]
-      (if (identical? u v)
-        s
+      (if (lvar? u)
+        (if (and (lvar? v) (= u v))
+          s
+          (unify-terms u v s))
         (unify-terms u v s)))))
 
 (def unbound-names

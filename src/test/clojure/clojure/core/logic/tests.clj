@@ -2127,8 +2127,6 @@
         s ((!= x y) empty-s)]
     (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x y))))))
 
-;; FIXME
-
 (deftest test-!=-2 []
   (let [x (lvar 'x)
         y (lvar 'y)
@@ -2280,6 +2278,16 @@
              (== x 1)
              (== y 2)))
          '([1 2]))))
+
+(deftest test-eq-vars-1 []
+  (let [x0 (lvar 'x)
+        x1 (with-meta x0 {:foo 'bar})
+        s  (unify empty-s x0 x1)]
+    (is (= s empty-s))))
+
+
+
+
 
 
 
