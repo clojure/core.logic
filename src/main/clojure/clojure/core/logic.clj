@@ -19,6 +19,11 @@
   (with-meta x (dissoc (meta x) k)))
 
 ;; =============================================================================
+;; Marker Interfaces
+
+(definterface Var)
+
+;; =============================================================================
 ;; miniKanren Protocols
 
 ;; -----------------------------------------------------------------------------
@@ -1086,7 +1091,7 @@
     (let [id (id c)]
       (if-not (cqs id)
         (-> this
-          (assoc :cq (conj cq c))
+          (assoc :cq (conj (or cq []) c))
           (assoc :cqs (conj cqs id)))
         this)))
 
@@ -1151,6 +1156,7 @@
 ;; Logic Variables
 
 (deftype LVar [name oname hash meta]
+  clojure.core.logic.Var
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
@@ -1167,8 +1173,8 @@
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
-    (and (.. this getClass (isInstance o))
-         (identical? name (:name o))))
+    (and (instance? clojure.core.logic.Var o)
+      (identical? name (:name o))))
   (hashCode [_] hash)
   IUnifyTerms
   (unify-terms [u v s]
@@ -1230,7 +1236,7 @@
   (.write writer (str "<lvar:" (:name x) ">")))
 
 (defn lvar? [x]
-  (instance? LVar x))
+  (instance? clojure.core.logic.Var x))
 
 ;; =============================================================================
 ;; LCons
@@ -1830,13 +1836,18 @@
 ;; =============================================================================
 ;; Easy Unification
 
+(defmulti prep-subst (fn [lvar-expr] (::ann (meta lvar-expr))))
+
+(defmethod prep-subst :default
+  [lvar-expr] (lvar lvar-expr))
+
 (defn- lvarq-sym? [s]
   (and (symbol? s) (= (first (str s)) \?)))
 
 (defn- proc-lvar [lvar-expr store]
   (let [v (if-let [u (@store lvar-expr)]
             u
-            (lvar lvar-expr))]
+            (prep-subst lvar-expr))]
     (swap! store conj [lvar-expr v])
     v))
 
@@ -1882,13 +1893,17 @@
                   (postwalk (replace-lvar lvars) expr))]
     (with-meta prepped {:lvars @lvars})))
 
+(declare fix-constraints)
+
 (defn unifier*
   "Unify the terms u and w."
   ([u w]
      (first
       (run* [q]
         (== u w)
-        (== u q))))
+        (== q u)
+        (fn [a]
+          (fix-constraints a)))))
   ([u w & ts]
      (apply unifier* (unifier* u w) ts)))
 
@@ -3727,10 +3742,165 @@
      (!= y x)
      (rembero x ys zs)))
 
+;; =============================================================================
+;; Partial Maps
 
+(defprotocol IUnifyWithPMap
+  (unify-with-pmap [pmap u s]))
 
+(defrecord PMap []
+  IUnifyWithMap
+  (unify-with-map [v u s]
+    (loop [ks (keys v) s s]
+      (if (seq ks)
+        (let [kf (first ks)
+              uf (get u kf ::not-found)]
+          (if (= uf ::not-found)
+            nil
+            (if-let [s (unify s (get v kf) uf)]
+              (recur (next ks) s)
+              nil)))
+        s)))
 
+  IUnifyWithPMap
+  (unify-with-pmap [v u s]
+    (unify-with-map v u s))
 
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-pmap v u s))
 
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (ext-no-check s u v)))
 
-(load "logic/partial_map")
+(extend-protocol IUnifyWithPMap
+  nil
+  (unify-with-pmap [v u s] nil)
+
+  Object
+  (unify-with-pmap [v u s] nil)
+
+  clojure.core.logic.LVar
+  (unify-with-pmap [v u s]
+    (ext s v u))
+
+  clojure.lang.IPersistentMap
+  (unify-with-pmap [v u s]
+    (unify-with-map u v s)))
+
+(defn partial-map
+  "Given map m, returns partial map that unifies with maps even if it
+   doesn't share all of the keys of that map.
+   Only the keys of the partial map will be unified:
+
+   (run* [q]
+     (fresh [pm x]
+       (== pm (partial-map {:a x}))
+       (== pm {:a 1 :b 2})
+       (== pm q)))
+   ;;=> ({:a 1})"
+  [m]
+  (map->PMap m))
+
+;; =============================================================================
+;; Predicate Constraint
+
+(defn -predc
+  ([x p] (-predc x p p))
+  ([x p pform]
+     (reify
+       Object
+       (toString [_]
+         (str pform))
+       clojure.lang.IFn
+       (invoke [this a]
+         (let [x (walk a x)]
+           (when (p x)
+             ((remcg this) a))))
+       IConstraintOp
+       (rator [_] (if (seq? pform)
+                    `(predc ~pform)
+                    `predc))
+       (rands [_] [x])
+       IReifiableConstraint
+       (reifyc [_ a r]
+         pform)
+       IRelevant
+       (-relevant? [_ a] true)
+       IRunnable
+       (runnable? [_ a]
+         (not (lvar? (walk a x))))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
+
+(defn predc
+  ([x p] (predc x p p))
+  ([x p pform]
+     (cgoal (-predc x p pform))))
+
+;; =============================================================================
+;; Constrained Vars
+
+(defprotocol IUnifyWithCVar
+  (unify-with-cvar [v u s]))
+
+(extend-protocol IUnifyWithCVar
+  nil
+  (unify-with-cvar [v u s]
+    (queue (unify v (:lvar u)) (:c u)))
+
+  Object
+  (unify-with-cvar [v u s]
+    (queue (unify s v (:lvar u)) (:c u)))
+
+  LVar
+  (unify-with-cvar [v u s]
+    (-> (unify s v (:lvar u))
+        (queue (:c u)))))
+
+(deftype CVar [lvar c]
+  clojure.core.logic.Var
+  Object
+  (toString [_]
+    (str lvar " :- " c))
+  (hashCode [_]
+    (.hashCode lvar))
+  (equals [this o]
+    (and (instance? clojure.core.logic.Var o)
+      (identical? (:name lvar) (:name o))))
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [_ k not-found]
+    (case k
+      :lvar lvar
+      :name (:name lvar)
+      :c c
+      not-found))
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-cvar v u s))
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (-> (unify s (:lvar v) u)
+        (queue (:c v))))
+  IUnifyWithLVar
+  (unify-with-lvar [v u s]
+    (-> (unify s (:lvar v) u)
+        (queue (:c v))))
+  IUnifyWithCVar
+  (unify-with-cvar [v u s]
+    (-> (unify s (:lvar v) (:lvar u))
+        (queue (:c u))
+        (queue (:c v)))))
+
+(defn cvar [lvar c]
+  (CVar. lvar c))
+
+;; =============================================================================
+;; Some default prep substitutions
+
+(defmethod prep-subst ::numeric
+  [x] (let [x (lvar x)]
+        (cvar x (-predc x number? `number?))))

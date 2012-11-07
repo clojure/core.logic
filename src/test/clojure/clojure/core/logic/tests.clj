@@ -1,6 +1,6 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
-  (:use [clojure.core.logic :exclude [is]]
+  (:use [clojure.core.logic :exclude [is] :as l]
         clojure.test :reload)
   (:require [clojure.pprint :as pp]))
 
@@ -2285,13 +2285,38 @@
         s  (unify empty-s x0 x1)]
     (is (= s empty-s))))
 
+;; =============================================================================
+;; predc
 
+(deftest test-predc-1 []
+  (is (= (run* [q]
+           (predc q number? `number?))
+         '((_.0 :- clojure.core/number?))))
+  (is (= (run* [q]
+           (predc q number? `number?)
+           (== q 1))
+         '(1)))
+  (is (= (run* [q]
+           (== q 1)
+           (predc q number? `number?))
+         '(1)))
+  (is (= (run* [q]
+           (predc q number? `number?)
+           (== q "foo"))
+         ()))
+  (is (= (run* [q]
+           (== q "foo")
+           (predc q number? `number?))
+         ())))
 
+;; =============================================================================
+;; extensible unifier
 
-
-
-
-
+(deftest test-extensible-unifier-1
+  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '(1))
+         '(1)))
+  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '("foo"))
+         nil)))
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
