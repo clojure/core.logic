@@ -1105,7 +1105,10 @@
     (let [x (root-var this x)
           v (root-val this x)]
       (if (subst-val? v)
-        (update-var this x (dissoc-meta v attr))
+        (let [new-meta (dissoc (meta v) attr)]
+          (if (and (zero? (count new-meta)) (not= (:v v) ::unbound))
+            (update-var this x (:v v))
+            (update-var this x (with-meta v new-meta))))
         this)))
 
   (get-attr [this x attr]

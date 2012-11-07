@@ -807,9 +807,19 @@
       (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
 (comment
-  ; FIXME: too many answers, negative answers escape, non-distinct answers
-
   (safefd)
+
+  (every?
+    (fn [[c1 c2 c3 c4 c5 c6 c7 c8 c9]]
+      (and
+        (not= c1 1) (not= c2 2) (not= c3 3)
+        (not= c4 4) (not= c5 5) (not= c6 6)
+        (not= c7 7) (not= c8 8) (not= c9 9)
+        (= (- c4 c6) c7)
+        (= (* c1 c2 c3) (+ c8 c9))
+        (< (+ c2 c3 c6) c8)
+        (< c9 c8)))
+    (safefd))
 
   ;; 2800ms
   (dotimes [_ 5]
