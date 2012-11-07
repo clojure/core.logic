@@ -1490,7 +1490,7 @@
         (if (seq ks)
           (let [kf (first ks)
                 vf (get v kf ::not-found)]
-            (if-let [s (unify s (get u kf) vf)]
+            (if-let [s (unify s (get u kf ::not-found) vf)]
               (recur (next ks) s)
               nil))
           s)))))
