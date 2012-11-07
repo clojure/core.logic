@@ -967,7 +967,7 @@
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
 
-(deftype Substitutions [s l cs cq cqs]
+(deftype Substitutions [s l cs cq cqs _meta]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -978,6 +978,11 @@
 
   clojure.lang.Counted
   (count [this] (count s))
+
+  clojure.lang.IObj
+  (meta [this] _meta)
+  (withMeta [this new-meta]
+    (Substitutions. s l cs cq cqs new-meta))
 
   clojure.lang.ILookup
   (valAt [this k]
@@ -1013,11 +1018,11 @@
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v l cs cq cqs)
-      :l   (Substitutions. s v cs cq cqs)
-      :cs  (Substitutions. s l  v cq cqs)
-      :cq  (Substitutions. s l cs  v cqs)
-      :cqs (Substitutions. s l cs cq v)
+      :s   (Substitutions. v l cs cq cqs _meta)
+      :l   (Substitutions. s v cs cq cqs _meta)
+      :cs  (Substitutions. s l  v cq cqs _meta)
+      :cq  (Substitutions. s l cs  v cqs _meta)
+      :cqs (Substitutions. s l cs cq v   _meta)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
@@ -1027,7 +1032,7 @@
                      (= (:v v) ::unbound))
               l
               (cons (pair u v) l))]
-      (Substitutions. (assoc s u v) l cs cq cqs)))
+      (Substitutions. (assoc s u v) l cs cq cqs _meta)))
 
   (walk [this v]
     (if (lvar? v)
@@ -1131,10 +1136,10 @@
   (take* [this] this))
 
 (defn- make-s
-  ([] (Substitutions. {} () (make-cs) nil #{}))
-  ([m] (Substitutions. m () (make-cs) nil #{}))
-  ([m l] (Substitutions. m l (make-cs) nil #{}))
-  ([m l cs] (Substitutions. m l cs nil #{})))
+  ([] (Substitutions. {} () (make-cs) nil #{} nil))
+  ([m] (Substitutions. m () (make-cs) nil #{} nil))
+  ([m l] (Substitutions. m l (make-cs) nil #{} nil))
+  ([m l cs] (Substitutions. m l cs nil #{} nil)))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
