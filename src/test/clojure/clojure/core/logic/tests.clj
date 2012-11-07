@@ -1653,7 +1653,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         cs (addc (make-cs) c)
-        sc (first (constraints-for cs u :clojure.core.logic/fd))]
+        sc (first (constraints-for cs u ::l/fd))]
     (is (= c sc))
     (is (= (id sc) 0))
     (is (= (count (:km cs)) 2))
@@ -2363,7 +2363,7 @@
 
 (deftest test-update-1 []
   (let [x (lvar 'x)
-        s (ext-no-check empty-s x (subst-val :clojure.core.logic/unbound))
+        s (ext-no-check empty-s x (subst-val ::l/unbound))
         s (add-attr s x ::fd (domain 1 2 3))
         s (update s x 1)]
     (is (= (:v (root-val s x)) 1))
