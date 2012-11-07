@@ -1485,11 +1485,9 @@
         (if (seq ks)
           (let [kf (first ks)
                 vf (get v kf ::not-found)]
-            (if (= vf ::not-found)
-              nil
-              (if-let [s (unify s (get u kf) vf)]
-                (recur (next ks) s)
-                nil)))
+            (if-let [s (unify s (get u kf) vf)]
+              (recur (next ks) s)
+              nil))
           s)))))
 
 ;; =============================================================================
