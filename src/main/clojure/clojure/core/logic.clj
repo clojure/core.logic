@@ -3906,8 +3906,46 @@
   (CVar. lvar c))
 
 ;; =============================================================================
+;; Missing
+
+(defprotocol IUnifyWithMissing
+  (unify-with-missing [v u s]))
+
+(extend-protocol IUnifyWithMissing
+  nil
+  (unify-with-missing [v u s] nil)
+
+  Object
+  (unify-with-missing [v u s]
+    (when (= v ::not-found)
+      s)))
+
+(deftype Missing []
+  IUnifyTerms
+  (unify-terms [u v s]
+    (unify-with-missing v u s))
+  IUnifyWithObject
+  (unify-with-object [v u s]
+    (when (= u ::not-found)
+      s)))
+
+(defn missing []
+  (Missing.))
+
+;; =============================================================================
+;; GhostVal
+
+;; for ghost val we need to be able to add goals?
+;; gvar? logic vars that queue goals - to implement or functionality
+
+;; =============================================================================
 ;; Some default prep substitutions
 
 (defmethod prep-subst ::numeric
   [x] (let [x (lvar x)]
         (cvar x (-predc x number? `number?))))
+
+(defmethod prep-subst ::missing
+  [x] (let [x (lvar x)]
+        (missing)))
+
