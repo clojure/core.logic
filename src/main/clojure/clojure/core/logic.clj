@@ -20,7 +20,13 @@
 ;; =============================================================================
 ;; Marker Interfaces
 
-(definterface Var)
+(definterface IVar)
+
+;; =============================================================================
+;; Utility Protocols
+
+(defprotocol IUninitialized
+  (-uninitialized [coll]))
 
 ;; =============================================================================
 ;; miniKanren Protocols
@@ -1167,7 +1173,7 @@
 ;; Logic Variables
 
 (deftype LVar [name oname hash meta]
-  clojure.core.logic.Var
+  clojure.core.logic.IVar
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
@@ -1184,7 +1190,7 @@
   Object
   (toString [_] (str "<lvar:" name ">"))
   (equals [this o]
-    (and (instance? clojure.core.logic.Var o)
+    (and (instance? clojure.core.logic.IVar o)
       (identical? name (:name o))))
   (hashCode [_] hash)
   IUnifyTerms
@@ -1247,7 +1253,7 @@
   (.write writer (str "<lvar:" (:name x) ">")))
 
 (defn lvar? [x]
-  (instance? clojure.core.logic.Var x))
+  (instance? clojure.core.logic.IVar x))
 
 ;; =============================================================================
 ;; LCons
@@ -1480,6 +1486,17 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
+(defn unify-with-map* [v u s]
+  (when (= (count u) (count v))
+    (loop [ks (keys u) s s]
+      (if (seq ks)
+        (let [kf (first ks)
+              vf (get v kf ::not-found)]
+          (if-let [s (unify s (get u kf) vf)]
+            (recur (next ks) s)
+            nil))
+        s))))
+
 (extend-protocol IUnifyWithMap
   nil
   (unify-with-map [v u s] nil)
@@ -1489,15 +1506,7 @@
 
   clojure.lang.IPersistentMap
   (unify-with-map [v u s]
-    (when (= (count u) (count v))
-      (loop [ks (keys u) s s]
-        (if (seq ks)
-          (let [kf (first ks)
-                vf (get v kf ::not-found)]
-            (if-let [s (unify s (get u kf ::not-found) vf)]
-              (recur (next ks) s)
-              nil))
-          s)))))
+    (unify-with-map* v u s)))
 
 ;; =============================================================================
 ;; Reification
@@ -1518,6 +1527,15 @@
 
 ;; =============================================================================
 ;; Walk Term
+
+(defn walk-record-term [v f]
+  (with-meta
+    (loop [v v r (-uninitialized v)]
+      (if (seq v)
+        (let [[vfk vfv] (first v)]
+          (recur (next v) (assoc r vfk (f vfv))))
+        r))
+    (meta v)))
 
 (extend-protocol IWalkTerm
   nil
@@ -3755,23 +3773,24 @@
 (defprotocol IUnifyWithPMap
   (unify-with-pmap [pmap u s]))
 
+(defn unify-with-pmap* [u v s]
+  (loop [ks (keys u) s s]
+    (if (seq ks)
+      (let [kf (first ks)
+            vf (get v kf ::not-found)]
+        (if-let [s (unify s (get u kf) vf)]
+          (recur (next ks) s)
+          nil))
+      s)))
+
 (defrecord PMap []
   IUnifyWithMap
   (unify-with-map [v u s]
-    (loop [ks (keys v) s s]
-      (if (seq ks)
-        (let [kf (first ks)
-              uf (get u kf ::not-found)]
-          (if (= uf ::not-found)
-            nil
-            (if-let [s (unify s (get v kf) uf)]
-              (recur (next ks) s)
-              nil)))
-        s)))
+    (unify-with-pmap* v u s))
 
   IUnifyWithPMap
   (unify-with-pmap [v u s]
-    (unify-with-map v u s))
+    (unify-with-pmap* v u s))
 
   IUnifyTerms
   (unify-terms [u v s]
@@ -3779,7 +3798,14 @@
 
   IUnifyWithLVar
   (unify-with-lvar [v u s]
-    (ext-no-check s u v)))
+    (ext-no-check s u v))
+
+  IUninitialized
+  (-uninitialized [_] (PMap.))
+
+  IWalkTerm
+  (walk-term [v f]
+    (walk-record-term v f)))
 
 (extend-protocol IUnifyWithPMap
   nil
@@ -3794,7 +3820,7 @@
 
   clojure.lang.IPersistentMap
   (unify-with-pmap [v u s]
-    (unify-with-map u v s)))
+    (unify-with-pmap* u v s)))
 
 (defn partial-map
   "Given map m, returns partial map that unifies with maps even if it
@@ -3867,14 +3893,14 @@
         (queue (:c u)))))
 
 (deftype CVar [lvar c]
-  clojure.core.logic.Var
+  clojure.core.logic.IVar
   Object
   (toString [_]
     (str lvar " :- " c))
   (hashCode [_]
     (.hashCode lvar))
   (equals [this o]
-    (and (instance? clojure.core.logic.Var o)
+    (and (instance? clojure.core.logic.IVar o)
       (identical? (:name lvar) (:name o))))
   clojure.lang.ILookup
   (valAt [this k]
@@ -3906,33 +3932,6 @@
   (CVar. lvar c))
 
 ;; =============================================================================
-;; Missing
-
-(defprotocol IUnifyWithMissing
-  (unify-with-missing [v u s]))
-
-(extend-protocol IUnifyWithMissing
-  nil
-  (unify-with-missing [v u s] nil)
-
-  Object
-  (unify-with-missing [v u s]
-    (when (= v ::not-found)
-      s)))
-
-(deftype Missing []
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-missing v u s))
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (when (= u ::not-found)
-      s)))
-
-(defn missing []
-  (Missing.))
-
-;; =============================================================================
 ;; GhostVal
 
 ;; for ghost val we need to be able to add goals?
@@ -3944,8 +3943,4 @@
 (defmethod prep-subst ::numeric
   [x] (let [x (lvar x)]
         (cvar x (-predc x number? `number?))))
-
-(defmethod prep-subst ::missing
-  [x] (let [x (lvar x)]
-        (missing)))
 
