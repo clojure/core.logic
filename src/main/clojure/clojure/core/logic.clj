@@ -1,6 +1,5 @@
 (ns clojure.core.logic
   (:refer-clojure :exclude [==])
-  (:use [clojure.walk :only [postwalk]])
   (:require [clojure.set :as set]
             [clojure.string :as string])
   (:import [java.io Writer]))
@@ -80,7 +79,7 @@
   (reify-term [v s]))
 
 (defprotocol IWalkTerm
-  (walk-term [v s]))
+  (walk-term [v f]))
 
 (defprotocol IOccursCheckTerm
   (occurs-check-term [v x s]))
@@ -921,9 +920,16 @@
     nil
     (ext-no-check s u v)))
 
+(declare lcons?)
+
 (defn walk* [s v]
   (let [v (walk s v)]
-    (walk-term v s)))
+    (walk-term v
+      (fn [x]
+        (let [x (walk s x)]
+         (if (or (coll? x) (lcons? x))
+           (walk* s x)
+           x))))))
 
 (defn unify [s u v]
   (if (identical? u v)
@@ -1213,7 +1219,7 @@
       (ext s v (reify-lvar-name s))
       (ext s v (:oname v))))
   IWalkTerm
-  (walk-term [v s] v)
+  (walk-term [v f] (f v))
   IOccursCheckTerm
   (occurs-check-term [v x s] (= (walk s v) x))
   IBuildTerm
@@ -1259,8 +1265,6 @@
     `(unchecked-add ~@args)))
 
 ;; TODO: clean up the printing code
-
-(declare lcons?)
 
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
   clojure.lang.IObj
@@ -1339,9 +1343,9 @@
   ;; TODO: no way to make this non-stack consuming w/o a lot more thinking
   ;; we could use continuation passing style and trampoline
   IWalkTerm
-  (walk-term [v s]
-    (lcons (walk* s (lfirst v))
-           (walk* s (lnext v))))
+  (walk-term [v f]
+    (lcons (f (lfirst v))
+           (f (lnext v))))
   IOccursCheckTerm
   (occurs-check-term [v x s]
     (loop [v v x x s s]
@@ -1517,28 +1521,28 @@
 
 (extend-protocol IWalkTerm
   nil
-  (walk-term [v s] nil)
+  (walk-term [v f] (f nil))
 
   Object
-  (walk-term [v s] v)
+  (walk-term [v f] (f v))
 
   clojure.lang.ISeq
-  (walk-term [v s]
+  (walk-term [v f]
     (with-meta
-      (map #(walk* s %) v)
+      (map f v)
       (meta v)))
 
   clojure.lang.IPersistentVector
-  (walk-term [v s]
+  (walk-term [v f]
     (with-meta
       (loop [v v r (transient [])]
         (if (seq v)
-          (recur (next v) (conj! r (walk* s (first v))))
+          (recur (next v) (conj! r (f (first v))))
           (persistent! r)))
       (meta v)))
 
   clojure.lang.IPersistentMap
-  (walk-term [v s]
+  (walk-term [v f]
     (with-meta
       ;; TODO: call empty here on v to preserve the type
       ;; we were given, we can have the transient bit
@@ -1547,7 +1551,7 @@
       (loop [v v r (transient {})]
         (if (seq v)
           (let [[vfk vfv] (first v)]
-            (recur (next v) (assoc! r vfk (walk* s vfv))))
+            (recur (next v) (assoc! r vfk (f vfv))))
           (persistent! r)))
       (meta v))))
 
@@ -1883,7 +1887,7 @@
                         (if skip
                           tail
                           (lcons (prep* f store) tail)))
-                      (postwalk (replace-lvar store) expr))
+                      (doall (walk-term expr (replace-lvar store))))
         :else expr))))
 
 (defn prep
@@ -1893,7 +1897,7 @@
   (let [lvars (atom {})
         prepped (if (lcons-expr? expr)
                   (prep* expr lvars true)
-                  (postwalk (replace-lvar lvars) expr))]
+                  (doall (walk-term expr (replace-lvar lvars))))]
     (with-meta prepped {:lvars @lvars})))
 
 (declare fix-constraints)

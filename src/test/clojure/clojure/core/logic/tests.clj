@@ -1210,16 +1210,16 @@
 (deftest test-42-multiple-run-parameters
   (is (= '[[3 _.0 [3 _.0]]]
          (run* [x y z]
-               (== z [x y])
-               (== [x] [3])))))
+           (== z [x y])
+           (== [x] [3])))))
 
 (deftest test-49-partial-map-unification
   (is (= '[{:a 1}]
          (run* [q]
-               (fresh [pm x]
-                      (== pm (partial-map {:a x}))
-                      (== pm {:a 1 :b 2})
-                      (== pm q))))))
+           (fresh [pm x]
+             (== pm (partial-map {:a x}))
+             (== pm {:a 1 :b 2})
+             (== pm q))))))
 
 ;; =============================================================================
 ;; cKanren
