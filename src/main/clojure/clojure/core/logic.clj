@@ -3244,7 +3244,7 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv]
-        (not (disjoint? du dv))))
+        (not (and (domain? du) (domain? dv) (disjoint? du dv)))))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
