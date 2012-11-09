@@ -334,6 +334,7 @@
       (== q [s e n d m o r y])
       (infd s e n d m o r y (interval 0 9))
       (distinctfd q)
+      (distribute q ::l/ff)
       (!=fd m 0) (!=fd s 0)
       (eqfd
         (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
@@ -356,6 +357,8 @@
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
 
 (comment
+  ;; FIXME: we don't see as much propagation as Oz, why not?
+
   (cryptarithfd-1)
 
   (time (cryptarithfd-1))
@@ -366,7 +369,7 @@
      (dotimes [_ 100] 
        (cryptarithfd-1))))
 
-  ;; 10X slower now, argh
+  ;; 3X slower still
   (dotimes [_ 5]
     (time
      (dotimes [_ 10] 
@@ -478,17 +481,14 @@
     (fresh [x y]
       (infd x y (interval 0 9))
       (eqfd
-        #_(= (+ x y) 9)
-         (= (+ (* x 2) (* y 4)) 24))
-      (== q [x y])
-      (debug-doms))))
+        (= (+ x y) 9)
+        (= (+ (* x 2) (* y 4)) 24))
+      (== q [x y]))))
 
 (comment
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
-
-  ;; TODO: we need to fix *fdc, it's too imprecise
 
   (simple-eqfd)
 
@@ -497,6 +497,11 @@
     (time
      (dotimes [_ 1e3] 
        (simple-eqfd))))
+  
+  (run* [q]
+    (fresh [a b]
+      (*fd a 3 34)
+      (debug-doms)))
   )
 
 ;; =============================================================================
@@ -832,7 +837,9 @@
       (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
 (comment
-  (safefd)
+  ;; FIXME: see a disjoint error now
+
+  (time (safefd))
 
   ;; FIXME: adding (distribute q ::l/ff) causes an exception
 
@@ -849,8 +856,9 @@
     (safefd))
 
   ;; 2800ms
+  ;; also significantly slower
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100] 
+     (dotimes [_ 10] 
        (safefd))))
   )
