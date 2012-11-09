@@ -344,6 +344,8 @@
 (comment
   (cryptarithfd-1)
 
+  (time (cryptarithfd-1))
+
   ;; ~2700ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
@@ -808,6 +810,8 @@
 
 (comment
   (safefd)
+
+  ;; FIXME: adding (distribute q ::ff) causes an exception
 
   (every?
     (fn [[c1 c2 c3 c4 c5 c6 c7 c8 c9]]
