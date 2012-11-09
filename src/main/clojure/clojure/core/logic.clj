@@ -2815,11 +2815,10 @@
 
 (defn ext-dom
   [a x dom]
-  (let [no-prop (-> x meta ::no-propagate)
-        x       (root-var a x)
-        domp    (get-dom a x)
-        a       (add-attr a x ::fd dom)]
-    (if (and (not no-prop) (not= domp dom))
+  (let [x    (root-var a x)
+        domp (get-dom a x)
+        a    (add-attr a x ::fd dom)]
+    (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::fd) a)
       a)))
 
@@ -3067,6 +3066,7 @@
 (defn sort-by-strategy [v x a]
   (case (-> x meta ::strategy)
     ::ff (seq (sort (sort-by-member-count a) v))
+    ;; TODO: throw on non-existant strategies
     v))
 
 ;; TODO: handle all Clojure tree types
@@ -3464,9 +3464,7 @@
                        s (if-not (lvar? v)
                            (cond
                              (= x v) nil
-                             (member? v x) ((process-dom
-                                              (assoc-meta y ::no-propagate true)
-                                              (difference v x)) s)
+                             (member? v x) ((process-dom y (difference v x)) s)
                              :else s)
                            s)]
                    (when s
