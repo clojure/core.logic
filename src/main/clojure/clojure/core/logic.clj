@@ -1169,6 +1169,10 @@
     flatten
     (filter #(lvar? (root-val a %)))))
 
+(defn annotate [k v]
+  (fn [a]
+    (vary-meta a assoc k v)))
+
 ;; =============================================================================
 ;; Logic Variables
 
