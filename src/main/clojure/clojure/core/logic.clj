@@ -3383,8 +3383,15 @@
         s))))
 
 (defn *fdc [u v w]
-  (letfn [(safe-div [n c a]
-            (if (zero? n) c (quot a n)))]
+  (letfn [(safe-div [n c a t]
+            (if (zero? n)
+              c
+              (let [q (quot a n)]
+                (case t
+                  :lower (if (pos? (rem a n))
+                           (inc q)
+                           q)
+                  :upper q))))]
    (reify
      clojure.lang.IFn
      (invoke [this s]
@@ -3394,17 +3401,17 @@
                              [(* (lb du) (lb dv)) (* (ub du) (ub dv))])
                [umin umax] (if (domain? du)
                              (bounds du)
-                             [(safe-div (ub dv) (lb du) (lb dw))
-                              (safe-div (lb dv) (ub dv) (ub dw))])
+                             [(safe-div (ub dv) (lb dw) (lb dw) :lower)
+                              (safe-div (lb dv) (lb dw) (ub dw) :upper)])
                [vmin vmax] (if (domain? dv)
                              (bounds dv)
-                             [(safe-div (ub du) (lb dv) (lb dw))
-                              (safe-div (lb du) (ub dv) (ub dw))])
+                             [(safe-div (ub du) (lb dw) (lb dw) :lower)
+                              (safe-div (lb du) (lb dw) (ub dw) :upper)])
                wi (interval (* umin vmin) (* umax vmax))
-               ui (interval (safe-div vmax umin wmin)
-                            (safe-div vmin umax wmax))
-               vi (interval (safe-div umax vmin wmin)
-                            (safe-div umin vmax wmax))]
+               ui (interval (safe-div vmax umin wmin :lower)
+                            (safe-div vmin umax wmax :upper))
+               vi (interval (safe-div umax vmin wmin :lower)
+                            (safe-div umin vmax wmax :upper))]
            ((composeg*
              (process-dom w wi)
              (process-dom u ui)
