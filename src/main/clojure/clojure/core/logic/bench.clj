@@ -1,6 +1,6 @@
 (ns clojure.core.logic.bench
   (:refer-clojure :exclude [==])
-  (:use clojure.core.logic)
+  (:use [clojure.core.logic :as l])
   (:require [clojure.core.logic.arithmetic :as a]
             [clojure.repl :as r]
             [clojure.pprint :as pp]
@@ -315,17 +315,31 @@
 ;; =============================================================================
 ;; Cryptarithmetic Puzzle
 
+(defn debug-doms []
+  (fn [a]
+    (let [s (:s a)]
+      (pp/pprint
+       (zipmap (keys s)
+         (map (fn [v]
+                (let [v (walk a v)]
+                  (if (lvar? v)
+                    (get-dom a v)
+                    v)))
+              (keys s)))))
+    a))
+
 (defn cryptarithfd-1 []
   (run* [q]
     (fresh [s e n d m o r y]
       (== q [s e n d m o r y])
       (infd s e n d m o r y (interval 0 9))
-      (distinctfd [s e n d m o r y])
+      (distinctfd q)
       (!=fd m 0) (!=fd s 0)
       (eqfd
-        (= (+ (* 1000 s) (* 100 e) (* 10 n) d
-              (* 1000 m) (* 100 o) (* 10 r) e)
-           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
+        (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
+                          (* 1000 m) (* 100 o) (* 10 r) e)
+           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))
+      (debug-doms))))
 
 ;; Bratko 3rd ed pg 343
 
@@ -333,7 +347,7 @@
   (run* [q]
     (fresh [d o n a l g e r b t]
       (== q [d o n a l g e r b t])
-      (distribute q :ff)
+      (distribute q ::l/ff)
       (infd d o n a l g e r b t (interval 0 9))
       (distinctfd q)
       (eqfd
@@ -350,6 +364,12 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
+       (cryptarithfd-1))))
+
+  ;; 10X slower now, argh
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 10] 
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
@@ -458,15 +478,18 @@
     (fresh [x y]
       (infd x y (interval 0 9))
       (eqfd
-         (= (+ x y) 9)
+        #_(= (+ x y) 9)
          (= (+ (* x 2) (* y 4)) 24))
-      (== q [x y]))))
+      (== q [x y])
+      (debug-doms))))
 
 (comment
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
-  
+
+  ;; TODO: we need to fix *fdc, it's too imprecise
+
   (simple-eqfd)
 
   ;; 900ms
@@ -628,7 +651,7 @@
         sqs  (->squares rows)]
     (run-nc 1 [q]
       (== q vars)
-      (distribute q ::ff)
+      (distribute q ::l/ff)
       (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
       (everyg distinctfd rows)
@@ -811,7 +834,7 @@
 (comment
   (safefd)
 
-  ;; FIXME: adding (distribute q ::ff) causes an exception
+  ;; FIXME: adding (distribute q ::l/ff) causes an exception
 
   (every?
     (fn [[c1 c2 c3 c4 c5 c6 c7 c8 c9]]
