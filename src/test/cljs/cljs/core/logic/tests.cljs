@@ -999,4 +999,14 @@
           (run 10 [q]
             (nexto 'dog 'cat q))))
 
+;; =============================================================================
+;; matche
+
+(defn map-geto [m k v]
+  (matche [m]
+    ([[[k v] . _]])
+    ([[_ . tail]] (map-geto tail k v))))
+
+(assert (= (run* [q] (map-geto (seq {:title "Blub"}) :title q)) '("Blub")))
+
 (println "ok")
