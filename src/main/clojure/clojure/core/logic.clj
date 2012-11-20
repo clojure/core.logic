@@ -3901,6 +3901,8 @@
     (-> (unify s v (:lvar u))
         (queue (:c u)))))
 
+(declare cvar)
+
 (deftype CVar [lvar c]
   clojure.core.logic.IVar
   Object
@@ -3911,6 +3913,11 @@
   (equals [this o]
     (and (instance? clojure.core.logic.IVar o)
       (identical? (:name lvar) (:name o))))
+  clojure.lang.IObj
+  (withMeta [this new-meta]
+    (cvar (with-meta lvar new-meta) c))
+  (meta [this]
+    (meta lvar))
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
