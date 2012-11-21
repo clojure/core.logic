@@ -1081,6 +1081,27 @@
   (is (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
          nil)))
 
+(deftest test-unifier-7
+  (is (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+         nil)))
+
+(deftest test-unifier-8 ;;nested maps
+  (is (= (unifier '{:a {:b ?b}} {:a {:b 1}})
+         {:a {:b 1}})))
+
+(deftest test-unifier-9 ;;nested vectors
+  (is (= (unifier '[?a [?b ?c] :d] [:a [:b :c] :d])
+         [:a [:b :c] :d])))
+
+(deftest test-unifier-10 ;;nested seqs
+  (is (= (unifier '(?a (?b ?c) :d) '(:a (:b :c) :d))
+         '(:a (:b :c) :d))))
+
+(deftest test-unifier-11 ;;all together now
+  (is (= (unifier '{:a [?b (?c [?d {:e ?e}])]} {:a [:b '(:c [:d {:e :e}])]})
+         {:a [:b '(:c [:d {:e :e}])]})))
+
+
 (deftest test-binding-map-1
   (is (= (binding-map '(?x ?y) '(1 2))
          '{?x 1 ?y 2})))

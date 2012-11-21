@@ -1537,7 +1537,8 @@
     (loop [v v r (-uninitialized v)]
       (if (seq v)
         (let [[vfk vfv] (first v)]
-          (recur (next v) (assoc r vfk (f vfv))))
+          (recur (next v) (assoc r (walk-term (f vfk) f)
+                                 (walk-term (f vfv) f))))
         r))
     (meta v)))
 
@@ -1551,7 +1552,7 @@
   clojure.lang.ISeq
   (walk-term [v f]
     (with-meta
-      (map f v)
+      (map #(walk-term (f %) f) v)
       (meta v)))
 
   clojure.lang.IPersistentVector
@@ -1559,7 +1560,7 @@
     (with-meta
       (loop [v v r (transient [])]
         (if (seq v)
-          (recur (next v) (conj! r (f (first v))))
+          (recur (next v) (conj! r (walk-term (f (first v)) f)))
           (persistent! r)))
       (meta v)))
 
@@ -1573,7 +1574,8 @@
       (loop [v v r (transient {})]
         (if (seq v)
           (let [[vfk vfv] (first v)]
-            (recur (next v) (assoc! r vfk (f vfv))))
+            (recur (next v) (assoc! r (walk-term (f vfk) f)
+                                    (walk-term (f vfv) f))))
           (persistent! r)))
       (meta v))))
 
