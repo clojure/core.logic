@@ -3788,10 +3788,15 @@
   (loop [ks (keys u) s s]
     (if (seq ks)
       (let [kf (first ks)
-            vf (get v kf ::not-found)]
-        (if-let [s (unify s (get u kf) vf)]
-          (recur (next ks) s)
-          nil))
+            vf (get v kf ::not-found)
+            uf (get u kf)]
+        (if (= vf ::not-found)
+          (if (= uf ::not-found)
+            (recur (next s) s)
+            nil)
+          (if-let [s (unify s uf vf)]
+            (recur (next ks) s)
+            nil)))
       s)))
 
 (defrecord PMap []
@@ -3962,3 +3967,7 @@
   [x] (let [x (lvar x)]
         (cvar x (-predc x number? `number?))))
 
+(comment
+  (run* [q]
+    (== {:x 1} (partial-map (prep {:a '?a}))))
+  )

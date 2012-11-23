@@ -1248,6 +1248,15 @@
              (== {:a 1 :b 2} pm)
              (== q pm))))))
 
+(deftest test-73-partial-map-unification
+  (is (= (run* [q]
+           (fresh [a]
+             (== {:x 1} (partial-map {:a a}))))
+         '()))
+  (is (= (run* [q]
+           (== {:a 1} (partial-map {:a q})))
+         '(1))))
+
 ;; =============================================================================
 ;; cKanren
 
