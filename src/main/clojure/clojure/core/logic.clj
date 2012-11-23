@@ -3792,7 +3792,7 @@
             uf (get u kf)]
         (if (= vf ::not-found)
           (if (= uf ::not-found)
-            (recur (next s) s)
+            (recur (next ks) s)
             nil)
           (if-let [s (unify s uf vf)]
             (recur (next ks) s)
@@ -3966,8 +3966,3 @@
 (defmethod prep-subst ::numeric
   [x] (let [x (lvar x)]
         (cvar x (-predc x number? `number?))))
-
-(comment
-  (run* [q]
-    (== {:x 1} (partial-map (prep {:a '?a}))))
-  )
