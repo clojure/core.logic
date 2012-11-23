@@ -3784,15 +3784,7 @@
 (defprotocol IUnifyWithPMap
   (unify-with-pmap [pmap u s]))
 
-(defn unify-with-pmap* [u v s]
-  (loop [ks (keys u) s s]
-    (if (seq ks)
-      (let [kf (first ks)
-            vf (get v kf ::not-found)]
-        (if-let [s (unify s (get u kf) vf)]
-          (recur (next ks) s)
-          nil))
-      s)))
+(declare unify-with-pmap*)
 
 (defrecord PMap []
   IUnifyWithMap
@@ -3817,6 +3809,18 @@
   IWalkTerm
   (walk-term [v f]
     (walk-record-term v f)))
+
+(defn unify-with-pmap* [u v s]
+  (loop [ks (keys u) s s]
+    (if (seq ks)
+      (let [kf (first ks)
+            vf (get v kf ::not-found)]
+        (if-let [s (if (map? vf)
+                     (unify-with-pmap* (get u kf) (map->PMap vf) s)
+                     (unify s (get u kf) vf))]
+          (recur (next ks) s)
+          nil))
+      s)))
 
 (extend-protocol IUnifyWithPMap
   nil
