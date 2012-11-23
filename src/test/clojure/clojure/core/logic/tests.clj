@@ -1248,6 +1248,14 @@
              (== {:a 1 :b 2} pm)
              (== q pm))))))
 
+(deftest test-nested-partial-map-unification
+  (is (= '[#clojure.core.logic.PMap{:a {:b 2}}]
+         (run* [q]
+           (fresh [pm x]
+             (== (partial-map {:a {:b x}}) pm)
+             (== {:a {:b 2 :c 3}} pm)
+             (== q pm))))))
+
 ;; =============================================================================
 ;; cKanren
 
