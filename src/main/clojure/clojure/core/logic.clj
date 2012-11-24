@@ -1496,9 +1496,10 @@
       (if (seq ks)
         (let [kf (first ks)
               vf (get v kf ::not-found)]
-          (if-let [s (unify s (get u kf) vf)]
-            (recur (next ks) s)
-            nil))
+          (when-not (= vf ::not-found)
+            (if-let [s (unify s (get u kf) vf)]
+              (recur (next ks) s)
+              nil)))
         s))))
 
 (extend-protocol IUnifyWithMap
