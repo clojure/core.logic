@@ -1205,7 +1205,9 @@
     (ext-no-check s v u))
   IUnifyWithObject
   (unify-with-object [v u s]
-    (ext s v u))
+    (if (= u ::not-found)
+      nil
+      (ext s v u)))
   IUnifyWithLVar
   (unify-with-lvar [v u s]
     (if (-> u clojure.core/meta ::unbound)
@@ -1441,7 +1443,9 @@
 
   Object
   (unify-with-lvar [v u s]
-    (ext s u v)))
+    (if (= v ::not-found)
+      nil
+      (ext s u v))))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify LCons with X
