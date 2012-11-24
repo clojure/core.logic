@@ -3795,9 +3795,11 @@
           (if (= uf ::not-found)
             (recur (next ks) s)
             nil)
-          (if-let [s (unify s uf vf)]
-            (recur (next ks) s)
-            nil)))
+          (if (= uf ::not-found)
+            nil
+            (if-let [s (unify s uf vf)]
+              (recur (next ks) s)
+              nil))))
       s)))
 
 (defrecord PMap []
