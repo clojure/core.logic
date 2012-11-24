@@ -1,4 +1,4 @@
-(defproject core.logic "0.8.0-beta3-SNAPSHOT" 
+(defproject org.clojure/core.logic "0.8.0-beta3-SNAPSHOT" 
   :description "A logic/relational programming library for Clojure"
   :extra-classpath-dirs ["checkouts/clojurescript/src/clj"
                          "checkouts/clojurescript/src/cljs"]
@@ -13,9 +13,9 @@
   :test-paths ["src/test/clojure"]
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.macro "0.1.1"]
+                 [org.clojure/tools.nrepl "0.2.0-RC1"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
-  :dev-dependencies [[lein-swank "1.4.4"]
-                     [lein-cljsbuild "0.2.9"]]
+  :dev-dependencies [[lein-cljsbuild "0.2.9"]]
   :cljsbuild {:builds {:test-simp {:source-path "src/test/cljs"
                                    :compiler {:optimizations :simple
                                               :pretty-print true
