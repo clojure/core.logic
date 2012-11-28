@@ -3900,8 +3900,8 @@
                       (~'rator [_#] '~name)
                       (~'rands [_#] (filter lvar? (flatten ~args)))
                       clojure.core.logic/IReifiableConstraint
-                      (~'reifyc [_# a# r#]
-                        (list '~name (map #(walk a# %) ~args)))
+                      (~'reifyc [_# _# r#]
+                        (list '~name (map #(-reify r# %) ~args)))
                       clojure.core.logic/IRelevant
                       (~'-relevant? [_# s#] true)
                       clojure.core.logic/IRunnable
