@@ -3882,6 +3882,36 @@
       (catch Exception e
         false))))
 
+(defmacro defc [name args & body]
+  (let [-name (symbol (str "-" name))]
+   `(let [~-name (fn ~-name
+                   (~args (~-name ~@args nil))
+                   ([~@args id#]
+                    (reify
+                      ~'clojure.lang.IFn
+                      (~'invoke [this# a#]
+                        (let [[~@args :as args#] (map #(walk* a# %) ~args)
+                              test# (do ~@body)]
+                          (when test#
+                            ((remcg this#) a#))))
+                      clojure.core.logic/IWithConstraintId
+                      (~'with-id [_# id#] (~-name ~@args id#))
+                      clojure.core.logic/IConstraintOp
+                      (~'rator [_#] '~name)
+                      (~'rands [_#] (filter lvar? (flatten ~args)))
+                      clojure.core.logic/IReifiableConstraint
+                      (~'reifyc [_# a# r#]
+                        (list '~name (map #(walk a# %) ~args)))
+                      clojure.core.logic/IRelevant
+                      (~'-relevant? [_# s#] true)
+                      clojure.core.logic/IRunnable
+                      (~'runnable? [_# s#]
+                        (ground-term? ~args s#))
+                      clojure.core.logic/IConstraintWatchedStores
+                      (~'watched-stores [_#] #{::subst}))))]
+      (defn ~name ~args
+        (cgoal (~-name ~@args))))))
+
 ;; =============================================================================
 ;; Predicate Constraint
 
