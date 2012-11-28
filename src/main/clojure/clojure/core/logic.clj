@@ -3860,6 +3860,29 @@
   (map->PMap m))
 
 ;; =============================================================================
+;; defc
+
+(def backtrack (Exception.))
+
+(defn ground-term? [x s]
+  (letfn [(-ground-term? [x s]
+            (let [x (walk s x)]
+              (if (lvar? x)
+                (throw backtrack)
+                (walk-term x
+                  (fn [x]
+                    (let [x (walk s x)]
+                      (cond
+                        (lvar? x) (throw backtrack)
+                        (coll? x) (-ground-term? x s)
+                        :else x)))))))]
+    (try
+      (-ground-term? x s)
+      true
+      (catch Exception e
+        false))))
+
+;; =============================================================================
 ;; Predicate Constraint
 
 (defn -predc
