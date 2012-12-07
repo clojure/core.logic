@@ -5,3 +5,5 @@
 *.diff
 *.swp
 target/
+out/
+tests.js
