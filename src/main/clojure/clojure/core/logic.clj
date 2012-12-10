@@ -204,6 +204,9 @@
   IEnforceableConstraint
   (enforceable? [x] false))
 
+(defprotocol IUnwrapConstraint
+  (unwrap [c]))
+
 ;; -----------------------------------------------------------------------------
 ;; Finite domain protocol types
 
@@ -1251,8 +1254,12 @@
      (let [name (str (. clojure.lang.RT (nextID)))]
        (LVar. name nil (.hashCode name) nil)))
   ([name]
+     (lvar name true))
+  ([name gensym]
      (let [oname name
-           name (str name "_" (. clojure.lang.RT (nextID)))]
+           name (if gensym
+                  (str name (. clojure.lang.RT (nextID)))
+                  (str name))]
        (LVar. name oname (.hashCode name) nil))))
 
 (defmethod print-method LVar [x ^Writer writer]
@@ -1875,7 +1882,7 @@
 (defmulti prep-subst (fn [lvar-expr] (::ann (meta lvar-expr))))
 
 (defmethod prep-subst :default
-  [lvar-expr] (lvar lvar-expr))
+  [lvar-expr] (lvar lvar-expr false))
 
 (defn- lvarq-sym? [s]
   (and (symbol? s) (= (first (str s)) \?)))
@@ -1934,14 +1941,28 @@
 (defn unifier*
   "Unify the terms u and w."
   ([u w]
-     (first
-      (run* [q]
-        (== u w)
-        (== q u)
-        (fn [a]
-          (fix-constraints a)))))
+     (let [init-s (reduce
+                    (fn [s [vs cs]]
+                      (let [vs (if (seq? vs) vs (list vs))]
+                        (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
+                    empty-s (-> u meta ::when))]
+       (first
+         (take*
+           (fn []
+             ((fresh [q]
+                (== u w) (== q u)
+                (fn [a]
+                  (fix-constraints a))
+                (reifyg q))
+              init-s))))))
   ([u w & ts]
-     (apply unifier* (unifier* u w) ts)))
+     (if (some #{:when} ts)
+       (let [terms (take-while #(not= % :when) ts)
+             constraints (last ts)]
+         (reduce #(unifier* %1 %2)
+           (unifier* (vary-meta u assoc ::when constraints) w)
+           terms))
+       (apply unifier* (unifier* u w) ts))))
 
 (defn binding-map*
   "Return the binding map that unifies terms u and w.
@@ -1962,11 +1983,17 @@
   ([u w]
      {:pre [(not (lcons? u))
             (not (lcons? w))]}
-     (let [up (prep u)
+     (let [up (vary-meta (prep u) merge (meta u))
            wp (prep w)]
        (unifier* up wp)))
   ([u w & ts]
-     (apply unifier (unifier u w) ts)))
+     (if (some #{:when} ts)
+       (let [terms (take-while #(not= % :when) ts)
+             constraints (last ts)]
+         (reduce #(unifier %1 %2)
+           (unifier (vary-meta u assoc ::when constraints) w)
+           terms))
+       (apply unifier (unifier u w) ts))))
 
 (defn binding-map
   "Return the binding map that unifies terms u and w.
@@ -2973,14 +3000,19 @@
          (let [v (walk* r v)]
            (reify-constraints v r (:cs a))))))))
 
+
 (defn cgoal [c]
-  (fn [a]
-    (if (runnable? c a)
-      (when-let [a (c a)]
-        (if (relevant? c a)
-          ((addcg c) a)
-          a))
-      ((addcg c) a))))
+  (reify
+    clojure.lang.IFn
+    (invoke [_ a]
+      (if (runnable? c a)
+        (when-let [a (c a)]
+          (if (relevant? c a)
+            ((addcg c) a)
+            a))
+        ((addcg c) a)))
+    IUnwrapConstraint
+    (unwrap [_] c)))
 
 ;; =============================================================================
 ;; CLP(FD)
