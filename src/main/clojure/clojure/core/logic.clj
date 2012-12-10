@@ -1843,11 +1843,10 @@
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 (defn solutions
+  ([s g]
+     (solutions s (lvar) g))
   ([s q g]
-     (take*
-      ((all g
-        (fn [a]
-          (cons (-reify a q) '()))) s))))
+     (take* ((all g (reifyg q)) s))))
 
 ;; =============================================================================
 ;; Debugging
