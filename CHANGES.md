@@ -1,3 +1,21 @@
+From 0.8-beta2 to 0.8.0-beta3
+====
+
+Enhancements
+----
+* :when support in the simple unifier
+* experimental defc macro for converting predicates into constraints
+* add IUnitialized protocol to support defrecord
+* many improvements to constraint framework & CLP(FD) functionality
+
+Fixes
+----
+* LOGIC-75: -force-ans implementations for clojure.lang.IPersistentHashMap & LCons
+* LOGIC-73: fix partial-map
+* LOGIC-69: fix IWalkTerm implementation
+* LOGIC-67: fix defne & related macros in ClojureScript implementation
+* LOGIC-64: add support for inequalities to eqfd
+
 From 0.8-beta1 to 0.8.0-beta2
 ====
 
