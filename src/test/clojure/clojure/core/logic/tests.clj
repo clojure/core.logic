@@ -583,12 +583,14 @@
 ;; flatteno
 
 (deftest test-flatteno
-  (is (= (run* [x]
-           (flatteno '[[a b] c] x))
-         '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
-           (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
-           (a b () (c)) (a b c) (a b c ()) (a b () c)
-           (a b () c ())))))
+  (is (= (into #{}
+           (run* [x]
+             (flatteno '[[a b] c] x)))
+         (into #{}
+           '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
+             (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
+             (a b () (c)) (a b c) (a b c ()) (a b () c)
+             (a b () c ()))))))
 
 ;; =============================================================================
 ;; membero

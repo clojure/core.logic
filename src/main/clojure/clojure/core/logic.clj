@@ -1669,7 +1669,7 @@
       not-found))
   IBind
   (bind [this g]
-    (mplus (g a) (-inc (bind f g))))
+    (mplus (g a) (fn [] (bind f g))))
   IMPlus
   (mplus [this fp]
     (Choice. a (fn [] (mplus (fp) f))))
@@ -1689,7 +1689,7 @@
 
 (extend-protocol IMPlus
   nil
-  (mplus [_ b] b))
+  (mplus [_ f] (f)))
 
 (extend-protocol ITake
   nil
