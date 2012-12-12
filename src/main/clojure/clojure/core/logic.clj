@@ -3135,7 +3135,25 @@
                 s#))]
       (loop (seq v))))
 
-  ;; clojure.lang.IPersistentMap
+  clojure.lang.IPersistentMap
+  (-force-ans [v x]
+    (letfn [(loop [ys]
+              (if ys
+                (all
+                  (force-ans (val (first ys)))
+                  (loop (next ys)))
+                s#))]
+      (loop (seq v))))
+
+  clojure.core.logic.LCons
+  (-force-ans [v x]
+    (letfn [(loop [ys]
+              (all
+               (force-ans (lfirst ys))
+               (if (lcons? (lnext ys))
+                 (loop (lnext ys))
+                 s#)))]
+      (loop v)))
 
   FiniteDomain
   (-force-ans [v x]

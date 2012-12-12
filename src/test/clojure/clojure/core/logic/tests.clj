@@ -1259,6 +1259,20 @@
            (== {:a 1} (partial-map {:a q})))
          '(1))))
 
+(deftest test-75-map-sum-maps-lcons
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x]
+               (infd x (interval 1 3))
+               (== q {:foo x}))))
+         (into #{} '({:foo 1} {:foo 2} {:foo 3}))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x (interval 1 3))
+               (== q (lcons x y)))))
+         (into #{} [(lcons 1 '_.0) (lcons 2 '_.0) (lcons 3 '_.0)]))))
+
 ;; =============================================================================
 ;; cKanren
 
