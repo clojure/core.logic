@@ -1650,12 +1650,7 @@
   ([e & e-rest]
      `(mplus ~e (fn [] (mplus* ~@e-rest)))))
 
-(defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
-
-(extend-type Object
-  ITake
-  (take* [this] this))
+(declare -inc)
 
 ;; TODO: Choice always holds a as a list, can we just remove that?
 
@@ -1669,13 +1664,13 @@
       not-found))
   IBind
   (bind [this g]
-    (mplus (g a) (-inc (bind f g))))
+    (mplus (g a) (fn [] (bind (f) g))))
   IMPlus
   (mplus [this fp]
     (Choice. a (fn [] (mplus (fp) f))))
   ITake
   (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+    (lazy-seq (cons (first a) (lazy-seq (take* (f)))))))
 
 (defn choice [a f]
   (Choice. a f))
@@ -1689,32 +1684,28 @@
 
 (extend-protocol IMPlus
   nil
-  (mplus [_ b] b))
+  (mplus [_ b] (b)))
 
 (extend-protocol ITake
   nil
   (take* [_] '()))
 
 ;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type Object
-  IMPlus
-  (mplus [this f]
-    (Choice. this f)))
-
-;; -----------------------------------------------------------------------------
 ;; Inc
 
-(extend-type clojure.lang.Fn
+(deftype Inc [a restg]
   IBind
   (bind [this g]
-    (-inc (bind (this) g)))
+    (Inc. a (fn [a2] (bind (restg a2) g))))
   IMPlus
   (mplus [this f]
-    (-inc (mplus (f) this)))
+    (mplus (f) (fn [] (restg a))))
   ITake
-  (take* [this] (lazy-seq (take* (this)))))
+  (take* [this]
+    (lazy-seq (take* (restg a)))))
+
+(defn -inc [a restg]
+  (Inc. a restg))
 
 ;; =============================================================================
 ;; Syntax
@@ -1771,9 +1762,10 @@
   execution of the clauses."
   [& clauses]
   (let [a (gensym "a")]
-    `(fn [~a]
-       (-inc
-        (mplus* ~@(bind-conde-clauses a clauses))))))
+    `(fn [a#]
+       (-inc a#
+             (fn [~a]
+               (mplus* ~@(bind-conde-clauses a clauses)))))))
 
 (defn- lvar-bind [sym]
   ((juxt identity
@@ -1783,24 +1775,26 @@
   (mapcat lvar-bind syms))
 
 (defmacro fresh
-  "Creates fresh variables. Goals occuring within form a logical 
+  "Creates fresh variables. Goals occuring within form a logical
   conjunction."
   [[& lvars] & goals]
   `(fn [a#]
-     (-inc
-      (let [~@(lvar-binds lvars)]
-        (bind* a# ~@goals)))))
+     (-inc a#
+           (fn [a2#]
+             (let [~@(lvar-binds lvars)]
+               (bind* a2# ~@goals))))))
 
 (declare reifyg)
 
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (take* (fn []
-                        ((fresh [~x]
-                           ~@goals
-                           (reifyg ~x))
-                         empty-s)))]
+    `(let [xs# (take* (-inc empty-s
+                            (fn [a#]
+                              ((fresh [~x]
+                                      ~@goals
+                                      (reifyg ~x))
+                               a#))))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1947,13 +1941,14 @@
                     empty-s (-> u meta ::when))]
        (first
          (take*
-           (fn []
-             ((fresh [q]
-                (== u w) (== q u)
-                (fn [a]
-                  (fix-constraints a))
-                (reifyg q))
-              init-s))))))
+          (-inc init-s
+                (fn [s]
+                  ((fresh [q]
+                          (== u w) (== q u)
+                          (fn [a]
+                            (fix-constraints a))
+                          (reifyg q))
+                   s)))))))
   ([u w & ts]
      (if (some #{:when} ts)
        (let [terms (take-while #(not= % :when) ts)
@@ -2081,9 +2076,11 @@
              (recur b gr))
            b)))
 
-  clojure.lang.Fn
+  Inc
   (ifa [b gs c]
-       (-inc (ifa (b) gs c)))
+    (let [a (.a b)
+          restg (.restg b)]
+      (-inc a (fn [a2] (ifa (restg a2) gs c)))))
 
   Choice
   (ifa [b gs c]
@@ -2103,9 +2100,11 @@
           (recur b gr))
         b)))
 
-  clojure.lang.Fn
-  (ifu [b gs c]
-    (-inc (ifu (b) gs c)))
+  Inc
+  (ifa [b gs c]
+    (let [a (.a b)
+          restg (.restg b)]
+      (-inc a (fn [a2] (ifu (restg a2) gs c)))))
 
   ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
