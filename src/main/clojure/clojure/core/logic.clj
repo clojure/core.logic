@@ -953,13 +953,13 @@
 
 (def unbound-names
   (let [r (range 100)]
-    (zipmap r (map (comp symbol str) (repeat "_.") r))))
+    (zipmap r (map (comp symbol str) (repeat "_") r))))
 
 (defn reify-lvar-name [s]
   (let [c (count s)]
     (if (< c 100)
       (unbound-names c)
-      (symbol (str "_." (count s))))))
+      (symbol (str "_" (count s))))))
 
 (defn -reify* [s v]
   (let [v (walk s v)]

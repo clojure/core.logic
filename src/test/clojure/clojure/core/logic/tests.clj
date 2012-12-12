@@ -391,7 +391,7 @@
   (is (= (let [x  (lvar 'x)
                y  (lvar 'y)]
            (reify-lvar-name (to-s [[x 5] [y x]])))
-         '_.2)))
+         '_2)))
 
 ;; =============================================================================
 ;; walk*
@@ -421,7 +421,7 @@
   (is (=  (run* [q]
             (fresh [x y]
               (== [x y] q)))
-          '[[_.0 _.1]])))
+          '[[_0 _1]])))
 
 ;; =============================================================================
 ;; fail
@@ -481,7 +481,7 @@
               [(== x 'olive) succeed]
               [succeed succeed]
               [(== x 'oil) succeed]))
-          '[olive _.0 oil])))
+          '[olive _0 oil])))
 
 (deftest test-basic-conde-2
   (is (= (run* [r]
@@ -562,12 +562,12 @@
 (deftest test-resto
   (is (= (run* [q]
            (resto q '(1 2)))
-         '[(_.0 1 2)])))
+         '[(_0 1 2)])))
 
 (deftest test-resto-2
   (is (= (run* [q]
            (resto q [1 2]))
-         '[(_.0 1 2)])))
+         '[(_0 1 2)])))
 
 (deftest test-resto-3
   (is (= (run* [q]
@@ -609,8 +609,8 @@
             (== q [(lvar) (lvar)])
             (membero ['foo (lvar)] q)
             (membero [(lvar) 'bar] q)))
-         '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
-             [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
+         '([[foo bar] _0] [[foo _0] [_1 bar]]
+             [[_0 bar] [foo _1]] [_0 [foo bar]]))))
 
 ;; -----------------------------------------------------------------------------
 ;; rembero
@@ -681,14 +681,14 @@
            (conde
              [f1]
              [(== false false)]))
-         '(_.0))))
+         '(_0))))
 
 (deftest test-divergence-2
   (is (= (run 1 [q]
            (conde
              [f1 (== false false)]
              [(== false false)]))
-         '(_.0))))
+         '(_0))))
 
 (def f2
   (fresh []
@@ -700,7 +700,7 @@
 
 (deftest test-divergence-3
   (is (= (run 5 [q] f2)
-         '(_.0 _.0 _.0 _.0 _.0))))
+         '(_0 _0 _0 _0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; conda (soft-cut)
@@ -792,14 +792,14 @@
            (fresh [x]
              (!= x 1)
              (== q x)))
-         '((_.0 :- (!= _.0 1))))))
+         '((_0 :- (!= _0 1))))))
 
 (deftest test-disequality-2
   (is (= (run* [q]
            (fresh [x]
              (== q x)
              (!= x 1)))
-         '((_.0 :- (!= _.0 1))))))
+         '((_0 :- (!= _0 1))))))
 
 (deftest test-disequality-3
   (is (= (run* [q]
@@ -913,7 +913,7 @@
              (== q [x y])
              (!= x 1)
              (!= y 2)))
-         '(([_.0 _.1] :- (!= _.1 2) (!= _.0 1))))))
+         '(([_0 _1] :- (!= _1 2) (!= _0 1))))))
 
 ;; -----------------------------------------------------------------------------
 ;; tabled
@@ -1073,7 +1073,7 @@
 
 (deftest test-unifier-4
   (is (= (unifier '(?x . ?y) '(1 . ?z))
-         (lcons 1 '_.0))))
+         (lcons 1 '_0))))
 
 (deftest test-unifier-5
   (is (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1118,7 +1118,7 @@
 
 (deftest test-binding-map-4
   (is (= (binding-map '(?x . ?y) '(1 . ?z))
-         '{?z _.0, ?x 1, ?y _.0})))
+         '{?z _0, ?x 1, ?y _0})))
 
 (deftest test-binding-map-5
   (is (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1201,7 +1201,7 @@
 
 (deftest test-matche-with-expr
   (is (= (run* [q] (natural-number one))
-         '(_.0 _.0))))
+         '(_0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures
@@ -1231,7 +1231,7 @@
       '((^:haz-meta-daytuhs (form form form)))))
 
 (deftest test-42-multiple-run-parameters
-  (is (= '[[3 _.0 [3 _.0]]]
+  (is (= '[[3 _0 [3 _0]]]
          (run* [x y z]
            (== z [x y])
            (== [x] [3])))))
@@ -1271,7 +1271,7 @@
              (fresh [x y]
                (infd x (interval 1 3))
                (== q (lcons x y)))))
-         (into #{} [(lcons 1 '_.0) (lcons 2 '_.0) (lcons 3 '_.0)]))))
+         (into #{} [(lcons 1 '_0) (lcons 2 '_0) (lcons 3 '_0)]))))
 
 ;; =============================================================================
 ;; cKanren
@@ -2343,7 +2343,7 @@
 (deftest test-predc-1 []
   (is (= (run* [q]
            (predc q number? `number?))
-         '((_.0 :- clojure.core/number?))))
+         '((_0 :- clojure.core/number?))))
   (is (= (run* [q]
            (predc q number? `number?)
            (== q 1))
