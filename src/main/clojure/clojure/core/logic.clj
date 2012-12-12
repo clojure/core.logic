@@ -100,10 +100,17 @@
   (bind [this g]))
 
 (defprotocol IMPlus
-  (mplus [a f]))
+  (mplus [this that]))
 
 (defprotocol ITake
-  (take* [a]))
+  (-take* [a q] "Push sub-elems onto q, return results."))
+
+(defn take* [a]
+  (let [q (java.util.ArrayDeque. [a])]
+    (letfn [(taker []
+              (when-let [head (.pollFirst q)]
+                (lazy-seq (concat (-take* head q) (taker)))))]
+            (taker))))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
@@ -1145,10 +1152,11 @@
   (bind [this g]
     (g this))
   IMPlus
-  (mplus [this f]
-    (choice this f))
+  (mplus [this that]
+    (choice this that))
   ITake
-  (take* [this] this))
+  (-take* [this q]
+    [this]))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
@@ -1157,7 +1165,6 @@
   ([m l cs] (Substitutions. m l cs nil #{} nil)))
 
 (def empty-s (make-s))
-(def empty-f (fn []))
 
 (defn subst? [x]
   (instance? Substitutions x))
@@ -1648,32 +1655,31 @@
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (fn [] (mplus* ~@e-rest)))))
+     `(mplus ~e (mplus* ~@e-rest))))
 
-(declare -inc)
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-
-(deftype Choice [a f]
+(deftype Choice [left right]
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
-      :a a
+      :left left
+      :right right
       not-found))
   IBind
   (bind [this g]
-    (mplus (g a) (fn [] (bind (f) g))))
+    (mplus (bind left g) (bind right g)))
   IMPlus
-  (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f))))
+  (mplus [this that]
+    (Choice. this that))
   ITake
-  (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* (f)))))))
+  (-take* [this q]
+    (when left (.addLast ^java.util.ArrayDeque q left))
+    (when right (.addLast ^java.util.ArrayDeque q right))
+    nil))
 
-(defn choice [a f]
-  (Choice. a f))
+(defn choice [left right]
+  (Choice. left right))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -1688,7 +1694,8 @@
 
 (extend-protocol ITake
   nil
-  (take* [_] '()))
+  (-take* [this q]
+    nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
@@ -1696,16 +1703,37 @@
 (deftype Inc [a restg]
   IBind
   (bind [this g]
-    (Inc. a (fn [a2] (bind (restg a2) g))))
+    (Inc. a (^{:once true} fn [a2] (bind (restg a2) g)))) ; TODO: ^{:once true}
   IMPlus
-  (mplus [this f]
-    (mplus (f) (fn [] (restg a))))
+  (mplus [this that]
+    (Choice. this that))
   ITake
-  (take* [this]
-    (lazy-seq (take* (restg a)))))
+  (-take* [this q]
+    (when-let [rest (restg a)]
+      (.addLast ^java.util.ArrayDeque q rest))
+    nil))
 
-(defn -inc [a restg]
-  (Inc. a restg))
+(defmacro -inc [a restg]
+  (let [a2 (gensym "a")
+        thunk-body (clojure.walk/prewalk-replace {a a2} restg)
+        thunk `(^{:once true} fn* [~a2] ~thunk-body)] ; TODO: ^{:once true}
+    `(Inc. ~a ~thunk)))
+
+(extend-type clojure.lang.PersistentList
+  ITake
+  (-take* [this q]
+    this)
+  IMPlus
+  (mplus [this that]
+    (concat this that)))
+
+(extend-type clojure.lang.LazySeq
+  ITake
+  (-take* [this q]
+    this)
+  IMPlus
+  (mplus [this that]
+    (concat this that)))
 
 ;; =============================================================================
 ;; Syntax
@@ -1762,10 +1790,8 @@
   execution of the clauses."
   [& clauses]
   (let [a (gensym "a")]
-    `(fn [a#]
-       (-inc a#
-             (fn [~a]
-               (mplus* ~@(bind-conde-clauses a clauses)))))))
+    `(fn [~a]
+       (-inc ~a (mplus* ~@(bind-conde-clauses a clauses))))))
 
 (defn- lvar-bind [sym]
   ((juxt identity
@@ -1779,10 +1805,8 @@
   conjunction."
   [[& lvars] & goals]
   `(fn [a#]
-     (-inc a#
-           (fn [a2#]
-             (let [~@(lvar-binds lvars)]
-               (bind* a2# ~@goals))))))
+     (-inc a# (let [~@(lvar-binds lvars)]
+                (bind* a# ~@goals)))))
 
 (declare reifyg)
 
@@ -1790,11 +1814,10 @@
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
     `(let [xs# (take* (-inc empty-s
-                            (fn [a#]
-                              ((fresh [~x]
-                                      ~@goals
-                                      (reifyg ~x))
-                               a#))))]
+                            ((fresh [~x]
+                                    ~@goals
+                                    (reifyg ~x))
+                             empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1942,13 +1965,12 @@
        (first
          (take*
           (-inc init-s
-                (fn [s]
-                  ((fresh [q]
-                          (== u w) (== q u)
-                          (fn [a]
-                            (fix-constraints a))
-                          (reifyg q))
-                   s)))))))
+                ((fresh [q]
+                        (== u w) (== q u)
+                        (fn [a]
+                          (fix-constraints a))
+                        (reifyg q))
+                 init-s))))))
   ([u w & ts]
      (if (some #{:when} ts)
        (let [terms (take-while #(not= % :when) ts)
@@ -2080,7 +2102,7 @@
   (ifa [b gs c]
     (let [a (.a b)
           restg (.restg b)]
-      (-inc a (fn [a2] (ifa (restg a2) gs c)))))
+      (-inc a (ifa (restg a) gs c))))
 
   Choice
   (ifa [b gs c]
@@ -2104,12 +2126,11 @@
   (ifa [b gs c]
     (let [a (.a b)
           restg (.restg b)]
-      (-inc a (fn [a2] (ifu (restg a2) gs c)))))
+      (-inc a (ifu (restg a) gs c))))
 
-  ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
-    (reduce bind (:a b) gs)))
+    (reduce bind (first (take* b)) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2419,7 +2440,7 @@
   (let [aseq (drop-while nil? aseq)]
     (when (seq aseq)
       (choice (first aseq)
-              (fn [] (to-stream (next aseq)))))))
+              (to-stream (next aseq))))))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -2735,8 +2756,8 @@
                      (fn [] (reuse this argv cache @cache (count start))))]
                   ;; we have answer terms to reuse in the cache
                   (let [ans (first ansv*)]
-                    (Choice. (subunify this argv (reify-tabled this ans))
-                      (fn [] (reuse-loop (disj ansv* ans)))))))]
+                    (choice (subunify this argv (reify-tabled this ans))
+                            (-inc this (reuse-loop (disj ansv* ans)))))))]
         (reuse-loop start))))
 
   ;; unify an argument with an answer from a cache
@@ -2780,7 +2801,7 @@
             (mplus a-inf (fn [] this)))))))
 
   ITake
-  (take* [this]
+  (-take* [this q]
     (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
 
 (defn master
@@ -2984,8 +3005,8 @@
                  (filter reifiable?)
                  (map #(reifyc % v r)))]
     (if (empty? rcs)
-      (choice (list v) empty-f)
-      (choice (list `(~v :- ~@rcs)) empty-f))))
+      (list v)
+      (list `(~v :- ~@rcs)))))
 
 (defn reifyg [x]
   (all
@@ -2994,7 +3015,7 @@
      (let [v (walk* a x)
            r (-reify* empty-s v)]
        (if (zero? (count r))
-         (choice (list v) empty-f)
+         (list v)
          (let [v (walk* r v)]
            (reify-constraints v r (:cs a))))))))
 
