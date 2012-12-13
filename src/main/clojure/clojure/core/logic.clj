@@ -99,6 +99,9 @@
 (defprotocol IBind
   (bind [this g]))
 
+(defprotocol IBindFair
+  (bind-fair [this g]))
+
 (defprotocol IMPlus
   (mplus [this that]))
 
@@ -1153,6 +1156,9 @@
   IBind
   (bind [this g]
     (g this))
+  IBindFair
+  (bind-fair [this g]
+    (g this))
   IMPlus
   (mplus [this that]
     (choice this that))
@@ -1654,6 +1660,11 @@
   ([a g & g-rest]
      `(bind* (bind ~a ~g) ~@g-rest)))
 
+(defmacro bind-fair*
+  ([a g] `(bind-fair ~a ~g))
+  ([a g & g-rest]
+     `(bind-fair* (bind-fair ~a ~g) ~@g-rest)))
+
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
@@ -1671,6 +1682,9 @@
   IBind
   (bind [this g]
     (mplus (bind left g) (bind right g)))
+  IBindFair
+  (bind-fair [this g]
+    (mplus (bind-fair left g) (bind-fair right g)))
   IMPlus
   (mplus [this that]
     (Choice. this that))
@@ -1690,9 +1704,13 @@
   nil
   (bind [_ g] nil))
 
+(extend-protocol IBindFair
+  nil
+  (bind-fair [_ g] nil))
+
 (extend-protocol IMPlus
   nil
-  (mplus [_ b] (b)))
+  (mplus [_ b] b))
 
 (extend-protocol ITake
   nil
@@ -1706,6 +1724,9 @@
   IBind
   (bind [this g]
     (Inc. a (^{:once true} fn [a2] (bind (restg a2) g))))
+  IBindFair
+  (bind-fair [this g]
+    (Inc. a (^{:once true} fn [a2] (bind (g a2) restg))))
   IMPlus
   (mplus [this that]
     (Choice. this that))
@@ -1860,6 +1881,10 @@
   "Like fresh but does does not create logic variables."
   ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
+
+(defmacro all-fair
+  ([] `clojure.core.logic/s#)
+  ([& goals] `(fn [a#] (bind-fair* a# ~@goals))))
 
 (defn solutions
   ([s g]
@@ -2789,7 +2814,18 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind ((:f ss)) g))))
                this)))))
-
+  IBindFair
+  (bind-fair [this g]
+    (waiting-stream-check this
+      ;; success continuation
+      (fn [f] (bind-fair f g))
+      ;; failure continuation
+      (fn []
+        (into []
+          (map (fn [ss]
+                 (make-suspended-stream (:cache ss) (:ansv* ss)
+                   (fn [] (bind-fair ((:f ss)) g))))
+               this)))))
   IMPlus
   (mplus [this f]
     (waiting-stream-check this
