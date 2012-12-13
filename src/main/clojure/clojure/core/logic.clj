@@ -103,13 +103,15 @@
   (mplus [this that]))
 
 (defprotocol ITake
-  (-take* [a q] "Push sub-elems onto q, return results."))
+  (-take* [a q] "Push sub-elems onto q, maybe return a result."))
 
 (defn take* [a]
   (let [q (java.util.ArrayDeque. [a])]
     (letfn [(taker []
               (when-let [head (.pollFirst q)]
-                (lazy-seq (concat (-take* head q) (taker)))))]
+                (if-let [result (-take* head q)]
+                  (lazy-seq (cons result (taker)))
+                  (recur))))]
             (taker))))
 
 ;; -----------------------------------------------------------------------------
@@ -1156,7 +1158,7 @@
     (choice this that))
   ITake
   (-take* [this q]
-    [this]))
+    this))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
