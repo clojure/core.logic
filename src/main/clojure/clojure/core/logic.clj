@@ -1705,7 +1705,7 @@
 (deftype Inc [a restg]
   IBind
   (bind [this g]
-    (Inc. a (^{:once true} fn [a2] (bind (restg a2) g)))) ; TODO: ^{:once true}
+    (Inc. a (^{:once true} fn [a2] (bind (restg a2) g))))
   IMPlus
   (mplus [this that]
     (Choice. this that))
@@ -1718,7 +1718,7 @@
 (defmacro -inc [a restg]
   (let [a2 (gensym "a")
         thunk-body (clojure.walk/prewalk-replace {a a2} restg)
-        thunk `(^{:once true} fn* [~a2] ~thunk-body)] ; TODO: ^{:once true}
+        thunk `(^{:once true} fn* [~a2] ~thunk-body)]
     `(Inc. ~a ~thunk)))
 
 (extend-type clojure.lang.PersistentList
