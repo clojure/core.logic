@@ -422,8 +422,8 @@
      :else (FiniteDomain. s (first s) (first (rseq s))))))
 
 (defn domain
-  "Construct a domain for assignment to a var. Arguments should 
-   be integers given in sorted order. domains may be more efficient 
+  "Construct a domain for assignment to a var. Arguments should
+   be integers given in sorted order. domains may be more efficient
    than intervals when only a few values are possible."
   [& args]
   (when (seq args)
@@ -579,7 +579,7 @@
               (multi-interval (interval _lb (dec that))
                               (interval (inc that) _ub))
               this))
-     
+
      (interval? that)
      (let [i this j that
            imin (lb i) imax (ub i)
@@ -596,7 +596,7 @@
         (and (> imax jmax)
              (<= jmin imin)) (interval (inc jmax) imax)
         :else (throw (Error. (str "Interval difference not defined " i " " j)))))
-     
+
      :else (difference* this that)))
   IIntervals
   (intervals [this]
@@ -1063,14 +1063,14 @@
       (loop [lv v [v vp :as me] (find s v)]
         (cond
           (nil? me) lv
-          
+
           (not (lvar? vp))
           (if-let [sv (and (subst-val? vp) (:v vp))]
             (if (= sv ::unbound)
               (with-meta v (assoc (meta vp) ::unbound true))
               sv)
             vp)
-          
+
           :else (recur vp (find s vp))))
       v))
 
@@ -1099,7 +1099,7 @@
 
             :else (recur vp (find s vp)))))
       v))
-  
+
   (update [this x v]
     (let [xv (root-val this x)
           sval? (subst-val? xv)]
@@ -1835,7 +1835,7 @@
   `(run false ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not 
+  "Executes goals until a maximum of n results are found. Does not
    occurs-check."
   [& [n & goals]]
   `(binding [*occurs-check* false]
@@ -2147,7 +2147,7 @@
        (ifa* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro condu
-  "Committed choice. Once the head (first goal) of a clause 
+  "Committed choice. Once the head (first goal) of a clause
   has succeeded, remaining goals of the clause will only
   be run once. Non-relational."
   [& clauses]
@@ -2224,7 +2224,7 @@
 (defn- extract-vars
   ([p]
      (set (cond
-           (lvar-sym? p) [p]           
+           (lvar-sym? p) [p]
            (coll? p) (let [p (if (seq? p) (rest p) p)]
                        (filter lvar-sym? (flatten p)))
            :else nil)))
@@ -2335,7 +2335,7 @@
   (== '() a))
 
 (defn conso
-  "A relation where l is a collection, such that a is the first of l 
+  "A relation where l is a collection, such that a is the first of l
   and d is the rest of l"
   [a d l]
   (== (lcons a d) l))
@@ -2409,15 +2409,15 @@
 ;; =============================================================================
 ;; More convenient goals
 
-(defne membero 
+(defne membero
   "A relation where l is a collection, such that l contains x"
   [x l]
   ([_ [x . tail]])
   ([_ [head . tail]]
      (membero x tail)))
 
-(defne appendo 
-  "A relation where x, y, and z are proper collections, 
+(defne appendo
+  "A relation where x, y, and z are proper collections,
   such that z is x appended to y"
   [x y z]
   ([() _ y])
@@ -2537,7 +2537,7 @@
            ((deref ~'indexes) ~'arity))
          (~'add-indexes [~'_ ~'arity ~'index]
            (swap! ~'indexes assoc ~'arity ~'index)))
-       (defmacro ~'defrel 
+       (defmacro ~'defrel
          "Define a relation for adding facts. Takes a name and some fields.
          Use fact/facts to add facts and invoke the relation to query it."
          [~'name ~'& ~'rest]
@@ -2695,7 +2695,7 @@
 
 (defn waiting-stream-check
   "Take a waiting stream, a success continuation, and a failure continuation.
-   If we don't find any ready suspended streams, invoke the failure continuation. 
+   If we don't find any ready suspended streams, invoke the failure continuation.
    If we find a ready suspended stream calculate the remainder of the waiting
    stream. If we've reached the fixpoint just call the thunk of the suspended
    stream, otherwise call mplus on the result of the thunk and the remainder
@@ -2841,7 +2841,7 @@
               (reuse a argv cache nil nil))))))))
 
 (defmacro tabled
-  "Macro for defining a tabled goal. Prefer ^:tabled with the 
+  "Macro for defining a tabled goal. Prefer ^:tabled with the
   defne/a/u forms over using this directly."
   [args & grest]
   `(let [table# (atom {})]
@@ -3288,7 +3288,7 @@
   (cgoal (fdc (=fdc u v))))
 
 (defn !=fdc [u v]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3316,7 +3316,7 @@
         ;; and at least du or dv has a singleton domain
         (and (domain? du) (domain? dv)
              (or (singleton-dom? du)
-                 (singleton-dom? dv))))))) 
+                 (singleton-dom? dv)))))))
 
 (defn !=fd
   "A finite domain constraint. u and v must not be equal. u and v
@@ -3325,7 +3325,7 @@
   (cgoal (fdc (!=fdc u v))))
 
 (defn <=fdc [u v]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3384,7 +3384,7 @@
         s))))
 
 (defn +fdc [u v w]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
@@ -3505,7 +3505,7 @@
 
 (defn *fd
   "A finite domain constraint for multiplication and
-   thus division. u, v & w must be eventually be given 
+   thus division. u, v & w must be eventually be given
    domains if vars."
   [u v w]
   (cgoal (fdc (*fdc u v w))))
@@ -3516,10 +3516,10 @@
 (defn -distinctfdc
   "The real *individual* distinctfd constraint. x is a var that now is bound to
    a single value. y* were the non-singleton bound vars that existed at the
-   construction of the constraint. n* is the set of singleton domain values 
-   that existed at the construction of the constraint. We use categorize to 
+   construction of the constraint. n* is the set of singleton domain values
+   that existed at the construction of the constraint. We use categorize to
    determine the current non-singleton bound vars and singleton vlaues. if x
-   is in n* or the new singletons we have failed. If not we simply remove 
+   is in n* or the new singletons we have failed. If not we simply remove
    the value of x from the remaining non-singleton domains bound to vars."
   ([x y* n*] (-distinctfdc x y* n* nil))
   ([x y* n* id]
@@ -3575,9 +3575,9 @@
 
 (defn distinctfdc
   "The real distinctfd constraint. v* can be seq of logic vars and
-   values or it can be a logic var itself. This constraint does not 
+   values or it can be a logic var itself. This constraint does not
    run until v* has become ground. When it has become ground we group
-   v* into a set of logic vars and a sorted set of known singleton 
+   v* into a set of logic vars and a sorted set of known singleton
    values. We then construct the individual constraint for each var."
   ([v*] (distinctfdc v* nil))
   ([v* id]
@@ -3615,8 +3615,8 @@
        (watched-stores [this] #{::subst}))))
 
 (defn distinctfd
-  "A finite domain constraint that will guarantee that 
-   all vars that occur in v* will be unified with unique 
+  "A finite domain constraint that will guarantee that
+   all vars that occur in v* will be unified with unique
    values. v* need not be ground. Any vars in v* should
    eventually be given a domain."
   [v*]

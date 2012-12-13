@@ -142,7 +142,7 @@
       (== q (llist a b d))
       (bounded-listo q 6)
       (all-connected-to-allo q)))
-  
+
   ;; 350-400ms
   (dotimes [_ 5]
     (time
@@ -225,7 +225,7 @@
   ;; direct translation does not work
   ;; because of the subtraction constraints
   ;; also, some domain inference would be nice
-  
+
   (defne noattackfd [y ys d]
     ([_ () _])
     ([y1 [y2 . yr] d]
@@ -366,13 +366,13 @@
   ;; ~2700ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100] 
+     (dotimes [_ 100]
        (cryptarithfd-1))))
 
   ;; 3X slower still
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10] 
+     (dotimes [_ 10]
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
@@ -437,7 +437,7 @@
       (infd baker cooper fletcher miller smith (interval 1 5))
       (!=fd baker 5) (!=fd cooper 1)
       (!=fd fletcher 5) (!=fd fletcher 1)
-      (<fd cooper miller) 
+      (<fd cooper miller)
       (not-adjacento smith fletcher)
       (not-adjacento fletcher cooper))))
 
@@ -495,9 +495,9 @@
   ;; 900ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e3] 
+     (dotimes [_ 1e3]
        (simple-eqfd))))
-  
+
   (run* [q]
     (fresh [a b]
       (*fd a 3 34)
@@ -555,7 +555,7 @@
 (defn matches [n]
   (run 1 [q]
     (fresh [a b c d s1 s2]
-      (infd a b c d s1 s2 (interval 1 n)) 
+      (infd a b c d s1 s2 (interval 1 n))
       (distinctfd [a b c d])
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
@@ -614,7 +614,7 @@
 (comment
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e3] 
+     (dotimes [_ 1e3]
        (small-sudokufd))))
 
   (small-sudokufd)
@@ -650,7 +650,7 @@
     (get-square rows x y)))
 
 (defn sudokufd [hints]
-  (let [vars (repeatedly 81 lvar) 
+  (let [vars (repeatedly 81 lvar)
         rows (->rows vars)
         cols (->cols rows)
         sqs  (->squares rows)]
@@ -719,10 +719,10 @@
      3 0 1  0 0 7  0 4 0
      7 2 0  0 4 0  0 6 0
      0 0 4  0 1 0  0 0 3])
-  
+
   (sudokufd easy0)
   (time (sudokufd easy0))
-  
+
   (sudokufd easy1)
   (time (sudokufd easy1))
 
@@ -777,7 +777,7 @@
      0 0 0  0 9 0  2 0 0
      0 0 8  0 7 0  4 0 0
      0 0 3  0 6 0  0 0 0
-     
+
      0 1 0  0 0 2  8 9 0
      0 4 0  0 0 0  0 0 0
      0 5 0  1 0 0  0 0 0])
@@ -859,6 +859,6 @@
   ;; also significantly slower
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10] 
+     (dotimes [_ 10]
        (safefd))))
   )

@@ -692,7 +692,7 @@
   (fresh []
     (conde
       [f2 (conde
-            [f2] 
+            [f2]
             [(== false false)])]
       [(== false false)])))
 
@@ -1152,7 +1152,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching functions preserve metadata
 
-(defne ^:tabled dummy 
+(defne ^:tabled dummy
   "Docstring"
   [x l]
   ([_ [x . tail]])
@@ -1471,7 +1471,7 @@
     (is (= (intersection mi0 7) 7))
     (is (= (intersection 7 mi0) 7))))
 
-;; |-----| 
+;; |-----|
 ;;   |-----|
 (deftest test-intersection-mimi-3
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
@@ -1529,7 +1529,7 @@
            (multi-interval (interval 1 4) (interval 6 8))))))
 
 ;; |---|  |---|
-;;         N      
+;;         N
 (deftest test-difference-mis-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 8)
