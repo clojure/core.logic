@@ -2957,6 +2957,9 @@
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
 
+;; FIXME: Nada Amin's quine code blows up here, seems like somehow
+;; things might be getting out of sync? 
+
 (defn enforceable-constrained [a]
   (let [cs (:cs a)
         km (:km cs)
@@ -2964,7 +2967,8 @@
         vs (keys km)]
     (filter (fn [v]
               (some (fn [cid]
-                      (enforceable? (get cm cid)))
+                      (when-let [c (get cm cid)]
+                        (enforceable? c)))
                     (get km v)))
             vs)))
 
