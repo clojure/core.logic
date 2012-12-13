@@ -108,14 +108,51 @@
 (defprotocol ITake
   (-take* [a q] "Push sub-elems onto q, maybe return a result."))
 
+(deftype PromiseSeq [p] ; p is a promise containing either nil or [val PromiseSeq]
+  clojure.lang.ISeq
+  (first [this]
+    (first @p))
+  (next [this]
+    (second @p))
+  (more [this]
+    (second @p))
+  (cons [this o]
+    (throw (Exception. "PromiseSeq does not implement cons")))
+  clojure.lang.Seqable
+  (seq [this]
+    this))
+
+(defn pseq []
+  (PromiseSeq. (promise)))
+
+(defn snoc! [pseq val]
+  (let [new-tail (PromiseSeq. (promise))]
+    (loop [pseq pseq]
+      (let [p (.p pseq)]
+        (when-not (deliver p [val new-tail])
+          (let [[_ existing-tail] @p]
+            (recur existing-tail)))))))
+
+;; TODO: leaves a nil in the tail of the seq
+(defn nil! [pseq]
+  (let [p (.p pseq)]
+    (when-not (deliver p nil)
+      (let [[_ tail] @p]
+        (recur tail)))))
+
+;; TODO: clean up threads when finished!
+(defn taker [q results]
+  (let [head (.take q)]
+    (if-let [result (-take* head q)]
+      (snoc! results result))
+    (recur q results)))
+
 (defn take* [a]
-  (let [q (java.util.ArrayDeque. [a])]
-    (letfn [(taker []
-              (when-let [head (.pollFirst q)]
-                (if-let [result (-take* head q)]
-                  (cons result (lazy-seq (taker)))
-                  (recur))))]
-            (taker))))
+  (let [q (java.util.concurrent.LinkedBlockingQueue. [a])
+        results (pseq)
+        workers (doall (for [i (range 4)]
+                         (future (taker q results))))]
+    results))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
@@ -1686,8 +1723,8 @@
     (choice (bind-fair left g) (bind-fair right g)))
   ITake
   (-take* [this q]
-    (when left (.addLast ^java.util.ArrayDeque q left))
-    (when right (.addLast ^java.util.ArrayDeque q right))
+    (when left (.add ^java.util.concurrent.LinkedBlockingQueue q left))
+    (when right (.add ^java.util.concurrent.LinkedBlockingQueue q right))
     nil))
 
 (defn choice [left right]
@@ -1731,7 +1768,7 @@
   ITake
   (-take* [this q]
     (when-let [rest (restg a)]
-      (.addLast ^java.util.ArrayDeque q rest))
+      (.add ^java.util.concurrent.LinkedBlockingQueue q rest))
     nil))
 
 (defmacro -inc [a restg]
@@ -2727,6 +2764,7 @@
          (let [ss (first w)
                f  (:f ss)
                w  (into a (next w))]
+           (prn 'here?)
            (if (empty? w)
              (f)
              (mplus (f) (fn [] w))))))
