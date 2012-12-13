@@ -1159,9 +1159,6 @@
   IBindFair
   (bind-fair [this g]
     (g this))
-  IMPlus
-  (mplus [this that]
-    (choice this that))
   ITake
   (-take* [this q]
     this))
@@ -1670,6 +1667,8 @@
   ([e & e-rest]
      `(mplus ~e (mplus* ~@e-rest))))
 
+(declare choice)
+
 (deftype Choice [left right]
   clojure.lang.ILookup
   (valAt [this k]
@@ -1681,13 +1680,10 @@
       not-found))
   IBind
   (bind [this g]
-    (mplus (bind left g) (bind right g)))
+    (choice (bind left g) (bind right g)))
   IBindFair
   (bind-fair [this g]
-    (mplus (bind-fair left g) (bind-fair right g)))
-  IMPlus
-  (mplus [this that]
-    (Choice. this that))
+    (choice (bind-fair left g) (bind-fair right g)))
   ITake
   (-take* [this q]
     (when left (.addLast ^java.util.ArrayDeque q left))
@@ -1695,7 +1691,16 @@
     nil))
 
 (defn choice [left right]
-  (Choice. left right))
+  (cond
+   (nil? left) right
+   (nil? right) left
+   :else (Choice. left right)))
+
+;; TODO: might a binary tree be better?
+(defmacro choice*
+  ([e] e)
+  ([e & e-rest]
+     `(choice ~e (choice* ~@e-rest))))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -1707,10 +1712,6 @@
 (extend-protocol IBindFair
   nil
   (bind-fair [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (mplus [_ b] b))
 
 (extend-protocol ITake
   nil
@@ -1727,9 +1728,6 @@
   IBindFair
   (bind-fair [this g]
     (Inc. a (^{:once true} fn [a2] (bind (g a2) restg))))
-  IMPlus
-  (mplus [this that]
-    (Choice. this that))
   ITake
   (-take* [this q]
     (when-let [rest (restg a)]
@@ -1742,21 +1740,11 @@
         thunk `(^{:once true} fn* [~a2] ~thunk-body)]
     `(Inc. ~a ~thunk)))
 
-(extend-type clojure.lang.PersistentList
+;; -----------------------------------------------------------------------------
+;; TODO: This is a hack to make reifyg work. Figure out what reifyg is for and then fix this somehow
+(defrecord Return [value]
   ITake
-  (-take* [this q]
-    this)
-  IMPlus
-  (mplus [this that]
-    (concat this that)))
-
-(extend-type clojure.lang.LazySeq
-  ITake
-  (-take* [this q]
-    this)
-  IMPlus
-  (mplus [this that]
-    (concat this that)))
+  (-take* [_ q] value))
 
 ;; =============================================================================
 ;; Syntax
@@ -1814,7 +1802,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (-inc ~a (mplus* ~@(bind-conde-clauses a clauses))))))
+       (-inc ~a (choice* ~@(bind-conde-clauses a clauses))))))
 
 (defn- lvar-bind [sym]
   ((juxt identity
@@ -2826,18 +2814,6 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind-fair ((:f ss)) g))))
                this)))))
-  IMPlus
-  (mplus [this f]
-    (waiting-stream-check this
-      ;; success continuation
-      (fn [fp] (mplus fp f))
-      ;; failure continuation
-      (fn []
-        (let [a-inf (f)]
-          (if (waiting-stream? a-inf)
-            (into a-inf this)
-            (mplus a-inf (fn [] this)))))))
-
   ITake
   (-take* [this q]
     (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
@@ -3043,8 +3019,8 @@
                  (filter reifiable?)
                  (map #(reifyc % v r)))]
     (if (empty? rcs)
-      (list v)
-      (list `(~v :- ~@rcs)))))
+      (Return. v)
+      (Return. `(~v :- ~@rcs)))))
 
 (defn reifyg [x]
   (all
@@ -3053,10 +3029,9 @@
      (let [v (walk* a x)
            r (-reify* empty-s v)]
        (if (zero? (count r))
-         (list v)
+         (Return. v)
          (let [v (walk* r v)]
            (reify-constraints v r (:cs a))))))))
-
 
 (defn cgoal [c]
   (reify
