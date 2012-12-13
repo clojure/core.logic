@@ -1740,6 +1740,9 @@
         thunk `(^{:once true} fn* [~a2] ~thunk-body)]
     `(Inc. ~a ~thunk)))
 
+(defn -dec [inc]
+  ((.restg inc) (.a inc)))
+
 ;; -----------------------------------------------------------------------------
 ;; TODO: This is a hack to make reifyg work. Figure out what reifyg is for and then fix this somehow
 (defrecord Return [value]
