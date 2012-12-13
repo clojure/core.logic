@@ -113,7 +113,7 @@
     (letfn [(taker []
               (when-let [head (.pollFirst q)]
                 (if-let [result (-take* head q)]
-                  (lazy-seq (cons result (taker)))
+                  (cons result (lazy-seq (taker)))
                   (recur))))]
             (taker))))
 
