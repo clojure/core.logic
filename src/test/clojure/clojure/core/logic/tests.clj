@@ -2389,15 +2389,6 @@
          ())))
 
 ;; =============================================================================
-;; extensible unifier
-
-(deftest test-extensible-unifier-1
-  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '(1))
-         '(1)))
-  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '("foo"))
-         nil)))
-
-;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
 (deftest test-attrs-1 []
