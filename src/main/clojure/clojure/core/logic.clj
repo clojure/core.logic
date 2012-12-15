@@ -20,6 +20,7 @@
 ;; =============================================================================
 ;; Marker Interfaces
 
+(definterface IWalkable)
 (definterface IVar)
 
 ;; =============================================================================
@@ -309,7 +310,7 @@
 ;; =============================================================================
 ;; Constraint Store
 
-(declare lvar? interval multi-interval)
+(declare lvar? walkable? interval multi-interval)
 
 (defn bounds [i]
   (pair (lb i) (ub i)))
@@ -1050,12 +1051,12 @@
       (Substitutions. (assoc s u v) l cs cq cqs _meta)))
 
   (walk [this v]
-    (if (lvar? v)
+    (if (walkable? v)
       (loop [lv v [v vp :as me] (find s v)]
         (cond
           (nil? me) lv
           
-          (not (lvar? vp))
+          (not (walkable? vp))
           (if-let [sv (and (subst-val? vp) (:v vp))]
             (if (= sv ::unbound)
               (with-meta v (assoc (meta vp) ::unbound true))
@@ -1267,6 +1268,10 @@
 
 (defn lvar? [x]
   (instance? clojure.core.logic.IVar x))
+
+(defn walkable? [x]
+  (or (lvar? x)
+      (instance? clojure.core.logic.IWalkable x)))
 
 ;; =============================================================================
 ;; LCons
@@ -2891,6 +2896,10 @@
         a)
       ((remcg c) a))))
 
+(defn addcg-now [c]
+  (fn [a]
+    (bind* a (addcg c) (run-constraint c) (fn [a] (queue a c)))))
+
 ;; TODO NOW: try an implementation that allows constraints
 ;; to run roughly in the order they normaly would. reverse
 ;; xcs in run-constraints, (into cq (reverse xcs)), cq should
@@ -2982,7 +2991,8 @@
 (defn reify-constraints [v r cs]
   (let [rcs (->> (vals (:cm cs))
                  (filter reifiable?)
-                 (map #(reifyc % v r)))]
+                 (map #(reifyc % v r))
+                 (filter #(not (nil? %))))]
     (if (empty? rcs)
       (choice (list v) empty-f)
       (choice (list `(~v :- ~@rcs)) empty-f))))

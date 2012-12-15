@@ -1,6 +1,8 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic :exclude [is] :as l]
+        ;; TODO(namin): If I don't include this here, nominal/tests fail... why?
+        [clojure.core.logic.nominal]
         clojure.test :reload)
   (:require [clojure.pprint :as pp]))
 
