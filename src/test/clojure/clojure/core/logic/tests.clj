@@ -2391,19 +2391,6 @@
 ;; =============================================================================
 ;; Real cKanren programs
 
-(defn simple-eqfd []
-  (run* [q]
-    (fresh [x y]
-      (infd x y (interval 0 9))
-      (eqfd
-        (= (+ x y) 9)
-        (= (+ (* x 2) (* y 4)) 24))
-      (== q [x y]))))
-
-(deftest test-simple-eqfd
-  (is (= (simple-eqfd)
-         '([6 3]))))
-
 (defn not-adjacento [x y]
   (fresh [f]
     (infd f (interval 1 5))
@@ -2462,22 +2449,6 @@
 
 (deftest test-matches
   (is (= (matches 40) '([1 3 9 27]))))
-
-(defn cryptarithfd []
-  (run* [q]
-    (fresh [s e n d m o r y]
-      (== q [s e n d m o r y])
-      (infd s e n d m o r y (interval 0 9))
-      (distinctfd q)
-      (distribute q ::l/ff)
-      (!=fd m 0) (!=fd s 0)
-      (eqfd
-        (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
-                          (* 1000 m) (* 100 o) (* 10 r) e)
-           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
-
-(deftest test-cryptarithfd
-  (is (= (cryptarithfd) '([9 5 6 7 1 0 8 2]))))
 
 (defn get-square [rows x y]
   (for [x (range x (+ x 3))
