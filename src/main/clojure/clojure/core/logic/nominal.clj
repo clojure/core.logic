@@ -1,12 +1,12 @@
 (ns clojure.core.logic.nominal
-  (:refer-clojure :exclude [==])
-  (:use clojure.core.logic)
+  (:refer-clojure :exclude [== hash])
+  (:use [clojure.core.logic :exclude [fresh] :as l])
   (:import [java.io Writer]))
 
 (def ^{:dynamic true} *reify-noms* true)
 
 ;; =============================================================================
-;; Nominal unification with nom-fresh, nom-hash and nom-tie.
+;; Nominal unification with fresh, hash and tie.
 ;;
 ;; Some references / inspiration:
 ;; alphaKanren - http://www.cs.indiana.edu/~webyrd/alphamk/alphamk.pdf
@@ -85,7 +85,7 @@
 (defn- nom-binds [syms]
   (mapcat nom-bind syms))
 
-(defmacro nom-fresh
+(defmacro fresh
   "Creates fresh noms. Goals occuring within form a logical
   conjunction."
   [[& noms] & goals]
@@ -95,9 +95,9 @@
         (bind* a# ~@goals)))))
 
 ;; =============================================================================
-;; nom-hash: ensure a nom is free in a term
+;; hash: ensure a nom is free in a term
 
-(declare nom-tie? susp? invert-pi compose-pis disagreement-set nom-tie susp)
+(declare tie? susp? invert-pi compose-pis disagreement-set tie susp)
 
 (defn -nom-hash? [a x]
   (reify
@@ -144,7 +144,7 @@
   (apply-hash [x a c s]
     (reduce (fn [s c] (bind* s (addcg-now (-nom-hash? a c)))) (bind s (remcg c)) x)))
 
-(defn nom-hash [a t]
+(defn hash [a t]
   (cgoal (-nom-hash? a t)))
 
 ;; =============================================================================
@@ -283,9 +283,9 @@
   (.write writer (str "<susp:(" (apply str (:pi x)) ")" (:lvar x) ">")))
 
 ;; =============================================================================
-;; nom-tie: bind a nom in a term
+;; tie: bind a nom in a term
 
-(declare nom-tie)
+(declare tie)
 
 (extend-protocol IUnifyWithTie
   nil
@@ -313,7 +313,7 @@
          (and (= binding-nom (:binding-nom o)) (= body (:body o)))))
   clojure.lang.IObj
   (withMeta [this new-meta]
-    (nom-tie (with-meta binding-nom new-meta) body))
+    (tie (with-meta binding-nom new-meta) body))
   (meta [this]
     (meta binding-nom))
   clojure.lang.ILookup
@@ -345,24 +345,24 @@
         s)))
   clojure.core.logic.IWalkTerm
   (walk-term [v f]
-    (nom-tie (walk-term (:binding-nom v) f)
-             (walk-term (:body v) f)))
+    (tie (walk-term (:binding-nom v) f)
+         (walk-term (:body v) f)))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check-term (:body v) x s))
   IApplyPi
   (apply-pi [t pi]
-    (nom-tie (api (:binding-nom t) pi) (apply-pi (:body t) pi)))
+    (tie (api (:binding-nom t) pi) (apply-pi (:body t) pi)))
   IApplyHash
   (apply-hash [x a c s]
     (if (= a (:binding-nom x))
       (bind s (remcg c))
       (bind* s (remcg c) (addcg-now (-nom-hash? a (:body x)))))))
 
-(defn nom-tie [binding-nom body]
+(defn tie [binding-nom body]
   (Tie. binding-nom body))
 
-(defn nom-tie? [x]
+(defn tie? [x]
   (instance? clojure.core.logic.nominal.Tie x))
 
 (defmethod print-method Tie [x ^Writer writer]

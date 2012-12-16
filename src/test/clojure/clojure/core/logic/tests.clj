@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic :exclude [is] :as l]
         ;; TODO(namin): If I don't include this here, nominal/tests fail... why?
-        [clojure.core.logic.nominal]
+        [clojure.core.logic.nominal :exclude [fresh hash] :as nom]
         clojure.test :reload)
   (:require [clojure.pprint :as pp]))
 
