@@ -65,7 +65,7 @@
     (api t pi))
   IApplyHash
   (apply-hash [x a c s]
-    (if (or  (identical? x a) (.equals x a))
+    (if (or  (identical? x a) (= x a))
       nil
       (bind s (remcg c)))))
 
@@ -184,7 +184,7 @@
     (unify-with-susp v (Suspension. nil u) s))
   clojure.core.logic.nominal.IUnifyWithSuspension
   (unify-with-susp [v u s]
-    (if (.equals (:lvar v) (:lvar u))
+    (if (= (:lvar v) (:lvar u))
       (loop [a* (disagreement-set (:pi v) (:pi u))
              s s]
         (when s
@@ -236,8 +236,8 @@
   (fold-right
    (fn [swap a]
      (cond
-      (.equals a (first swap)) (second swap)
-      (.equals a (second swap)) (first swap)
+      (= a (first swap)) (second swap)
+      (= a (second swap)) (first swap)
       :else a))
    a pi))
 
@@ -264,12 +264,12 @@
 (defn invert-pi [pi] (reverse pi))
 
 (defn in? [seq elm]
-  (some #(.equals elm %) seq))
+  (some #(= elm %) seq))
 
 (defn disagreement-set [pi1 pi2]
   (let [i (fn [a a*]
             (if (or (in? a* a)
-                    (.equals (api a pi1) (api a pi2)))
+                    (= (api a pi1) (api a pi2)))
               a*
               (cons a a*)))
         c (fn [pi a*]
@@ -331,7 +331,7 @@
   (unify-with-object [v u s] nil)
   clojure.core.logic.nominal.IUnifyWithTie
   (unify-with-tie [v u s]
-    (if (.equals (:binding-nom v) (:binding-nom u))
+    (if (= (:binding-nom v) (:binding-nom u))
       (unify s (:body v) (:body u))
       (bind* s
         (fn [s] (unify s
@@ -355,7 +355,7 @@
     (nom-tie (api (:binding-nom t) pi) (apply-pi (:body t) pi)))
   IApplyHash
   (apply-hash [x a c s]
-    (if (.equals a (:binding-nom x))
+    (if (= a (:binding-nom x))
       (bind s (remcg c))
       (bind* s (remcg c) (addcg-now (-nom-hash? a (:body x)))))))
 
