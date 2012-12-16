@@ -229,7 +229,7 @@
 (defn susp? [x]
   (instance? clojure.core.logic.nominal.Suspension x))
 
-(defn fold-right [f init coll]
+(defn- fold-right [f init coll]
   (reduce (fn [x y] (f y x)) init (reverse coll)))
 
 (defn api [a pi]
@@ -263,7 +263,7 @@
 (defn compose-pis [pi1 pi2] (concat pi1 pi2))
 (defn invert-pi [pi] (reverse pi))
 
-(defn in? [seq elm]
+(defn- in? [seq elm]
   (some #(= elm %) seq))
 
 (defn disagreement-set [pi1 pi2]
