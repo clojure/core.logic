@@ -115,7 +115,19 @@
                (== [x y] q))))
          ['(a_0 a_1)
           ['_0 (susp '((a_1 a_2)) '_0)]
-          [['_0 (susp '((a_1 a_2)) '_0)] ':- 'a_1#_0]])))
+           [['_0 (susp '((a_1 a_2)) '_0)] ':- 'a_1#_0]]))
+  (is (= (run* [q]
+           (fresh [bx by]
+             (nom/fresh [x y]
+               (== (nom/tie x (nom/tie y by)) (nom/tie x (nom/tie x bx)))
+               (== by ['foo q]))))
+        '(_0)))
+  (is (= (run* [q]
+           (fresh [bx by]
+             (nom/fresh [x y]
+               (== (nom/tie x (nom/tie y by)) (nom/tie x (nom/tie x bx)))
+               (== ['foo q] by))))
+        '(_0))))
 
 (deftest test-nom-5
   (is (= (run* [q]

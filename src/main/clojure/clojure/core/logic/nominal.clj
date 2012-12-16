@@ -176,12 +176,24 @@
   clojure.core.logic.IUnifyTerms
   (unify-terms [u v s]
     (unify-with-susp v u s))
+  clojure.core.logic.IUnifyWithNil
+  (unify-with-nil [v u s]
+    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
   clojure.core.logic.IUnifyWithObject
   (unify-with-object [v u s]
     (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
   clojure.core.logic.IUnifyWithLVar
   (unify-with-lvar [v u s]
     (unify-with-susp v (Suspension. nil u) s))
+  clojure.core.logic.IUnifyWithLSeq
+  (unify-with-lseq [v u s]
+    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+  clojure.core.logic.IUnifyWithSequential
+  (unify-with-seq [v u s]
+    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+  clojure.core.logic.IUnifyWithMap
+  (unify-with-map [v u s]
+    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
   clojure.core.logic.nominal.IUnifyWithSuspension
   (unify-with-susp [v u s]
     (if (= (:lvar v) (:lvar u))
