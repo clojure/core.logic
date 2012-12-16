@@ -381,7 +381,7 @@
        (cond
          (< max (:min that)) true
          (> min (:max that)) true
-         :else (empty? (set/intersection this (:s that))))
+         :else (empty? (set/intersection s (:s that))))
      :else (disjoint?* this that)))
   (intersection [this that]
     (cond
