@@ -134,9 +134,7 @@
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
                (== (nom/tie c (nom/tie d [d z])) (nom/tie d (nom/tie c [c w])))
                (== y z)
-               ;; TODO(namin): repeating the constraint results in failure
-               ;;   commenting out the following constraint to get intended behavior
-               ; (== y z)
+               (== y z)
                )))
         '(_0))))
 

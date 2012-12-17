@@ -195,15 +195,19 @@
   (unify-with-map [v u s]
     (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
   clojure.core.logic.nominal.IUnifyWithSuspension
-  (unify-with-susp [v u s]
-    (if (= (:lvar v) (:lvar u))
-      (loop [a* (disagreement-set (:pi v) (:pi u))
-             s s]
-        (if (empty? a*) s
-          (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
-      (if (find (:s s) (:lvar u))
-        (ext s (:lvar v) (apply-pi u (invert-pi (:pi v))))
-        (ext s (:lvar u) (apply-pi v (invert-pi (:pi u)))))))
+  (unify-with-susp [vo uo s]
+    (let [wv (walk* s vo)
+          wu (walk* s uo)]
+      (let [v (if (lvar? wv) (Suspension. nil wv) wv)
+            u (if (lvar? wu) (Suspension. nil wu) wu)]
+        (if (= (:lvar v) (:lvar u))
+          (loop [a* (disagreement-set (:pi v) (:pi u))
+                  s s]
+            (if (empty? a*) s
+              (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
+          (if (find (:s s) (:lvar uo))
+            (ext s (:lvar v) (apply-pi u (invert-pi (:pi v))))
+            (ext s (:lvar u) (apply-pi v (invert-pi (:pi u)))))))))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s pi)]
@@ -213,8 +217,12 @@
   (walk-term [v f]
     (let [u (apply-pi (:lvar v) (:pi v))]
       (if (= u v)
-        (susp (walk-term (:pi v) f)
-              (walk-term (:lvar v) f))
+        (let [fv (walk-term (:lvar v) f)
+              fpi (walk-term (:pi v) f)]
+          (cond
+            (empty? fpi) fv
+            (nom? (first (first fpi))) (apply-pi fv fpi)
+            :else (susp fpi fv)))
         (walk-term u f))))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
