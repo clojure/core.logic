@@ -2391,6 +2391,153 @@
          ())))
 
 ;; =============================================================================
+;; Real cKanren programs
+
+(defn not-adjacento [x y]
+  (fresh [f]
+    (infd f (interval 1 5))
+    (conde
+      [(+fd x f y) (<fd 1 f)]
+      [(+fd y f x) (<fd 1 f)])))
+
+(defn dinesmanfd []
+  (run* [q]
+    (fresh [baker cooper fletcher miller smith]
+      (== q [baker cooper fletcher miller smith])
+      (distinctfd [baker cooper fletcher miller smith])
+      (infd baker cooper fletcher miller smith (interval 1 5))
+      (!=fd baker 5) (!=fd cooper 1)
+      (!=fd fletcher 5) (!=fd fletcher 1)
+      (<fd cooper miller) 
+      (not-adjacento smith fletcher)
+      (not-adjacento fletcher cooper))))
+
+(deftest test-dinesmandfd []
+  (is (= (dinesmanfd) '([3 2 4 5 1]))))
+
+(defne subchecko [w sl r o n]
+  ([_ () _ _ _]
+     (fresh [hr]
+       (infd hr (interval 1 n))
+       (matche [r o]
+         ([[hr . _] [w . r]] (+fd hr 1 w))
+         ([() [w . r]]))))
+  ([_ [hsl . rsl] _ _ _]
+     (fresh [w-hsl w+hsl o0 o1 nw]
+       (infd hsl w-hsl w+hsl (interval 1 n))
+       (+fd hsl w-hsl w) (+fd hsl w w+hsl)
+       (subchecko w-hsl rsl r  o0 n)
+       (subchecko w     rsl o0 o1 n)
+       (subchecko w+hsl rsl o1 o  n))))
+
+(defne checko [ws sl r n]
+  ([() _ [a . _] a])
+  ([[w . wr] _ _ _]
+     (fresh [nsl nr]
+       (subchecko w sl r nr n)
+       (conso w sl nsl)
+       (checko wr nsl nr n))))
+
+(defn matches [n]
+  (run 1 [q]
+    (fresh [a b c d s1 s2]
+      (infd a b c d s1 s2 (interval 1 n)) 
+      (distinctfd [a b c d])
+      (== a 1)
+      (<=fd a b) (<=fd b c) (<=fd c d)
+      (eqfd (= (+ a b c d) n))
+      (checko [a b c d] () () n)
+      (== q [a b c d]))))
+
+(deftest test-matches
+  (is (= (matches 40) '([1 3 9 27]))))
+
+(defn get-square [rows x y]
+  (for [x (range x (+ x 3))
+        y (range y (+ y 3))]
+    (get-in rows [x y])))
+
+(defn init [vars hints]
+  (if (seq vars)
+    (let [hint (first hints)]
+      (all
+       (if-not (zero? hint)
+         (== (first vars) hint)
+         succeed)
+       (init (next vars) (next hints))))
+    succeed))
+
+(defn ->rows [xs]
+  (->> xs (partition 9) (map vec) (into [])))
+
+(defn ->cols [rows]
+  (apply map vector rows))
+
+(defn ->squares [rows]
+  (for [x (range 0 9 3)
+        y (range 0 9 3)]
+    (get-square rows x y)))
+
+(defn sudokufd [hints]
+  (let [vars (repeatedly 81 lvar) 
+        rows (->rows vars)
+        cols (->cols rows)
+        sqs  (->squares rows)]
+    (run-nc 1 [q]
+      (== q vars)
+      (distribute q ::l/ff)
+      (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
+      (init vars hints)
+      (everyg distinctfd rows)
+      (everyg distinctfd cols)
+      (everyg distinctfd sqs))))
+
+(defn verify [vars]
+  (let [rows (->rows vars)
+        cols (->cols rows)
+        sqs  (->squares rows)
+        verify-group (fn [group]
+                       (every? #(= (->> % (into #{}) count) 9)
+                          group))]
+    (and (verify-group rows)
+         (verify-group cols)
+         (verify-group sqs))))
+
+(def easy0
+    [0 0 3  0 2 0  6 0 0
+     9 0 0  3 0 5  0 0 1
+     0 0 1  8 0 6  4 0 0
+
+     0 0 8  1 0 2  9 0 0
+     7 0 0  0 0 0  0 0 8
+     0 0 6  7 0 8  2 0 0
+
+     0 0 2  6 0 9  5 0 0
+     8 0 0  2 0 3  0 0 9
+     0 0 5  0 1 0  3 0 0])
+
+(deftest test-sudokufd
+  (is (-> (sudokufd easy0) first verify)))
+
+;; FIXME: when asking for 1 answer, we get something sensible
+;; when asking for 2 answers, we get a different set of answers
+
+(defn safefd []
+  (run 1 [q]
+    (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
+      (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
+      (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
+      (distinctfd q)
+      (eqfd
+        (= (- c4 c6) c7)
+        (= (* c1 c2 c3) (+ c8 c9))
+        (< (+ c2 c3 c6) c8)
+        (< c9 c8))
+      (!=fd c1 1) (!=fd c2 2) (!=fd c3 3)
+      (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
+      (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
+
+;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
 (deftest test-attrs-1 []
