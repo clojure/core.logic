@@ -900,7 +900,7 @@
 ;; =============================================================================
 ;; SubstValue
 
-(defrecord SubstValue [v]
+(defrecord SubstValue [v doms]
   Object
   (toString [_]
     (str v)))
@@ -909,8 +909,8 @@
   (instance? SubstValue x))
 
 (defn subst-val
-  ([x] (SubstValue. x))
-  ([x _meta] (with-meta (SubstValue. x) _meta)))
+  ([x] (SubstValue. x {}))
+  ([x _meta] (with-meta (SubstValue. x {}) _meta)))
 
 (defmethod print-method SubstValue [x ^Writer writer]
   (.write writer (str (:v x))))
