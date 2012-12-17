@@ -2171,7 +2171,7 @@
         b)))
 
   Inc
-  (ifa [b gs c]
+  (ifu [b gs c]
     (let [a (.a b)
           restg (.restg b)]
       (-inc a (ifu (restg a) gs c))))
