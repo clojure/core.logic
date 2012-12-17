@@ -391,7 +391,7 @@
   (is (= (let [x  (lvar 'x)
                y  (lvar 'y)]
            (reify-lvar-name (to-s [[x 5] [y x]])))
-         '_.2)))
+         '_2)))
 
 ;; =============================================================================
 ;; walk*
@@ -421,7 +421,7 @@
   (is (=  (run* [q]
             (fresh [x y]
               (== [x y] q)))
-          '[[_.0 _.1]])))
+          '[[_0 _1]])))
 
 ;; =============================================================================
 ;; fail
@@ -476,21 +476,25 @@
 ;; conde
 
 (deftest test-basic-conde
-  (is (=  (run* [x]
-            (conde
-              [(== x 'olive) succeed]
-              [succeed succeed]
-              [(== x 'oil) succeed]))
-          '[olive _.0 oil])))
+  (is (=  (into #{}
+            (run* [x]
+              (conde
+                [(== x 'olive) succeed]
+                [succeed succeed]
+                [(== x 'oil) succeed])))
+          (into #{}
+            '[olive _0 oil]))))
 
 (deftest test-basic-conde-2
-  (is (= (run* [r]
-           (fresh [x y]
-             (conde
-               [(== 'split x) (== 'pea y)]
-               [(== 'navy x) (== 'bean y)])
-             (== (cons x (cons y ())) r)))
-         '[(split pea) (navy bean)])))
+  (is (= (into #{}
+           (run* [r]
+             (fresh [x y]
+               (conde
+                 [(== 'split x) (== 'pea y)]
+                 [(== 'navy x) (== 'bean y)])
+               (== (cons x (cons y ())) r))))
+         (into #{}
+           '[(split pea) (navy bean)]))))
 
 (defn teacupo [x]
   (conde
@@ -498,13 +502,14 @@
     [(== 'cup x) s#]))
 
 (deftest test-basic-conde-e-3
-  (is (= (run* [r]
-           (fresh [x y]
-             (conde
-               [(teacupo x) (== true y) s#]
-               [(== false x) (== true y)])
-             (== (cons x (cons y ())) r)))
-         '((false true) (tea true) (cup true)))))
+  (is (= (into #{}
+           (run* [r]
+             (fresh [x y]
+               (conde
+                 [(teacupo x) (== true y) s#]
+                 [(== false x) (== true y)])
+               (== (cons x (cons y ())) r))))
+         (into #{} '((false true) (tea true) (cup true))))))
 
 ;; =============================================================================
 ;; conso
@@ -562,12 +567,12 @@
 (deftest test-resto
   (is (= (run* [q]
            (resto q '(1 2)))
-         '[(_.0 1 2)])))
+         '[(_0 1 2)])))
 
 (deftest test-resto-2
   (is (= (run* [q]
            (resto q [1 2]))
-         '[(_.0 1 2)])))
+         '[(_0 1 2)])))
 
 (deftest test-resto-3
   (is (= (run* [q]
@@ -583,12 +588,14 @@
 ;; flatteno
 
 (deftest test-flatteno
-  (is (= (run* [x]
-           (flatteno '[[a b] c] x))
-         '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
-           (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
-           (a b () (c)) (a b c) (a b c ()) (a b () c)
-           (a b () c ())))))
+  (is (= (into #{}
+           (run* [x]
+             (flatteno '[[a b] c] x)))
+         (into #{}
+           '(([[a b] c]) ([a b] (c)) ([a b] c) ([a b] c ())
+             (a (b) (c)) (a (b) c) (a (b) c ()) (a b (c))
+             (a b () (c)) (a b c) (a b c ()) (a b () c)
+             (a b () c ()))))))
 
 ;; =============================================================================
 ;; membero
@@ -602,13 +609,15 @@
          '([[foo bar]]))))
 
 (deftest membero-2
-  (is (= (run* [q]
-           (all
-            (== q [(lvar) (lvar)])
-            (membero ['foo (lvar)] q)
-            (membero [(lvar) 'bar] q)))
-         '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
-             [[_.0 bar] [foo _.1]] [_.0 [foo bar]]))))
+  (is (= (into #{}
+           (run* [q]
+             (all
+              (== q [(lvar) (lvar)])
+              (membero ['foo (lvar)] q)
+              (membero [(lvar) 'bar] q))))
+         (into #{}
+           '([[foo bar] _0] [[foo _0] [_1 bar]]
+               [[_0 bar] [foo _1]] [_0 [foo bar]])))))
 
 ;; -----------------------------------------------------------------------------
 ;; rembero
@@ -641,13 +650,15 @@
          '([0 0]))))
 
 (deftest test-conde-4-clauses
-  (is (= (run* [q]
-           (fresh [x y]
-             (digit-4 x)
-             (digit-4 y)
-             (== q [x y])))
-         '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
-             [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (digit-4 x)
+               (digit-4 y)
+               (== q [x y]))))
+         (into #{}
+           '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
+               [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3])))))
 
 ;; -----------------------------------------------------------------------------
 ;; anyo
@@ -679,14 +690,14 @@
            (conde
              [f1]
              [(== false false)]))
-         '(_.0))))
+         '(_0))))
 
 (deftest test-divergence-2
   (is (= (run 1 [q]
            (conde
              [f1 (== false false)]
              [(== false false)]))
-         '(_.0))))
+         '(_0))))
 
 (def f2
   (fresh []
@@ -698,7 +709,7 @@
 
 (deftest test-divergence-3
   (is (= (run 5 [q] f2)
-         '(_.0 _.0 _.0 _.0 _.0))))
+         '(_0 _0 _0 _0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; conda (soft-cut)
@@ -769,18 +780,21 @@
  )
 
 (deftest test-condu-2
-  (is (= (run* [r]
-           (conde
-             [(teacupo r) s#]
-             [(== false r) s#]))
-         '(false tea cup))))
+  (is (= (into #{}
+           (run* [r]
+             (conde
+               [(teacupo r) s#]
+               [(== false r) s#])))
+         (into #{}
+           '(false tea cup)))))
 
 (deftest test-condu-3
-  (is (= (run* [r]
-           (conda
-             [(teacupo r) s#]
-             [(== false r) s#]))
-         '(tea cup))))
+  (is (= (into #{}
+           (run* [r]
+             (conda
+               [(teacupo r) s#]
+               [(== false r) s#])))
+         (into #{} '(tea cup)))))
 
 ;; -----------------------------------------------------------------------------
 ;; disequality
@@ -790,14 +804,14 @@
            (fresh [x]
              (!= x 1)
              (== q x)))
-         '((_.0 :- (!= _.0 1))))))
+         '((_0 :- (!= _0 1))))))
 
 (deftest test-disequality-2
   (is (= (run* [q]
            (fresh [x]
              (== q x)
              (!= x 1)))
-         '((_.0 :- (!= _.0 1))))))
+         '((_0 :- (!= _0 1))))))
 
 (deftest test-disequality-3
   (is (= (run* [q]
@@ -911,7 +925,7 @@
              (== q [x y])
              (!= x 1)
              (!= y 2)))
-         '(([_.0 _.1] :- (!= _.1 2) (!= _.0 1))))))
+         '(([_0 _1] :- (!= _1 2) (!= _0 1))))))
 
 ;; -----------------------------------------------------------------------------
 ;; tabled
@@ -930,8 +944,8 @@
          (patho z y))])))
 
 (deftest test-tabled-1
-  (is (= (run* [q] (patho :a q))
-         '(:b :a :d))))
+  (is (= (into #{} (run* [q] (patho :a q)))
+         (into #{} '(:b :a :d)))))
 
 (defne arco-2 [x y]
   ([1 2])
@@ -989,11 +1003,12 @@
 (retraction likes 'Bob 'Mary)
 
 (deftest test-rel-retract
-  (is (= (run* [q]
-           (fresh [x y]
-             (likes x y)
-             (== q [x y])))
-         '([John Martha] [Ricky Lucy]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (likes x y)
+               (== q [x y]))))
+         (into #{} '([John Martha] [Ricky Lucy])))))
 
 (defrel rel1 ^:index a)
 (fact rel1 [1 2])
@@ -1071,7 +1086,7 @@
 
 (deftest test-unifier-4
   (is (= (unifier '(?x . ?y) '(1 . ?z))
-         (lcons 1 '_.0))))
+         (lcons 1 '_0))))
 
 (deftest test-unifier-5
   (is (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1116,7 +1131,7 @@
 
 (deftest test-binding-map-4
   (is (= (binding-map '(?x . ?y) '(1 . ?z))
-         '{?z _.0, ?x 1, ?y _.0})))
+         '{?z _0, ?x 1, ?y _0})))
 
 (deftest test-binding-map-5
   (is (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1199,7 +1214,7 @@
 
 (deftest test-matche-with-expr
   (is (= (run* [q] (natural-number one))
-         '(_.0 _.0))))
+         '(_0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures
@@ -1229,7 +1244,7 @@
       '((^:haz-meta-daytuhs (form form form)))))
 
 (deftest test-42-multiple-run-parameters
-  (is (= '[[3 _.0 [3 _.0]]]
+  (is (= '[[3 _0 [3 _0]]]
          (run* [x y z]
            (== z [x y])
            (== [x] [3])))))
@@ -1256,6 +1271,20 @@
   (is (= (run* [q]
            (== {:a 1} (partial-map {:a q})))
          '(1))))
+
+(deftest test-75-map-sum-maps-lcons
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x]
+               (infd x (interval 1 3))
+               (== q {:foo x}))))
+         (into #{} '({:foo 1} {:foo 2} {:foo 3}))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x (interval 1 3))
+               (== q (lcons x y)))))
+         (into #{} [(lcons 1 '_0) (lcons 2 '_0) (lcons 3 '_0)]))))
 
 ;; =============================================================================
 ;; cKanren
@@ -1901,28 +1930,31 @@
     (is (= (root-var s y) x))))
 
 (deftest test-ckanren-1
-  (is (= (run* [q]
-           (fresh [x]
-             (infd x (interval 1 3))
-             (== q x)))
-         '(1 2 3))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x]
+               (infd x (interval 1 3))
+               (== q x))))
+         (into #{} '(1 2 3)))))
 
 (deftest test-ckanren-2
-  (is (= (run* [q]
-           (fresh [x y z]
-             (infd x z (interval 1 5))
-             (infd y (interval 3 5))
-             (+fd x y z)
-             (== q [x y z])))
-         '([1 3 4] [2 3 5] [1 4 5]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y z]
+               (infd x z (interval 1 5))
+               (infd y (interval 3 5))
+               (+fd x y z)
+               (== q [x y z]))))
+         (into #{} '([1 3 4] [2 3 5] [1 4 5])))))
 
 (deftest test-ckanren-3
-  (is (= (run* [q]
-           (fresh [x y]
-             (infd x y (interval 1 3))
-             (=fd x y)
-             (== q [x y])))
-         '([1 1] [2 2] [3 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x y (interval 1 3))
+               (=fd x y)
+               (== q [x y]))))
+         (into #{} '([1 1] [2 2] [3 3])))))
 
 (deftest test-ckanren-4
   (is (true?
@@ -1934,13 +1966,14 @@
              (== q [x y])))))))
 
 (deftest test-ckanren-5
-  (is (= (run* [q]
-           (fresh [x y]
-             (infd x y (interval 1 3))
-             (== x 2)
-             (!=fd x y)
-             (== q [x y])))
-         '([2 1] [2 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x y (interval 1 3))
+               (== x 2)
+               (!=fd x y)
+               (== q [x y]))))
+         (into #{} '([2 1] [2 3])))))
 
 (deftest test-ckanren-6
   (is (= (run* [q]
@@ -1958,20 +1991,22 @@
          '())))
 
 (deftest test-ckanren-8
-  (is (= (run* [q]
-           (fresh [x y]
-             (infd x y (interval 1 3))
-             (<=fd x y)
-             (== q [x y])))
-         '([1 1] [1 2] [2 2] [1 3] [3 3] [2 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x y (interval 1 3))
+               (<=fd x y)
+               (== q [x y]))))
+         (into #{} '([1 1] [1 2] [2 2] [1 3] [3 3] [2 3])))))
 
 (deftest test-ckanren-9
-  (is (= (run* [q]
-           (fresh [x y]
-             (infd x y (interval 1 3))
-             (<fd x y)
-             (== q [x y])))
-         '([1 2] [2 3] [1 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y]
+               (infd x y (interval 1 3))
+               (<fd x y)
+               (== q [x y]))))
+         (into #{} '([1 2] [2 3] [1 3])))))
 
 (defn subgoal [x]
   (fresh [y]
@@ -2001,56 +2036,62 @@
     (is (= (id (:proc c)) 1))))
 
 (deftest test-distinctfd
-  (is (= (run* [q]
-           (fresh [x y z]
-             (infd x y z (interval 1 3))
-             (distinctfd [x y z])
-             (== q [x y z])))
-         '([1 2 3] [1 3 2] [2 1 3] [2 3 1] [3 1 2] [3 2 1]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y z]
+               (infd x y z (interval 1 3))
+               (distinctfd [x y z])
+               (== q [x y z]))))
+         (into #{} '([1 2 3] [1 3 2] [2 1 3] [2 3 1] [3 1 2] [3 2 1])))))
 
 (deftest test-=fd-1
-  (is (= (run* [q]
-           (fresh [a b]
-             (infd a b (interval 1 3))
-             (=fd a b)
-             (== q [a b])))
-         '([1 1] [2 2] [3 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [a b]
+               (infd a b (interval 1 3))
+               (=fd a b)
+               (== q [a b]))))
+         (into #{} '([1 1] [2 2] [3 3])))))
 
 (deftest test-!=fd-1
-  (is (= (run* [q]
-           (fresh [a b]
-             (infd a b (interval 1 3))
-             (!=fd a b)
-             (== q [a b])))
-         '([1 2] [1 3] [2 1] [2 3] [3 1] [3 2]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [a b]
+               (infd a b (interval 1 3))
+               (!=fd a b)
+               (== q [a b]))))
+         (into #{} '([1 2] [1 3] [2 1] [2 3] [3 1] [3 2])))))
 
 (deftest test-<fd-1
-  (is (= (run* [q]
-           (fresh [a b c]
-             (infd a b c (interval 1 3))
-             (<fd a b) (<fd b c)
-             (== q [a b c])))
-         '([1 2 3]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [a b c]
+               (infd a b c (interval 1 3))
+               (<fd a b) (<fd b c)
+               (== q [a b c]))))
+         (into #{} '([1 2 3])))))
 
 (deftest test-<fd-2
-  (is (= (run* [q]
-           (fresh [x y z]
-             (infd x y z (interval 1 10))
-             (+fd x y z)
-             (<fd x y)
-             (== z 10)
-             (== q [x y z])))
-         '([1 9 10] [2 8 10] [3 7 10] [4 6 10]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y z]
+               (infd x y z (interval 1 10))
+               (+fd x y z)
+               (<fd x y)
+               (== z 10)
+               (== q [x y z]))))
+         (into #{} '([1 9 10] [2 8 10] [3 7 10] [4 6 10])))))
 
 (deftest test->fd-1
-  (is (= (run* [q]
-           (fresh [x y z]
-             (infd x y z (interval 1 10))
-             (+fd x y z)
-             (>fd x y)
-             (== z 10)
-             (== q [x y z])))
-         '([6 4 10] [7 3 10] [8 2 10] [9 1 10]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x y z]
+               (infd x y z (interval 1 10))
+               (+fd x y z)
+               (>fd x y)
+               (== z 10)
+               (== q [x y z]))))
+         (into #{} '([6 4 10] [7 3 10] [8 2 10] [9 1 10])))))
 
 (deftest test-<=fd-1
   (is (= (run* [q]
@@ -2071,20 +2112,22 @@
          '(2))))
 
 (deftest test-*fd-1
-  (is (= (run* [q]
-           (fresh [n m]
-             (infd n m (interval 1 10))
-             (*fd n 2 m)
-             (== q [n m])))
-         '([1 2] [2 4] [3 6] [4 8] [5 10]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [n m]
+               (infd n m (interval 1 10))
+               (*fd n 2 m)
+               (== q [n m]))))
+         (into #{} '([1 2] [2 4] [3 6] [4 8] [5 10])))))
 
 (deftest test-*fd-2
-  (is (= (run* [q]
-           (fresh [n m]
-             (infd n m (interval 1 10))
-             (*fd n m 10)
-             (== q [n m])))
-         '([1 10] [2 5] [5 2] [10 1]))))
+  (is (= (into #{}
+           (run* [q]
+             (fresh [n m]
+               (infd n m (interval 1 10))
+               (*fd n m 10)
+               (== q [n m]))))
+         (into #{} '([1 10] [2 5] [5 2] [10 1])))))
 
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
@@ -2327,7 +2370,7 @@
 (deftest test-predc-1 []
   (is (= (run* [q]
            (predc q number? `number?))
-         '((_.0 :- clojure.core/number?))))
+         '((_0 :- clojure.core/number?))))
   (is (= (run* [q]
            (predc q number? `number?)
            (== q 1))
@@ -2346,13 +2389,151 @@
          ())))
 
 ;; =============================================================================
-;; extensible unifier
+;; Real cKanren programs
 
-(deftest test-extensible-unifier-1
-  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '(1))
-         '(1)))
-  (is (= (unifier '(^{::l/ann ::l/numeric} ?x) '("foo"))
-         nil)))
+(defn not-adjacento [x y]
+  (fresh [f]
+    (infd f (interval 1 5))
+    (conde
+      [(+fd x f y) (<fd 1 f)]
+      [(+fd y f x) (<fd 1 f)])))
+
+(defn dinesmanfd []
+  (run* [q]
+    (fresh [baker cooper fletcher miller smith]
+      (== q [baker cooper fletcher miller smith])
+      (distinctfd [baker cooper fletcher miller smith])
+      (infd baker cooper fletcher miller smith (interval 1 5))
+      (!=fd baker 5) (!=fd cooper 1)
+      (!=fd fletcher 5) (!=fd fletcher 1)
+      (<fd cooper miller) 
+      (not-adjacento smith fletcher)
+      (not-adjacento fletcher cooper))))
+
+(deftest test-dinesmandfd []
+  (is (= (dinesmanfd) '([3 2 4 5 1]))))
+
+(defne subchecko [w sl r o n]
+  ([_ () _ _ _]
+     (fresh [hr]
+       (infd hr (interval 1 n))
+       (matche [r o]
+         ([[hr . _] [w . r]] (+fd hr 1 w))
+         ([() [w . r]]))))
+  ([_ [hsl . rsl] _ _ _]
+     (fresh [w-hsl w+hsl o0 o1 nw]
+       (infd hsl w-hsl w+hsl (interval 1 n))
+       (+fd hsl w-hsl w) (+fd hsl w w+hsl)
+       (subchecko w-hsl rsl r  o0 n)
+       (subchecko w     rsl o0 o1 n)
+       (subchecko w+hsl rsl o1 o  n))))
+
+(defne checko [ws sl r n]
+  ([() _ [a . _] a])
+  ([[w . wr] _ _ _]
+     (fresh [nsl nr]
+       (subchecko w sl r nr n)
+       (conso w sl nsl)
+       (checko wr nsl nr n))))
+
+(defn matches [n]
+  (run 1 [q]
+    (fresh [a b c d s1 s2]
+      (infd a b c d s1 s2 (interval 1 n)) 
+      (distinctfd [a b c d])
+      (== a 1)
+      (<=fd a b) (<=fd b c) (<=fd c d)
+      (eqfd (= (+ a b c d) n))
+      (checko [a b c d] () () n)
+      (== q [a b c d]))))
+
+(deftest test-matches
+  (is (= (matches 40) '([1 3 9 27]))))
+
+(defn get-square [rows x y]
+  (for [x (range x (+ x 3))
+        y (range y (+ y 3))]
+    (get-in rows [x y])))
+
+(defn init [vars hints]
+  (if (seq vars)
+    (let [hint (first hints)]
+      (all
+       (if-not (zero? hint)
+         (== (first vars) hint)
+         succeed)
+       (init (next vars) (next hints))))
+    succeed))
+
+(defn ->rows [xs]
+  (->> xs (partition 9) (map vec) (into [])))
+
+(defn ->cols [rows]
+  (apply map vector rows))
+
+(defn ->squares [rows]
+  (for [x (range 0 9 3)
+        y (range 0 9 3)]
+    (get-square rows x y)))
+
+(defn sudokufd [hints]
+  (let [vars (repeatedly 81 lvar) 
+        rows (->rows vars)
+        cols (->cols rows)
+        sqs  (->squares rows)]
+    (run-nc 1 [q]
+      (== q vars)
+      (distribute q ::l/ff)
+      (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
+      (init vars hints)
+      (everyg distinctfd rows)
+      (everyg distinctfd cols)
+      (everyg distinctfd sqs))))
+
+(defn verify [vars]
+  (let [rows (->rows vars)
+        cols (->cols rows)
+        sqs  (->squares rows)
+        verify-group (fn [group]
+                       (every? #(= (->> % (into #{}) count) 9)
+                          group))]
+    (and (verify-group rows)
+         (verify-group cols)
+         (verify-group sqs))))
+
+(def easy0
+    [0 0 3  0 2 0  6 0 0
+     9 0 0  3 0 5  0 0 1
+     0 0 1  8 0 6  4 0 0
+
+     0 0 8  1 0 2  9 0 0
+     7 0 0  0 0 0  0 0 8
+     0 0 6  7 0 8  2 0 0
+
+     0 0 2  6 0 9  5 0 0
+     8 0 0  2 0 3  0 0 9
+     0 0 5  0 1 0  3 0 0])
+
+(deftest test-sudokufd
+  (is (-> (sudokufd easy0) first verify)))
+
+;; FIXME: when asking for 1 answer, we get something sensible
+;; when asking for 2 answers, we get a different set of answers
+
+(defn safefd []
+  (run 1 [q]
+    (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
+      (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
+      (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
+      (distinctfd q)
+      (eqfd
+        (= (- c4 c6) c7)
+        (= (* c1 c2 c3) (+ c8 c9))
+        (< (+ c2 c3 c6) c8)
+        (< c9 c8))
+      (!=fd c1 1) (!=fd c2 2) (!=fd c3 3)
+      (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
+      (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change

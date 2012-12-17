@@ -385,7 +385,7 @@
        (cond
          (< max (:min that)) true
          (> min (:max that)) true
-         :else (empty? (set/intersection this (:s that))))
+         :else (empty? (set/intersection s (:s that))))
      :else (disjoint?* this that)))
   (intersection [this that]
     (cond
@@ -957,13 +957,13 @@
 
 (def unbound-names
   (let [r (range 100)]
-    (zipmap r (map (comp symbol str) (repeat "_.") r))))
+    (zipmap r (map (comp symbol str) (repeat "_") r))))
 
 (defn reify-lvar-name [s]
   (let [c (count s)]
     (if (< c 100)
       (unbound-names c)
-      (symbol (str "_." (count s))))))
+      (symbol (str "_" (count s))))))
 
 (defn -reify* [s v]
   (let [v (walk s v)]
@@ -1948,18 +1948,13 @@
 ;; =============================================================================
 ;; Easy Unification
 
-(defmulti prep-subst (fn [lvar-expr] (::ann (meta lvar-expr))))
-
-(defmethod prep-subst :default
-  [lvar-expr] (lvar lvar-expr false))
-
 (defn- lvarq-sym? [s]
   (and (symbol? s) (= (first (str s)) \?)))
 
 (defn- proc-lvar [lvar-expr store]
   (let [v (if-let [u (@store lvar-expr)]
             u
-            (prep-subst lvar-expr))]
+            (lvar lvar-expr false))]
     (swap! store conj [lvar-expr v])
     v))
 
@@ -3032,6 +3027,9 @@
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
 
+;; FIXME: Nada Amin's quine code blows up here, seems like somehow
+;; things might be getting out of sync?
+
 (defn enforceable-constrained [a]
   (let [cs (:cs a)
         km (:km cs)
@@ -3039,7 +3037,8 @@
         vs (keys km)]
     (filter (fn [v]
               (some (fn [cid]
-                      (enforceable? (get cm cid)))
+                      (when-let [c (get cm cid)]
+                        (enforceable? c)))
                     (get km v)))
             vs)))
 
@@ -3209,7 +3208,25 @@
                 s#))]
       (loop (seq v))))
 
-  ;; clojure.lang.IPersistentMap
+  clojure.lang.IPersistentMap
+  (-force-ans [v x]
+    (letfn [(loop [ys]
+              (if ys
+                (all
+                  (force-ans (val (first ys)))
+                  (loop (next ys)))
+                s#))]
+      (loop (seq v))))
+
+  clojure.core.logic.LCons
+  (-force-ans [v x]
+    (letfn [(loop [ys]
+              (all
+               (force-ans (lfirst ys))
+               (if (lcons? (lnext ys))
+                 (loop (lnext ys))
+                 s#)))]
+      (loop v)))
 
   FiniteDomain
   (-force-ans [v x]
@@ -4052,82 +4069,3 @@
   ([x p] (predc x p p))
   ([x p pform]
      (cgoal (-predc x p pform))))
-
-;; =============================================================================
-;; Constrained Vars
-
-(defprotocol IUnifyWithCVar
-  (unify-with-cvar [v u s]))
-
-(extend-protocol IUnifyWithCVar
-  nil
-  (unify-with-cvar [v u s]
-    (queue (unify v (:lvar u)) (:c u)))
-
-  Object
-  (unify-with-cvar [v u s]
-    (queue (unify s v (:lvar u)) (:c u)))
-
-  LVar
-  (unify-with-cvar [v u s]
-    (-> (unify s v (:lvar u))
-        (queue (:c u)))))
-
-(declare cvar)
-
-(deftype CVar [lvar c]
-  clojure.core.logic.IVar
-  Object
-  (toString [_]
-    (str lvar " :- " c))
-  (hashCode [_]
-    (.hashCode lvar))
-  (equals [this o]
-    (and (instance? clojure.core.logic.IVar o)
-      (identical? (:name lvar) (:name o))))
-  clojure.lang.IObj
-  (withMeta [this new-meta]
-    (cvar (with-meta lvar new-meta) c))
-  (meta [this]
-    (meta lvar))
-  clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [_ k not-found]
-    (case k
-      :lvar lvar
-      :name (:name lvar)
-      :c c
-      not-found))
-  IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-cvar v u s))
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (-> (unify s (:lvar v) u)
-        (queue (:c v))))
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (-> (unify s (:lvar v) u)
-        (queue (:c v))))
-  IUnifyWithCVar
-  (unify-with-cvar [v u s]
-    (-> (unify s (:lvar v) (:lvar u))
-        (queue (:c u))
-        (queue (:c v)))))
-
-(defn cvar [lvar c]
-  (CVar. lvar c))
-
-;; =============================================================================
-;; GhostVal
-
-;; for ghost val we need to be able to add goals?
-;; gvar? logic vars that queue goals - to implement or functionality
-
-;; =============================================================================
-;; Some default prep substitutions
-
-(defmethod prep-subst ::numeric
-  [x] (let [x (lvar x)]
-        (cvar x (-predc x number? `number?))))
