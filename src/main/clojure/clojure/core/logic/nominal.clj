@@ -294,7 +294,9 @@
     (c pi1 (c pi2 nil))))
 
 (defmethod print-method Suspension [x ^Writer writer]
-  (.write writer (str "<susp:(" (apply str (:pi x)) ")" (:lvar x) ">")))
+  (.write writer (str "<susp:(" (apply str (:pi x)) ")"))
+  (print-method (:lvar x) writer)
+  (.write writer ">"))
 
 ;; =============================================================================
 ;; tie: bind a nom in a term
@@ -380,4 +382,6 @@
   (instance? clojure.core.logic.nominal.Tie x))
 
 (defmethod print-method Tie [x ^Writer writer]
-  (.write writer (str "<tie:" (:binding-nom x) "." (:body x) ">")))
+  (.write writer (str "<tie:" (:binding-nom x) "."))
+  (print-method (:body x) writer)
+  (.write writer ">"))
