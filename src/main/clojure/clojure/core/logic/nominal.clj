@@ -214,7 +214,7 @@
           (walk-term (:lvar v) f)))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
-    (occurs-check-term (:lvar v) x s))
+    (occurs-check s x (:lvar v)))
   IApplyPi
   (apply-pi [t pi]
     (susp (compose-pis pi (:pi t)) (:lvar t)))
@@ -361,7 +361,7 @@
          (walk-term (:body v) f)))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
-    (occurs-check-term (:body v) x s))
+    (occurs-check s x (:body v)))
   IApplyPi
   (apply-pi [t pi]
     (tie (api (:binding-nom t) pi) (apply-pi (:body t) pi)))
