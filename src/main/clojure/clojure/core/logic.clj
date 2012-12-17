@@ -1713,10 +1713,10 @@
 (deftype Inc [a restg]
   IBind
   (bind [this g]
-    (Inc. a (^{:once true} fn [a2] (bind (restg a2) g))))
+    (Inc. a (fn [a2] (bind (restg a2) g))))
   IBindFair
   (bind-fair [this g]
-    (Inc. a (^{:once true} fn [a2] (bind (g a2) restg))))
+    (Inc. a (fn [a2] (bind (g a2) restg))))
   ISearchTree
   (value [this]
     nil)
@@ -1727,7 +1727,7 @@
 (defmacro -inc [a restg]
   (let [a2 (gensym "a")
         thunk-body (clojure.walk/prewalk-replace {a a2} restg)
-        thunk `(^{:once true} fn* [~a2] ~thunk-body)]
+        thunk `(fn [~a2] ~thunk-body)]
     `(Inc. ~a ~thunk)))
 
 (defn -dec [inc]
