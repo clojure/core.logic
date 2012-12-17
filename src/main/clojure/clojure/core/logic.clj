@@ -1844,7 +1844,7 @@
 (defn dfs-lazy [node]
   (let [rest-results (apply concat (map dfs-lazy (children node)))]
     (if-let [result (value node)]
-      (cons result (lazy-seq rest-results))
+      (cons result rest-results)
       rest-results)))
 
 (defn dfs-strict [node]
