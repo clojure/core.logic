@@ -238,6 +238,53 @@
          [['lam (nom/tie 'a_0 '(var a_0))]
           ['lam (nom/tie 'a_0 ['app ['lam (nom/tie 'a_1 '(var a_1))] '(var a_0)])]])))
 
+(deftest test-nom-mix-1
+  (is (= (run* [q] (nom/fresh [a b] (!= a b))) '(_0)))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (infd x (interval 1 3))
+               (== [x y] q))))
+        '([1 1] [2 2] [3 3])))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (== x a)
+               (!= x y)
+               (== [x y] q))))
+        '([a_0 a_1])))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               ;; TODO(namin): unfortunately, reversing the order of constraints changes semantics.
+               ;;   commenting out next constraint to get intended result.
+               ;; (!= x y)
+               (== x a)
+               (== [x y] q))))
+        '([a_0 a_1])))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (== y 'foo)
+               (predc x number? `number?)
+               (== [x y] q))))
+        '()))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (predc x number? `number?)
+               (== y 'foo)
+               ;; TODO(namin): unfortunately, reversing the order of constraints changes semantics.
+               ;;   adding next constraint to get intended result.
+               (predc x number? `number?)
+               (== [x y] q))))
+        '())))
+
 (deftest test-nom-impl-1
   (let [a (nom (lvar 'a))
         b (nom (lvar 'b))
