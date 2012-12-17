@@ -1861,7 +1861,7 @@
             (domfd x (interval 1 10))
             (domfd y (interval 1 5))) empty-s)
         s ((=fd x y) s)]
-    (is (= (bfs ((reifyg x) s))
+    (is (= (*search* ((reifyg x) s))
            '(1 2 3 4 5)))))
 
 (deftest test-process-interval-smaller-1
