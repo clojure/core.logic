@@ -127,6 +127,17 @@
              (nom/fresh [x y]
                (== (nom/tie x (nom/tie y by)) (nom/tie x (nom/tie x bx)))
                (== ['foo q] by))))
+        '(_0)))
+  (is (= (run* [q]
+           (nom/fresh [a b c d]
+             (fresh [x y w z]
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (== (nom/tie c (nom/tie d [d z])) (nom/tie d (nom/tie c [c w])))
+               (== y z)
+               ;; TODO(namin): repeating the constraint results in failure
+               ;;   commenting out the following constraint to get intended behavior
+               ; (== y z)
+               )))
         '(_0))))
 
 (deftest test-nom-5
