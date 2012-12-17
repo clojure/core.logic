@@ -105,17 +105,9 @@
 (defprotocol IMPlus
   (mplus [this that]))
 
-(defprotocol ITake
-  (-take* [a q] "Push sub-elems onto q, maybe return a result."))
-
-(defn take* [a]
-  (let [q (java.util.ArrayDeque. [a])]
-    (letfn [(taker []
-              (when-let [head (.pollFirst q)]
-                (if-let [result (-take* head q)]
-                  (cons result (lazy-seq (taker)))
-                  (recur))))]
-            (taker))))
+(defprotocol ISearchTree
+  (value [this] "The value at this node, or nil")
+  (children [this] "The children of this node"))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
@@ -1159,9 +1151,11 @@
   IBindFair
   (bind-fair [this g]
     (g this))
-  ITake
-  (-take* [this q]
-    this))
+  ISearchTree
+  (value [this]
+    this)
+  (children [this]
+    nil))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
@@ -1684,11 +1678,11 @@
   IBindFair
   (bind-fair [this g]
     (choice (bind-fair left g) (bind-fair right g)))
-  ITake
-  (-take* [this q]
-    (when left (.addLast ^java.util.ArrayDeque q left))
-    (when right (.addLast ^java.util.ArrayDeque q right))
-    nil))
+  ISearchTree
+  (value [this]
+    nil)
+  (children [this]
+    [left right]))
 
 (defn choice [left right]
   (cond
@@ -1713,11 +1707,6 @@
   nil
   (bind-fair [_ g] nil))
 
-(extend-protocol ITake
-  nil
-  (-take* [this q]
-    nil))
-
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
@@ -1728,11 +1717,12 @@
   IBindFair
   (bind-fair [this g]
     (Inc. a (^{:once true} fn [a2] (bind (g a2) restg))))
-  ITake
-  (-take* [this q]
+  ISearchTree
+  (value [this]
+    nil)
+  (children [this]
     (when-let [rest (restg a)]
-      (.addLast ^java.util.ArrayDeque q rest))
-    nil))
+      [rest])))
 
 (defmacro -inc [a restg]
   (let [a2 (gensym "a")
@@ -1744,10 +1734,14 @@
   ((.restg inc) (.a inc)))
 
 ;; -----------------------------------------------------------------------------
-;; TODO: This is a hack to make reifyg work. Figure out what reifyg is for and then fix this somehow
+;; Return
+
 (defrecord Return [value]
-  ITake
-  (-take* [_ q] value))
+  ISearchTree
+  (value [this]
+    value)
+  (children [this]
+    nil))
 
 ;; =============================================================================
 ;; Syntax
@@ -1824,14 +1818,25 @@
 
 (declare reifyg)
 
+(defn bfs [a]
+  (let [q (java.util.ArrayDeque. [a])]
+    (letfn [(taker []
+              (when-let [node (.pollFirst q)]
+                (doseq [child (children node)]
+                  (.addLast q child))
+                (if-let [result (value node)]
+                    (cons result (lazy-seq (taker)))
+                    (recur))))]
+      (taker))))
+
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (take* (-inc empty-s
-                            ((fresh [~x]
-                                    ~@goals
-                                    (reifyg ~x))
-                             empty-s)))]
+    `(let [xs# (bfs (-inc empty-s
+                          ((fresh [~x]
+                                  ~@goals
+                                  (reifyg ~x))
+                           empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1881,7 +1886,7 @@
   ([s g]
      (solutions s (lvar) g))
   ([s q g]
-     (take* ((all g (reifyg q)) s))))
+     (bfs ((all g (reifyg q)) s))))
 
 ;; =============================================================================
 ;; Debugging
@@ -1981,7 +1986,7 @@
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
                     empty-s (-> u meta ::when))]
        (first
-         (take*
+         (bfs
           (-inc init-s
                 ((fresh [q]
                         (== u w) (== q u)
@@ -2148,7 +2153,7 @@
 
   Choice
   (ifu [b gs c]
-    (reduce bind (first (take* b)) gs)))
+    (reduce bind (first (bfs b)) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2817,9 +2822,11 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind-fair ((:f ss)) g))))
                this)))))
-  ITake
-  (-take* [this q]
-    (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
+  ISearchTree
+  (value [this]
+    (waiting-stream-check this (fn [f] (bfs f)) (fn [] ())))
+  (children [this]
+    nil))
 
 (defn master
   "Take the argument to the goal and check that we don't
