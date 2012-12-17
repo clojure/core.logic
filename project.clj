@@ -21,7 +21,8 @@
                  [org.clojure/google-closure-library-third-party "0.0-2029"] 
                  [org.clojure/tools.macro "0.1.1"]
                  [org.clojure/tools.nrepl "0.2.0-RC1"]
-                 [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
+                 [com.datomic/datomic-free "0.8.3551" :scope "provided"]
+                 [org.codehaus.jsr166-mirror/jsr166y "1.7.0"]]
   :plugins [[lein-cljsbuild "0.2.9"]]
 
 

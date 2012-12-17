@@ -109,6 +109,7 @@
   (value [this] "The value at this node, or nil")
   (children [this] "The children of this node"))
 
+
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
 
@@ -2758,6 +2759,7 @@
          (let [ss (first w)
                f  (:f ss)
                w  (into a (next w))]
+           (prn 'here?)
            (if (empty? w)
              (f)
              (mplus (f) (fn [] w))))))
