@@ -105,54 +105,10 @@
 (defprotocol IMPlus
   (mplus [this that]))
 
-(defprotocol ITake
-  (-take* [a q] "Push sub-elems onto q, maybe return a result."))
+(defprotocol ISearchTree
+  (value [this] "The value at this node, or nil")
+  (children [this] "The children of this node"))
 
-(deftype PromiseSeq [p] ; p is a promise containing either nil or [val PromiseSeq]
-  clojure.lang.ISeq
-  (first [this]
-    (first @p))
-  (next [this]
-    (second @p))
-  (more [this]
-    (second @p))
-  (cons [this o]
-    (throw (Exception. "PromiseSeq does not implement cons")))
-  clojure.lang.Seqable
-  (seq [this]
-    this))
-
-(defn pseq []
-  (PromiseSeq. (promise)))
-
-(defn snoc! [pseq val]
-  (let [new-tail (PromiseSeq. (promise))]
-    (loop [pseq pseq]
-      (let [p (.p pseq)]
-        (when-not (deliver p [val new-tail])
-          (let [[_ existing-tail] @p]
-            (recur existing-tail)))))))
-
-;; TODO: leaves a nil in the tail of the seq
-(defn nil! [pseq]
-  (let [p (.p pseq)]
-    (when-not (deliver p nil)
-      (let [[_ tail] @p]
-        (recur tail)))))
-
-;; TODO: clean up threads when finished!
-(defn taker [q results]
-  (let [head (.take q)]
-    (if-let [result (-take* head q)]
-      (snoc! results result))
-    (recur q results)))
-
-(defn take* [a]
-  (let [q (java.util.concurrent.LinkedBlockingQueue. [a])
-        results (pseq)
-        workers (doall (for [i (range 4)]
-                         (future (taker q results))))]
-    results))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
@@ -1196,9 +1152,11 @@
   IBindFair
   (bind-fair [this g]
     (g this))
-  ITake
-  (-take* [this q]
-    this))
+  ISearchTree
+  (value [this]
+    this)
+  (children [this]
+    nil))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
@@ -1721,11 +1679,11 @@
   IBindFair
   (bind-fair [this g]
     (choice (bind-fair left g) (bind-fair right g)))
-  ITake
-  (-take* [this q]
-    (when left (.add ^java.util.concurrent.LinkedBlockingQueue q left))
-    (when right (.add ^java.util.concurrent.LinkedBlockingQueue q right))
-    nil))
+  ISearchTree
+  (value [this]
+    nil)
+  (children [this]
+    [left right]))
 
 (defn choice [left right]
   (cond
@@ -1750,41 +1708,41 @@
   nil
   (bind-fair [_ g] nil))
 
-(extend-protocol ITake
-  nil
-  (-take* [this q]
-    nil))
-
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
 (deftype Inc [a restg]
   IBind
   (bind [this g]
-    (Inc. a (^{:once true} fn [a2] (bind (restg a2) g))))
+    (Inc. a (fn [a2] (bind (restg a2) g))))
   IBindFair
   (bind-fair [this g]
-    (Inc. a (^{:once true} fn [a2] (bind (g a2) restg))))
-  ITake
-  (-take* [this q]
+    (Inc. a (fn [a2] (bind (g a2) restg))))
+  ISearchTree
+  (value [this]
+    nil)
+  (children [this]
     (when-let [rest (restg a)]
-      (.add ^java.util.concurrent.LinkedBlockingQueue q rest))
-    nil))
+      [rest])))
 
 (defmacro -inc [a restg]
   (let [a2 (gensym "a")
         thunk-body (clojure.walk/prewalk-replace {a a2} restg)
-        thunk `(^{:once true} fn* [~a2] ~thunk-body)]
+        thunk `(fn [~a2] ~thunk-body)]
     `(Inc. ~a ~thunk)))
 
 (defn -dec [inc]
   ((.restg inc) (.a inc)))
 
 ;; -----------------------------------------------------------------------------
-;; TODO: This is a hack to make reifyg work. Figure out what reifyg is for and then fix this somehow
+;; Return
+
 (defrecord Return [value]
-  ITake
-  (-take* [_ q] value))
+  ISearchTree
+  (value [this]
+    value)
+  (children [this]
+    nil))
 
 ;; =============================================================================
 ;; Syntax
@@ -1861,14 +1819,55 @@
 
 (declare reifyg)
 
+(defn bfs-lazy [a]
+  (let [q (java.util.ArrayDeque. [a])]
+    (letfn [(bfs-loop []
+              (when-let [node (.pollFirst q)]
+                (doseq [child (children node)]
+                  (.addLast q child))
+                (if-let [result (value node)]
+                    (cons result (lazy-seq (bfs-loop)))
+                    (recur))))]
+      (bfs-loop))))
+
+(defn bfs-strict [a]
+  (let [q (java.util.ArrayDeque. [a])
+        results (java.util.ArrayDeque.)]
+    (loop []
+      (when-let [node (.pollFirst q)]
+        (when-let [result (value node)]
+          (.addLast results result))
+        (doseq [child (children node)]
+          (.addLast q child))
+        (recur)))
+    (into nil results)))
+
+(defn dfs-lazy [node]
+  (let [rest-results (apply concat (map dfs-lazy (children node)))]
+    (if-let [result (value node)]
+      (cons result (lazy-seq rest-results))
+      rest-results)))
+
+(defn dfs-strict [node]
+  (let [results (java.util.ArrayDeque.)]
+    (letfn [(dfs-loop [node]
+              (when-let [result (value node)]
+                (.addLast results result))
+              (doseq [child (children node)]
+                (dfs-loop child)))]
+      (dfs-loop node)
+      (into nil results))))
+
+(def ^:dynamic *search* bfs-lazy)
+
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (take* (-inc empty-s
-                            ((fresh [~x]
-                                    ~@goals
-                                    (reifyg ~x))
-                             empty-s)))]
+    `(let [xs# (*search* (-inc empty-s
+                               ((fresh [~x]
+                                       ~@goals
+                                       (reifyg ~x))
+                                empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1918,7 +1917,7 @@
   ([s g]
      (solutions s (lvar) g))
   ([s q g]
-     (take* ((all g (reifyg q)) s))))
+     (*search* ((all g (reifyg q)) s))))
 
 ;; =============================================================================
 ;; Debugging
@@ -2018,7 +2017,7 @@
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
                     empty-s (-> u meta ::when))]
        (first
-         (take*
+         (*search*
           (-inc init-s
                 ((fresh [q]
                         (== u w) (== q u)
@@ -2185,7 +2184,8 @@
 
   Choice
   (ifu [b gs c]
-    (reduce bind (first (take* b)) gs)))
+    ;; TODO: using *search* reduces fairness - we lose any Incs underneath the choice
+    (reduce bind (first (*search* b)) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2855,9 +2855,11 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind-fair ((:f ss)) g))))
                this)))))
-  ITake
-  (-take* [this q]
-    (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
+  ISearchTree
+  (value [this]
+    (waiting-stream-check this (fn [f] (*search* f)) (fn [] ())))
+  (children [this]
+    nil))
 
 (defn master
   "Take the argument to the goal and check that we don't
