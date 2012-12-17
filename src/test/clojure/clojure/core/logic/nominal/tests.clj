@@ -143,7 +143,23 @@
                (== t ['lam (nom/tie a ['lam (nom/tie b ['var a])])])
                (== u ['lam (nom/tie c ['lam (nom/tie d ['var d])])])
                (== t u))))
-         '())))
+        '()))
+  (is (= (run* [q]
+           (fresh [x e1 e2]
+             (nom/fresh [a b]
+               (== x ['lam (nom/tie a e1)])
+               (== e1 ['var a])
+               (== x ['lam (nom/tie b e2)])
+               (== q x))))
+        [['lam (nom/tie 'a_0 ['var 'a_0])]]))
+  (is (= (run* [q]
+           (fresh [x e1 e2]
+             (nom/fresh [a b]
+               (== x ['lam (nom/tie a e1)])
+               (== e1 ['var a])
+               (== ['lam (nom/tie b e2)] x)
+               (== q x))))
+        [['lam (nom/tie 'a_0 ['var 'a_0])]])))
 
 (defn- substo [e new a out]
   (conde

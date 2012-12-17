@@ -201,7 +201,9 @@
              s s]
         (if (empty? a*) s
           (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
-      (ext s (:lvar u) (apply-pi v (invert-pi (:pi u))))))
+      (if (find (:s s) (:lvar u))
+        (ext s (:lvar v) (apply-pi u (invert-pi (:pi v))))
+        (ext s (:lvar u) (apply-pi v (invert-pi (:pi u)))))))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s pi)]
