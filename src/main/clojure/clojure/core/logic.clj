@@ -1818,25 +1818,55 @@
 
 (declare reifyg)
 
-(defn bfs [a]
+(defn bfs-lazy [a]
   (let [q (java.util.ArrayDeque. [a])]
-    (letfn [(taker []
+    (letfn [(bfs-loop []
               (when-let [node (.pollFirst q)]
                 (doseq [child (children node)]
                   (.addLast q child))
                 (if-let [result (value node)]
-                    (cons result (lazy-seq (taker)))
+                    (cons result (lazy-seq (bfs-loop)))
                     (recur))))]
-      (taker))))
+      (bfs-loop))))
+
+(defn bfs-strict [a]
+  (let [q (java.util.ArrayDeque. [a])
+        results (java.util.ArrayDeque.)]
+    (loop []
+      (when-let [node (.pollFirst q)]
+        (when-let [result (value node)]
+          (.addLast results result))
+        (doseq [child (children node)]
+          (.addLast q child))
+        (recur)))
+    (into nil results)))
+
+(defn dfs-lazy [node]
+  (let [rest-results (apply concat (map dfs-lazy (children node)))]
+    (if-let [result (value node)]
+      (cons result (lazy-seq rest-results))
+      rest-results)))
+
+(defn dfs-strict [node]
+  (let [results (java.util.ArrayDeque.)]
+    (letfn [(dfs-loop [node]
+              (when-let [result (value node)]
+                (.addLast results result))
+              (doseq [child (children node)]
+                (dfs-loop child)))]
+      (dfs-loop node)
+      (into nil results))))
+
+(def ^:dynamic *search* bfs-lazy)
 
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (bfs (-inc empty-s
-                          ((fresh [~x]
-                                  ~@goals
-                                  (reifyg ~x))
-                           empty-s)))]
+    `(let [xs# (*search* (-inc empty-s
+                               ((fresh [~x]
+                                       ~@goals
+                                       (reifyg ~x))
+                                empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1886,7 +1916,7 @@
   ([s g]
      (solutions s (lvar) g))
   ([s q g]
-     (bfs ((all g (reifyg q)) s))))
+     (*search* ((all g (reifyg q)) s))))
 
 ;; =============================================================================
 ;; Debugging
@@ -1986,7 +2016,7 @@
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
                     empty-s (-> u meta ::when))]
        (first
-         (bfs
+         (*search*
           (-inc init-s
                 ((fresh [q]
                         (== u w) (== q u)
@@ -2153,7 +2183,7 @@
 
   Choice
   (ifu [b gs c]
-    (reduce bind (first (bfs b)) gs)))
+    (reduce bind (first (*search* b)) gs)))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2824,7 +2854,7 @@
                this)))))
   ISearchTree
   (value [this]
-    (waiting-stream-check this (fn [f] (bfs f)) (fn [] ())))
+    (waiting-stream-check this (fn [f] (*search* f)) (fn [] ())))
   (children [this]
     nil))
 
