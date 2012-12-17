@@ -142,10 +142,7 @@
   (root-var [this x])
   (update [this x v])
   (queue [this c])
-  (update-var [this x v])
-  (add-attr [this x attr attrv])
-  (rem-attr [this x attr])
-  (get-attr [this x attro]))
+  (update-var [this x v]))
 
 ;; -----------------------------------------------------------------------------
 ;; Constraint Store
@@ -1118,29 +1115,6 @@
   (update-var [this x v]
     (assoc this :s (assoc (:s this) x v)))
 
-  (add-attr [this x attr attrv]
-    (let [x (root-var this x)
-          v (root-val this x)]
-      (if (subst-val? v)
-        (update-var this x (assoc-meta v attr attrv))
-        (let [v (if (lvar? v) ::unbound v)]
-          (ext-no-check this x (subst-val v {attr attrv}))))))
-
-  (rem-attr [this x attr]
-    (let [x (root-var this x)
-          v (root-val this x)]
-      (if (subst-val? v)
-        (let [new-meta (dissoc (meta v) attr)]
-          (if (and (zero? (count new-meta)) (not= (:v v) ::unbound))
-            (update-var this x (:v v))
-            (update-var this x (with-meta v new-meta))))
-        this)))
-
-  (get-attr [this x attr]
-    (let [v (root-val this x)]
-      (if (subst-val? v)
-        (-> v meta attr))))
-
   IBind
   (bind [this g]
     (g this))
@@ -1149,6 +1123,29 @@
     (choice this f))
   ITake
   (take* [this] this))
+
+(defn add-attr [s x attr attrv]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (update-var s x (assoc-meta v attr attrv))
+      (let [v (if (lvar? v) ::unbound v)]
+        (ext-no-check s x (subst-val v {attr attrv}))))))
+
+(defn rem-attr [s x attr]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (let [new-meta (dissoc (meta v) attr)]
+        (if (and (zero? (count new-meta)) (not= (:v v) ::unbound))
+          (update-var s x (:v v))
+          (update-var s x (with-meta v new-meta))))
+      s)))
+
+(defn get-attr [s x attr]
+  (let [v (root-val s x)]
+    (if (subst-val? v)
+      (-> v meta attr))))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
