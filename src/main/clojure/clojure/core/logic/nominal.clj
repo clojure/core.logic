@@ -229,7 +229,7 @@
 (extend-protocol IUnifyWithSuspension
   nil
   (unify-with-susp [v u s]
-    (unify v (:lvar u) s))
+    (unify s (:lvar u) v))
 
   Object
   (unify-with-susp [v u s]
