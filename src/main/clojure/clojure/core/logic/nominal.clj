@@ -199,9 +199,8 @@
     (if (= (:lvar v) (:lvar u))
       (loop [a* (disagreement-set (:pi v) (:pi u))
              s s]
-        (when s
-          (if (empty? a*) s
-              (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u))))))))
+        (if (empty? a*) s
+          (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
       (ext s (:lvar u) (apply-pi v (invert-pi (:pi u))))))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
