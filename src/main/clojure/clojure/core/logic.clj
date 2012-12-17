@@ -2183,6 +2183,7 @@
 
   Choice
   (ifu [b gs c]
+    ;; TODO: using *search* reduces fairness - we lose any Incs underneath the choice
     (reduce bind (first (*search* b)) gs)))
 
 (defn- cond-clauses [a]
