@@ -209,8 +209,11 @@
         s)))
   clojure.core.logic.IWalkTerm
   (walk-term [v f]
-    (susp (walk-term (:pi v) f)
-          (walk-term (:lvar v) f)))
+    (let [u (apply-pi (:lvar v) (:pi v))]
+      (if (= u v)
+        (susp (walk-term (:pi v) f)
+              (walk-term (:lvar v) f))
+        (walk-term u f))))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check s x (:lvar v)))
