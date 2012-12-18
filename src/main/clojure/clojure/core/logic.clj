@@ -21,6 +21,7 @@
 ;; Marker Interfaces
 
 (definterface IWalkable)
+(definterface IDeepWalk)
 (definterface IVar)
 
 ;; =============================================================================
@@ -919,7 +920,7 @@
 ;; =============================================================================
 ;; Substitutions
 
-(declare empty-s choice lvar lvar? pair lcons run-constraints*)
+(declare empty-s choice lvar lvar? pair lcons lcons? run-constraints*)
 
 (defn occurs-check [s u v]
   (let [v (walk s v)]
@@ -930,14 +931,15 @@
     nil
     (ext-no-check s u v)))
 
-(declare lcons?)
+(defn deep-walk? [x]
+  (or (coll? x) (instance? IDeepWalk x)))
 
 (defn walk* [s v]
   (let [v (walk s v)]
     (walk-term v
       (fn [x]
         (let [x (walk s x)]
-         (if (or (coll? x) (lcons? x))
+          (if (deep-walk? x)
            (walk* s x)
            x))))))
 
@@ -1291,6 +1293,7 @@
 ;; TODO: clean up the printing code
 
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
+  IDeepWalk
   clojure.lang.IObj
   (meta [this]
     meta)

@@ -151,6 +151,7 @@
 ;; Suspension
 
 (deftype Suspension [pi lvar]
+  clojure.core.logic.IDeepWalk
   Object
   (toString [_]
     (str "<susp:(" (apply str pi) ")" lvar ">"))
@@ -215,15 +216,12 @@
         s)))
   clojure.core.logic.IWalkTerm
   (walk-term [v f]
-    (let [u (apply-pi (:lvar v) (:pi v))]
-      (if (= u v)
-        (let [fv (walk-term (:lvar v) f)
-              fpi (walk-term (:pi v) f)]
-          (cond
-            (empty? fpi) fv
-            (nom? (first (first fpi))) (apply-pi fv fpi)
-            :else (susp fpi fv)))
-        (walk-term u f))))
+    (let [fv (walk-term (:lvar v) f)
+          fpi (walk-term (:pi v) f)]
+      (cond
+        (empty? fpi) fv
+        (nom? (first (first fpi))) (apply-pi fv fpi)
+        :else (susp fpi fv))))
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check s x (:lvar v)))

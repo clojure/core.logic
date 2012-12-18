@@ -136,7 +136,14 @@
                (== y z)
                (== y z)
                )))
-        '(_0))))
+        '(_0)))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie b [b [y]])) (nom/tie b (nom/tie a [a [x]])))
+               (conso 1 y q)
+               (== y [1]))))
+        '((1 1)))))
 
 (deftest test-nom-5
   (is (= (run* [q]
