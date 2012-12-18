@@ -61,9 +61,8 @@
 
 (defn dfs-par [node]
   (fjinvoke
-   #(let [rest-results (apply dfs-par* (children node))]
-      (if-let [result (value node)]
-        (cons result rest-results)
-        rest-results))))
+   #(if (leaf? node)
+      (list (value node))
+      (apply dfs-par* (children node)))))
 
 ;; TODO bfs-par
