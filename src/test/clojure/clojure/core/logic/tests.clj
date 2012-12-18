@@ -443,6 +443,24 @@
          '(true))))
 
 ;; =============================================================================
+;; Fair conjuctions
+
+(def endlesso
+  (fresh [] endlesso))
+
+(deftest test-all-fair
+  (is (= (run* [q]
+               (all-fair
+                endlesso
+                u#))
+         ()))
+  (is (= (run* [q]
+               (all-fair
+                u#
+                endlesso))
+         ())))
+
+;; =============================================================================
 ;; TRS
 
 (defn pairo [p]
