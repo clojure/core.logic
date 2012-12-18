@@ -2179,8 +2179,7 @@
 
   Choice
   (ifu [b gs c]
-    ;; TODO: using *search* reduces fairness - we lose any Incs underneath the choice
-    (reduce bind (first (*search* b)) gs)))
+    (ifu (.left b) gs (delay (ifu (.right b) gs c)))))
 
 (defn- cond-clauses [a]
   (fn [goals]
