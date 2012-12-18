@@ -210,6 +210,9 @@
 (defprotocol IUnwrapConstraint
   (unwrap [c]))
 
+(defprotocol IMergeDomains
+  (-merge-doms [a b]))
+
 ;; -----------------------------------------------------------------------------
 ;; Finite domain protocol types
 
@@ -403,7 +406,10 @@
      :else
        (difference* this that)))
   IIntervals
-  (intervals [_] (seq s)))
+  (intervals [_] (seq s))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 (defn finite-domain? [x]
   (instance? FiniteDomain x))
@@ -594,7 +600,10 @@
      :else (difference* this that)))
   IIntervals
   (intervals [this]
-    (list this)))
+    (list this))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 (defn interval? [x]
   (instance? IntervalFD x))
@@ -789,7 +798,10 @@
     (difference* this that))
   IIntervals
   (intervals [this]
-    (seq is)))
+    (seq is))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 ;; union where possible
 (defn normalize-intervals [is]
