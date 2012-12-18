@@ -1862,11 +1862,10 @@
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (*search* (-inc empty-s
-                               ((fresh [~x]
-                                       ~@goals
-                                       (reifyg ~x))
-                                empty-s)))]
+    `(let [xs# (*search* ((fresh [~x]
+                                 ~@goals
+                                 (reifyg ~x))
+                          empty-s))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -2012,13 +2011,12 @@
                     empty-s (-> u meta ::when))]
        (first
          (*search*
-          (-inc init-s
-                ((fresh [q]
-                        (== u w) (== q u)
-                        (fn [a]
-                          (fix-constraints a))
-                        (reifyg q))
-                 init-s))))))
+          ((fresh [q]
+                  (== u w) (== q u)
+                  (fn [a]
+                    (fix-constraints a))
+                  (reifyg q))
+           init-s)))))
   ([u w & ts]
      (if (some #{:when} ts)
        (let [terms (take-while #(not= % :when) ts)
