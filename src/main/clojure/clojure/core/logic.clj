@@ -2847,9 +2847,9 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind-fair ((:f ss)) g))))
                this)))))
-  ILeaf
-  (value [this]
-    (waiting-stream-check this (fn [f] (*search* f)) (fn [] ()))))
+  IBranch
+  (children [this]
+    (waiting-stream-check this (fn [a] a) (fn [] nil))))
 
 (defn master
   "Take the argument to the goal and check that we don't
