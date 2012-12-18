@@ -150,6 +150,8 @@
 ;; =============================================================================
 ;; Suspension
 
+(declare unify-with-susps- unify-two-susps-)
+
 (deftype Suspension [pi lvar]
   clojure.core.logic.IDeepWalk
   Object
@@ -175,40 +177,29 @@
       :name (:name lvar)
       not-found))
   clojure.core.logic.IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-susp v u s))
+  (unify-terms [v u s]
+    (unify-with-susps- u v s))
   clojure.core.logic.IUnifyWithNil
   (unify-with-nil [v u s]
-    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+    (unify-with-susps- v u s))
   clojure.core.logic.IUnifyWithObject
   (unify-with-object [v u s]
-    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+    (unify-with-susps- v u s))
   clojure.core.logic.IUnifyWithLVar
   (unify-with-lvar [v u s]
-    (unify-with-susp v (Suspension. nil u) s))
+    (unify-with-susps- v u s))
   clojure.core.logic.IUnifyWithLSeq
   (unify-with-lseq [v u s]
-    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+    (unify-with-susps- v u s))
   clojure.core.logic.IUnifyWithSequential
   (unify-with-seq [v u s]
-    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+    (unify-with-susps- v u s))
   clojure.core.logic.IUnifyWithMap
   (unify-with-map [v u s]
-    (unify s (:lvar v) (apply-pi u (invert-pi (:pi v)))))
+    (unify-with-susps- v u s))
   clojure.core.logic.nominal.IUnifyWithSuspension
-  (unify-with-susp [vo uo s]
-    (let [wv (walk* s vo)
-          wu (walk* s uo)]
-      (let [v (if (lvar? wv) (Suspension. nil wv) wv)
-            u (if (lvar? wu) (Suspension. nil wu) wu)]
-        (if (= (:lvar v) (:lvar u))
-          (loop [a* (disagreement-set (:pi v) (:pi u))
-                  s s]
-            (if (empty? a*) s
-              (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
-          (if (find (:s s) (:lvar uo))
-            (ext s (:lvar v) (apply-pi u (invert-pi (:pi v))))
-            (ext s (:lvar u) (apply-pi v (invert-pi (:pi u)))))))))
+  (unify-with-susp [v u s]
+    (unify-with-susps- v u s))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s pi)]
@@ -235,15 +226,39 @@
 (extend-protocol IUnifyWithSuspension
   nil
   (unify-with-susp [v u s]
-    (unify s (:lvar u) v))
+    (unify-with-susps- v u s))
 
   Object
   (unify-with-susp [v u s]
-    (unify s (apply-pi v (invert-pi (:pi u))) (:lvar u)))
+    (unify-with-susps- v u s))
 
   clojure.core.logic.LVar
   (unify-with-susp [v u s]
-    (unify-with-susp (Suspension. nil v) u s)))
+    (unify-with-susps- v u s)))
+
+(defn unify-with-susps- [v u s]
+  (let [v (walk* s v)
+        u (walk* s u)]
+    (cond
+      (and (susp? v) (susp? u))
+      (unify-two-susps- v u s)
+      (and (susp? v) (lvar? u))
+      (unify-two-susps- v (Suspension. nil u) s)
+      (and (lvar? v) (susp? u))
+      (unify-two-susps- (Suspension. nil v) u s)
+      (susp? v)
+      (unify s (:lvar v) (apply-pi u (invert-pi (:pi v))))
+      (susp? u)
+      (unify s (:lvar u) (apply-pi v (invert-pi (:pi u))))
+      :else (unify s v u))))
+
+(defn unify-two-susps- [v u s]
+  (if (= (:lvar v) (:lvar u))
+    (loop [a* (disagreement-set (:pi v) (:pi u))
+           s s]
+      (if (empty? a*) s
+        (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
+    (ext s (:lvar u) (apply-pi v (invert-pi (:pi u))))))
 
 (defn susp [pi lvar]
   (if (empty? pi) lvar (Suspension. pi lvar)))
@@ -324,7 +339,7 @@
 
   clojure.core.logic.nominal.Suspension
   (unify-with-tie [v u s]
-    (unify-with-susp u v s)))
+    (unify-with-susps- u v s)))
 
 (deftype Tie [binding-nom body]
   Object
