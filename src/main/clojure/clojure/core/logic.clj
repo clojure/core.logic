@@ -105,9 +105,17 @@
 (defprotocol IMPlus
   (mplus [this that]))
 
-(defprotocol ISearchTree
-  (value [this] "The value at this node, or nil")
+(defprotocol ILeaf
+  (value [this] "The value at this leaf"))
+
+(defprotocol IBranch
   (children [this] "The children of this node"))
+
+(defn leaf? [thing]
+  (satisfies? ILeaf thing))
+
+(defn branch? [thing]
+  (satisfies? IBranch thing))
 
 
 ;; -----------------------------------------------------------------------------
@@ -1152,11 +1160,9 @@
   IBindFair
   (bind-fair [this g]
     (g this))
-  ISearchTree
+  ILeaf
   (value [this]
-    this)
-  (children [this]
-    nil))
+    this))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
@@ -1679,9 +1685,7 @@
   IBindFair
   (bind-fair [this g]
     (choice (bind-fair left g) (bind-fair right g)))
-  ISearchTree
-  (value [this]
-    nil)
+  IBranch
   (children [this]
     [left right]))
 
@@ -1718,9 +1722,7 @@
   IBindFair
   (bind-fair [this g]
     (Inc. a (fn [a2] (bind (g a2) restg))))
-  ISearchTree
-  (value [this]
-    nil)
+  IBranch
   (children [this]
     (when-let [rest (restg a)]
       [rest])))
@@ -1738,11 +1740,9 @@
 ;; Return
 
 (defrecord Return [value]
-  ISearchTree
+  ILeaf
   (value [this]
-    value)
-  (children [this]
-    nil))
+    value))
 
 ;; =============================================================================
 ;; Syntax
@@ -1823,11 +1823,11 @@
   (let [q (java.util.ArrayDeque. [a])]
     (letfn [(bfs-loop []
               (when-let [node (.pollFirst q)]
-                (doseq [child (children node)]
-                  (.addLast q child))
-                (if-let [result (value node)]
-                    (cons result (lazy-seq (bfs-loop)))
-                    (recur))))]
+                (if (leaf? node)
+                  (cons (value node) (lazy-seq (bfs-loop)))
+                  (do (doseq [child (children node)]
+                        (.addLast q child))
+                      (recur)))))]
       (bfs-loop))))
 
 (defn bfs-strict [a]
@@ -1835,26 +1835,25 @@
         results (java.util.ArrayDeque.)]
     (loop []
       (when-let [node (.pollFirst q)]
-        (when-let [result (value node)]
-          (.addLast results result))
-        (doseq [child (children node)]
-          (.addLast q child))
+        (if (leaf? node)
+          (.addLast results (value node))
+          (doseq [child (children node)]
+            (.addLast q child)))
         (recur)))
     (into nil results)))
 
 (defn dfs-lazy [node]
-  (let [rest-results (apply concat (map dfs-lazy (children node)))]
-    (if-let [result (value node)]
-      (cons result rest-results)
-      rest-results)))
+  (if (leaf? node)
+    (list (value node))
+    (apply concat (map dfs-lazy (children node)))))
 
 (defn dfs-strict [node]
   (let [results (java.util.ArrayDeque.)]
     (letfn [(dfs-loop [node]
-              (when-let [result (value node)]
-                (.addLast results result))
-              (doseq [child (children node)]
-                (dfs-loop child)))]
+              (if (leaf? node)
+                (.addLast results (value node))
+                (doseq [child (children node)]
+                  (dfs-loop child))))]
       (dfs-loop node)
       (into nil results))))
 
@@ -2849,11 +2848,9 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind-fair ((:f ss)) g))))
                this)))))
-  ISearchTree
+  ILeaf
   (value [this]
-    (waiting-stream-check this (fn [f] (*search* f)) (fn [] ())))
-  (children [this]
-    nil))
+    (waiting-stream-check this (fn [f] (*search* f)) (fn [] ()))))
 
 (defn master
   "Take the argument to the goal and check that we don't
