@@ -1862,10 +1862,11 @@
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (*search* ((fresh [~x]
-                                 ~@goals
-                                 (reifyg ~x))
-                          empty-s))]
+    `(let [xs# (lazy-seq
+                (*search* ((fresh [~x]
+                                  ~@goals
+                                  (reifyg ~x))
+                           empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
