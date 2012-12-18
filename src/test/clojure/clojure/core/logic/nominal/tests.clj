@@ -13,7 +13,7 @@
   (is (= (run* [q] (nom/fresh [a] (== q a))) '(a_0)))
   (is (= (run* [q] (nom/fresh [a] (== a q))) '(a_0)))
   (is (= (run* [q] (nom/fresh [a b] (== q [a b]))) '([a_0 a_1])))
-  (is (= (run* [q] (nom/fresh [a b] (conde [(== q a)] [ (== q b)]))) '(a_0 a_0)))
+  (is (= (run* [q] (nom/fresh [a b] (conde [(== q a)] [(== q b)]))) '(a_0 a_0)))
   (is (= (run* [q] (nom/fresh [a b] (== a b))) '()))
   (is (= (run* [q] (nom/fresh [a] (== a 1))) '()))
   (is (= (run* [q] (nom/fresh [a] (== 1 a))) '()))
@@ -105,13 +105,13 @@
              (fresh [x y]
                (conde
                  [(== (nom/tie a (nom/tie b [x b]))
-                  (nom/tie b (nom/tie a [a x])))]
+                      (nom/tie b (nom/tie a [a x])))]
                  [(== (nom/tie a (nom/tie b [y b]))
-                  (nom/tie b (nom/tie a [a x])))]
+                      (nom/tie b (nom/tie a [a x])))]
                  [(== (nom/tie a (nom/tie b [b y]))
-                  (nom/tie b (nom/tie a [a x])))]
+                      (nom/tie b (nom/tie a [a x])))]
                  [(== (nom/tie a (nom/tie b [b y]))
-                  (nom/tie a (nom/tie a [a x])))])
+                      (nom/tie a (nom/tie a [a x])))])
                (== [x y] q))))
          ['(a_0 a_1)
           ['_0 (susp '((a_1 a_2)) '_0)]
