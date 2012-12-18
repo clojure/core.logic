@@ -112,11 +112,7 @@
   (children [this] "The children of this node"))
 
 (defn leaf? [thing]
-  (satisfies? ILeaf thing))
-
-(defn branch? [thing]
-  (satisfies? IBranch thing))
-
+  (instance? clojure.core.logic.ILeaf thing))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
