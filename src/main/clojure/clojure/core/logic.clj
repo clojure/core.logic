@@ -8,6 +8,8 @@
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
+(def fk (Exception.))
+
 ;; =============================================================================
 ;; Utilities
 
@@ -3947,18 +3949,16 @@
 ;; =============================================================================
 ;; defc
 
-(def backtrack (Exception.))
-
 (defn ground-term? [x s]
   (letfn [(-ground-term? [x s]
             (let [x (walk s x)]
               (if (lvar? x)
-                (throw backtrack)
+                (throw fk)
                 (walk-term x
                   (fn [x]
                     (let [x (walk s x)]
                       (cond
-                        (lvar? x) (throw backtrack)
+                        (lvar? x) (throw fk)
                         (coll? x) (-ground-term? x s)
                         :else x)))))))]
     (try
