@@ -2935,12 +2935,10 @@
 (defn run-constraints [xcs]
   (fn [a]
     (let [cq (:cq a)
-          a  (reduce (fn [a c]
-                       (queue a c))
+           a  (reduce (fn [a c]
+                        (queue a c))
                (assoc a :cq (or cq [])) xcs)]
-     (if cq
-       a
-       (fix-constraints a)))))
+      (fix-constraints a))))
 
 (defn run-constraints* [xs cs ws]
   (if (or (zero? (count cs))

@@ -307,9 +307,6 @@
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
                (predc x number? `number?)
                (== y 'foo)
-               ;; TODO(namin): unfortunately, reversing the order of constraints changes semantics.
-               ;;   adding next constraint to get intended result.
-               (predc x number? `number?)
                (== [x y] q))))
         '())))
 
