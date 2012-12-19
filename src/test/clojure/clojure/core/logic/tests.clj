@@ -1681,7 +1681,7 @@
   (let [u (lvar 'u)
         w (lvar 'w)
         c (fdc (=fdc u w))]
-    (is (= (var-rands c)
+    (is (= (var-rands empty-s c)
            [u w]))
     (is (= (rator c)
            `=fd))
@@ -1693,7 +1693,7 @@
         v 1
         w (lvar 'w)
         c (+fdc u v w)]
-    (is (= (var-rands c)
+    (is (= (var-rands empty-s c)
            [u w]))
     (is (= (rator c)
            `+fd))
@@ -1705,7 +1705,7 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))]
-    (is (= (var-rands c)
+    (is (= (var-rands empty-s c)
            [u w]))
     (is (= (rator c)
            `+fd))
@@ -1717,8 +1717,8 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        cs (addc (make-cs) c)
-        sc (first (constraints-for cs u ::l/fd))]
+        cs (addc (make-cs) empty-s c)
+        sc (first (constraints-for cs empty-s u ::l/fd))]
     (is (= c sc))
     (is (= (id sc) 0))
     (is (= (count (:km cs)) 2))
@@ -1731,9 +1731,9 @@
         c0 (fdc (+fdc u v w))
         x (lvar 'x)
         c1 (fdc (+fdc w v x))
-        cs  (-> (make-cs )
-                (addc c0)
-                (addc c1))
+        cs  (-> (make-cs)
+                (addc empty-s c0)
+                (addc empty-s c1))
         sc0 (get (:cm cs) 0)
         sc1 (get (:cm cs) 1)]
     (is (= sc0 c0)) (is (= (id sc0) 0))
@@ -1757,7 +1757,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (constraints-for (:cs s) u ::fd))
+        c (first (constraints-for (:cs s) s u ::fd))
         s (-> s
             (ext-no-check u 1)
             (ext-no-check w 2))
@@ -2171,9 +2171,9 @@
         y (lvar 'y)
         z (lvar 'z)
         c (fdc (+fdc x y z))
-        cs (addc (make-cs) c)
+        cs (addc (make-cs) empty-s c)
         cp (get (:cm cs) 0)
-        cs (remc cs cp)]
+        cs (remc cs empty-s cp)]
     (is (= (:km cs) {}))
     (is (= (:cm cs) {}))))
 
@@ -2187,7 +2187,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
-        cs (addc (make-cs) c)]
+        cs (addc (make-cs) empty-s c)]
     (is (tree-constraint? ((:cm cs) 0)))
     (is (= (into #{} (keys (:km cs)))
            #{x y}))))
@@ -2255,7 +2255,7 @@
         y (lvar 'y)
         c (!=c (list (pair x 1)))
         sc (!=c (list (pair x 1) (pair y 2)))
-        cs (addc (make-cs) c)]
+        cs (addc (make-cs) empty-s c)]
     ))
 
 (deftest test-multi-constraints-1 []
@@ -2364,6 +2364,24 @@
         s  (unify empty-s x0 x1)]
     (is (= s empty-s))))
 
+(deftest test-logic-81-fd []
+  (is (= (run* [q]
+           (fresh [x y]
+             (== q x)
+             (distinctfd [q y])
+             (== y x)
+             (infd q x y (interval 1 3))))
+        ()))
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== q x)
+             (== y z)
+             (distinctfd [q y])
+             (distinctfd [q x])
+             (== z q)
+             (infd q x y z (interval 1 3))))
+        ())))
+
 ;; =============================================================================
 ;; predc
 
@@ -2386,7 +2404,19 @@
   (is (= (run* [q]
            (== q "foo")
            (predc q number? `number?))
-         ())))
+        ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (predc q number? `number?)
+             (== q x)
+             (== x "foo")))
+        ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (== q x)
+             (predc q number? `number?)
+             (== x "foo")))
+        ())))
 
 ;; =============================================================================
 ;; Real cKanren programs
