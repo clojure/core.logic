@@ -2366,6 +2366,24 @@
         s  (unify empty-s x0 x1)]
     (is (= s empty-s))))
 
+(deftest test-logic-81-fd []
+  (is (= (run* [q]
+           (fresh [x y]
+             (== q x)
+             (distinctfd [q y])
+             (== y x)
+             (infd q x y (interval 1 3))))
+        ()))
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== q x)
+             (== y z)
+             (distinctfd [q y])
+             (distinctfd [q x])
+             (== z q)
+             (infd q x y z (interval 1 3))))
+        ())))
+
 ;; =============================================================================
 ;; predc
 
@@ -2388,7 +2406,19 @@
   (is (= (run* [q]
            (== q "foo")
            (predc q number? `number?))
-         ())))
+        ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (predc q number? `number?)
+             (== q x)
+             (== x "foo")))
+        ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (== q x)
+             (predc q number? `number?)
+             (== x "foo")))
+        ())))
 
 ;; =============================================================================
 ;; Real cKanren programs

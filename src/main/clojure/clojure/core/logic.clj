@@ -2863,10 +2863,14 @@
       a)))
 
 (defn addcg [c]
-  (fn [a]
+  (fn [ap]
     (let [a (reduce (fn [a x]
-                      (ext-no-check a x (subst-val ::unbound)))
-              a (unbound-rands a c))]
+                       (let [[xp vp :as prev] (find (:s ap) x)
+                              a (ext-no-check a x (subst-val ::unbound))]
+                        (if (nil? prev)
+                          a
+                          (ext-no-check a vp xp))))
+              ap (unbound-rands ap c))]
       (assoc a :cs (addc (:cs a) c)))))
 
 (defn updatecg [c]
