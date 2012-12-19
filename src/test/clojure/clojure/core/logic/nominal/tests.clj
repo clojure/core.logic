@@ -267,12 +267,7 @@
            (nom/fresh [a b]
              (fresh [x y]
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
-               ;; TODO(namin): unfortunately, unifying with y instead of x generates a class cast exception:
-               ;;   clojure.core.logic.nominal.Suspension cannot be cast to java.lang.Number
-               ;;   at clojure.core.logic.IntervalFD.member_QMARK_ (logic.clj:525)
-               ;;   commenting out next constraint, and adding following to get intended result
-               ;; (infd y (interval 1 3))
-               (infd x (interval 1 3))
+               (infd y (interval 1 3))
                (== [x y] q))))
         '([1 1] [2 2] [3 3])))
   (is (= (run* [q]

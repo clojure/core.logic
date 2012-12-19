@@ -172,6 +172,7 @@
     (.valAt this k nil))
   (valAt [_ k not-found]
     (case k
+      :tovar lvar
       :lvar lvar
       :pi pi
       :name (:name lvar)
