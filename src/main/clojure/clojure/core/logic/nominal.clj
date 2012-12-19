@@ -406,6 +406,5 @@
   (instance? clojure.core.logic.nominal.Tie x))
 
 (defmethod print-method Tie [x ^Writer writer]
-  (.write writer (str "<tie:" (:binding-nom x) "."))
-  (print-method (:body x) writer)
-  (.write writer ">"))
+  (.write writer (str " [" (:binding-nom x) "] "))
+  (print-method (:body x) writer))
