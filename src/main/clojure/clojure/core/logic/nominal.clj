@@ -295,7 +295,7 @@
 
   clojure.lang.IPersistentCollection
   (apply-pi [t pi]
-    (lcons (apply-pi (first t) pi) (apply-pi (next t) pi))))
+    (cons (apply-pi (first t) pi) (apply-pi (next t) pi))))
 
 (defn compose-pis [pi1 pi2] (concat pi1 pi2))
 (defn invert-pi [pi] (reverse pi))
