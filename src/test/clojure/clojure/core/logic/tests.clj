@@ -2366,11 +2366,20 @@
 
 (deftest test-logic-81-fd []
   (is (= (run* [q]
-           (fresh [x y z]
+           (fresh [x y]
              (== q x)
              (distinctfd [q y])
              (== y x)
              (infd q x y (interval 1 3))))
+        ()))
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== q x)
+             (== y z)
+             (distinctfd [q y])
+             (distinctfd [q x])
+             (== z q)
+             (infd q x y z (interval 1 3))))
         ())))
 
 ;; =============================================================================
