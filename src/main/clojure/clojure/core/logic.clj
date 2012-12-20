@@ -151,11 +151,11 @@
 ;; Constraint Store
 
 (defprotocol IConstraintStore
-  (addc [this c])
-  (updatec [this c])
-  (remc [this c])
+  (addc [this a c])
+  (updatec [this a c])
+  (remc [this a c])
   (runc [this c state])
-  (constraints-for [this x ws])
+  (constraints-for [this a x ws])
   (migrate [this u v]))
 
 ;; -----------------------------------------------------------------------------
@@ -814,11 +814,15 @@
 (defmethod print-method MultiIntervalFD [x ^Writer writer]
   (.write writer (str "<intervals:" (apply pr-str (:is x)) ">")))
 
-(defn var-rands [c]
+(defn var-rands [a c]
   (->> (rands c)
-    flatten
+    (map #(root-var a %))
     (filter lvar?)
     (into [])))
+
+(defn unbound-rands [a c]
+  (->> (var-rands a c)
+    (filter #(lvar? (root-val a %)))))
 
 (declare add-var)
 
@@ -842,23 +846,23 @@
       :running running
       not-found))
   IConstraintStore
-  (addc [this c]
-    (let [vars (var-rands c)
+  (addc [this a c]
+    (let [vars (var-rands a c)
           c (with-id c cid)
           cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
       (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
-  (updatec [this c]
+  (updatec [this a c]
     (let [oc (cm (id c))
           nkm (if (instance? clojure.core.logic.IRelevantVar c)
                 (reduce (fn [km x]
                           (if-not (-relevant-var? c x)
                             (dissoc km x)
                             km))
-                        km (var-rands oc))
+                        km (var-rands a oc))
                 km)]
       (ConstraintStore. nkm (assoc cm (id c) c) cid running)))
-  (remc [this c]
-    (let [vs (var-rands c)
+  (remc [this a c]
+    (let [vs (var-rands a c)
           ocid (id c)
           nkm (reduce (fn [km v]
                         (let [vcs (disj (get km v) ocid)]
@@ -872,8 +876,8 @@
     (if state
       (ConstraintStore. km cm cid (conj running (id c)))
       (ConstraintStore. km cm cid (disj running (id c)))))
-  (constraints-for [this x ws]
-    (when-let [ids (get km x)]
+  (constraints-for [this a x ws]
+    (when-let [ids (get km (root-var a x))]
       (filter #((watched-stores %) ws) (map cm (remove running ids)))))
   (migrate [this u v]
     (let [ucs (km u)
@@ -1166,11 +1170,6 @@
   (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
         l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
     (make-s s l (make-cs))))
-
-(defn unbound-rands [a c]
-  (->> (rands c)
-    flatten
-    (filter #(lvar? (root-val a %)))))
 
 (defn annotate [k v]
   (fn [a]
@@ -2855,23 +2854,19 @@
       a)))
 
 (defn addcg [c]
-  (fn [ap]
+  (fn [a]
     (let [a (reduce (fn [a x]
-                       (let [[xp vp :as prev] (find (:s ap) x)
-                              a (ext-no-check a x (subst-val ::unbound))]
-                        (if (nil? prev)
-                          a
-                          (ext-no-check a vp xp))))
-              ap (unbound-rands ap c))]
-      (assoc a :cs (addc (:cs a) c)))))
+                      (ext-no-check a x (subst-val ::unbound)))
+              a (unbound-rands a c))]
+      (assoc a :cs (addc (:cs a) a c)))))
 
 (defn updatecg [c]
   (fn [a]
-    (assoc a :cs (updatec (:cs a) c))))
+    (assoc a :cs (updatec (:cs a) a c))))
 
 (defn remcg [c]
   (fn [a]
-    (assoc a :cs (remc (:cs a) c))))
+    (assoc a :cs (remc (:cs a) a c))))
 
 (defn runcg [c]
   (fn [a]
@@ -2926,20 +2921,21 @@
           a  (reduce (fn [a c]
                        (queue a c))
                (assoc a :cq (or cq [])) xcs)]
-     (if cq
-       a
-       (fix-constraints a)))))
+      (if cq
+        a
+        (fix-constraints a)))))
 
 (defn run-constraints* [xs cs ws]
   (if (or (zero? (count cs))
           (nil? (seq xs)))
     s#
-    (let [xcs (constraints-for cs (first xs) ws)]
-      (if (seq xcs)
-        (composeg
-         (run-constraints xcs)
-         (run-constraints* (next xs) cs ws))
-        (run-constraints* (next xs) cs ws)))))
+    (fn [a]
+      (let [xcs (constraints-for cs a (first xs) ws)]
+        (if (seq xcs)
+          (bind* a
+            (run-constraints xcs)
+            (run-constraints* (next xs) cs ws))
+          (bind a (run-constraints* (next xs) cs ws)))))))
 
 (declare get-dom)
 
@@ -3800,7 +3796,7 @@
                 pp (prefix oc)]
             (cond
              (prefix-subsumes? pp p) ((remcg c) a)
-             (prefix-subsumes? p pp) (recur (assoc a :cs (remc cs oc)) (next neqcs))
+             (prefix-subsumes? p pp) (recur (assoc a :cs (remc cs a oc)) (next neqcs))
              :else (recur a (next neqcs))))
           ((updatecg c) a))))))
 
