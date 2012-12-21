@@ -2211,25 +2211,48 @@
   (and (coll? p)
        (not (nil? (some '#{.} p)))))
 
-(defn- p->llist [p]
-  `(llist
-    ~@(map p->term
-           (remove #(contains? '#{.} %) p))))
+(defn- p->llist
+  ([p] (p->llist p false))
+  ([p quoted]
+     `(llist
+       ~@(map #(p->term % quoted)
+           (remove #(contains? '#{.} %) p)))))
 
-(defn- p->term [p]
-  (cond
-   (= p '_) `(lvar)
-   (lcons-p? p) (p->llist p)
-   (and (coll? p) (not= (first p) 'quote))
+(defn- p->term
+  "Convert a pattern p into a term suitable for unification."
+  ([p] (p->term p false))
+  ([p quoted]
      (cond
-      ;; support simple expressions
-      (list? p) p
-      ;; preserve original collection type
-      :else (let [ps (map p->term p)]
-              (cond
-               (instance? clojure.lang.MapEntry p) (into [] ps)
-               :else (into (empty p) ps))))
-   :else p))
+       (= p '_) `(lvar)
+       (lcons-p? p) (p->llist p quoted)
+       (coll? p)
+       (cond
+         ;; support simple expressions
+         (seq? p)
+         (let [[f s] p]
+           (cond
+             (= f 'quote)
+             (cond
+               (and (seq? s) (not quoted)) (p->term s true)
+               (symbol? s) p
+               :else (throw (Exception. "Invalid use of quote in pattern."))) 
+             (= f 'clojure.core/unquote)
+             (if quoted
+               s
+               (throw (Exception. "Invalid use of clojure.core/unquote in pattern.")))
+             :else
+             (let [ps (map #(p->term % quoted) p)]
+               (if quoted
+                 `(list ~@ps)
+                 ps))))
+         ;; preserve original collection type
+         :else
+         (let [ps (map #(p->term % quoted) p)]
+           (cond
+             (instance? clojure.lang.MapEntry p) (into [] ps)
+             :else (into (empty p) ps))))
+       (and quoted (symbol? p)) (list 'quote p)
+       :else p)))
 
 (defn- lvar-sym? [s]
   (and (symbol? s)
