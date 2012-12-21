@@ -1165,6 +1165,40 @@
          ())))
 
 ;; -----------------------------------------------------------------------------
+;; Pattern Matching
+
+(defne pm1 [x y]
+  ([:foo :bar]))
+
+(defne pm2 [x y]
+  ([_ x]))
+
+(defne pm3 [x y]
+  ([_ 'x]))
+
+(defne pm4 [x y]
+  ([[h . t] t]))
+
+(deftest test-pm []
+  (is (= (run* [q] (fresh [x y] (== q [x y]) (pm1 x y))) '([:foo :bar])))
+  (is (= (run* [q] (fresh [x y] (pm2 x y) (== x y))) '(_0)))
+  (is (= (run* [q] (pm4 '(1 2) q)) '((2)))))
+
+(defne form->ast1 [form ast]
+  (['(fn ~args . ~body) {:op :fn :args args :body body}]))
+
+(defne form->ast2 [form ast]
+  (['(fn [~f . ~rest] . ~body) {:op :fn :f f :rest rest :body body}]))
+
+(deftest test-code-match-1
+  (is (= (run* [q]
+           (form->ast1 '(fn [x y] (+ x y)) q))
+         '({:op :fn :args [x y] :body ((+ x y))})))
+  (is (= (run* [q]
+           (form->ast2 '(fn [x y] (+ x y)) q))
+         '({:op :fn :f x :rest (y) :body ((+ x y))}))))
+
+;; -----------------------------------------------------------------------------
 ;; Pattern matching functions preserve metadata
 
 (defne ^:tabled dummy 
@@ -1197,24 +1231,27 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching inline expression support
 
-(defn s [n] (llist n []))
+;; REMOVED - fn application no longer supported in patterns, list syntax is
+;; much more useful when used for matching Clojure source - David
 
-(def zero 0)
-(def one (s zero))
-(def two (s one))
-(def three (s two))
-(def four (s three))
-(def five (s four))
-(def six  (s five))
+;; (defn s [n] (llist n []))
 
-(defn natural-number [x]
-  (matche [x]
-    ([zero])
-    ([(s y)] (natural-number y))))
+;; (def zero 0)
+;; (def one (s zero))
+;; (def two (s one))
+;; (def three (s two))
+;; (def four (s three))
+;; (def five (s four))
+;; (def six  (s five))
 
-(deftest test-matche-with-expr
-  (is (= (run* [q] (natural-number one))
-         '(_0 _0))))
+;; (defn natural-number [x]
+;;   (matche [x]
+;;     ([zero])
+;;     ([(s y)] (natural-number y))))
+
+;; (deftest test-matche-with-expr
+;;   (is (= (run* [q] (natural-number one))
+;;          '(_0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures

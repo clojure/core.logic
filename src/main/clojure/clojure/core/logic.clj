@@ -2212,19 +2212,36 @@
        (not (nil? (some '#{.} p)))))
 
 (defn- p->llist
-  ([p] (p->llist p false))
-  ([p quoted]
+  "Take an lcons pattern and convert it into a llist constructor
+   expression."
+  ([p vars] (p->llist p vars false))
+  ([p vars quoted]
      `(llist
-       ~@(map #(p->term % quoted)
-           (remove #(contains? '#{.} %) p)))))
+       ~@(doall
+           (map #(p->term % vars quoted)
+                (remove #(contains? '#{.} %) p))))))
+
+(defn- lvar-sym? [s]
+  (and (symbol? s)
+       (not= s '.)
+       (not (contains? *locals* s))))
+
+(defn update-pvars! [x vars]
+  (if (lvar-sym? x)
+    (do
+      (swap! vars conj x)
+      x)
+    x))
 
 (defn- p->term
-  "Convert a pattern p into a term suitable for unification."
-  ([p] (p->term p false))
-  ([p quoted]
+  "Convert a pattern p into a term suitable for unification. Takes an atom
+   containing a set for returning any encountered vars which will be declared
+   fresh."
+  ([p vars] (p->term p vars false))
+  ([p vars quoted]
      (cond
        (= p '_) `(lvar)
-       (lcons-p? p) (p->llist p quoted)
+       (lcons-p? p) (p->llist p vars quoted)
        (coll? p)
        (cond
          ;; support simple expressions
@@ -2232,47 +2249,35 @@
          (let [[f s] p]
            (cond
              (= f 'quote)
-             (cond
-               (and (seq? s) (not quoted)) (p->term s true)
-               (symbol? s) p
-               :else (throw (Exception. "Invalid use of quote in pattern."))) 
+             (if (and (seq? s) (not quoted))
+               (p->term s vars true)
+               p) 
              (= f 'clojure.core/unquote)
              (if quoted
-               s
+               (update-pvars! s vars)
                (throw (Exception. "Invalid use of clojure.core/unquote in pattern.")))
              :else
-             (let [ps (map #(p->term % quoted) p)]
+             (let [ps (map #(p->term % vars quoted) p)]
                (if quoted
                  `(list ~@ps)
                  ps))))
          ;; preserve original collection type
          :else
-         (let [ps (map #(p->term % quoted) p)]
+         (let [ps (map #(p->term % vars quoted) p)]
            (cond
              (instance? clojure.lang.MapEntry p) (into [] ps)
              :else (into (empty p) ps))))
-       (and quoted (symbol? p)) (list 'quote p)
+       (symbol? p) (if quoted
+                     (list 'quote p)
+                     (update-pvars! p vars))
        :else p)))
-
-(defn- lvar-sym? [s]
-  (and (symbol? s)
-       (not= s '.)
-       (not (contains? *locals* s))))
-
-(defn- extract-vars
-  ([p]
-     (set (cond
-           (lvar-sym? p) [p]           
-           (coll? p) (let [p (if (seq? p) (rest p) p)]
-                       (filter lvar-sym? (flatten p)))
-           :else nil)))
-  ([p seen]
-     (set/difference (extract-vars p) (set seen))))
 
 (defn- fresh-expr? [cs]
   (= (first cs) `fresh))
 
 (defn- ex
+  "Takes a list of vars to declare fresh and a term t to be unified
+   with relation argument a."
   ([vs t a]
      `(fresh [~@vs]
         (== ~t ~a)))
@@ -2285,9 +2290,14 @@
           (== ~t ~a)
           ~@exprs))))
 
-(defn- ex* [[[p a :as pa] & par] exprs seen]
-  (let [t (p->term p)
-        vs (extract-vars p seen)
+(defn- ex*
+  "Takes a sequence of pattern/argument pairs, goal expressions and
+   a set of seen variables. Returns source code that represents the
+   equivalent miniKanren series of unifications."
+  [[[p a :as pa] & par] exprs seen]
+  (let [vars (atom #{})
+        t    (p->term p vars)
+        vs   (set/difference @vars seen)
         seen (reduce conj seen vs)]
     (cond
      (nil? pa) exprs
