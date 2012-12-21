@@ -8,6 +8,8 @@
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
+(def fk (Exception.))
+
 ;; =============================================================================
 ;; Utilities
 
@@ -16,6 +18,12 @@
 
 (defn dissoc-meta [x k]
   (with-meta x (dissoc (meta x) k)))
+
+(defn assoc-dom [x k v]
+  (assoc x :doms (assoc (:doms x) k v)))
+
+(defn dissoc-dom [x k]
+  (assoc x :doms (dissoc (:doms x) k)))
 
 ;; =============================================================================
 ;; Marker Interfaces
@@ -144,10 +152,7 @@
   (root-var [this x])
   (update [this x v])
   (queue [this c])
-  (update-var [this x v])
-  (add-attr [this x attr attrv])
-  (rem-attr [this x attr])
-  (get-attr [this x attro]))
+  (update-var [this x v]))
 
 ;; -----------------------------------------------------------------------------
 ;; Constraint Store
@@ -208,6 +213,9 @@
 
 (defprotocol IUnwrapConstraint
   (unwrap [c]))
+
+(defprotocol IMergeDomains
+  (-merge-doms [a b]))
 
 ;; -----------------------------------------------------------------------------
 ;; Finite domain protocol types
@@ -402,7 +410,10 @@
      :else
        (difference* this that)))
   IIntervals
-  (intervals [_] (seq s)))
+  (intervals [_] (seq s))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 (defn finite-domain? [x]
   (instance? FiniteDomain x))
@@ -593,7 +604,10 @@
      :else (difference* this that)))
   IIntervals
   (intervals [this]
-    (list this)))
+    (list this))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 (defn interval? [x]
   (instance? IntervalFD x))
@@ -788,7 +802,10 @@
     (difference* this that))
   IIntervals
   (intervals [this]
-    (seq is)))
+    (seq is))
+  IMergeDomains
+  (-merge-doms [this that]
+    (intersection this that)))
 
 ;; union where possible
 (defn normalize-intervals [is]
@@ -906,7 +923,7 @@
 ;; =============================================================================
 ;; SubstValue
 
-(defrecord SubstValue [v]
+(defrecord SubstValue [v doms]
   Object
   (toString [_]
     (str v)))
@@ -915,8 +932,9 @@
   (instance? SubstValue x))
 
 (defn subst-val
-  ([x] (SubstValue. x))
-  ([x _meta] (with-meta (SubstValue. x) _meta)))
+  ([x] (SubstValue. x nil))
+  ([x doms] (SubstValue. x doms))
+  ([x doms _meta] (with-meta (SubstValue. x doms) _meta)))
 
 (defmethod print-method SubstValue [x ^Writer writer]
   (.write writer (str (:v x))))
@@ -1129,29 +1147,6 @@
   (update-var [this x v]
     (assoc this :s (assoc (:s this) x v)))
 
-  (add-attr [this x attr attrv]
-    (let [x (root-var this x)
-          v (root-val this x)]
-      (if (subst-val? v)
-        (update-var this x (assoc-meta v attr attrv))
-        (let [v (if (lvar? v) ::unbound v)]
-          (ext-no-check this x (subst-val v {attr attrv}))))))
-
-  (rem-attr [this x attr]
-    (let [x (root-var this x)
-          v (root-val this x)]
-      (if (subst-val? v)
-        (let [new-meta (dissoc (meta v) attr)]
-          (if (and (zero? (count new-meta)) (not= (:v v) ::unbound))
-            (update-var this x (:v v))
-            (update-var this x (with-meta v new-meta))))
-        this)))
-
-  (get-attr [this x attr]
-    (let [v (root-val this x)]
-      (if (subst-val? v)
-        (-> v meta attr))))
-
   IBind
   (bind [this g]
     (g this))
@@ -1160,6 +1155,52 @@
     (choice this f))
   ITake
   (take* [this] this))
+
+(defn add-attr [s x attr attrv]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (update-var s x (assoc-meta v attr attrv))
+      (let [v (if (lvar? v) ::unbound v)]
+        (ext-no-check s x (with-meta (subst-val v) {attr attrv}))))))
+
+(defn rem-attr [s x attr]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (let [new-meta (dissoc (meta v) attr)]
+        (if (and (zero? (count new-meta)) (not= (:v v) ::unbound))
+          (update-var s x (:v v))
+          (update-var s x (with-meta v new-meta))))
+      s)))
+
+(defn get-attr [s x attr]
+  (let [v (root-val s x)]
+    (if (subst-val? v)
+      (-> v meta attr))))
+
+(defn add-dom [s x dom domv]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (update-var s x (assoc-dom v dom domv))
+      (let [v (if (lvar? v) ::unbound v)]
+        (ext-no-check s x (subst-val v {dom domv}))))))
+
+(defn rem-dom [s x dom]
+  (let [x (root-var s x)
+        v (root-val s x)]
+    (if (subst-val? v)
+      (let [new-doms (dissoc (:doms v) dom)]
+        (if (and (zero? (count new-doms)) (not= (:v v) ::unbound))
+          (update-var s x (:v v))
+          (update-var s x (assoc v :doms new-doms))))
+      s)))
+
+(defn get-dom [s x dom]
+  (let [v (root-val s x)]
+    (if (subst-val? v)
+      (-> v :doms dom))))
 
 (defn- make-s
   ([] (Substitutions. {} () (make-cs) nil #{} nil))
@@ -1486,7 +1527,9 @@
             nil)
           (unify s u v))
         (if (lvar? u)
-          (unify s u '())
+          (if-let [s (unify s u '())]
+            s
+            (unify s u nil))
           nil)))))
 
 ;; -----------------------------------------------------------------------------
@@ -2851,17 +2894,17 @@
 ;; http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf
 ;; http://github.com/calvis/cKanren
 
-(defn get-dom
+(defn get-dom-fd
   [a x]
   (if (lvar? x)
-    (get-attr a x ::fd)
+    (get-dom a x ::fd)
     x))
 
-(defn ext-dom
+(defn ext-dom-fd
   [a x dom]
   (let [x    (root-var a x)
-        domp (get-dom a x)
-        a    (add-attr a x ::fd dom)]
+        domp (get-dom-fd a x)
+        a    (add-dom a x ::fd dom)]
     (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::fd) a)
       a)))
@@ -2952,8 +2995,6 @@
             (run-constraints* (next xs) cs ws))
           (bind a (run-constraints* (next xs) cs ws)))))))
 
-(declare get-dom)
-
 ;; TODO: we've hard coded finite domains here
 
 (defn verify-all-bound [a constrained]
@@ -2961,8 +3002,8 @@
             (when constrained
               (let [x (first constrained)]
                 (if (and (lvar? (:tovar x))
-                         (and (lvar? (:tovar (walk a x)))
-                              (nil? (get-dom a (:tovar x)))))
+                         (and (lvar? (:tovar (walk a (:tovar x))))
+                              (nil? (get-dom-fd a x))))
                   (throw (Exception. (str "Constrained variable " x " without domain")))
                   (recur a (next constrained))))))]
     (verify-all-bound* a (seq constrained))))
@@ -3041,7 +3082,7 @@
   (let [get-var-dom (fn [a [v b]]
                       `(~b (let [v# (walk ~a ~v)]
                              (if (lvar? v#)
-                               (get-dom ~a v#)
+                               (get-dom-fd ~a v#)
                                v#))))]
    `(let [~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
@@ -3049,12 +3090,12 @@
 (defn resolve-storable-dom
   [a x dom]
   (if (singleton-dom? dom)
-    (update (rem-attr a x ::fd) x dom)
-    (ext-dom a x dom)))
+    (update (rem-dom a x ::fd) x dom)
+    (ext-dom-fd a x dom)))
 
 (defn update-var-dom
   [a x dom]
-  (let [domp (get-dom a x)]
+  (let [domp (get-dom-fd a x)]
     (if domp
       (let [i (intersection dom domp)]
         (when i
@@ -3080,7 +3121,7 @@
   (fn [a]
     ((composeg
       (process-dom x dom)
-      (if (nil? (get-dom a x))
+      (if (nil? (get-dom-fd a x))
         (domfdc x)
         identity)) a)))
 
@@ -3186,7 +3227,7 @@
   (fn [a]
     ((let [v (walk a x)]
        (if (lvar? v)
-         (-force-ans (get-dom a x) x)
+         (-force-ans (get-dom-fd a x) x)
          (if (sequential? v)
            (let [x (root-var a x)]
              (-force-ans (sort-by-strategy v x a) x))
@@ -3229,7 +3270,7 @@
       (letfn [(has-dom? [x]
                 (let [x (walk s x)]
                   (if (lvar? (:tovar x))
-                    (get-dom s (:tovar x))
+                    (get-dom-fd s x)
                     x)))]
         (every? identity (map has-dom? (rands proc))))))
   IWithConstraintId
@@ -3255,14 +3296,14 @@
   (reify
     clojure.lang.IFn
     (invoke [this s]
-      (when (member? (get-dom s x) (walk s x))
-        (rem-attr s x ::fd)))
+      (when (member? (get-dom-fd s x) (walk s x))
+        (rem-dom s x ::fd)))
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
     IRelevant
     (-relevant? [this s]
-      (not (nil? (get-dom s x))))
+      (not (nil? (get-dom-fd s x))))
     IRunnable
     (runnable? [this s]
       (not (lvar? (:tovar (walk s x)))))
@@ -3542,7 +3583,7 @@
              (loop [y* (seq y*) s s]
                (if y*
                  (let [y (first y*)
-                       v (or (get-dom s y) (walk s y))
+                       v (or (get-dom-fd s y) (walk s y))
                        s (if-not (lvar? v)
                            (cond
                              (= x v) nil
@@ -3926,18 +3967,16 @@
 ;; =============================================================================
 ;; defc
 
-(def backtrack (Exception.))
-
 (defn ground-term? [x s]
   (letfn [(-ground-term? [x s]
             (let [x (walk s x)]
               (if (lvar? (:tovar x))
-                (throw backtrack)
+                (throw fk)
                 (walk-term x
                   (fn [x]
                     (let [x (walk s x)]
                       (cond
-                        (lvar? (:tovar x)) (throw backtrack)
+                        (lvar? (:tovar x)) (throw fk)
                         (coll? x) (-ground-term? x s)
                         :else x)))))))]
     (try

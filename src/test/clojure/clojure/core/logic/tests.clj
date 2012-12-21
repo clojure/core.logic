@@ -1288,6 +1288,14 @@
                (== q (lcons x y)))))
          (into #{} [(lcons 1 '_0) (lcons 2 '_0) (lcons 3 '_0)]))))
 
+(deftest test-82-nil-lcons-tail
+  (is (= (run 1 [q]
+           (fresh [a b c]
+             (conso a b c)
+             (== b nil)
+             (== `(~a) c)))
+         '(_0))))
+
 ;; =============================================================================
 ;; cKanren
 
@@ -1664,20 +1672,20 @@
 (deftest test-process-dom-2
   (let [x (lvar 'x)
         s ((process-dom x (interval 1 10)) empty-s)]
-    (is (= (get-dom s x) (interval 1 10)))))
+    (is (= (get-dom-fd s x) (interval 1 10)))))
 
 (deftest test-domfd-1
   (let [x (lvar 'x)
         s ((domfd x (interval 1 10)) empty-s)]
-    (is (= (get-dom s x) (interval 1 10)))))
+    (is (= (get-dom-fd s x) (interval 1 10)))))
 
 (deftest test-infd-1
   (let [x (lvar 'x)
         y (lvar 'y)
         f ((infd x y (interval 1 10)) empty-s)
         s (f)]
-    (is (= (get-dom s x) (interval 1 10)))
-    (is (= (get-dom s y) (interval 1 10)))))
+    (is (= (get-dom-fd s x) (interval 1 10)))
+    (is (= (get-dom-fd s y) (interval 1 10)))))
 
 (deftest test-make-fdc-prim-1
   (let [u (lvar 'u)
@@ -1777,8 +1785,8 @@
         cs (:cs s)]
     (is (= 2 (count (:km (:cs s))))) ;; works
     (is (= 3 (count (:cm (:cs s)))))
-    (is (= (get-dom s x) (interval 5 6)))
-    (is (= (get-dom s y) (interval 5 6)))))
+    (is (= (get-dom-fd s x) (interval 5 6)))
+    (is (= (get-dom-fd s y) (interval 5 6)))))
 
 (deftest test-multi-interval-1
   (let [mi (multi-interval (interval 1 3) (interval 7 10))]
@@ -1900,7 +1908,7 @@
         s ((composeg
             (domfd x (interval 1 10))
             (domfd x (interval 2 10))) empty-s)]
-    (is (= (get-dom s x)
+    (is (= (get-dom-fd s x)
            (interval 2 10)))))
 
 (deftest test-boundary-interval-1
@@ -1917,7 +1925,7 @@
             (domfd x (interval 2 10))
             (domfd x (multi-interval (interval 1 4) (interval 6 10))))
            empty-s)]
-    (is (= (get-dom s x)
+    (is (= (get-dom-fd s x)
            (multi-interval (interval 2 4) (interval 6 10))))))
 
 ;; -----------------------------------------------------------------------------
