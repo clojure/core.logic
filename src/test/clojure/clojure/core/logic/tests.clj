@@ -1286,6 +1286,14 @@
                (== q (lcons x y)))))
          (into #{} [(lcons 1 '_0) (lcons 2 '_0) (lcons 3 '_0)]))))
 
+(deftest test-82-nil-lcons-tail
+  (is (= (run 1 [q]
+           (fresh [a b c]
+             (conso a b c)
+             (== b nil)
+             (== `(~a) c)))
+         '(_0))))
+
 ;; =============================================================================
 ;; cKanren
 
