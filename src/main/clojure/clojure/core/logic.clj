@@ -2221,11 +2221,14 @@
    (= p '_) `(lvar)
    (lcons-p? p) (p->llist p)
    (and (coll? p) (not= (first p) 'quote))
-   ;; preserve original collection type
-   (let [ps (map p->term p)]
      (cond
-       (instance? clojure.lang.MapEntry p) (into [] ps)
-       :else (into (empty p) ps)))
+      ;; support simple expressions
+      (list? p) p
+      ;; preserve original collection type
+      :else (let [ps (map p->term p)]
+              (cond
+               (instance? clojure.lang.MapEntry p) (into [] ps)
+               :else (into (empty p) ps))))
    :else p))
 
 (defn- lvar-sym? [s]

@@ -1197,27 +1197,24 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching inline expression support
 
-;; FEATURE REMOVED - it's far more useful to have list syntax support matching
-;; code than allowing simple expressions.
+(defn s [n] (llist n []))
 
-;; (defn s [n] (llist n []))
+(def zero 0)
+(def one (s zero))
+(def two (s one))
+(def three (s two))
+(def four (s three))
+(def five (s four))
+(def six  (s five))
 
-;; (def zero 0)
-;; (def one (s zero))
-;; (def two (s one))
-;; (def three (s two))
-;; (def four (s three))
-;; (def five (s four))
-;; (def six  (s five))
+(defn natural-number [x]
+  (matche [x]
+    ([zero])
+    ([(s y)] (natural-number y))))
 
-;; (defn natural-number [x]
-;;   (matche [x]
-;;     ([zero])
-;;     ([(s y)] (natural-number y))))
-
-;; (deftest test-matche-with-expr
-;;   (is (= (run* [q] (natural-number one))
-;;          '(_0 _0))))
+(deftest test-matche-with-expr
+  (is (= (run* [q] (natural-number one))
+         '(_0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures
