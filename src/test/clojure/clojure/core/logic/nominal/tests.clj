@@ -282,9 +282,7 @@
            (nom/fresh [a b]
              (fresh [x y]
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
-               ;; TODO(namin): unfortunately, reversing the order of constraints changes semantics.
-               ;;   commenting out next constraint to get intended result.
-               ;; (!= x y)
+               (!= x y)
                (== x a)
                (== [x y] q))))
         '([a_0 a_1])))
