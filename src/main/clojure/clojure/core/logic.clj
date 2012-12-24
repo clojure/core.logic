@@ -952,9 +952,7 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [vs (:vs s)
-          s  (if vs s (assoc s :vs #{}))
-          u  (walk s u)
+    (let [u  (walk s u)
           v  (walk s v)]
       ;; TODO: we can't use an identical? check here at the moment
       ;; because we add metadata on vars in walk - David
@@ -1696,7 +1694,7 @@
   "A goal that attempts to unify terms u and v."
   [u v]
   (fn [a]
-    (when-let [ap (unify a u v)]
+    (when-let [ap (unify (assoc a :vs #{}) u v)]
       (if (pos? (count (:cs a)))
         ((run-constraints* (:vs ap) (:cs ap) ::subst) (assoc ap :vs nil))
         ap))))
