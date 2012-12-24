@@ -132,7 +132,7 @@
 (defprotocol ISubstitutionsCLP
   (root-val [this x])
   (root-var [this x])
-  (update [this x v] [this x v ext?])
+  (ext-run-cs [this x v])
   (queue [this c])
   (update-var [this x v]))
 
@@ -145,7 +145,7 @@
   (remc [this a c])
   (runc [this c state])
   (constraints-for [this a x ws])
-  (migrate [this u v]))
+  (migrate [this x root]))
 
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
@@ -883,10 +883,10 @@
   (constraints-for [this a x ws]
     (when-let [ids (get km (root-var a x))]
       (filter #((watched-stores %) ws) (map cm (remove running ids)))))
-  (migrate [this u v]
-    (let [ucs (km u)
-          vcs (km v)
-          nkm (assoc (dissoc km u) v (into vcs ucs))]
+  (migrate [this x root]
+    (let [xcs    (km x)
+          rootcs (km root)
+          nkm    (assoc (dissoc km x) root (into rootcs xcs))]
       (ConstraintStore. nkm cm cid running)))
   clojure.lang.Counted
   (count [this]
@@ -1100,24 +1100,16 @@
             :else (recur vp (find s vp)))))
       v))
   
-  (update [this x v]
-    (update this x v false))
-  (update [this x v ext?]
-    (let [xv (walk this x)]
-      (if (lvar? xv)
-        (let [x  (root-var this x)
-              xs (if (lvar? v)
-                   [x (root-var this v)]
-                   [x])
-              s  (if ext?
-                   (if *occurs-check*
-                     (ext this x v)
-                     (ext-no-check this x v))
-                   this)]
-          (when s
-            ((run-constraints* xs cs ::subst) s)))
-        (when (= xv v)
-          this))))
+  (ext-run-cs [this x v]
+    (let [x  (root-var this x)
+          xs (if (lvar? v)
+               [x (root-var this v)]
+               [x])
+          s  (if *occurs-check*
+               (ext this x v)
+               (ext-no-check this x v))]
+      (when s
+        ((run-constraints* xs cs ::subst) s))))
 
   (queue [this c]
     (let [id (id c)]
@@ -1232,12 +1224,15 @@
   (unify-terms [u v s]
     (cond
       (lvar? v)
-      (if (-> u clojure.core/meta ::unbound)
-        (let [s (if (-> v clojure.core/meta ::unbound)
-                  (assoc s :cs (migrate (:cs s) v u))
-                  s)]
-          (ext-no-check s v u))
-        (ext-no-check s u v))
+      (let [repoint (cond
+                      (-> u clojure.core/meta ::unbound) [u v]
+                      (-> v clojure.core/meta ::unbound) [v u]
+                      :else nil)]
+       (if repoint
+         (let [[root other] repoint
+               s (assoc s :cs (migrate (:cs s) other root))]
+           (ext-no-check s other root))
+         (ext-no-check s u v)))
 
       (non-storable? v)
       (throw (Exception. (str v " is non-storable")))
@@ -1682,13 +1677,9 @@
 
 (def u# fail)
 
-(defn updateg
-  ([u v]
-     (fn [a]
-       (update a u v)))
-  ([u v ext]
-     (fn [a]
-       (update a u v ext))))
+(defn ext-run-csg [u v]
+  (fn [a]
+    (ext-run-cs a u v)))
 
 (defn ==
   "A goal that attempts to unify terms u and v."
@@ -2821,8 +2812,7 @@
 
 (defn ext-dom-fd
   [a x dom]
-  (let [x    (root-var a x)
-        domp (get-dom-fd a x)
+  (let [domp (get-dom-fd a x)
         a    (add-dom a x ::fd dom)]
     (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::fd) a)
@@ -3006,7 +2996,7 @@
 (defn resolve-storable-dom
   [a x dom]
   (if (singleton-dom? dom)
-    (update (rem-dom a x ::fd) x dom true)
+    (ext-run-cs (rem-dom a x ::fd) x dom)
     (ext-dom-fd a x dom)))
 
 (defn update-var-dom
@@ -3090,8 +3080,8 @@
 
   Object
   (-force-ans [v x]
-    (if (integer? v)
-      (updateg x v true)
+    (if (lvar? x)
+      (ext-run-csg x v)
       s#))
 
   clojure.lang.Sequential
@@ -3129,25 +3119,25 @@
 
   FiniteDomain
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n true))) (to-vals v)))
+    ((map-sum (fn [n] (ext-run-csg x n))) (to-vals v)))
 
   IntervalFD
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n true))) (to-vals v)))
+    ((map-sum (fn [n] (ext-run-csg x n))) (to-vals v)))
 
   MultiIntervalFD
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n true))) (to-vals v))))
+    ((map-sum (fn [n] (ext-run-csg x n))) (to-vals v))))
 
 (defn force-ans [x]
   (fn [a]
     ((let [v (walk a x)]
        (if (lvar? v)
-         (-force-ans (get-dom-fd a x) x)
-         (if (sequential? v)
-           (let [x (root-var a x)]
-             (-force-ans (sort-by-strategy v x a) x))
-           (-force-ans v x)))) a)))
+         (-force-ans (get-dom-fd a x) v)
+         (let [x (root-var a x)]
+           (if (sequential? v)
+             (-force-ans (sort-by-strategy v x a) x)
+             (-force-ans v x))))) a)))
 
 (deftype FDConstraint [proc _id _meta]
   clojure.lang.ILookup

@@ -1894,7 +1894,7 @@
         s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
-               ((map-sum (fn [v] (updateg x v true)))
+               ((map-sum (fn [v] (ext-run-csg x v)))
                 (to-vals (interval 1 10)))))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
@@ -2076,10 +2076,10 @@
 
 (deftest test-ckanren-10
   (is (= (run* [q]
-           (fresh [a]
-             (infd a (interval 1 10))
-             (subgoal a)
-             (== q a)))
+           (fresh [x]
+             (infd x (interval 1 10))
+             (subgoal x)
+             (== q x)))
          '(2))))
 
 (deftest test-list-sorted
@@ -2669,11 +2669,10 @@
            (ext-no-check y x))]
     (is (= (root-var s y) x))))
 
-(deftest test-update-1 []
+(deftest test-ext-run-cs-1 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
         s (add-attr s x ::l/fd (domain 1 2 3))
-        s (update s x 1 true)]
-    (is (= (:v (root-val s x)) 1))
-    (is (= (get-attr s x ::l/fd) (domain 1 2 3)))
+        s (ext-run-cs s x 1)]
+    (is (= (root-val s x) 1))
     (is (= (walk s x) 1))))
