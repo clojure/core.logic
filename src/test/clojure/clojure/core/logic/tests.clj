@@ -1287,18 +1287,16 @@
            (== [x] [3])))))
 
 (deftest test-49-partial-map-unification
-  (is (= '[#clojure.core.logic.PMap{:a 1}]
+  (is (= [1]
          (run* [q]
-           (fresh [pm x]
-             (== pm (partial-map {:a x}))
-             (== pm {:a 1 :b 2})
-             (== pm q)))))
-  (is (= '[#clojure.core.logic.PMap{:a 1}]
+           (fresh [x]
+             (== {:a 1 :b 2} (partial-map {:a x}))
+             (== q x)))))
+  (is (= [1]
          (run* [q]
-           (fresh [pm x]
-             (== (partial-map {:a x}) pm)
-             (== {:a 1 :b 2} pm)
-             (== q pm))))))
+           (fresh [x]
+             (== (partial-map {:a x}) {:a 1 :b 2})
+             (== q x))))))
 
 (deftest test-73-partial-map-unification
   (is (= (run* [q]
