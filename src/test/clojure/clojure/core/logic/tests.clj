@@ -1800,7 +1800,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (constraints-for (:cs s) s u ::fd))
+        c (first (constraints-for (:cs s) s u ::l/fd))
         s (-> s
             (ext-no-check u 1)
             (ext-no-check w 2))
@@ -1827,7 +1827,7 @@
     (is (= 10 (ub mi)))))
 
 (deftest test-run-constraints*
-  (is (= (run-constraints* [] [] ::subst) s#)))
+  (is (= (run-constraints* [] [] ::l/subst) s#)))
 
 (deftest test-drop-one-1
   (is (= (:s (drop-one (domain 1 2 3)))
@@ -2654,8 +2654,8 @@
 (deftest test-update-1 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
-        s (add-attr s x ::fd (domain 1 2 3))
+        s (add-attr s x ::l/fd (domain 1 2 3))
         s (update s x 1)]
     (is (= (:v (root-val s x)) 1))
-    (is (= (get-attr s x ::fd) (domain 1 2 3)))
+    (is (= (get-attr s x ::l/fd) (domain 1 2 3)))
     (is (= (walk s x) 1))))
