@@ -47,29 +47,13 @@
 (defprotocol IUnifyTerms
   (unify-terms [u v s]))
 
-(defprotocol IUnifyWithNil
-  (unify-with-nil [v u s]))
+(defprotocol IUnifyWithRecord
+  (unify-with-record [u v s]))
 
-(defprotocol IUnifyWithObject
-  (unify-with-object [v u s]))
+(definterface INonStorable)
 
-(defprotocol IUnifyWithLVar
-  (unify-with-lvar [v u s]))
-
-(defprotocol IUnifyWithLSeq
-  (unify-with-lseq [v u s]))
-
-(defprotocol IUnifyWithSequential
-  (unify-with-seq [v u s]))
-
-(defprotocol IUnifyWithMap
-  (unify-with-map [v u s]))
-
-;; WARNING: implement at your own peril. How to efficiently unify sets
-;; is an open research problem.
-
-(defprotocol IUnifyWithSet
-  (unify-with-set [v u s]))
+(defn non-storable? [x]
+  (instance? INonStorable x))
 
 ;; -----------------------------------------------------------------------------
 ;; Utility protocols
@@ -253,6 +237,9 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Tree Constraints
+
+(defprotocol IDisunifyTerms
+  (disunify-terms [u v s cs]))
 
 (defprotocol ITreeConstraint
   (tree-constraint? [this]))
@@ -970,11 +957,13 @@
     s
     (let [u (walk s u)
           v (walk s v)]
-      (if (lvar? u)
-        (if (and (lvar? v) (= u v))
-          s
-          (unify-terms u v s))
-        (unify-terms u v s)))))
+      ;; TODO: we can't use an identical? check here at the moment
+      ;; because we add metadata on vars in walk - David
+      (if (and (lvar? u) (= u v))
+        s
+        (if (and (not (lvar? u)) (lvar? v))
+          (unify-terms v u s)
+          (unify-terms u v s))))))
 
 (def unbound-names
   (let [r (range 100)]
@@ -1067,7 +1056,9 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (assoc-meta u ::root true)
+    (let [u (if-not (lvar? v)
+              (assoc-meta u ::root true)
+              u)
           l (if (and (subst-val? v)
                      (= (:v v) ::unbound))
               l
@@ -1250,32 +1241,24 @@
   (hashCode [_] hash)
   IUnifyTerms
   (unify-terms [u v s]
-    (unify-with-lvar v u s))
-  IUnifyWithNil
-  (unify-with-nil [v u s]
-    (ext-no-check s v u))
-  IUnifyWithObject
-  (unify-with-object [v u s]
-    (if (= u ::not-found)
-      nil
-      (ext s v u)))
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (if (-> u clojure.core/meta ::unbound)
-      (let [s (if (-> v clojure.core/meta ::unbound)
-                (assoc s :cs (migrate (:cs s) v u))
-                s)]
-        (ext-no-check s v u))
-      (ext-no-check s u v)))
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s]
-    (ext s v u))
-  IUnifyWithSequential
-  (unify-with-seq [v u s]
-    (ext s v u))
-  IUnifyWithMap
-  (unify-with-map [v u s]
-    (ext s v u))
+    (cond
+      (lvar? v)
+      (if (-> u clojure.core/meta ::unbound)
+        (let [s (if (-> v clojure.core/meta ::unbound)
+                  (assoc s :cs (migrate (:cs s) v u))
+                  s)]
+          (ext-no-check s v u))
+        (ext-no-check s u v))
+
+      (non-storable? v)
+      (throw (Exception. (str v " is non-storable")))
+
+      (not= v ::not-found)
+      (if (or (coll? v) (lcons? v))
+        (ext s u v)
+        (ext-no-check s u v))
+      
+      :else nil))
   IReifyTerm
   (reify-term [v s]
     (if *reify-vars*
@@ -1384,28 +1367,34 @@
       cache))
   IUnifyTerms
   (unify-terms [u v s]
-    (unify-with-lseq v u s))
-  IUnifyWithNil
-  (unify-with-nil [v u s] nil)
-  IUnifyWithObject
-  (unify-with-object [v u s] nil)
-  IUnifyWithLSeq
-  (unify-with-lseq [v u s]
-    (loop [u u v v s s]
-      (if (lvar? u)
-        (unify s u v)
-        (cond
-         (lvar? v) (unify s v u)
-         (and (lcons? u) (lcons? v))
-           (if-let [s (unify s (lfirst u) (lfirst v))]
-             (recur (lnext u) (lnext v) s)
-             nil)
-         :else (unify s u v)))))
-  IUnifyWithSequential
-  (unify-with-seq [v u s]
-    (unify-with-lseq u v s))
-  IUnifyWithMap
-  (unify-with-map [v u s] nil)
+    (cond
+      (sequential? v)
+      (loop [u u v v s s]
+        (if (seq v)
+          (if (lcons? u)
+            (if-let [s (unify s (lfirst u) (first v))]
+              (recur (lnext u) (next v) s)
+              nil)
+            (unify s u v))
+          (if (lvar? u)
+            (if-let [s (unify s u '())]
+              s
+              (unify s u nil))
+            nil)))
+      
+      (lcons? v)
+      (loop [u u v v s s]
+        (if (lvar? u)
+          (unify s u v)
+          (cond
+            (lvar? v) (unify s v u)
+            (and (lcons? u) (lcons? v))
+            (if-let [s (unify s (lfirst u) (lfirst v))]
+              (recur (lnext u) (lnext v) s)
+              nil)
+            :else (unify s u v))))
+      
+      :else nil))
   IReifyTerm
   (reify-term [v s]
     (loop [v v s s]
@@ -1459,125 +1448,48 @@
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
-    (unify-with-nil v u s))
+    (if (nil? v) s nil))
 
   Object
   (unify-terms [u v s]
-    (unify-with-object v u s))
+    (if (= u v)
+      s
+      nil))
 
   clojure.lang.Sequential
   (unify-terms [u v s]
-    (unify-with-seq v u s))
+    (cond
+      (sequential? v)
+      (loop [u u v v s s]
+        (if (seq u)
+          (if (seq v)
+            (if-let [s (unify s (first u) (first v))]
+              (recur (next u) (next v) s)
+              nil)
+            nil)
+          (if (seq v) nil s)))
+      
+      (lcons? v) (unify-terms v u s)
+      :else nil))
 
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
-    (unify-with-map v u s)))
+    (cond
+      (instance? clojure.core.logic.IUnifyWithRecord v)
+      (unify-with-record v u s)
 
-;; -----------------------------------------------------------------------------
-;; Unify nil with X
-
-(extend-protocol IUnifyWithNil
-  nil
-  (unify-with-nil [v u s] s)
-
-  Object
-  (unify-with-nil [v u s] nil))
-
-;; -----------------------------------------------------------------------------
-;; Unify Object with X
-
-(extend-protocol IUnifyWithObject
-  nil
-  (unify-with-object [v u s] nil)
-
-  Object
-  (unify-with-object [v u s]
-    (if (= u v) s nil)))
-
-;; -----------------------------------------------------------------------------
-;; Unify LVar with X
-
-(extend-protocol IUnifyWithLVar
-  nil
-  (unify-with-lvar [v u s] (ext-no-check s u v))
-
-  Object
-  (unify-with-lvar [v u s]
-    (if (= v ::not-found)
-      nil
-      (ext s u v))))
-
-;; -----------------------------------------------------------------------------
-;; Unify LCons with X
-
-(extend-protocol IUnifyWithLSeq
-  nil
-  (unify-with-lseq [v u s] nil)
-
-  Object
-  (unify-with-lseq [v u s] nil)
-
-  clojure.lang.Sequential
-  (unify-with-lseq [v u s]
-    (loop [u u v v s s]
-      (if (seq v)
-        (if (lcons? u)
-          (if-let [s (unify s (lfirst u) (first v))]
-            (recur (lnext u) (next v) s)
-            nil)
-          (unify s u v))
-        (if (lvar? u)
-          (if-let [s (unify s u '())]
-            s
-            (unify s u nil))
-          nil)))))
-
-;; -----------------------------------------------------------------------------
-;; Unify Sequential with X
-
-(extend-protocol IUnifyWithSequential
-  nil
-  (unify-with-seq [v u s] nil)
-
-  Object
-  (unify-with-seq [v u s] nil)
-
-  clojure.lang.Sequential
-  (unify-with-seq [v u s]
-    (loop [u u v v s s]
-      (if (seq u)
-        (if (seq v)
-          (if-let [s (unify s (first u) (first v))]
-            (recur (next u) (next v) s)
-            nil)
-          nil)
-        (if (seq v) nil s)))))
-
-;; -----------------------------------------------------------------------------
-;; Unify IPersistentMap with X
-
-(defn unify-with-map* [v u s]
-  (when (= (count u) (count v))
-    (loop [ks (keys u) s s]
-      (if (seq ks)
-        (let [kf (first ks)
-              vf (get v kf ::not-found)]
-          (when-not (= vf ::not-found)
-            (if-let [s (unify s (get u kf) vf)]
-              (recur (next ks) s)
-              nil)))
-        s))))
-
-(extend-protocol IUnifyWithMap
-  nil
-  (unify-with-map [v u s] nil)
-
-  Object
-  (unify-with-map [v u s] nil)
-
-  clojure.lang.IPersistentMap
-  (unify-with-map [v u s]
-    (unify-with-map* v u s)))
+      (map? v)
+      (when (= (count u) (count v))
+        (loop [ks (keys u) s s]
+          (if (seq ks)
+            (let [kf (first ks)
+                  vf (get v kf ::not-found)]
+              (when-not (= vf ::not-found)
+                (if-let [s (unify s (get u kf) vf)]
+                  (recur (next ks) s)
+                  nil)))
+            s)))
+      :else nil)))
 
 ;; =============================================================================
 ;; Reification
@@ -2224,45 +2136,73 @@
   (and (coll? p)
        (not (nil? (some '#{.} p)))))
 
-(defn- p->llist [p]
-  `(llist
-    ~@(map p->term
-           (remove #(contains? '#{.} %) p))))
-
-(defn- p->term [p]
-  (cond
-   (= p '_) `(lvar)
-   (lcons-p? p) (p->llist p)
-   (and (coll? p) (not= (first p) 'quote))
-     (cond
-      ;; support simple expressions
-      (list? p) p
-      ;; preserve original collection type
-      :else (let [ps (map p->term p)]
-              (cond
-               (instance? clojure.lang.MapEntry p) (into [] ps)
-               :else (into (empty p) ps))))
-   :else p))
+(defn- p->llist
+  "Take an lcons pattern and convert it into a llist constructor
+   expression."
+  ([p vars] (p->llist p vars false))
+  ([p vars quoted]
+     `(llist
+       ~@(doall
+           (map #(p->term % vars quoted)
+                (remove #(contains? '#{.} %) p))))))
 
 (defn- lvar-sym? [s]
   (and (symbol? s)
        (not= s '.)
        (not (contains? *locals* s))))
 
-(defn- extract-vars
-  ([p]
-     (set (cond
-           (lvar-sym? p) [p]           
-           (coll? p) (let [p (if (seq? p) (rest p) p)]
-                       (filter lvar-sym? (flatten p)))
-           :else nil)))
-  ([p seen]
-     (set/difference (extract-vars p) (set seen))))
+(defn update-pvars! [x vars]
+  (if (lvar-sym? x)
+    (do
+      (swap! vars conj x)
+      x)
+    x))
+
+(defn- p->term
+  "Convert a pattern p into a term suitable for unification. Takes an atom
+   containing a set for returning any encountered vars which will be declared
+   fresh."
+  ([p vars] (p->term p vars false))
+  ([p vars quoted]
+     (cond
+       (= p '_) `(lvar)
+       (lcons-p? p) (p->llist p vars quoted)
+       (coll? p)
+       (cond
+         ;; support simple expressions
+         (seq? p)
+         (let [[f s] p]
+           (cond
+             (= f 'quote)
+             (if (and (seq? s) (not quoted))
+               (p->term s vars true)
+               p) 
+             (= f 'clojure.core/unquote)
+             (if quoted
+               (update-pvars! s vars)
+               (throw (Exception. "Invalid use of clojure.core/unquote in pattern.")))
+             :else
+             (let [ps (map #(p->term % vars quoted) p)]
+               (if quoted
+                 `(list ~@ps)
+                 ps))))
+         ;; preserve original collection type
+         :else
+         (let [ps (map #(p->term % vars quoted) p)]
+           (cond
+             (instance? clojure.lang.MapEntry p) (into [] ps)
+             :else (into (empty p) ps))))
+       (symbol? p) (if quoted
+                     (list 'quote p)
+                     (update-pvars! p vars))
+       :else p)))
 
 (defn- fresh-expr? [cs]
   (= (first cs) `fresh))
 
 (defn- ex
+  "Takes a list of vars to declare fresh and a term t to be unified
+   with relation argument a."
   ([vs t a]
      `(fresh [~@vs]
         (== ~t ~a)))
@@ -2275,9 +2215,14 @@
           (== ~t ~a)
           ~@exprs))))
 
-(defn- ex* [[[p a :as pa] & par] exprs seen]
-  (let [t (p->term p)
-        vs (extract-vars p seen)
+(defn- ex*
+  "Takes a sequence of pattern/argument pairs, goal expressions and
+   a set of seen variables. Returns source code that represents the
+   equivalent miniKanren series of unifications."
+  [[[p a :as pa] & par] exprs seen]
+  (let [vars (atom #{})
+        t    (p->term p vars)
+        vs   (set/difference @vars seen)
         seen (reduce conj seen vs)]
     (cond
      (nil? pa) exprs
@@ -3756,17 +3701,65 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
-(defn prefix-s [s <s]
-  (letfn [(prefix* [s <s]
-            (if (identical? s <s)
-              nil
-              (cons (first s) (prefix* (rest s) <s))))]
-    (when-let [p (prefix* (:l s) (:l <s))]
-      (with-meta p {:s s}))))
+(defn disunify
+  ([s u v] (disunify s u v {:prefixc {}}))
+  ([s u v cs]
+     (if (identical? u v)
+       cs
+       (let [u (walk s u)
+             v (walk s v)]
+         (if (identical? u v)
+           cs
+           (if (and (not (lvar? u)) (lvar? v))
+             (disunify-terms v u s cs)
+             (disunify-terms u v s cs)))))))
 
-;; TODO: unify should return the prefix sub, then can eliminate l - David
+(extend-protocol IDisunifyTerms
+  nil
+  (disunify-terms [u v s cs]
+    (if-not (nil? v) nil cs))
 
-(defn prefix-subsumes? [p pp]
+  Object
+  (disunify-terms [u v s cs]
+    (if-not (= u v) nil cs))
+
+  clojure.core.logic.LVar
+  (disunify-terms [u v s {pc :prefixc :as cs}]
+    (assoc cs :prefixc (assoc pc u v)))
+
+  clojure.lang.Sequential
+  (disunify-terms [u v s cs]
+    (if (sequential? v)
+      (loop [u (seq u) v (seq v) cs cs]
+        (if u
+          (if v
+            (let [uv (first u)
+                  vv (first v)
+                  cs (disunify s uv vv cs)]
+              (if cs
+                (recur (next u) (next v) cs)
+                nil))
+            nil)
+          (if (nil? v)
+            cs
+            nil)))
+      nil))
+
+  clojure.lang.IPersistentMap
+  (disunify-terms [u v s cs]
+    (if (= (count u) (count v))
+      (loop [ks (seq (keys u)) cs cs]
+        (if ks
+          (let [kf (first ks)
+                vf (get v kf ::not-found)]
+            (when-not (= vf ::not-found)
+              (if-let [cs (disunify s (get u kf) vf cs)]
+                (recur (next ks) cs)
+                nil))) 
+          cs))
+      nil)))
+
+#_(defn prefix-subsumes? [p pp]
   (let [s (-> p meta :s)
         sp (reduce (fn [s [lhs rhs]]
                      (unify s lhs rhs))
@@ -3791,12 +3784,21 @@
      (reify
        clojure.lang.IFn
        (invoke [this a]
-         (if-let [ap (reduce (fn [a [u v]]
-                               (when a (unify a u v)))
-                             a p)]
-           (when-let [p (prefix-s ap a)]
-             ((normalize-store (with-prefix this p)) a))
-           ((remcg this) a)))
+         (let [p (loop [sp (seq p) p p]
+                   (if sp
+                     (let [[x v] (first sp)
+                           xv (walk a x)
+                           vv (walk a v)]
+                       (cond
+                         (= xv vv) (recur (next sp) (dissoc p x))
+                         (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
+                         :else (recur (next sp) p)))
+                     p))]
+           (if p
+             (when-not (empty? p)
+               #_((normalize-store (with-prefix this p)) a)
+               ((updatecg (with-prefix this p)) a))
+             ((remcg this) a))))
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
@@ -3834,7 +3836,7 @@
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
-(defn normalize-store [c]
+#_(defn normalize-store [c]
   (fn [a]
     (let [p (prefix c)
           cid (id c)
@@ -3862,11 +3864,12 @@
    unify. u and v can be complex terms."
   [u v]
   (fn [a]
-    (if-let [ap (unify a u v)]
-      (let [p (prefix-s ap a)]
-        (when-not (empty? p)
-          ((cgoal (!=c p)) a)))
-      a)))
+    (let [cs (disunify a u v)]
+      (if-not (nil? cs)
+        (let [p (:prefixc cs)]
+          (when-not (empty? p)
+            ((cgoal (!=c p)) a)))
+        a))))
 
 (defne distincto
   "A relation which guarantees no element of l will unify
@@ -3911,22 +3914,22 @@
               nil))))
       s)))
 
-(defrecord PMap []
-  IUnifyWithMap
-  (unify-with-map [v u s]
-    (unify-with-pmap* v u s))
+(declare partial-map?)
 
-  IUnifyWithPMap
-  (unify-with-pmap [v u s]
-    (unify-with-pmap* v u s))
+(defrecord PMap []
+  INonStorable
 
   IUnifyTerms
   (unify-terms [u v s]
-    (unify-with-pmap v u s))
+    (if (map? v)
+      (unify-with-pmap* u v s)
+      nil))
 
-  IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (ext-no-check s u v))
+  IUnifyWithRecord
+  (unify-with-record [u v s]
+    (if (map? v)
+      (unify-with-pmap* u v s)
+      nil))
 
   IUninitialized
   (-uninitialized [_] (PMap.))
@@ -3934,21 +3937,6 @@
   IWalkTerm
   (walk-term [v f]
     (walk-record-term v f)))
-
-(extend-protocol IUnifyWithPMap
-  nil
-  (unify-with-pmap [v u s] nil)
-
-  Object
-  (unify-with-pmap [v u s] nil)
-
-  clojure.core.logic.LVar
-  (unify-with-pmap [v u s]
-    (ext s v u))
-
-  clojure.lang.IPersistentMap
-  (unify-with-pmap [v u s]
-    (unify-with-pmap* u v s)))
 
 (defn partial-map
   "Given map m, returns partial map that unifies with maps even if it
@@ -3963,6 +3951,9 @@
    ;;=> ({:a 1})"
   [m]
   (map->PMap m))
+
+(defn partial-map? [x]
+  (instance? PMap x))
 
 ;; =============================================================================
 ;; defc

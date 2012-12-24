@@ -1167,6 +1167,40 @@
          ())))
 
 ;; -----------------------------------------------------------------------------
+;; Pattern Matching
+
+(defne pm1 [x y]
+  ([:foo :bar]))
+
+(defne pm2 [x y]
+  ([_ x]))
+
+(defne pm3 [x y]
+  ([_ 'x]))
+
+(defne pm4 [x y]
+  ([[h . t] t]))
+
+(deftest test-pm []
+  (is (= (run* [q] (fresh [x y] (== q [x y]) (pm1 x y))) '([:foo :bar])))
+  (is (= (run* [q] (fresh [x y] (pm2 x y) (== x y))) '(_0)))
+  (is (= (run* [q] (pm4 '(1 2) q)) '((2)))))
+
+(defne form->ast1 [form ast]
+  (['(fn ~args . ~body) {:op :fn :args args :body body}]))
+
+(defne form->ast2 [form ast]
+  (['(fn [~f . ~rest] . ~body) {:op :fn :f f :rest rest :body body}]))
+
+(deftest test-code-match-1
+  (is (= (run* [q]
+           (form->ast1 '(fn [x y] (+ x y)) q))
+         '({:op :fn :args [x y] :body ((+ x y))})))
+  (is (= (run* [q]
+           (form->ast2 '(fn [x y] (+ x y)) q))
+         '({:op :fn :f x :rest (y) :body ((+ x y))}))))
+
+;; -----------------------------------------------------------------------------
 ;; Pattern matching functions preserve metadata
 
 (defne ^:tabled dummy 
@@ -1199,24 +1233,27 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching inline expression support
 
-(defn s [n] (llist n []))
+;; REMOVED - fn application no longer supported in patterns, list syntax is
+;; much more useful when used for matching Clojure source - David
 
-(def zero 0)
-(def one (s zero))
-(def two (s one))
-(def three (s two))
-(def four (s three))
-(def five (s four))
-(def six  (s five))
+;; (defn s [n] (llist n []))
 
-(defn natural-number [x]
-  (matche [x]
-    ([zero])
-    ([(s y)] (natural-number y))))
+;; (def zero 0)
+;; (def one (s zero))
+;; (def two (s one))
+;; (def three (s two))
+;; (def four (s three))
+;; (def five (s four))
+;; (def six  (s five))
 
-(deftest test-matche-with-expr
-  (is (= (run* [q] (natural-number one))
-         '(_0 _0))))
+;; (defn natural-number [x]
+;;   (matche [x]
+;;     ([zero])
+;;     ([(s y)] (natural-number y))))
+
+;; (deftest test-matche-with-expr
+;;   (is (= (run* [q] (natural-number one))
+;;          '(_0 _0))))
 
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching other data structures
@@ -1252,18 +1289,16 @@
            (== [x] [3])))))
 
 (deftest test-49-partial-map-unification
-  (is (= '[#clojure.core.logic.PMap{:a 1}]
+  (is (= [1]
          (run* [q]
-           (fresh [pm x]
-             (== pm (partial-map {:a x}))
-             (== pm {:a 1 :b 2})
-             (== pm q)))))
-  (is (= '[#clojure.core.logic.PMap{:a 1}]
+           (fresh [x]
+             (== {:a 1 :b 2} (partial-map {:a x}))
+             (== q x)))))
+  (is (= [1]
          (run* [q]
-           (fresh [pm x]
-             (== (partial-map {:a x}) pm)
-             (== {:a 1 :b 2} pm)
-             (== q pm))))))
+           (fresh [x]
+             (== (partial-map {:a x}) {:a 1 :b 2})
+             (== q x))))))
 
 (deftest test-73-partial-map-unification
   (is (= (run* [q]
@@ -1767,7 +1802,7 @@
         w (lvar 'w)
         c (fdc (+fdc u v w))
         s ((addcg c) empty-s)
-        c (first (constraints-for (:cs s) s u ::fd))
+        c (first (constraints-for (:cs s) s u ::l/fd))
         s (-> s
             (ext-no-check u 1)
             (ext-no-check w 2))
@@ -1794,7 +1829,7 @@
     (is (= 10 (ub mi)))))
 
 (deftest test-run-constraints*
-  (is (= (run-constraints* [] [] ::subst) s#)))
+  (is (= (run-constraints* [] [] ::l/subst) s#)))
 
 (deftest test-drop-one-1
   (is (= (:s (drop-one (domain 1 2 3)))
@@ -2151,7 +2186,7 @@
     (is (= (recover-vars (:l s))
            #{x y}))))
 
-(deftest test-prefix-s []
+#_(deftest test-prefix-s []
   (let [x (lvar 'x)
         y (lvar 'y)
         s empty-s
@@ -2163,7 +2198,7 @@
            (list (pair y 2) (pair x 1))))
     (is (= (-> p meta :s) sp))))
 
-(deftest test-prefix-subsumes? []
+#_(deftest test-prefix-subsumes? []
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
@@ -2214,7 +2249,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x y))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) {x y}))))
 
 (deftest test-!=-2 []
   (let [x (lvar 'x)
@@ -2258,7 +2293,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x 1) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x 1))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) {x 1}))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)
@@ -2621,8 +2656,8 @@
 (deftest test-update-1 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
-        s (add-attr s x ::fd (domain 1 2 3))
+        s (add-attr s x ::l/fd (domain 1 2 3))
         s (update s x 1)]
     (is (= (:v (root-val s x)) 1))
-    (is (= (get-attr s x ::fd) (domain 1 2 3)))
+    (is (= (get-attr s x ::l/fd) (domain 1 2 3)))
     (is (= (walk s x) 1))))
