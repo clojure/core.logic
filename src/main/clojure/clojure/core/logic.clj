@@ -2933,14 +2933,12 @@
           (nil? (seq xs)))
     s#
     (fn [a]
-      (bind a
-        (fn [a]
-          (let [xcs (constraints-for cs a (first xs) ws)]
-            (if (seq xcs)
-              (bind* a
-                (run-constraints xcs)
-                (run-constraints* (next xs) cs ws))
-              (bind a (run-constraints* (next xs) cs ws)))))))))
+      (let [xcs (constraints-for cs a (first xs) ws)]
+        (if (seq xcs)
+          (bind* a
+            (run-constraints xcs)
+            (run-constraints* (next xs) cs ws))
+          (bind a (run-constraints* (next xs) cs ws)))))))
 
 ;; TODO: we've hard coded finite domains here
 
