@@ -132,7 +132,7 @@
 (defprotocol ISubstitutionsCLP
   (root-val [this x])
   (root-var [this x])
-  (update [this x v])
+  (update [this x v] [this x v ext?])
   (queue [this c])
   (update-var [this x v]))
 
@@ -1105,20 +1105,22 @@
       v))
   
   (update [this x v]
-    (let [xv (root-val this x)
-          sval? (subst-val? xv)]
-      (if (or (lvar? xv) (and sval? (= (:v xv) ::unbound)))
+    (update this x v false))
+  (update [this x v ext?]
+    (let [xv (walk this x)]
+      (if (lvar? xv)
         (let [x  (root-var this x)
               xs (if (lvar? v)
                    [x (root-var this v)]
                    [x])
-              v  (if sval? (assoc xv :v v) v)
-              s  (if *occurs-check*
-                   (ext this x v)
-                   (ext-no-check this x v))]
+              s  (if ext?
+                   (if *occurs-check*
+                     (ext this x v)
+                     (ext-no-check this x v))
+                   this)]
           (when s
             ((run-constraints* xs cs ::subst) s)))
-        (when (= (if sval? (:v xv) v) v) ;; NOTE: replace with unify?
+        (when (= xv v)
           this))))
 
   (queue [this c]
@@ -1686,9 +1688,13 @@
 
 (def u# fail)
 
-(defn updateg [u v]
-  (fn [a]
-    (update a u v)))
+(defn updateg
+  ([u v]
+     (fn [a]
+       (update a u v)))
+  ([u v ext]
+     (fn [a]
+       (update a u v ext))))
 
 (defn update-prefix [a ap]
   (let [l (:l a)]
@@ -1710,7 +1716,7 @@
   (fn [a]
     (when-let [ap (unify a u v)]
       (if (pos? (count (:cs a)))
-        ((update-prefix a ap) a)
+        ((update-prefix a ap) ap)
         ap))))
 
 (defn- bind-conde-clause [a]
@@ -3020,7 +3026,7 @@
 (defn resolve-storable-dom
   [a x dom]
   (if (singleton-dom? dom)
-    (update (rem-dom a x ::fd) x dom)
+    (update (rem-dom a x ::fd) x dom true)
     (ext-dom-fd a x dom)))
 
 (defn update-var-dom
@@ -3105,7 +3111,7 @@
   Object
   (-force-ans [v x]
     (if (integer? v)
-      (updateg x v)
+      (updateg x v true)
       s#))
 
   clojure.lang.Sequential
@@ -3143,15 +3149,15 @@
 
   FiniteDomain
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+    ((map-sum (fn [n] (updateg x n true))) (to-vals v)))
 
   IntervalFD
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n))) (to-vals v)))
+    ((map-sum (fn [n] (updateg x n true))) (to-vals v)))
 
   MultiIntervalFD
   (-force-ans [v x]
-    ((map-sum (fn [n] (updateg x n))) (to-vals v))))
+    ((map-sum (fn [n] (updateg x n true))) (to-vals v))))
 
 (defn force-ans [x]
   (fn [a]

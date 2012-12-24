@@ -1876,7 +1876,7 @@
         s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
-               ((map-sum (fn [v] (updateg x v)))
+               ((map-sum (fn [v] (updateg x v true)))
                 (to-vals (interval 1 10)))))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
@@ -2655,7 +2655,7 @@
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
         s (add-attr s x ::l/fd (domain 1 2 3))
-        s (update s x 1)]
+        s (update s x 1 true)]
     (is (= (:v (root-val s x)) 1))
     (is (= (get-attr s x ::l/fd) (domain 1 2 3)))
     (is (= (walk s x) 1))))
