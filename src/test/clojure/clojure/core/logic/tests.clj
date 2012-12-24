@@ -1329,6 +1329,24 @@
              (== `(~a) c)))
          '(_0))))
 
+(deftest test-85-alias
+  (is (= (run* [q]
+           (fresh [x y]
+             (predc y even? `even?)
+             (predc x odd? `odd)
+             (== x y)
+             (== x 1)
+             (== q [x y])))
+         ())))
+
+(deftest test-77-alias
+  (is (= (run 1 [r a b x]
+           (== r [a b])
+           (infd a b x (domain 1 2))
+           (<fd a b)
+           (firsto r x))
+         '([[1 2] 1 2 1]))))
+
 ;; =============================================================================
 ;; cKanren
 
