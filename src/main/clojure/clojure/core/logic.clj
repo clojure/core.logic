@@ -952,8 +952,10 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [u (walk s u)
-          v (walk s v)]
+    (let [vs (:vs s)
+          s  (if vs s (assoc s :vs #{}))
+          u  (walk s u)
+          v  (walk s v)]
       ;; TODO: we can't use an identical? check here at the moment
       ;; because we add metadata on vars in walk - David
       (if (and (lvar? u) (= u v))
@@ -988,12 +990,12 @@
 ;; Substitutions
 ;; -----
 ;; s   - persistent hashmap to store logic var bindings
-;; l   - persistent list of var bindings to support disequality constraints
+;; vs  - changed var set
 ;; cs  - constraint store
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
 
-(deftype Substitutions [s l cs cq cqs _meta]
+(deftype Substitutions [s vs cs cq cqs _meta]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -1008,7 +1010,7 @@
   clojure.lang.IObj
   (meta [this] _meta)
   (withMeta [this new-meta]
-    (Substitutions. s l cs cq cqs new-meta))
+    (Substitutions. s vs cs cq cqs new-meta))
 
   clojure.lang.ILookup
   (valAt [this k]
@@ -1016,7 +1018,7 @@
   (valAt [this k not-found]
     (case k
       :s   s
-      :l   l
+      :vs  vs
       :cs  cs
       :cq  cq
       :cqs cqs
@@ -1033,34 +1035,30 @@
 
   clojure.lang.Associative
   (containsKey [this k]
-    (contains? #{:s :l :cs :cq :cqs} k))
+    (contains? #{:s :vs :cs :cq :cqs} k))
   (entryAt [this k]
     (case k
       :s   [:s s]
-      :l   [:l l]
+      :vs  [:vs vs]
       :cs  [:cs cs]
       :cq  [:cq cq]
       :cqs [:cqs cqs]
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v l cs cq cqs _meta)
-      :l   (Substitutions. s v cs cq cqs _meta)
-      :cs  (Substitutions. s l  v cq cqs _meta)
-      :cq  (Substitutions. s l cs  v cqs _meta)
-      :cqs (Substitutions. s l cs cq v   _meta)
+      :s   (Substitutions. v vs cs cq cqs _meta)
+      :vs  (Substitutions. s  v cs cq cqs _meta)
+      :cs  (Substitutions. s vs  v cq cqs _meta)
+      :cq  (Substitutions. s vs cs  v cqs _meta)
+      :cqs (Substitutions. s vs cs cq   v _meta)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
   (ext-no-check [this u v]
     (let [u (if-not (lvar? v)
               (assoc-meta u ::root true)
-              u)
-          l (if (and (subst-val? v)
-                     (= (:v v) ::unbound))
-              l
-              (cons (pair u v) l))]
-      (Substitutions. (assoc s u v) l cs cq cqs _meta)))
+              u)]
+      (Substitutions. (assoc s u v) (if vs (conj vs u)) cs cq cqs _meta)))
 
   (walk [this v]
     (if (lvar? v)
@@ -1190,10 +1188,9 @@
       (-> v :doms dom))))
 
 (defn- make-s
-  ([] (Substitutions. {} () (make-cs) nil #{} nil))
-  ([m] (Substitutions. m () (make-cs) nil #{} nil))
-  ([m l] (Substitutions. m l (make-cs) nil #{} nil))
-  ([m l cs] (Substitutions. m l cs nil #{} nil)))
+  ([] (Substitutions. {} nil (make-cs) nil #{} nil))
+  ([m] (Substitutions. m nil (make-cs) nil #{} nil))
+  ([m cs] (Substitutions. m nil cs nil #{} nil)))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -1202,9 +1199,8 @@
   (instance? Substitutions x))
 
 (defn to-s [v]
-  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)
-        l (reduce (fn [l [k v]] (cons (Pair. k v) l)) '() v)]
-    (make-s s l (make-cs))))
+  (let [s (reduce (fn [m [k v]] (assoc m k v)) {} v)]
+    (make-s s (make-cs))))
 
 (defn annotate [k v]
   (fn [a]
@@ -1696,27 +1692,13 @@
      (fn [a]
        (update a u v ext))))
 
-(defn update-prefix [a ap]
-  (let [l (:l a)]
-    ((fn loop [lp]
-       (if (identical? l lp)
-         s#
-         (let [[lhs rhs] (first lp)]
-          (composeg
-           (updateg lhs rhs)
-           (loop (rest lp)))))) (:l ap))))
-
-;; NOTE: this seems costly if the user introduces a constraint
-;; update-prefix should be called only if we have a constraint
-;; in the store that needs this
-
 (defn ==
   "A goal that attempts to unify terms u and v."
   [u v]
   (fn [a]
     (when-let [ap (unify a u v)]
       (if (pos? (count (:cs a)))
-        ((update-prefix a ap) ap)
+        ((run-constraints* (:vs ap) (:cs ap) ::subst) (assoc ap :vs nil))
         ap))))
 
 (defn- bind-conde-clause [a]

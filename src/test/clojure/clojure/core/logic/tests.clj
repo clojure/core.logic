@@ -2175,7 +2175,7 @@
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
 
-(deftest test-recover-vars []
+#_(deftest test-recover-vars []
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
