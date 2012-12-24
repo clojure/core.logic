@@ -961,7 +961,7 @@
       ;; because we add metadata on vars in walk - David
       (if (and (lvar? u) (= u v))
         s
-        (if (and (not (lvar? u)) (lvar? v))
+        (if (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
           (unify-terms v u s)
           (unify-terms u v s))))))
 

@@ -16,12 +16,6 @@
 ;; =============================================================================
 ;; Nominal unification protocols
 
-(defprotocol IUnifyWithSuspension
-  (unify-with-susp [v u s]))
-
-(defprotocol IUnifyWithTie
-  (unify-with-tie [v u s]))
-
 (defprotocol IApplyPi
   (apply-pi [t pi]))
 
@@ -180,27 +174,6 @@
   clojure.core.logic.IUnifyTerms
   (unify-terms [v u s]
     (unify-with-susps- u v s))
-  clojure.core.logic.IUnifyWithNil
-  (unify-with-nil [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.IUnifyWithObject
-  (unify-with-object [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.IUnifyWithLVar
-  (unify-with-lvar [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.IUnifyWithLSeq
-  (unify-with-lseq [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.IUnifyWithSequential
-  (unify-with-seq [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.IUnifyWithMap
-  (unify-with-map [v u s]
-    (unify-with-susps- v u s))
-  clojure.core.logic.nominal.IUnifyWithSuspension
-  (unify-with-susp [v u s]
-    (unify-with-susps- v u s))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s pi)]
@@ -223,19 +196,6 @@
   IApplyHash
   (apply-hash [x a c s]
     (bind* s (remcg c) (addcg-now (-nom-hash? (apply-pi a (invert-pi (:pi x))) (:lvar x))) )))
-
-(extend-protocol IUnifyWithSuspension
-  nil
-  (unify-with-susp [v u s]
-    (unify-with-susps- v u s))
-
-  Object
-  (unify-with-susp [v u s]
-    (unify-with-susps- v u s))
-
-  clojure.core.logic.LVar
-  (unify-with-susp [v u s]
-    (unify-with-susps- v u s)))
 
 (defn unify-with-susps- [v u s]
   (let [v (walk* s v)
@@ -327,21 +287,6 @@
 
 (declare tie)
 
-(extend-protocol IUnifyWithTie
-  nil
-  (unify-with-tie [v u s] nil)
-
-  Object
-  (unify-with-tie [v u s] nil)
-
-  clojure.core.logic.LVar
-  (unify-with-tie [v u s]
-    (ext s v u))
-
-  clojure.core.logic.nominal.Suspension
-  (unify-with-tie [v u s]
-    (unify-with-susps- u v s)))
-
 (deftype Tie [binding-nom body]
   Object
   (toString [_]
@@ -365,19 +310,19 @@
       :body body
       not-found))
   clojure.core.logic.IUnifyTerms
-  (unify-terms [u v s]
-    (unify-with-tie v u s))
-  clojure.core.logic.IUnifyWithObject
-  (unify-with-object [v u s] nil)
-  clojure.core.logic.nominal.IUnifyWithTie
-  (unify-with-tie [v u s]
-    (if (= (:binding-nom v) (:binding-nom u))
-      (unify s (:body v) (:body u))
-      (bind* s
-        (fn [s] (unify s
-                 (apply-pi (:body v) [[(:binding-nom v) (:binding-nom u)]])
-                 (:body u)))
-        (addcg-now (-nom-hash? (:binding-nom u) (:body v))))))
+  (unify-terms [v u s]
+    (cond
+      (tie? u)
+      (if (= (:binding-nom v) (:binding-nom u))
+        (unify s (:body v) (:body u))
+        (bind* s
+          (fn [s] (unify s
+                   (apply-pi (:body v) [[(:binding-nom v) (:binding-nom u)]])
+                   (:body u)))
+          (addcg-now (-nom-hash? (:binding-nom u) (:body v)))))
+      (susp? u)
+      (unify-with-susps- v u s)
+      :else nil))
   clojure.core.logic.IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s binding-nom)]
