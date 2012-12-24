@@ -2184,7 +2184,7 @@
     (is (= (recover-vars (:l s))
            #{x y}))))
 
-(deftest test-prefix-s []
+#_(deftest test-prefix-s []
   (let [x (lvar 'x)
         y (lvar 'y)
         s empty-s
@@ -2196,7 +2196,7 @@
            (list (pair y 2) (pair x 1))))
     (is (= (-> p meta :s) sp))))
 
-(deftest test-prefix-subsumes? []
+#_(deftest test-prefix-subsumes? []
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
@@ -2247,7 +2247,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x y))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) {x y}))))
 
 (deftest test-!=-2 []
   (let [x (lvar 'x)
@@ -2291,7 +2291,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x 1) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) (list (pair x 1))))))
+    (is (= (prefix ((:cm (:cs s)) 0)) {x 1}))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)

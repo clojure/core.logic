@@ -236,6 +236,9 @@
 ;; -----------------------------------------------------------------------------
 ;; Tree Constraints
 
+(defprotocol IDisunifyTerms
+  (disunify-terms [u v s cs]))
+
 (defprotocol ITreeConstraint
   (tree-constraint? [this]))
 
@@ -3680,17 +3683,65 @@
 ;; =============================================================================
 ;; CLP(Tree)
 
-(defn prefix-s [s <s]
-  (letfn [(prefix* [s <s]
-            (if (identical? s <s)
-              nil
-              (cons (first s) (prefix* (rest s) <s))))]
-    (when-let [p (prefix* (:l s) (:l <s))]
-      (with-meta p {:s s}))))
+(defn disunify
+  ([s u v] (disunify s u v {:prefixc {}}))
+  ([s u v cs]
+     (if (identical? u v)
+       cs
+       (let [u (walk s u)
+             v (walk s v)]
+         (if (identical? u v)
+           cs
+           (if (and (not (lvar? u)) (lvar? v))
+             (disunify-terms v u s cs)
+             (disunify-terms u v s cs)))))))
 
-;; TODO: unify should return the prefix sub, then can eliminate l - David
+(extend-protocol IDisunifyTerms
+  nil
+  (disunify-terms [u v s cs]
+    (if-not (nil? v) nil cs))
 
-(defn prefix-subsumes? [p pp]
+  Object
+  (disunify-terms [u v s cs]
+    (if-not (= u v) nil cs))
+
+  clojure.core.logic.LVar
+  (disunify-terms [u v s {pc :prefixc :as cs}]
+    (assoc cs :prefixc (assoc pc u v)))
+
+  clojure.lang.Sequential
+  (disunify-terms [u v s cs]
+    (if (sequential? v)
+      (loop [u (seq u) v (seq v) cs cs]
+        (if u
+          (if v
+            (let [uv (first u)
+                  vv (first v)
+                  cs (disunify s uv vv cs)]
+              (if cs
+                (recur (next u) (next v) cs)
+                nil))
+            nil)
+          (if (nil? v)
+            cs
+            nil)))
+      nil))
+
+  clojure.lang.IPersistentMap
+  (disunify-terms [u v s cs]
+    (if (= (count u) (count v))
+      (loop [ks (seq (keys u)) cs cs]
+        (if ks
+          (let [kf (first ks)
+                vf (get v kf ::not-found)]
+            (when-not (= vf ::not-found)
+              (if-let [cs (disunify s (get u kf) vf cs)]
+                (recur (next ks) cs)
+                nil))) 
+          cs))
+      nil)))
+
+#_(defn prefix-subsumes? [p pp]
   (let [s (-> p meta :s)
         sp (reduce (fn [s [lhs rhs]]
                      (unify s lhs rhs))
@@ -3715,12 +3766,21 @@
      (reify
        clojure.lang.IFn
        (invoke [this a]
-         (if-let [ap (reduce (fn [a [u v]]
-                               (when a (unify a u v)))
-                             a p)]
-           (when-let [p (prefix-s ap a)]
-             ((normalize-store (with-prefix this p)) a))
-           ((remcg this) a)))
+         (let [p (loop [sp (seq p) p p]
+                   (if sp
+                     (let [[x v] (first sp)
+                           xv (walk a x)
+                           vv (walk a v)]
+                       (cond
+                         (= xv vv) (recur (next sp) (dissoc p x))
+                         (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
+                         :else (recur (next sp) p)))
+                     p))]
+           (if p
+             (when-not (empty? p)
+               #_((normalize-store (with-prefix this p)) a)
+               ((updatecg (with-prefix this p)) a))
+             ((remcg this) a))))
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
@@ -3758,7 +3818,7 @@
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
-(defn normalize-store [c]
+#_(defn normalize-store [c]
   (fn [a]
     (let [p (prefix c)
           cid (id c)
@@ -3786,11 +3846,12 @@
    unify. u and v can be complex terms."
   [u v]
   (fn [a]
-    (if-let [ap (unify a u v)]
-      (let [p (prefix-s ap a)]
-        (when-not (empty? p)
-          ((cgoal (!=c p)) a)))
-      a)))
+    (let [cs (disunify a u v)]
+      (if-not (nil? cs)
+        (let [p (:prefixc cs)]
+          (when-not (empty? p)
+            ((cgoal (!=c p)) a)))
+        a))))
 
 (defne distincto
   "A relation which guarantees no element of l will unify
