@@ -1118,12 +1118,13 @@
         (let [x  (root-var this x)
               xs (if (lvar? (:tovar  v))
                    [x (root-var this v)]
-                   [x])]
-          ((run-constraints* xs cs ::subst)
-           (let [v (if sval? (assoc xv :v v) v)]
-             (if *occurs-check*
-               (ext this x v)
-               (ext-no-check this x v)))))
+                   [x])
+              v  (if sval? (assoc xv :v v) v)
+              s  (if *occurs-check*
+                   (ext this x v)
+                   (ext-no-check this x v))]
+          (when s
+            ((run-constraints* xs cs ::subst) s)))
         (when (= (if sval? (:v xv) v) v) ;; NOTE: replace with unify?
           this))))
 
