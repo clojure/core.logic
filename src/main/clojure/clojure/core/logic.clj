@@ -1053,7 +1053,9 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (assoc-meta u ::root true)
+    (let [u (if-not (lvar? v)
+              (assoc-meta u ::root true)
+              u)
           l (if (and (subst-val? v)
                      (= (:v v) ::unbound))
               l
