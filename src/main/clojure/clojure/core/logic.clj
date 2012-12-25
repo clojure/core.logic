@@ -1777,7 +1777,7 @@
     (when-let [ap (unify (assoc a :vs #{}) u v)]
       (if (pos? (count (:cs a)))
         ((run-constraints* (:vs ap) (:cs ap) ::subst) (assoc ap :vs nil))
-        ap))))
+        (assoc ap :vs nil)))))
 
 (defn- bind-conde-clause [a]
   (fn [g-rest]
