@@ -4012,7 +4012,9 @@
      (reify
        clojure.lang.IFn
        (invoke [this a]
-         ((== fs x) a))
+         ((composeg
+           (== fs x)
+           (remcg this)) a))
        IWithConstraintId
        (with-id [this id]
          (-featurec fs x id))
