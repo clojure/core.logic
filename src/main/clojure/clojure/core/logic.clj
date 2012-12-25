@@ -1196,6 +1196,12 @@
   (fn [a]
     (vary-meta a assoc k v)))
 
+(defn merge-subst-vals [x root]
+  (subst-val
+    (:v root)
+    (merge-with -merge-doms (:doms x) (:doms root))
+    (merge (meta x) (meta root))))
+
 ;; =============================================================================
 ;; Logic Variables
 
@@ -1230,7 +1236,13 @@
                       :else nil)]
        (if repoint
          (let [[root other] repoint
-               s (assoc s :cs (migrate (:cs s) other root))]
+               s (assoc s :cs (migrate (:cs s) other root))
+               s (if (-> other clojure.core/meta ::unbound)
+                   (ext-no-check s root
+                     (merge-subst-vals
+                       (root-val s other)
+                       (root-val s root)))
+                   s)]
            (ext-no-check s other root))
          (ext-no-check s u v)))
 
