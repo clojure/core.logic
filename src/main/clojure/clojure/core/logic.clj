@@ -2897,7 +2897,7 @@
 
 (defn addcg-now [c]
   (fn [a]
-    (bind* a (addcg c) (run-constraint c) (fn [a] (queue a c)))))
+    (bind* a (addcg c) (run-constraint c))))
 
 ;; TODO NOW: try an implementation that allows constraints
 ;; to run roughly in the order they normaly would. reverse
@@ -2929,8 +2929,10 @@
     (let [cq (:cq a)
            a  (reduce (fn [a c]
                         (queue a c))
-               (assoc a :cq (or cq [])) xcs)]
-      (fix-constraints a))))
+                (assoc a :cq (or cq [])) xcs)]
+      (if cq
+        a
+        (fix-constraints a)))))
 
 (defn run-constraints* [xs cs ws]
   (if (or (zero? (count cs))
