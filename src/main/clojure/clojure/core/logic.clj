@@ -4058,6 +4058,9 @@
       (catch Exception e
         false))))
 
+;; consider ^:partial type hint for arguments
+;; these argument only need to be partially instantiated
+
 (defmacro defc [name args & body]
   (let [-name (symbol (str "-" name))]
    `(let [~-name (fn ~-name
