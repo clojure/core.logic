@@ -2626,6 +2626,10 @@
       (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
       (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
+(deftest test-safefd
+  (is (= (safefd)
+         '([4 3 1 8 9 2 6 7 5]))))
+
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
