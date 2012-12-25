@@ -2612,7 +2612,7 @@
 ;; when asking for 2 answers, we get a different set of answers
 
 (defn safefd []
-  (run 1 [q]
+  (run* [q]
     (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
       (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
       (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
