@@ -1360,6 +1360,9 @@
 (defn lvar? [x]
   (instance? clojure.core.logic.IVar x))
 
+(defn lvars [n]
+  (repeatedly n lvar))
+
 ;; =============================================================================
 ;; LCons
 
