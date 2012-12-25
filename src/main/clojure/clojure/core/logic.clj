@@ -1240,7 +1240,9 @@
       (not= v ::not-found)
       (if (or (coll? v) (lcons? v))
         (ext s u v)
-        (ext-no-check s u v))
+        (if (-> u clojure.core/meta ::unbound)
+          (ext-no-check s u (assoc (root-val s u) :v v))
+          (ext-no-check s u v)))
       
       :else nil))
   IReifyTerm
