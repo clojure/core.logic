@@ -339,8 +339,7 @@
       (eqfd
         (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
                           (* 1000 m) (* 100 o) (* 10 r) e)
-           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))
-      (debug-doms))))
+           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
 
 ;; Bratko 3rd ed pg 343
 
@@ -363,7 +362,7 @@
 
   (time (cryptarithfd-1))
 
-  ;; ~2700ms, a little bit slower w/ distribute step
+  ;; ~1200ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
@@ -376,8 +375,7 @@
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
-  ;; 128797.253
-  ;; 17.7s w/ distribute 7X faster
+  ;; 1.9s now
   (time (cryptarithfd-2))
   )
 
@@ -451,7 +449,7 @@
 
 (comment
   ;; close to 2X faster than Petite Chez
-  ;; ~3500ms
+  ;; ~2800ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -492,7 +490,7 @@
 
   (simple-eqfd)
 
-  ;; 900ms
+  ;; 620ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -566,7 +564,7 @@
 (comment
   (time (matches 40))
 
-  ;; ~8200ms
+  ;; ~7500-8000ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -612,6 +610,7 @@
             sq1 sq2 sq3 sq4])))))
 
 (comment
+  ;; 2100ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -837,11 +836,7 @@
       (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
 
 (comment
-  ;; FIXME: see a disjoint error now
-
   (time (safefd))
-
-  ;; FIXME: adding (distribute q ::l/ff) causes an exception
 
   (every?
     (fn [[c1 c2 c3 c4 c5 c6 c7 c8 c9]]
@@ -856,9 +851,8 @@
     (safefd))
 
   ;; 2800ms
-  ;; also significantly slower
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10] 
-       (safefd))))
+      (dotimes [_ 100] 
+        (safefd))))
   )

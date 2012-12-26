@@ -1331,6 +1331,24 @@
              (== `(~a) c)))
          '(_0))))
 
+(deftest test-85-alias
+  (is (= (run* [q]
+           (fresh [x y]
+             (predc y even? `even?)
+             (predc x odd? `odd)
+             (== x y)
+             (== x 1)
+             (== q [x y])))
+         ())))
+
+(deftest test-77-alias
+  (is (= (run 1 [r a b x]
+           (== r [a b])
+           (infd a b x (domain 1 2))
+           (<fd a b)
+           (firsto r x))
+         '([[1 2] 1 2 1]))))
+
 ;; =============================================================================
 ;; cKanren
 
@@ -1878,7 +1896,7 @@
         s ((domfd x (interval 1 10)) empty-s)]
     (is (= (take 10
              (solutions s x
-               ((map-sum (fn [v] (updateg x v)))
+               ((map-sum (fn [v] (ext-run-csg x v)))
                 (to-vals (interval 1 10)))))
            '(1 2 3 4 5 6 7 8 9 10)))))
 
@@ -2060,10 +2078,10 @@
 
 (deftest test-ckanren-10
   (is (= (run* [q]
-           (fresh [a]
-             (infd a (interval 1 10))
-             (subgoal a)
-             (== q a)))
+           (fresh [x]
+             (infd x (interval 1 10))
+             (subgoal x)
+             (== q x)))
          '(2))))
 
 (deftest test-list-sorted
@@ -2177,7 +2195,7 @@
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
 
-(deftest test-recover-vars []
+#_(deftest test-recover-vars []
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
@@ -2596,7 +2614,7 @@
 ;; when asking for 2 answers, we get a different set of answers
 
 (defn safefd []
-  (run 1 [q]
+  (run* [q]
     (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
       (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
       (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
@@ -2609,6 +2627,10 @@
       (!=fd c1 1) (!=fd c2 2) (!=fd c3 3)
       (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
       (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
+
+(deftest test-safefd
+  (is (= (safefd)
+         '([4 3 1 8 9 2 6 7 5]))))
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
@@ -2653,11 +2675,10 @@
            (ext-no-check y x))]
     (is (= (root-var s y) x))))
 
-(deftest test-update-1 []
+(deftest test-ext-run-cs-1 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
         s (add-attr s x ::l/fd (domain 1 2 3))
-        s (update s x 1)]
-    (is (= (:v (root-val s x)) 1))
-    (is (= (get-attr s x ::l/fd) (domain 1 2 3)))
+        s (ext-run-cs s x 1)]
+    (is (= (root-val s x) 1))
     (is (= (walk s x) 1))))
