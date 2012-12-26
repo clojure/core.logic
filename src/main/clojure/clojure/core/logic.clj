@@ -4212,7 +4212,7 @@
        (with-id [this _id]
          (-treec x fc cform _id))
        IConstraintOp
-       (rator [_] `featurec)
+       (rator [_] `treec)
        (rands [_] [x])
        IReifiableConstraint
        (reifyc [_ v r a]
