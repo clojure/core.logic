@@ -183,7 +183,7 @@
   (-relevant-var? [this x]))
 
 (defprotocol IReifiableConstraint
-  (reifyc [this v r]))
+  (reifyc [this v r a]))
 
 (defn reifiable? [x]
   (instance? clojure.core.logic.IReifiableConstraint x))
@@ -1369,6 +1369,9 @@
 (defn walkable? [x]
   (or (lvar? x)
       (instance? clojure.core.logic.IWalkable x)))
+
+(defn lvars [n]
+  (repeatedly n lvar))
 
 ;; =============================================================================
 ;; LCons
@@ -3046,10 +3049,11 @@
        (verify-all-bound a constrained)
        ((onceo (force-ans constrained)) a)))))
 
-(defn reify-constraints [v r cs]
-  (let [rcs (->> (vals (:cm cs))
+(defn reify-constraints [v r a]
+  (let [cs  (:cs  a)
+        rcs (->> (vals (:cm cs))
                  (filter reifiable?)
-                 (map #(reifyc % v r))
+                 (map #(reifyc % v r a))
                  (filter #(not (nil? %))))]
     (if (empty? rcs)
       (choice (list v) empty-f)
@@ -3064,7 +3068,7 @@
        (if (zero? (count r))
          (choice (list v) empty-f)
          (let [v (walk* r v)]
-           (reify-constraints v r (:cs a))))))))
+           (reify-constraints v r a)))))))
 
 
 (defn cgoal [c]
@@ -3878,7 +3882,7 @@
        IEnforceableConstraint
        (enforceable? [_] false)
        IReifiableConstraint
-       (reifyc [this v r]
+       (reifyc [this v r a]
          (let [p* (walk* r (map (fn [[lhs rhs]] `(~lhs ~rhs)) p))]
            (if (empty? p*)
              '()
@@ -4021,6 +4025,37 @@
 (defn partial-map? [x]
   (instance? PMap x))
 
+(defn -featurec
+  ([fs x] (-featurec (partial-map fs) x nil))
+  ([fs x id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this a]
+         ((composeg
+           (== fs x)
+           (remcg this)) a))
+       IWithConstraintId
+       (with-id [this id]
+         (-featurec fs x id))
+       IConstraintOp
+       (rator [_] `featurec)
+       (rands [_] [fs x])
+       IReifiableConstraint
+       (reifyc [_ v r a]
+         (let [fs (into {} fs)
+               r  (-reify* r (walk* a fs))]
+           `(featurec ~(walk* r fs) ~(walk* r x))))
+       IRelevant
+       (-relevant? [_ a] true)
+       IRunnable
+       (runnable? [_ a]
+         (not (lvar? (walk a x))))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
+
+(defn featurec [fs x]
+  (cgoal (-featurec fs x)))
+
 ;; =============================================================================
 ;; defc
 
@@ -4042,6 +4077,9 @@
       (catch Exception e
         false))))
 
+;; consider ^:partial type hint for arguments
+;; these argument only need to be partially instantiated
+
 (defmacro defc [name args & body]
   (let [-name (symbol (str "-" name))]
    `(let [~-name (fn ~-name
@@ -4060,7 +4098,7 @@
                       (~'rator [_#] '~name)
                       (~'rands [_#] (filter lvar? (flatten ~args)))
                       clojure.core.logic/IReifiableConstraint
-                      (~'reifyc [_# _# r#]
+                      (~'reifyc [_# _# r# a#]
                         (list '~name (map #(-reify r# %) ~args)))
                       clojure.core.logic/IRelevant
                       (~'-relevant? [_# s#] true)
@@ -4093,7 +4131,7 @@
                     `predc))
        (rands [_] [x])
        IReifiableConstraint
-       (reifyc [_ a r]
+       (reifyc [_ v r a]
          pform)
        IRelevant
        (-relevant? [_ a] true)

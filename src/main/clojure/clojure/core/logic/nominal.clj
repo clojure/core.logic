@@ -106,7 +106,7 @@
     (rator [_] `-nom-hash?)
     (rands [_] [x])
     clojure.core.logic.IReifiableConstraint
-    (reifyc [_ r s]
+    (reifyc [_ r s ap]
       (let [x (walk s x)
             a (walk s a)]
         ;; Filter constraints unrelated to reified variables.
