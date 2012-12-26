@@ -3880,6 +3880,9 @@
          (let [p (loop [sp (seq p) p p]
                    (if sp
                      (let [[x v] (first sp)
+                           ;; TODO: this seems expensive to walk* both sides
+                           ;; and run an equality test there must be a better
+                           ;; way - David
                            xv (walk* a x)
                            vv (walk* a v)]
                        (cond
