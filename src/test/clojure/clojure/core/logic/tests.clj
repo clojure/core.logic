@@ -2636,6 +2636,17 @@
          '([4 3 1 8 9 2 6 7 5]))))
 
 ;; =============================================================================
+;; Deep Constraints
+
+(deftest test-treec-1
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [x y]
+             (== q [x [2 3 y]])
+             (== x 1)))
+         '(([1 [2 3 _0]] :- (clojure.core.logic/treec _0 clojure.core/number?))))))
+
+;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
 (deftest test-attrs-1 []
