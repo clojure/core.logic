@@ -3789,8 +3789,14 @@
              v (walk s v)]
          (if (identical? u v)
            cs
-           (if (and (not (lvar? u)) (lvar? v))
+           (cond
+             (and (not (special-var? u)) (special-var? v))
              (disunify-terms v u s cs)
+             (and (not (special-var? v)) (special-var? u))
+             (disunify-terms u v s cs)
+             (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
+             (disunify-terms v u s cs)
+             :else
              (disunify-terms u v s cs)))))))
 
 (extend-protocol IDisunifyTerms

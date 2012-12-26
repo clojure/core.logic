@@ -195,7 +195,10 @@
     (susp (compose-pis pi (:pi t)) (:lvar t)))
   IApplyHash
   (apply-hash [x a c s]
-    (bind* s (remcg c) (addcg-now (-nom-hash? (apply-pi a (invert-pi (:pi x))) (:lvar x))) )))
+    (bind* s (remcg c) (addcg-now (-nom-hash? (apply-pi a (invert-pi (:pi x))) (:lvar x))) ))
+  IDisunifyTerms
+  (disunify-terms [u v s cs]
+    (disunify-terms (:lvar u) (apply-pi v (:pi u)) s cs)))
 
 (defn unify-with-susps- [v u s]
   (let [v (walk* s v)
