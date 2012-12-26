@@ -2357,8 +2357,6 @@
              (== q [x y])))
          '([6 3]))))
 
-;; FIXME
-
 (deftest test-eqfd-2 []
   (is (= (run* [q]
            (fresh [s e n d m o r y]
@@ -2608,9 +2606,6 @@
 
 (deftest test-sudokufd
   (is (-> (sudokufd easy0) first verify)))
-
-;; FIXME: when asking for 1 answer, we get something sensible
-;; when asking for 2 answers, we get a different set of answers
 
 (defn safefd []
   (run* [q]
