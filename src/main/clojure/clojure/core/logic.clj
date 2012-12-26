@@ -1005,6 +1005,9 @@
            (walk* s x)
            x))))))
 
+(defn special-var? [x]
+  (and (not (lvar? x)) (lvar? (:tovar x))))
+
 (defn unify [s u v]
   (if (identical? u v)
     s
@@ -1014,8 +1017,14 @@
       ;; because we add metadata on vars in walk - David
       (if (and (lvar? u) (= u v))
         s
-        (if (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
+        (cond
+          (and (not (special-var? u)) (special-var? v))
           (unify-terms v u s)
+          (and (not (special-var? v)) (special-var? u))
+          (unify-terms u v s)
+          (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
+          (unify-terms v u s)
+          :else
           (unify-terms u v s))))))
 
 (def unbound-names

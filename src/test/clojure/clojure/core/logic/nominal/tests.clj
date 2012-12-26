@@ -87,7 +87,13 @@
              (fresh [x y]
                (== (nom/tie a (nom/tie a x)) (nom/tie a (nom/tie b y)))
                (== [x y] q))))
-         [[[(susp '((a_0 a_1)) '_2) '_2] ':- 'a_0#_2]]))
+        [[[(susp '((a_0 a_1)) '_2) '_2] ':- 'a_0#_2]]))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (== (nom/tie a (nom/tie a x)) (nom/tie a (nom/tie b y)))
+               (== x y))))
+        '(_0)))
   (is (= (run* [q]
            (nom/fresh [a b]
              (fresh [x y]

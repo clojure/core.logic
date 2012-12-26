@@ -219,7 +219,7 @@
            s s]
       (if (empty? a*) s
         (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
-    (ext s (:lvar u) (apply-pi v (invert-pi (:pi u))))))
+    (unify-terms (:lvar u) (apply-pi v (invert-pi (:pi u))) s)))
 
 (defn susp [pi lvar]
   (if (empty? pi) lvar (Suspension. pi lvar)))
