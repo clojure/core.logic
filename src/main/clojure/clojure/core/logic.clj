@@ -28,6 +28,7 @@
 ;; =============================================================================
 ;; Marker Interfaces
 
+(definterface ITreeTerm)
 (definterface IVar)
 
 ;; =============================================================================
@@ -991,14 +992,14 @@
     nil
     (ext-no-check s u v)))
 
-(declare lcons?)
+(declare tree-term?)
 
 (defn walk* [s v]
   (let [v (walk s v)]
     (walk-term v
       (fn [x]
         (let [x (walk s x)]
-         (if (or (coll? x) (lcons? x))
+         (if (tree-term? x)
            (walk* s x)
            x))))))
 
@@ -1309,7 +1310,7 @@
       (throw (Exception. (str v " is non-storable")))
 
       (not= v ::not-found)
-      (if (or (coll? v) (lcons? v))
+      (if (tree-term? v)
         (ext s u v)
         (if (-> u clojure.core/meta ::unbound)
           (ext-no-check s u (assoc (root-val s u) :v v))
@@ -1366,6 +1367,8 @@
 ;; =============================================================================
 ;; LCons
 
+(declare lcons?)
+
 (defmacro umi
   [& args]
   (if (resolve 'unchecked-multiply-int)
@@ -1381,6 +1384,8 @@
 ;; TODO: clean up the printing code
 
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
+  clojure.core.logic.ITreeTerm
+
   clojure.lang.IObj
   (meta [this]
     meta)
@@ -1507,6 +1512,10 @@
    tail. The tail is improper if the last argument is a logic variable."
   ([f s] `(lcons ~f ~s))
   ([f s & rest] `(lcons ~f (llist ~s ~@rest))))
+
+(defn tree-term? [x]
+  (or (coll? x)
+      (instance? clojure.core.logic.ITreeTerm x)))
 
 ;; =============================================================================
 ;; Unification
