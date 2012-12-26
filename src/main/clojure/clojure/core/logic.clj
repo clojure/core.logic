@@ -1317,11 +1317,9 @@
       (throw (Exception. (str v " is non-storable")))
 
       (not= v ::not-found)
-      (if (deep-walk? v)
-        (ext s u v)
-        (if (-> u clojure.core/meta ::unbound)
-          (ext-no-check s u (assoc (root-val s u) :v v))
-          (ext-no-check s u v)))
+      (if (-> u clojure.core/meta ::unbound)
+        (ext s u (assoc (root-val s u) :v v))
+        (ext s u v))
       
       :else nil))
 
