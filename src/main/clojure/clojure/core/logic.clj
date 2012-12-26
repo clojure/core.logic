@@ -3850,8 +3850,11 @@
          (let [p (loop [sp (seq p) p p]
                    (if sp
                      (let [[x v] (first sp)
-                           xv (walk a x)
-                           vv (walk a v)]
+                           ;; TODO: this seems expensive to walk* both sides
+                           ;; and run an equality test there must be a better
+                           ;; way - David
+                           xv (walk* a x)
+                           vv (walk* a v)]
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
                          (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
