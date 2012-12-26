@@ -1109,7 +1109,7 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (if-not (lvar? v)
+    (let [u (if-not (lvar? (:tovar v))
               (assoc-meta u ::root true)
               u)]
       (Substitutions. (assoc s u v) (if vs (conj vs u)) cs cq cqs _meta)))
@@ -1317,7 +1317,7 @@
       (throw (Exception. (str v " is non-storable")))
 
       (not= v ::not-found)
-      (if (or (coll? v) (lcons? v))
+      (if (deep-walk? v)
         (ext s u v)
         (if (-> u clojure.core/meta ::unbound)
           (ext-no-check s u (assoc (root-val s u) :v v))
@@ -3239,7 +3239,7 @@
 (defn force-ans [x]
   (fn [a]
     ((let [v (walk a x)]
-       (if (lvar? v)
+       (if (lvar? (:tovar v))
          (-force-ans (get-dom-fd a x) v)
          (let [x (root-var a x)]
            (if (sequential? v)
