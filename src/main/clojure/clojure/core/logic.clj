@@ -1171,7 +1171,7 @@
   
   (ext-run-cs [this x v]
     (let [x  (root-var this x)
-          xs (if (lvar? v)
+          xs (if (lvar? (:tovar v))
                [x (root-var this v)]
                [x])
           s  (if *occurs-check*
@@ -1430,14 +1430,14 @@
                     you o]
                (cond
                 (nil? me) (nil? you)
-                (lvar? me) true
-                (lvar? you) true
+                (lvar? (:tovar me)) true
+                (lvar? (:tovar you)) true
                 (and (lcons? me) (lcons? you))
                   (let [mef  (lfirst me)
                         youf (lfirst you)]
                     (and (or (= mef youf)
-                             (lvar? mef)
-                             (lvar? youf))
+                             (lvar? (:tovar mef))
+                             (lvar? (:tovar youf)))
                          (recur (lnext me) (lnext you))))
                 :else (= me you))))))
 
@@ -1460,7 +1460,7 @@
               (recur (lnext u) (next v) s)
               nil)
             (unify s u v))
-          (if (lvar? u)
+          (if (lvar? (:tovar u))
             (if-let [s (unify s u '())]
               s
               (unify s u nil))
@@ -1468,10 +1468,10 @@
       
       (lcons? v)
       (loop [u u v v s s]
-        (if (lvar? u)
+        (if (lvar? (:tovar u))
           (unify s u v)
           (cond
-            (lvar? v) (unify s v u)
+            (lvar? (:tovar v)) (unify s v u)
             (and (lcons? u) (lcons? v))
             (if-let [s (unify s (lfirst u) (lfirst v))]
               (recur (lnext u) (lnext v) s)
@@ -2604,7 +2604,7 @@
 ;; TODO: for arity greater than 20, we need to use rest args
 
 (defn contains-lvar? [x]
-  (some lvar? (tree-seq coll? seq x)))
+  (some (fn [y] (lvar? (:tovar y))) (tree-seq coll? seq x)))
 
 (defmacro extend-rel [name & args]
   (let [arity (count args)
@@ -2918,13 +2918,14 @@
 
 (defn get-dom-fd
   [a x]
-  (if (lvar? x)
+  (if (lvar? (:tovar x))
     (get-dom a x ::fd)
     x))
 
 (defn ext-dom-fd
   [a x dom]
-  (let [domp (get-dom-fd a x)
+  (let [x (:tovar x)
+        domp (get-dom-fd a x)
         a    (add-dom a x ::fd dom)]
     (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::fd) a)
@@ -3105,7 +3106,7 @@
   [a vars & body]
   (let [get-var-dom (fn [a [v b]]
                       `(~b (let [v# (walk ~a ~v)]
-                             (if (lvar? v#)
+                             (if (lvar? (:tovar v#))
                                (get-dom-fd ~a v#)
                                v#))))]
    `(let [~@(mapcat (partial get-var-dom a) (partition 2 vars))]
@@ -3133,7 +3134,7 @@
   (fn [a]
     (when dom
       (cond
-       (lvar? x) (update-var-dom a x dom)
+       (lvar? (:tovar x)) (update-var-dom a x dom)
        (member? dom x) a
        :else nil))))
 
@@ -3198,7 +3199,7 @@
 
   Object
   (-force-ans [v x]
-    (if (lvar? x)
+    (if (lvar? (:tovar x))
       (ext-run-csg x v)
       s#))
 
@@ -3608,7 +3609,7 @@
                (if y*
                  (let [y (first y*)
                        v (or (get-dom-fd s y) (walk s y))
-                       s (if-not (lvar? v)
+                       s (if-not (lvar? (:tovar v))
                            (cond
                              (= x v) nil
                              (member? v x) ((process-dom y (difference v x)) s)
@@ -3661,7 +3662,7 @@
        clojure.lang.IFn
        (invoke [this s]
          (let [v* (walk s v*)
-               {x* true n* false} (group-by lvar? v*)
+              {x* true n* false} (group-by (fn [y] (lvar? (:tovar y))) v*)
                n* (sort < n*)]
            (when (list-sorted? < n*)
              (let [x* (into #{} x*)
@@ -3872,11 +3873,11 @@
          (let [p (loop [sp (seq p) p p]
                    (if sp
                      (let [[x v] (first sp)
-                           xv (walk a x)
-                           vv (walk a v)]
+                           xv (walk* a x)
+                           vv (walk* a v)]
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
-                         (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
+                         (and (not (lvar? (:tovar xv))) (not (lvar? (:tovar vv))) (not= xv vv)) nil
                          :else (recur (next sp) p)))
                      p))]
            (if p
@@ -3911,13 +3912,13 @@
        (rands [_] (seq (recover-vars p)))
        IRunnable
        (runnable? [this s]
-         (some #(not= (walk s %) %) (recover-vars p)))
+         (some #(not= (:tovar (walk s %)) (:tovar %)) (recover-vars p)))
        IRelevant
        (-relevant? [this s]
          (not (empty? p)))
        IRelevantVar
        (-relevant-var? [this x]
-         ((recover-vars p) x))
+         ((recover-vars p) (:tovar x)))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -4064,7 +4065,7 @@
        (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
-         (not (lvar? (walk a x))))
+         (not (lvar? (:tovar (walk a x)))))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 

@@ -304,8 +304,6 @@
            (nom/fresh [a b]
              (fresh [x y]
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
-               ;; TODO(namin): this one doesn't work without the spurious next goal.
-               (== x 'foo)
                (!= x y)
                (== x 'foo)
                (== [x y] q))))
