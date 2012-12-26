@@ -147,7 +147,7 @@
 (declare unify-with-susps- unify-two-susps-)
 
 (deftype Suspension [pi lvar]
-  clojure.core.logic.IDeepWalk
+  clojure.core.logic.ITreeTerm
   Object
   (toString [_]
     (str "<susp:(" (apply str pi) ")" lvar ">"))
@@ -291,6 +291,7 @@
 (declare tie)
 
 (deftype Tie [binding-nom body]
+  clojure.core.logic.ITreeTerm
   Object
   (toString [_]
     (str "<tie:" binding-nom "." body ">"))
