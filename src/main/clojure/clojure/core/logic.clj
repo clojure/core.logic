@@ -4053,16 +4053,18 @@
 
 (defn -featurec
   ([fs x] (-featurec (partial-map fs) x nil))
-  ([fs x id]
+  ([fs x _id]
      (reify
        clojure.lang.IFn
        (invoke [this a]
          ((composeg
            (== fs x)
            (remcg this)) a))
+       IConstraintId
+       (id [this] _id)
        IWithConstraintId
-       (with-id [this id]
-         (-featurec fs x id))
+       (with-id [this _id]
+         (-featurec fs x _id))
        IConstraintOp
        (rator [_] `featurec)
        (rands [_] [fs x])
@@ -4118,6 +4120,8 @@
                               test# (do ~@body)]
                           (when test#
                             ((remcg this#) a#))))
+                      clojure.core.logic/IConstraintId
+                      (~'id [_#] id#)
                       clojure.core.logic/IWithConstraintId
                       (~'with-id [_# id#] (~-name ~@args id#))
                       clojure.core.logic/IConstraintOp
@@ -4140,8 +4144,9 @@
 ;; Predicate Constraint
 
 (defn -predc
-  ([x p] (-predc x p p))
-  ([x p pform]
+  ([x p] (-predc x p p nil))
+  ([x p pform] (-predc x p pform nil))
+  ([x p pform _id]
      (reify
        Object
        (toString [_]
@@ -4151,6 +4156,11 @@
          (let [x (walk a x)]
            (when (p x)
              ((remcg this) a))))
+       IConstraintId
+       (id [this] _id)
+       IWithConstraintId
+       (with-id [this _id]
+         (-predc x p pform _id))
        IConstraintOp
        (rator [_] (if (seq? pform)
                     `(predc ~pform)
@@ -4171,3 +4181,75 @@
   ([x p] (predc x p p))
   ([x p pform]
      (cgoal (-predc x p pform))))
+
+;; =============================================================================
+;; Deep Constraint
+
+(defprotocol IConstrainTree
+  (-constrain-tree [t fc s]))
+
+(declare treec)
+
+(extend-protocol IConstrainTree
+  clojure.lang.Sequential
+  (-constrain-tree [t fc s]
+    (loop [t (seq t) s s]
+      (if t
+        (when-let [s (fc (first t) s)]
+          (recur (next t) s))
+        s)))
+
+  clojure.lang.IPersistentMap
+  (-constrain-tree [t fc s]
+    (loop [t (seq t) s s]
+      (if t
+        (let [[_ v] (first t)
+              s (fc v s)]
+          (when s
+            (recur (next t) s)))
+        s))))
+
+(defn constrain-tree [t fc]
+  (fn [a]
+    (-constrain-tree t fc a)))
+
+;; TODO: there are quite a few assumption in the implementation, for
+;; example we don't run the constraint on the tree term itself. We
+;; should probably consider how this might be made more generic.
+;; Perhaps a branch constraint and a children contraint? - David
+
+(defn -treec
+  ([x fc cform] (-treec x fc cform nil))
+  ([x fc cform _id]
+     (reify
+       clojure.lang.IFn
+       (invoke [this a]
+         (let [x (walk a x)]
+           ((composeg
+             (if (tree-term? x)
+               (constrain-tree x
+                 (fn [t a] ((treec t fc cform) a)))
+               (fc x))
+             (remcg this)) a)))
+       IConstraintId
+       (id [this] _id)
+       IWithConstraintId
+       (with-id [this _id]
+         (-treec x fc cform _id))
+       IConstraintOp
+       (rator [_] `treec)
+       (rands [_] [x])
+       IReifiableConstraint
+       (reifyc [_ v r a]
+         (let [x (walk* r x)]
+           `(treec ~x ~cform)))
+       IRelevant
+       (-relevant? [_ a] true)
+       IRunnable
+       (runnable? [_ a]
+         (not (lvar? (walk a x))))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
+
+(defn treec [x fc cform]
+  (cgoal (-treec x fc cform)))
