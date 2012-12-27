@@ -4195,14 +4195,12 @@
        clojure.lang.IFn
        (invoke [this a]
          (let [x (walk a x)]
-           (if (tree-term? x)
-             ((composeg
+           ((composeg
+             (if (tree-term? x)
                (constrain-tree x
                  (fn [t a] ((treec t fc cform) a)))
-               (remcg this)) a)
-             ((composeg
-               (fc x)
-               (remcg this)) a))))
+               (fc x))
+             (remcg this)) a)))
        IConstraintId
        (id [this] _id)
        IWithConstraintId
