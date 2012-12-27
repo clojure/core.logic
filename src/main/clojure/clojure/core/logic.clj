@@ -1220,6 +1220,15 @@
       (let [v (if (lvar? v) ::unbound v)]
         (ext-no-check s x (subst-val v {dom domv}))))))
 
+(defn update-dom [s x dom f]
+  (let [x (root-var s x)
+        v (root-val s x)
+        v (if (lvar? v)
+            (subst-val ::unbound)
+            v)
+        doms (:doms v)]
+    (update-var s x (assoc-dom v dom (f (get doms dom))))))
+
 (defn rem-dom [s x dom]
   (let [x (root-var s x)
         v (root-val s x)]
