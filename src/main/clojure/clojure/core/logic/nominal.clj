@@ -19,9 +19,6 @@
 (defprotocol IApplyPi
   (apply-pi [t pi]))
 
-(defprotocol IApplyHash
-  (apply-hash [t a c s]))
-
 ;; =============================================================================
 ;; Nom
 
@@ -56,12 +53,7 @@
     (ext s v (symbol (str (if *reify-noms* "a" (:oname v)) "_" (count s)))))
   IApplyPi
   (apply-pi [t pi]
-    (api t pi))
-  IApplyHash
-  (apply-hash [x a c s]
-    (if (or  (identical? x a) (= x a))
-      nil
-      (bind s (remcg c)))))
+    (api t pi)))
 
 (defn nom [lvar]
   (Nom. lvar))
@@ -93,53 +85,30 @@
 
 (declare tie? susp? invert-pi compose-pis disagreement-set tie susp)
 
-(defn -nom-hash? [a x]
-  (reify
-    Object
-    (toString [_]
-      (str (:oname a) "#" x))
-    clojure.lang.IFn
-    (invoke [this s]
-      (let [x (walk s x)]
-        (apply-hash x a this s)))
-    clojure.core.logic.IConstraintOp
-    (rator [_] `-nom-hash?)
-    (rands [_] [x])
-    clojure.core.logic.IReifiableConstraint
-    (reifyc [_ r s ap]
+(defn make-nom-hash [a]
+  (fn [x]
+    (not (= x a))))
+
+(defn hash [a t]
+  (treec
+    t
+    #(predc % (make-nom-hash a))
+    `hash
+    (fn [x]
+      (cond
+        (and (tie? x) (= (:binding-nom x) a))
+        (fn [s] s)
+
+        (susp? x)
+        (hash (apply-pi a (invert-pi (:pi x))) (:lvar x))
+
+        :else nil))
+    (fn [_ r s ap x]
       (let [x (walk s x)
             a (walk s a)]
         ;; Filter constraints unrelated to reified variables.
         (when (and (symbol? a)  (empty? (->> (list x) flatten (filter lvar?))))
-          (symbol (str a "#" x)))))
-    clojure.core.logic.IRelevant
-    (-relevant? [_ s] true)
-    clojure.core.logic.IRunnable
-    (runnable? [_ s]
-      (let [x (walk s x)]
-        (not (lvar? x))))
-    clojure.core.logic.IConstraintWatchedStores
-    (watched-stores [this] #{::clojure.core.logic/subst})))
-
-(extend-protocol IApplyHash
-  nil
-  (apply-hash [x a c s]
-    (bind s (remcg c)))
-
-  Object
-  (apply-hash [x a c s]
-    (bind s (remcg c)))
-
-  clojure.core.logic.LCons
-  (apply-hash [x a c s]
-    (bind* s (remcg c) (addcg-now (-nom-hash? a (lfirst x))) (addcg-now (-nom-hash? a (lnext x)))))
-
-  clojure.lang.IPersistentCollection
-  (apply-hash [x a c s]
-    (reduce (fn [s c] (bind* s (addcg-now (-nom-hash? a c)))) (bind s (remcg c)) x)))
-
-(defn hash [a t]
-  (cgoal (-nom-hash? a t)))
+          (symbol (str a "#" x)))))))
 
 ;; =============================================================================
 ;; Suspension
@@ -190,12 +159,12 @@
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check s x (:lvar v)))
+  clojure.core.logic.IConstrainTree
+  (-constrain-tree [t fc s]
+    (fc (:lvar t) s))
   IApplyPi
   (apply-pi [t pi]
     (susp (compose-pis pi (:pi t)) (:lvar t)))
-  IApplyHash
-  (apply-hash [x a c s]
-    (bind* s (remcg c) (addcg-now (-nom-hash? (apply-pi a (invert-pi (:pi x))) (:lvar x))) ))
   IDisunifyTerms
   (disunify-terms [u v s cs]
     (disunify-terms (:lvar u) (apply-pi v (:pi u)) s cs)))
@@ -221,7 +190,7 @@
     (loop [a* (disagreement-set (:pi v) (:pi u))
            s s]
       (if (empty? a*) s
-        (recur (rest a*) (bind s (addcg-now (-nom-hash? (first a*) (:lvar u)))))))
+        (recur (rest a*) (bind s (hash (first a*) (:lvar u))))))
     (unify-terms (:lvar u) (apply-pi v (invert-pi (:pi u))) s)))
 
 (defn susp [pi lvar]
@@ -323,7 +292,7 @@
           (fn [s] (unify s
                    (apply-pi (:body v) [[(:binding-nom v) (:binding-nom u)]])
                    (:body u)))
-          (addcg-now (-nom-hash? (:binding-nom u) (:body v)))))
+          (hash (:binding-nom u) (:body v))))
       (susp? u)
       (unify-with-susps- v u s)
       :else nil))
@@ -339,14 +308,12 @@
   clojure.core.logic.IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check s x (:body v)))
+  clojure.core.logic.IConstrainTree
+  (-constrain-tree [t fc s]
+    (fc (:body t) s))
   IApplyPi
   (apply-pi [t pi]
-    (tie (api (:binding-nom t) pi) (apply-pi (:body t) pi)))
-  IApplyHash
-  (apply-hash [x a c s]
-    (if (= a (:binding-nom x))
-      (bind s (remcg c))
-      (bind* s (remcg c) (addcg-now (-nom-hash? a (:body x)))))))
+    (tie (api (:binding-nom t) pi) (apply-pi (:body t) pi))))
 
 (defn tie [binding-nom body]
   (Tie. binding-nom body))
