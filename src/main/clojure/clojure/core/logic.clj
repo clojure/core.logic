@@ -1044,6 +1044,9 @@
   (let [v (walk* s v)]
     (walk* (-reify* empty-s v) v)))
 
+(defn creify [v r a]
+  (walk* (-reify* r (walk* a v)) v))
+
 (defn build [s u]
   (build-term u s))
 
@@ -1265,10 +1268,19 @@
     (vary-meta a assoc k v)))
 
 (defn merge-subst-vals [x root]
-  (subst-val
-    (:v root)
-    (merge-with -merge-doms (:doms x) (:doms root))
-    (merge (meta x) (meta root))))
+  (let [doms (loop [xd (seq (:doms x)) rd (:doms root) r {}]
+               (if xd
+                 (let [[xk xv] (first xd)]
+                   (if-let [[_ rv] (find rd xk)]
+                     (let [nd (-merge-doms xv rv)]
+                       (when nd
+                         (recur (next xd) (dissoc rd xk)
+                           (assoc r xk nd))))
+                     (recur (next xd) rd (assoc r xk xv))))
+                 (merge r rd)))]
+    (when doms
+      (subst-val (:v root) doms
+        (merge (meta x) (meta root))))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -1309,17 +1321,18 @@
                       (-> u clojure.core/meta ::unbound) [u v]
                       (-> v clojure.core/meta ::unbound) [v u]
                       :else nil)]
-       (if repoint
-         (let [[root other] repoint
-               s (assoc s :cs (migrate (:cs s) other root))
-               s (if (-> other clojure.core/meta ::unbound)
-                   (ext-no-check s root
-                     (merge-subst-vals
-                       (root-val s other)
-                       (root-val s root)))
-                   s)]
-           (ext-no-check s other root))
-         (ext-no-check s u v)))
+        (if repoint
+          (let [[root other] repoint
+                s (assoc s :cs (migrate (:cs s) other root))
+                s (if (-> other clojure.core/meta ::unbound)
+                    (when-let [nsv (merge-subst-vals
+                                    (root-val s other)
+                                    (root-val s root))]
+                      (ext-no-check s root nsv))
+                    s)]
+            (when s
+              (ext-no-check s other root)))
+          (ext-no-check s u v)))
 
       (non-storable? v)
       (throw (Exception. (str v " is non-storable")))
@@ -4226,8 +4239,8 @@
 ;; fspecial is a hack around this TODO - Nada
 
 (defn -treec
-  ([x fc cform fspecial freify] (-treec x fc cform fspecial freify nil))
-  ([x fc cform fspecial freify _id]
+  ([x fc cform fspecial] (-treec x fc cform fspecial nil))
+  ([x fc cform fspecial _id]
      (reify
        clojure.lang.IFn
        (invoke [this a]
@@ -4237,21 +4250,21 @@
                 (fspecial x)
                 (if (tree-term? x)
                   (constrain-tree x
-                    (fn [t a] ((treec t fc cform fspecial freify) a)))
+                    (fn [t a] ((treec t fc cform fspecial) a)))
                   (fc x)))
              (remcg this)) a)))
        IConstraintId
        (id [this] _id)
        IWithConstraintId
        (with-id [this _id]
-         (-treec x fc cform fspecial freify _id))
+         (-treec x fc cform fspecial _id))
        IConstraintOp
        (rator [_] `treec)
        (rands [_] [x])
        IReifiableConstraint
        (reifyc [c v r a]
-         (if freify
-           (freify c v r a x)
+         (if (fn? cform)
+           (cform c v r a x)
            (let [x (walk* r x)]
              `(treec ~x ~cform))))
        IRelevant
@@ -4263,5 +4276,5 @@
        (watched-stores [this] #{::subst}))))
 
 (defn treec
-  ([x fc cform] (treec x fc cform (fn [x] nil) nil))
-  ([x fc cform fspecial freify] (cgoal (-treec x fc cform fspecial freify))))
+  ([x fc cform] (treec x fc cform (fn [x] nil)))
+  ([x fc cform fspecial] (cgoal (-treec x fc cform fspecial))))

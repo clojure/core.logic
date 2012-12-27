@@ -2710,6 +2710,14 @@
              (== x '(foo))))
          ())))
 
+(deftest test-treec-custom-reify-1
+  (is (= (run* [q]
+           (fresh [x]
+             (treec q #(predc % number?)
+               (fn [c v r a _]
+                 `(~'hashc ~v ~(creify x r a))))))
+         '((_0 :- (hashc _0 _1))))))
+
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 

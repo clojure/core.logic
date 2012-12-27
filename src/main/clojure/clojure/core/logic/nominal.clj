@@ -93,7 +93,12 @@
   (treec
     t
     #(predc % (make-nom-hash a))
-    `hash
+    (fn [_ r s ap x]
+      (let [x (walk* s x)
+            a (walk* s a)]
+        ;; Filter constraints unrelated to reified variables.
+        (when (and (symbol? a)  (empty? (->> (list x) flatten (filter lvar?))))
+          (symbol (str a "#" x)))))    
     (fn [x]
       (cond
         (and (tie? x) (= (:binding-nom x) a))
@@ -102,13 +107,7 @@
         (susp? x)
         (hash (apply-pi a (invert-pi (:pi x))) (:lvar x))
 
-        :else nil))
-    (fn [_ r s ap x]
-      (let [x (walk s x)
-            a (walk s a)]
-        ;; Filter constraints unrelated to reified variables.
-        (when (and (symbol? a)  (empty? (->> (list x) flatten (filter lvar?))))
-          (symbol (str a "#" x)))))))
+        :else nil))))
 
 ;; =============================================================================
 ;; Suspension
