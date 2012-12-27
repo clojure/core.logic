@@ -2149,6 +2149,7 @@
 
   Choice
   (ifa [b gs c]
+    ;; TODO: should this be (ifu (.left b) gs (delay (ifu (.right b) gs c)))
     (reduce bind b gs)))
 
 (extend-protocol IIfU
@@ -2752,7 +2753,6 @@
          (let [ss (first w)
                f  (:f ss)
                w  (into a (next w))]
-           (prn 'here?)
            (if (empty? w)
              (f)
              (mplus (f) (fn [] w))))))
