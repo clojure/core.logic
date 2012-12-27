@@ -2636,6 +2636,27 @@
          '([4 3 1 8 9 2 6 7 5]))))
 
 ;; =============================================================================
+;; Feature Constraints
+
+(deftest test-featurec-1
+  (is (= (run* [q]
+           (featurec q {:foo 1}))
+         '((_0 :- (clojure.core.logic/featurec _0 {:foo 1})))))
+  (is (= (run* [q]
+           (featurec q {:foo 1})
+           (== q {:foo 1 :bar 2}))
+         '({:foo 1 :bar 2})))
+  (is (= (run* [q]
+           (featurec q {:foo 1})
+           (== q {:bar 2}))
+         ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (featurec x {:foo q})
+             (== x {:foo 1})))
+         '(1))))
+
+;; =============================================================================
 ;; Deep Constraints
 
 (deftest test-treec-1
