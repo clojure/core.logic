@@ -2665,7 +2665,7 @@
            (fresh [x y]
              (== q [x [2 3 y]])
              (== x 1)))
-         '(([1 [2 3 _0]] :- (clojure.core.logic/treec _0 clojure.core/number?)))))
+         '(([1 [2 3 _0]] :- (clojure.core.logic/fixc _0 clojure.core/number?)))))
   (is (= (run* [q]
            (treec q #(predc % number?) `number?)
            (fresh [x y]
@@ -2677,7 +2677,7 @@
            (treec q #(predc % number?) `number?)
            (fresh [z]
              (== q {:x {:y z}})))
-         '(({:x {:y _0}} :- (clojure.core.logic/treec _0 clojure.core/number?)))))
+         '(({:x {:y _0}} :- (clojure.core.logic/fixc _0 clojure.core/number?)))))
   (is (= (run* [q]
            (treec q #(predc % number?) `number?)
            (fresh [z]
@@ -2694,7 +2694,7 @@
            (treec q #(predc % number?) `number?)
            (fresh [x]
              (== q (llist 1 2 x))))
-         [[(llist 1 2 '_0) ':- '(clojure.core.logic/treec _0 clojure.core/number?)]]))
+         [[(llist 1 2 '_0) ':- '(clojure.core.logic/fixc _0 clojure.core/number?)]]))
   (is (= (run* [q]
            (treec q #(predc % number?) `number?)
            (fresh [x]

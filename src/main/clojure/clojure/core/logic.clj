@@ -4207,33 +4207,28 @@
 ;; should probably consider how this might be made more generic.
 ;; Perhaps a branch constraint and a children contraint? - David
 
-(defn -treec
-  ([x fc cform] (-treec x fc cform nil))
-  ([x fc cform _id]
+(defn -fixc
+  ([x f reifier] (-fixc x f reifier nil))
+  ([x f reifier _id]
      (reify
        clojure.lang.IFn
        (invoke [this a]
          (let [x (walk a x)]
-           ((composeg
-             (if (tree-term? x)
-               (constrain-tree x
-                 (fn [t a] ((treec t fc cform) a)))
-               (fc x))
-             (remcg this)) a)))
+           ((composeg (f x a reifier) (remcg this)) a)))
        IConstraintId
        (id [this] _id)
        IWithConstraintId
        (with-id [this _id]
-         (-treec x fc cform _id))
+         (-fixc x f reifier _id))
        IConstraintOp
-       (rator [_] `treec)
+       (rator [_] `fixc)
        (rands [_] [x])
        IReifiableConstraint
        (reifyc [c v r a]
-         (if (fn? cform)
-           (cform c x v r a)
+         (if (fn? reifier)
+           (reifier c x v r a)
            (let [x (walk* r x)]
-             `(treec ~x ~cform))))
+             `(fixc ~x ~reifier))))
        IRelevant
        (-relevant? [_ a] true)
        IRunnable
@@ -4242,5 +4237,14 @@
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
-(defn treec [x fc cform]
-  (cgoal (-treec x fc cform)))
+(defn fixc [x f reifier]
+  (cgoal (-fixc x f reifier)))
+
+(defn treec [x fc reifier]
+  (fixc x
+    (fn loop [t a reifier]
+      (if (tree-term? t)
+        (constrain-tree t
+          (fn [t a] ((fixc t loop reifier) a)))
+        (fc t)))
+    reifier))
