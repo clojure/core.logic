@@ -4211,11 +4211,6 @@
   (fn [a]
     (-constrain-tree t fc a)))
 
-;; TODO: there are quite a few assumption in the implementation, for
-;; example we don't run the constraint on the tree term itself. We
-;; should probably consider how this might be made more generic.
-;; Perhaps a branch constraint and a children contraint? - David
-
 (defn -fixc
   ([x f reifier] (-fixc x f reifier nil))
   ([x f reifier _id]
