@@ -4161,19 +4161,11 @@
 (declare treec)
 
 (extend-protocol IConstrainTree
-  nil
-  (-constrain-tree [t fc s]
-    (fc t s))
-
-  Object
-  (-constrain-tree [t fc s]
-    (fc t s))
-
   clojure.lang.Sequential
   (-constrain-tree [t fc s]
     (loop [t (seq t) s s]
       (if t
-        (when-let [s (-constrain-tree (first t) fc s)]
+        (when-let [s (fc (first t) s)]
           (recur (next t) s))
         s)))
 
@@ -4182,7 +4174,7 @@
     (loop [t (seq t) s s]
       (if t
         (let [[_ v] (first t)
-              s (-constrain-tree v fc s)]
+              s (fc v s)]
           (when s
             (recur (next t) s)))
         s))))
