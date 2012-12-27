@@ -93,7 +93,7 @@
   (treec
     t
     #(predc % (make-nom-hash a))
-    (fn [_ r s ap x]
+    (fn [_ x r s ap]
       (let [x (walk* s x)
             a (walk* s a)]
         ;; Filter constraints unrelated to reified variables.

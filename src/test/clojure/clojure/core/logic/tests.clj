@@ -2712,8 +2712,8 @@
   (is (= (run* [q]
            (fresh [x]
              (treec q #(predc % number?)
-               (fn [c v r a _]
-                 `(~'hashc ~v ~(creify x r a))))))
+               (fn [c _ v r a]
+                 `(~'hashc ~v ~(-reify a x r))))))
          '((_0 :- (hashc _0 _1))))))
 
 ;; =============================================================================
