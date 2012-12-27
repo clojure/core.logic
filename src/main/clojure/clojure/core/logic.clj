@@ -1234,6 +1234,15 @@
       (let [v (if (lvar? v) ::unbound v)]
         (ext-no-check s x (subst-val v {dom domv}))))))
 
+(defn update-dom [s x dom f]
+  (let [x (root-var s x)
+        v (root-val s x)
+        v (if (lvar? v)
+            (subst-val ::unbound)
+            v)
+        doms (:doms v)]
+    (update-var s x (assoc-dom v dom (f (get doms dom))))))
+
 (defn rem-dom [s x dom]
   (let [x (root-var s x)
         v (root-val s x)]
@@ -4227,11 +4236,6 @@
 (defn constrain-tree [t fc]
   (fn [a]
     (-constrain-tree t fc a)))
-
-;; TODO: there are quite a few assumption in the implementation, for
-;; example we don't run the constraint on the tree term itself. We
-;; should probably consider how this might be made more generic.
-;; Perhaps a branch constraint and a children contraint? - David
 
 (defn -fixc
   ([x f reifier] (-fixc x f reifier nil))

@@ -2766,3 +2766,14 @@
         s (ext-run-cs s x 1)]
     (is (= (root-val s x) 1))
     (is (= (walk s x) 1))))
+
+(deftest test-update-dom-1 []
+  (let [x (lvar 'x)
+        s (add-dom empty-s x ::nom '[(swap a b)])
+        s (update-dom s x ::nom (fn [d] (conj d '(swap x y))))]
+    (is (= (get-dom s x ::nom) '[(swap a b) (swap x y)]))))
+
+(deftest test-update-dom-2 []
+  (let [x (lvar 'x)
+        s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
+    (is (= (get-dom s x ::nom) '[(swap x y)]))))
