@@ -1251,10 +1251,19 @@
     (vary-meta a assoc k v)))
 
 (defn merge-subst-vals [x root]
-  (subst-val
-    (:v root)
-    (merge-with -merge-doms (:doms x) (:doms root))
-    (merge (meta x) (meta root))))
+  (let [doms (loop [xd (seq (:doms x)) rd (:doms root) r {}]
+               (if xd
+                 (let [[xk xv] (first xd)]
+                   (if-let [[_ rv] (find rd xk)]
+                     (let [nd (-merge-doms xv rv)]
+                       (when nd
+                         (recur (next xd) (dissoc rd xk)
+                           (assoc r xk nd))))
+                     (recur (next xd) rd (assoc r xk xv))))
+                 (merge r rd)))]
+    (when doms
+      (subst-val (:v root) doms
+        (merge (meta x) (meta root))))))
 
 ;; =============================================================================
 ;; Logic Variables
@@ -1294,17 +1303,18 @@
                       (-> u clojure.core/meta ::unbound) [u v]
                       (-> v clojure.core/meta ::unbound) [v u]
                       :else nil)]
-       (if repoint
-         (let [[root other] repoint
-               s (assoc s :cs (migrate (:cs s) other root))
-               s (if (-> other clojure.core/meta ::unbound)
-                   (ext-no-check s root
-                     (merge-subst-vals
-                       (root-val s other)
-                       (root-val s root)))
-                   s)]
-           (ext-no-check s other root))
-         (ext-no-check s u v)))
+        (if repoint
+          (let [[root other] repoint
+                s (assoc s :cs (migrate (:cs s) other root))
+                s (if (-> other clojure.core/meta ::unbound)
+                    (when-let [nsv (merge-subst-vals
+                                    (root-val s other)
+                                    (root-val s root))]
+                      (ext-no-check s root nsv))
+                    s)]
+            (when s
+              (ext-no-check s other root)))
+          (ext-no-check s u v)))
 
       (non-storable? v)
       (throw (Exception. (str v " is non-storable")))
