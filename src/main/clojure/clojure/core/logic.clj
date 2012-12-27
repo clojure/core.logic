@@ -1030,12 +1030,13 @@
   (let [v (walk s v)]
     (reify-term v s)))
 
-(defn -reify [s v]
-  (let [v (walk* s v)]
-    (walk* (-reify* empty-s v) v)))
-
-(defn creify [v r a]
-  (walk* (-reify* r (walk* a v)) v))
+(defn -reify
+  ([s v]
+     (let [v (walk* s v)]
+       (walk* (-reify* empty-s v) v)))
+  ([s v r]
+     (let [v (walk* s v)]
+       (walk* (-reify* r v) v))))
 
 (defn build [s u]
   (build-term u s))
@@ -4230,7 +4231,7 @@
        IReifiableConstraint
        (reifyc [c v r a]
          (if (fn? cform)
-           (cform c v r a)
+           (cform c x v r a)
            (let [x (walk* r x)]
              `(treec ~x ~cform))))
        IRelevant
