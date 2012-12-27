@@ -786,16 +786,10 @@
 ;; -----------------------------------------------------------------------------
 ;; condu (committed-choice)
 
-(comment
-  (defn onceo [g]
-    (condu
-      (g s#)))
-
- (deftest test-condu-1
-   (is (= (run* [x]
-            (onceo (teacupo x)))
-          '(tea))))
- )
+(deftest test-condu-1
+  (is (= (run* [x]
+               (onceo (teacupo x)))
+         '(tea))))
 
 (deftest test-condu-2
   (is (= (into #{}
