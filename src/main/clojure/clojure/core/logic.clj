@@ -4158,6 +4158,14 @@
 (declare treec)
 
 (extend-protocol IConstrainTree
+  clojure.core.logic.LCons
+  (-constrain-tree [t fc s]
+    (loop [t t s s]
+      (if (lvar? t)
+        (fc t s)
+        (when-let [s (fc (lfirst t) s)]
+          (recur (lnext t) s)))))
+  
   clojure.lang.Sequential
   (-constrain-tree [t fc s]
     (loop [t (seq t) s s]
