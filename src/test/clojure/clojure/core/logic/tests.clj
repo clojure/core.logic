@@ -1754,8 +1754,8 @@
 (deftest test-infd-1
   (let [x (lvar 'x)
         y (lvar 'y)
-        f ((infd x y (interval 1 10)) empty-s)
-        s (f)]
+        g (infd x y (interval 1 10))
+        s (-dec (g empty-s))]
     (is (= (get-dom-fd s x) (interval 1 10)))
     (is (= (get-dom-fd s y) (interval 1 10)))))
 
