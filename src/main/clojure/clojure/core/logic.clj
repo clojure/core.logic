@@ -92,11 +92,20 @@
 (defprotocol IBind
   (bind [this g]))
 
-(defprotocol IMPlus
-  (mplus [a f]))
+(defprotocol IBindFair
+  (bind-fair [this g]))
 
-(defprotocol ITake
-  (take* [a]))
+(defprotocol IMPlus
+  (mplus [this that]))
+
+(defprotocol ILeaf
+  (value [this] "The value at this leaf"))
+
+(defprotocol IBranch
+  (children [this] "The children of this node"))
+
+(defn leaf? [thing]
+  (instance? clojure.core.logic.ILeaf thing))
 
 ;; -----------------------------------------------------------------------------
 ;; soft cut & committed choice protocols
@@ -430,8 +439,8 @@
      :else (FiniteDomain. s (first s) (first (rseq s))))))
 
 (defn domain
-  "Construct a domain for assignment to a var. Arguments should 
-   be integers given in sorted order. domains may be more efficient 
+  "Construct a domain for assignment to a var. Arguments should
+   be integers given in sorted order. domains may be more efficient
    than intervals when only a few values are possible."
   [& args]
   (when (seq args)
@@ -603,7 +612,7 @@
               (multi-interval (interval _lb (dec that))
                               (interval (inc that) _ub))
               this))
-     
+
      (interval? that)
      (let [i this j that
            imin (lb i) imax (ub i)
@@ -620,7 +629,7 @@
         (and (> imax jmax)
              (<= jmin imin)) (interval (inc jmax) imax)
         :else (throw (Error. (str "Interval difference not defined " i " " j)))))
-     
+
      :else (difference* this that)))
 
   IIntervals
@@ -1121,14 +1130,14 @@
       (loop [lv v [v vp :as me] (find s v)]
         (cond
           (nil? me) lv
-          
+
           (not (lvar? vp))
           (if-let [sv (and (subst-val? vp) (:v vp))]
             (if (= sv ::unbound)
               (with-meta v (assoc (meta vp) ::unbound true))
               sv)
             vp)
-          
+
           :else (recur vp (find s vp))))
       v))
 
@@ -1157,7 +1166,7 @@
 
             :else (recur vp (find s vp)))))
       v))
-  
+
   (ext-run-cs [this x v]
     (let [x  (root-var this x)
           xs (if (lvar? v)
@@ -1183,11 +1192,12 @@
   IBind
   (bind [this g]
     (g this))
-  IMPlus
-  (mplus [this f]
-    (choice this f))
-  ITake
-  (take* [this] this))
+  IBindFair
+  (bind-fair [this g]
+    (g this))
+  ILeaf
+  (value [this]
+    this))
 
 (defn add-attr [s x attr attrv]
   (let [x (root-var s x)
@@ -1250,7 +1260,6 @@
   ([m cs] (Substitutions. m nil cs nil #{} nil)))
 
 (def empty-s (make-s))
-(def empty-f (fn []))
 
 (defn subst? [x]
   (instance? Substitutions x))
@@ -1338,7 +1347,7 @@
         (if (-> u clojure.core/meta ::unbound)
           (ext-no-check s u (assoc (root-val s u) :v v))
           (ext-no-check s u v)))
-      
+
       :else nil))
 
   IReifyTerm
@@ -1473,7 +1482,7 @@
               s
               (unify s u nil))
             nil)))
-      
+
       (lcons? v)
       (loop [u u v v s s]
         (if (lvar? u)
@@ -1485,7 +1494,7 @@
               (recur (lnext u) (lnext v) s)
               nil)
             :else (unify s u v))))
-      
+
       :else nil))
 
   IReifyTerm
@@ -1571,7 +1580,7 @@
                 nil)
               nil)
             (if (seq v) nil s))))
-      
+
       (lcons? v) (unify-terms v u s)
       :else nil))
 
@@ -1715,40 +1724,48 @@
   ([a g & g-rest]
      `(bind* (bind ~a ~g) ~@g-rest)))
 
+(defmacro bind-fair*
+  ([a g] `(bind-fair ~a ~g))
+  ([a g & g-rest]
+     `(bind-fair* (bind-fair ~a ~g) ~@g-rest)))
+
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(mplus ~e (fn [] (mplus* ~@e-rest)))))
+     `(mplus ~e (mplus* ~@e-rest))))
 
-(defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
+(declare choice)
 
-(extend-type Object
-  ITake
-  (take* [this] this))
-
-;; TODO: Choice always holds a as a list, can we just remove that?
-
-(deftype Choice [a f]
+(deftype Choice [left right]
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
-      :a a
+      :left left
+      :right right
       not-found))
   IBind
   (bind [this g]
-    (mplus (g a) (fn [] (bind f g))))
-  IMPlus
-  (mplus [this fp]
-    (Choice. a (fn [] (mplus (fp) f))))
-  ITake
-  (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+    (choice (bind left g) (bind right g)))
+  IBindFair
+  (bind-fair [this g]
+    (choice (bind-fair left g) (bind-fair right g)))
+  IBranch
+  (children [this]
+    [left right]))
 
-(defn choice [a f]
-  (Choice. a f))
+(defn choice [left right]
+  (cond
+   (nil? left) right
+   (nil? right) left
+   :else (Choice. left right)))
+
+;; TODO: might a binary tree be better?
+(defmacro choice*
+  ([e] e)
+  ([e & e-rest]
+     `(choice ~e (choice* ~@e-rest))))
 
 ;; -----------------------------------------------------------------------------
 ;; MZero
@@ -1757,34 +1774,41 @@
   nil
   (bind [_ g] nil))
 
-(extend-protocol IMPlus
+(extend-protocol IBindFair
   nil
-  (mplus [_ f] (f)))
-
-(extend-protocol ITake
-  nil
-  (take* [_] '()))
-
-;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type Object
-  IMPlus
-  (mplus [this f]
-    (Choice. this f)))
+  (bind-fair [_ g] nil))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
 
-(extend-type clojure.lang.Fn
+(deftype Inc [a restg]
   IBind
   (bind [this g]
-    (-inc (bind (this) g)))
-  IMPlus
-  (mplus [this f]
-    (-inc (mplus (f) this)))
-  ITake
-  (take* [this] (lazy-seq (take* (this)))))
+    (Inc. a (fn [a2] (bind (restg a2) g))))
+  IBindFair
+  (bind-fair [this g]
+    (Inc. a (fn [a2] (bind (g a2) restg))))
+  IBranch
+  (children [this]
+    (when-let [rest (restg a)]
+      [rest])))
+
+(defmacro -inc [a restg]
+  (let [a2 (gensym "a")
+        thunk-body (clojure.walk/prewalk-replace {a a2} restg)
+        thunk `(fn [~a2] ~thunk-body)]
+    `(Inc. ~a ~thunk)))
+
+(defn -dec [inc]
+  ((.restg inc) (.a inc)))
+
+;; -----------------------------------------------------------------------------
+;; Return
+
+(defrecord Return [value]
+  ILeaf
+  (value [this]
+    value))
 
 ;; =============================================================================
 ;; Syntax
@@ -1828,8 +1852,7 @@
   [& clauses]
   (let [a (gensym "a")]
     `(fn [~a]
-       (-inc
-        (mplus* ~@(bind-conde-clauses a clauses))))))
+       (-inc ~a (choice* ~@(bind-conde-clauses a clauses))))))
 
 (defn- lvar-bind [sym]
   ((juxt identity
@@ -1839,24 +1862,63 @@
   (mapcat lvar-bind syms))
 
 (defmacro fresh
-  "Creates fresh variables. Goals occuring within form a logical 
+  "Creates fresh variables. Goals occuring within form a logical
   conjunction."
   [[& lvars] & goals]
   `(fn [a#]
-     (-inc
-      (let [~@(lvar-binds lvars)]
-        (bind* a# ~@goals)))))
+     (-inc a# (let [~@(lvar-binds lvars)]
+                (bind* a# ~@goals)))))
 
 (declare reifyg)
+
+(defn bfs-lazy [a]
+  (let [q (java.util.ArrayDeque. [a])]
+    (letfn [(bfs-loop []
+              (when-let [node (.pollFirst q)]
+                (if (leaf? node)
+                  (cons (value node) (lazy-seq (bfs-loop)))
+                  (do (doseq [child (children node)]
+                        (.addLast q child))
+                      (recur)))))]
+      (bfs-loop))))
+
+(defn bfs-strict [a]
+  (let [q (java.util.ArrayDeque. [a])
+        results (java.util.ArrayDeque.)]
+    (loop []
+      (when-let [node (.pollFirst q)]
+        (if (leaf? node)
+          (.addLast results (value node))
+          (doseq [child (children node)]
+            (.addLast q child)))
+        (recur)))
+    (into nil results)))
+
+(defn dfs-lazy [node]
+  (if (leaf? node)
+    (list (value node))
+    (apply concat (map dfs-lazy (children node)))))
+
+(defn dfs-strict [node]
+  (let [results (java.util.ArrayDeque.)]
+    (letfn [(dfs-loop [node]
+              (if (leaf? node)
+                (.addLast results (value node))
+                (doseq [child (children node)]
+                  (dfs-loop child))))]
+      (dfs-loop node)
+      (into nil results))))
+
+(def ^:dynamic *search* bfs-lazy)
 
 (defmacro solve [& [n [x :as bindings] & goals]]
   (if (> (count bindings) 1)
     `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (take* (fn []
-                        ((fresh [~x]
-                           ~@goals
-                           (reifyg ~x))
-                         empty-s)))]
+    `(let [xs# (lazy-seq
+                (*search* ((fresh [~x]
+                                  ~@goals
+                                  (reifyg ~x))
+                           empty-s)))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1872,7 +1934,7 @@
   `(run false ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not 
+  "Executes goals until a maximum of n results are found. Does not
    occurs-check."
   [& [n & goals]]
   `(binding [*occurs-check* false]
@@ -1898,11 +1960,15 @@
   ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
+(defmacro all-fair
+  ([] `clojure.core.logic/s#)
+  ([& goals] `(fn [a#] (bind-fair* a# ~@goals))))
+
 (defn solutions
   ([s g]
      (solutions s (lvar) g))
   ([s q g]
-     (take* ((all g (reifyg q)) s))))
+     (*search* ((all g (reifyg q)) s))))
 
 ;; =============================================================================
 ;; Debugging
@@ -1997,14 +2063,13 @@
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
                     empty-s (-> u meta ::when))]
        (first
-         (take*
-           (fn []
-             ((fresh [q]
-                (== u w) (== q u)
-                (fn [a]
-                  (fix-constraints a))
-                (reifyg q))
-              init-s))))))
+         (*search*
+          ((fresh [q]
+                  (== u w) (== q u)
+                  (fn [a]
+                    (fix-constraints a))
+                  (reifyg q))
+           init-s)))))
   ([u w & ts]
      (if (some #{:when} ts)
        (let [terms (take-while #(not= % :when) ts)
@@ -2132,12 +2197,15 @@
              (recur b gr))
            b)))
 
-  clojure.lang.Fn
+  Inc
   (ifa [b gs c]
-       (-inc (ifa (b) gs c)))
+    (let [a (.a b)
+          restg (.restg b)]
+      (-inc a (ifa (restg a) gs c))))
 
   Choice
   (ifa [b gs c]
+    ;; TODO: should this be (ifu (.left b) gs (delay (ifu (.right b) gs c)))
     (reduce bind b gs)))
 
 (extend-protocol IIfU
@@ -2154,14 +2222,15 @@
           (recur b gr))
         b)))
 
-  clojure.lang.Fn
+  Inc
   (ifu [b gs c]
-    (-inc (ifu (b) gs c)))
+    (let [a (.a b)
+          restg (.restg b)]
+      (-inc a (ifu (restg a) gs c))))
 
-  ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
-    (reduce bind (:a b) gs)))
+    (ifu (.left b) gs (delay (ifu (.right b) gs c)))))
 
 (defn- cond-clauses [a]
   (fn [goals]
@@ -2176,7 +2245,7 @@
        (ifa* ~@(map (cond-clauses a) clauses)))))
 
 (defmacro condu
-  "Committed choice. Once the head (first goal) of a clause 
+  "Committed choice. Once the head (first goal) of a clause
   has succeeded, remaining goals of the clause will only
   be run once. Non-relational."
   [& clauses]
@@ -2265,7 +2334,7 @@
              (= f 'quote)
              (if (and (seq? s) (not quoted))
                (p->term s vars true)
-               p) 
+               p)
              (= f 'clojure.core/unquote)
              (if quoted
                (update-pvars! s vars)
@@ -2397,7 +2466,7 @@
   (== '() a))
 
 (defn conso
-  "A relation where l is a collection, such that a is the first of l 
+  "A relation where l is a collection, such that a is the first of l
   and d is the rest of l"
   [a d l]
   (== (lcons a d) l))
@@ -2471,15 +2540,15 @@
 ;; =============================================================================
 ;; More convenient goals
 
-(defne membero 
+(defne membero
   "A relation where l is a collection, such that l contains x"
   [x l]
   ([_ [x . tail]])
   ([_ [head . tail]]
      (membero x tail)))
 
-(defne appendo 
-  "A relation where x, y, and z are proper collections, 
+(defne appendo
+  "A relation where x, y, and z are proper collections,
   such that z is x appended to y"
   [x y z]
   ([() _ y])
@@ -2504,7 +2573,7 @@
   (let [aseq (drop-while nil? aseq)]
     (when (seq aseq)
       (choice (first aseq)
-              (fn [] (to-stream (next aseq)))))))
+              (to-stream (next aseq))))))
 
 (defmacro def-arity-exc-helper []
   (try
@@ -2599,7 +2668,7 @@
            ((deref ~'indexes) ~'arity))
          (~'add-indexes [~'_ ~'arity ~'index]
            (swap! ~'indexes assoc ~'arity ~'index)))
-       (defmacro ~'defrel 
+       (defmacro ~'defrel
          "Define a relation for adding facts. Takes a name and some fields.
          Use fact/facts to add facts and invoke the relation to query it."
          [~'name ~'& ~'rest]
@@ -2757,7 +2826,7 @@
 
 (defn waiting-stream-check
   "Take a waiting stream, a success continuation, and a failure continuation.
-   If we don't find any ready suspended streams, invoke the failure continuation. 
+   If we don't find any ready suspended streams, invoke the failure continuation.
    If we find a ready suspended stream calculate the remainder of the waiting
    stream. If we've reached the fixpoint just call the thunk of the suspended
    stream, otherwise call mplus on the result of the thunk and the remainder
@@ -2820,8 +2889,8 @@
                      (fn [] (reuse this argv cache @cache (count start))))]
                   ;; we have answer terms to reuse in the cache
                   (let [ans (first ansv*)]
-                    (Choice. (subunify this argv (reify-tabled this ans))
-                      (fn [] (reuse-loop (disj ansv* ans)))))))]
+                    (choice (subunify this argv (reify-tabled this ans))
+                            (-inc this (reuse-loop (disj ansv* ans)))))))]
         (reuse-loop start))))
 
   ;; unify an argument with an answer from a cache
@@ -2851,22 +2920,21 @@
                  (make-suspended-stream (:cache ss) (:ansv* ss)
                    (fn [] (bind ((:f ss)) g))))
                this)))))
-
-  IMPlus
-  (mplus [this f]
+  IBindFair
+  (bind-fair [this g]
     (waiting-stream-check this
       ;; success continuation
-      (fn [fp] (mplus fp f))
+      (fn [f] (bind-fair f g))
       ;; failure continuation
       (fn []
-        (let [a-inf (f)]
-          (if (waiting-stream? a-inf)
-            (into a-inf this)
-            (mplus a-inf (fn [] this)))))))
-
-  ITake
-  (take* [this]
-    (waiting-stream-check this (fn [f] (take* f)) (fn [] ()))))
+        (into []
+          (map (fn [ss]
+                 (make-suspended-stream (:cache ss) (:ansv* ss)
+                   (fn [] (bind-fair ((:f ss)) g))))
+               this)))))
+  IBranch
+  (children [this]
+    (waiting-stream-check this (fn [a] a) (fn [] nil))))
 
 (defn master
   "Take the argument to the goal and check that we don't
@@ -2903,7 +2971,7 @@
               (reuse a argv cache nil nil))))))))
 
 (defmacro tabled
-  "Macro for defining a tabled goal. Prefer ^:tabled with the 
+  "Macro for defining a tabled goal. Prefer ^:tabled with the
   defne/a/u forms over using this directly."
   [args & grest]
   `(let [table# (atom {})]
@@ -3040,7 +3108,7 @@
     (verify-all-bound* a (seq constrained))))
 
 ;; FIXME: Nada Amin's quine code blows up here, seems like somehow
-;; things might be getting out of sync? 
+;; things might be getting out of sync?
 
 (defn enforceable-constrained [a]
   (let [cs (:cs a)
@@ -3072,8 +3140,8 @@
                  (filter reifiable?)
                  (map #(reifyc % v r a)))]
     (if (empty? rcs)
-      (choice (list v) empty-f)
-      (choice (list `(~v :- ~@rcs)) empty-f))))
+      (Return. v)
+      (Return. `(~v :- ~@rcs)))))
 
 (defn reifyg [x]
   (all
@@ -3082,10 +3150,9 @@
      (let [v (walk* a x)
            r (-reify* empty-s v)]
        (if (zero? (count r))
-         (choice (list v) empty-f)
+         (Return. v)
          (let [v (walk* r v)]
            (reify-constraints v r a)))))))
-
 
 (defn cgoal [c]
   (reify
@@ -3371,7 +3438,7 @@
   (cgoal (fdc (=fdc u v))))
 
 (defn !=fdc [u v]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3399,7 +3466,7 @@
         ;; and at least du or dv has a singleton domain
         (and (domain? du) (domain? dv)
              (or (singleton-dom? du)
-                 (singleton-dom? dv))))))) 
+                 (singleton-dom? dv)))))))
 
 (defn !=fd
   "A finite domain constraint. u and v must not be equal. u and v
@@ -3408,7 +3475,7 @@
   (cgoal (fdc (!=fdc u v))))
 
 (defn <=fdc [u v]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3467,7 +3534,7 @@
         s))))
 
 (defn +fdc [u v w]
-  (reify 
+  (reify
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
@@ -3588,7 +3655,7 @@
 
 (defn *fd
   "A finite domain constraint for multiplication and
-   thus division. u, v & w must be eventually be given 
+   thus division. u, v & w must be eventually be given
    domains if vars."
   [u v w]
   (cgoal (fdc (*fdc u v w))))
@@ -3599,10 +3666,10 @@
 (defn -distinctfdc
   "The real *individual* distinctfd constraint. x is a var that now is bound to
    a single value. y* were the non-singleton bound vars that existed at the
-   construction of the constraint. n* is the set of singleton domain values 
-   that existed at the construction of the constraint. We use categorize to 
+   construction of the constraint. n* is the set of singleton domain values
+   that existed at the construction of the constraint. We use categorize to
    determine the current non-singleton bound vars and singleton vlaues. if x
-   is in n* or the new singletons we have failed. If not we simply remove 
+   is in n* or the new singletons we have failed. If not we simply remove
    the value of x from the remaining non-singleton domains bound to vars."
   ([x y* n*] (-distinctfdc x y* n* nil))
   ([x y* n* id]
@@ -3658,9 +3725,9 @@
 
 (defn distinctfdc
   "The real distinctfd constraint. v* can be seq of logic vars and
-   values or it can be a logic var itself. This constraint does not 
+   values or it can be a logic var itself. This constraint does not
    run until v* has become ground. When it has become ground we group
-   v* into a set of logic vars and a sorted set of known singleton 
+   v* into a set of logic vars and a sorted set of known singleton
    values. We then construct the individual constraint for each var."
   ([v*] (distinctfdc v* nil))
   ([v* id]
@@ -3698,8 +3765,8 @@
        (watched-stores [this] #{::subst}))))
 
 (defn distinctfd
-  "A finite domain constraint that will guarantee that 
-   all vars that occur in v* will be unified with unique 
+  "A finite domain constraint that will guarantee that
+   all vars that occur in v* will be unified with unique
    values. v* need not be ground. Any vars in v* should
    eventually be given a domain."
   [v*]
@@ -3841,7 +3908,7 @@
             (when-not (= vf ::not-found)
               (if-let [cs (disunify s (get u kf) vf cs)]
                 (recur (next ks) cs)
-                nil))) 
+                nil)))
           cs))
       nil)))
 
@@ -4068,8 +4135,8 @@
 
 (defn featurec
   "Ensure that a map contains at least the key-value pairs
-  in the map fs. fs must be partially instantiated - that is, 
-  it may contain values which are logic variables to support 
+  in the map fs. fs must be partially instantiated - that is,
+  it may contain values which are logic variables to support
   feature extraction."
   [x fs]
   (cgoal (-featurec x fs)))
@@ -4188,7 +4255,7 @@
         (fc t s)
         (when-let [s (fc (lfirst t) s)]
           (recur (lnext t) s)))))
-  
+
   clojure.lang.Sequential
   (-constrain-tree [t fc s]
     (loop [t (seq t) s s]

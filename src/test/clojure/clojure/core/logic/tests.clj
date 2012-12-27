@@ -443,6 +443,24 @@
          '(true))))
 
 ;; =============================================================================
+;; Fair conjuctions
+
+(def endlesso
+  (fresh [] endlesso))
+
+(deftest test-all-fair
+  (is (= (run* [q]
+               (all-fair
+                endlesso
+                u#))
+         ()))
+  (is (= (run* [q]
+               (all-fair
+                u#
+                endlesso))
+         ())))
+
+;; =============================================================================
 ;; TRS
 
 (defn pairo [p]
@@ -703,7 +721,7 @@
   (fresh []
     (conde
       [f2 (conde
-            [f2] 
+            [f2]
             [(== false false)])]
       [(== false false)])))
 
@@ -768,16 +786,10 @@
 ;; -----------------------------------------------------------------------------
 ;; condu (committed-choice)
 
-(comment
-  (defn onceo [g]
-    (condu
-      (g s#)))
-
- (deftest test-condu-1
-   (is (= (run* [x]
-            (onceo (teacupo x)))
-          '(tea))))
- )
+(deftest test-condu-1
+  (is (= (run* [x]
+               (onceo (teacupo x)))
+         '(tea))))
 
 (deftest test-condu-2
   (is (= (into #{}
@@ -1210,7 +1222,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching functions preserve metadata
 
-(defne ^:tabled dummy 
+(defne ^:tabled dummy
   "Docstring"
   [x l]
   ([_ [x . tail]])
@@ -1570,7 +1582,7 @@
     (is (= (intersection mi0 7) 7))
     (is (= (intersection 7 mi0) 7))))
 
-;; |-----| 
+;; |-----|
 ;;   |-----|
 (deftest test-intersection-mimi-3
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
@@ -1628,7 +1640,7 @@
            (multi-interval (interval 1 4) (interval 6 8))))))
 
 ;; |---|  |---|
-;;         N      
+;;         N
 (deftest test-difference-mis-1
   (let [mi0 (multi-interval (interval 1 4) (interval 7 10))]
     (is (= (difference mi0 8)
@@ -1742,8 +1754,8 @@
 (deftest test-infd-1
   (let [x (lvar 'x)
         y (lvar 'y)
-        f ((infd x y (interval 1 10)) empty-s)
-        s (f)]
+        g (infd x y (interval 1 10))
+        s (-dec (g empty-s))]
     (is (= (get-dom-fd s x) (interval 1 10)))
     (is (= (get-dom-fd s y) (interval 1 10)))))
 
@@ -1960,7 +1972,7 @@
             (domfd x (interval 1 10))
             (domfd y (interval 1 5))) empty-s)
         s ((=fd x y) s)]
-    (is (= (take* ((reifyg x) s))
+    (is (= (*search* ((reifyg x) s))
            '(1 2 3 4 5)))))
 
 (deftest test-process-interval-smaller-1
@@ -2505,7 +2517,7 @@
        (everyg #(infd % (interval 1 5)) vs)
        (!=fd baker 5) (!=fd cooper 1)
        (!=fd fletcher 5) (!=fd fletcher 1)
-       (<fd cooper miller) 
+       (<fd cooper miller)
        (not-adjacento smith fletcher)
        (not-adjacento fletcher cooper)))))
 
@@ -2538,7 +2550,7 @@
 (defn matches [n]
   (run 1 [q]
     (fresh [a b c d]
-      (infd a b c d (interval 1 n)) 
+      (infd a b c d (interval 1 n))
       (distinctfd [a b c d])
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
@@ -2576,7 +2588,7 @@
     (get-square rows x y)))
 
 (defn sudokufd [hints]
-  (let [vars (repeatedly 81 lvar) 
+  (let [vars (repeatedly 81 lvar)
         rows (->rows vars)
         cols (->cols rows)
         sqs  (->squares rows)]
