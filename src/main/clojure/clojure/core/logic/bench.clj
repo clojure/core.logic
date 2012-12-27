@@ -91,7 +91,7 @@
 
 (comment
   (run 1 [q] (zebrao q))
-  
+
   ;; SWI-Prolog 6-8.5s
   ;; ~2.4s
   (binding [*occurs-check* false]
@@ -339,8 +339,7 @@
       (eqfd
         (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
                           (* 1000 m) (* 100 o) (* 10 r) e)
-           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))
-      (debug-doms))))
+           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
 
 ;; Bratko 3rd ed pg 343
 
@@ -363,7 +362,7 @@
 
   (time (cryptarithfd-1))
 
-  ;; ~2700ms, a little bit slower w/ distribute step
+  ;; ~1200ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
@@ -376,8 +375,7 @@
        (cryptarithfd-1))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
-  ;; 128797.253
-  ;; 17.7s w/ distribute 7X faster
+  ;; 1.9s now
   (time (cryptarithfd-2))
   )
 
@@ -431,15 +429,16 @@
 
 (defn dinesmanfd []
   (run* [q]
-    (fresh [baker cooper fletcher miller smith]
-      (== q [baker cooper fletcher miller smith])
-      (distinctfd [baker cooper fletcher miller smith])
-      (infd baker cooper fletcher miller smith (interval 1 5))
-      (!=fd baker 5) (!=fd cooper 1)
-      (!=fd fletcher 5) (!=fd fletcher 1)
-      (<fd cooper miller)
-      (not-adjacento smith fletcher)
-      (not-adjacento fletcher cooper))))
+    (let [[baker cooper fletcher miller smith :as vs] (lvars 5)]
+      (all
+       (== q vs)
+       (distinctfd vs)
+       (everyg #(infd % (interval 1 5)) vs)
+       (!=fd baker 5) (!=fd cooper 1)
+       (!=fd fletcher 5) (!=fd fletcher 1)
+       (<fd cooper miller)
+       (not-adjacento smith fletcher)
+       (not-adjacento fletcher cooper)))))
 
 (defn sort-dwellers [[fa _] [fb _]]
   (cond (< fa fb) -1 (= fa fb) 0 :else 1))
@@ -451,7 +450,7 @@
 
 (comment
   ;; close to 2X faster than Petite Chez
-  ;; ~3500ms
+  ;; ~2800ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -492,7 +491,7 @@
 
   (simple-eqfd)
 
-  ;; 900ms
+  ;; 620ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3]
@@ -554,8 +553,8 @@
 
 (defn matches [n]
   (run 1 [q]
-    (fresh [a b c d s1 s2]
-      (infd a b c d s1 s2 (interval 1 n))
+    (fresh [a b c d]
+      (infd a b c d (interval 1 n))
       (distinctfd [a b c d])
       (== a 1)
       (<=fd a b) (<=fd b c) (<=fd c d)
@@ -566,7 +565,7 @@
 (comment
   (time (matches 40))
 
-  ;; ~8200ms
+  ;; ~7500-8000ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -612,6 +611,7 @@
             sq1 sq2 sq3 sq4])))))
 
 (comment
+  ;; 2100ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3]
@@ -823,25 +823,21 @@
 
 (defn safefd []
   (run* [q]
-    (fresh [c1 c2 c3 c4 c5 c6 c7 c8 c9]
-      (infd c1 c2 c3 c4 c5 c6 c7 c8 c9 (interval 1 9))
-      (== q [c1 c2 c3 c4 c5 c6 c7 c8 c9])
-      (distinctfd q)
-      (eqfd
-        (= (- c4 c6) c7)
-        (= (* c1 c2 c3) (+ c8 c9))
-        (< (+ c2 c3 c6) c8)
-        (< c9 c8))
-      (!=fd c1 1) (!=fd c2 2) (!=fd c3 3)
-      (!=fd c4 4) (!=fd c5 5) (!=fd c6 6)
-      (!=fd c7 7) (!=fd c8 8) (!=fd c9 9))))
+    (let [[c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs] (lvars 9)]
+      (all
+       (everyg #(infd % (interval 1 9)) vs)
+       (== q vs)
+       (distinctfd q)
+       (eqfd
+         (= (- c4 c6) c7)
+         (= (* c1 c2 c3) (+ c8 c9))
+         (< (+ c2 c3 c6) c8)
+         (< c9 c8))
+       (everyg (fn [[v n]] (!=fd v n))
+         (map vector vs (range 1 10)))))))
 
 (comment
-  ;; FIXME: see a disjoint error now
-
   (time (safefd))
-
-  ;; FIXME: adding (distribute q ::l/ff) causes an exception
 
   (every?
     (fn [[c1 c2 c3 c4 c5 c6 c7 c8 c9]]
@@ -856,9 +852,8 @@
     (safefd))
 
   ;; 2800ms
-  ;; also significantly slower
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10]
-       (safefd))))
+      (dotimes [_ 100]
+        (safefd))))
   )
