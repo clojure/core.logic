@@ -2988,10 +2988,6 @@
         a)
       ((remcg c) a))))
 
-(defn addcg-now [c]
-  (fn [a]
-    (bind* a (addcg c) (run-constraint c))))
-
 ;; TODO NOW: try an implementation that allows constraints
 ;; to run roughly in the order they normaly would. reverse
 ;; xcs in run-constraints, (into cq (reverse xcs)), cq should
