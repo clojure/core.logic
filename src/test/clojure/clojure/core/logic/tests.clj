@@ -2638,6 +2638,27 @@
          '([4 3 1 8 9 2 6 7 5]))))
 
 ;; =============================================================================
+;; Feature Constraints
+
+(deftest test-featurec-1
+  (is (= (run* [q]
+           (featurec q {:foo 1}))
+         '((_0 :- (clojure.core.logic/featurec _0 {:foo 1})))))
+  (is (= (run* [q]
+           (featurec q {:foo 1})
+           (== q {:foo 1 :bar 2}))
+         '({:foo 1 :bar 2})))
+  (is (= (run* [q]
+           (featurec q {:foo 1})
+           (== q {:bar 2}))
+         ()))
+  (is (= (run* [q]
+           (fresh [x]
+             (featurec x {:foo q})
+             (== x {:foo 1})))
+         '(1))))
+
+;; =============================================================================
 ;; Deep Constraints
 
 (deftest test-treec-1
@@ -2646,7 +2667,48 @@
            (fresh [x y]
              (== q [x [2 3 y]])
              (== x 1)))
-         '(([1 [2 3 _0]] :- (clojure.core.logic/treec _0 clojure.core/number?))))))
+         '(([1 [2 3 _0]] :- (clojure.core.logic/treec _0 clojure.core/number?)))))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [x y]
+             (== q [x [2 3 y]])
+             (== x 1)
+             (== y 'foo)))
+         ()))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [z]
+             (== q {:x {:y z}})))
+         '(({:x {:y _0}} :- (clojure.core.logic/treec _0 clojure.core/number?)))))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [z]
+             (== q {:x {:y z}})
+             (== z 1)))
+         '({:x {:y 1}})))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [z]
+             (== q {:x {:y z}})
+             (== z 'foo)))
+         ()))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [x]
+             (== q (llist 1 2 x))))
+         [[(llist 1 2 '_0) ':- '(clojure.core.logic/treec _0 clojure.core/number?)]]))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [x]
+             (== q (llist 1 2 x))
+             (== x '(3))))
+         '((1 2 3))))
+  (is (= (run* [q]
+           (treec q #(predc % number?) `number?)
+           (fresh [x]
+             (== q (llist 1 2 x))
+             (== x '(foo))))
+         ())))
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change

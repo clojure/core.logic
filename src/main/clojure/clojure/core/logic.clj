@@ -4036,15 +4036,7 @@
 
 (defn partial-map
   "Given map m, returns partial map that unifies with maps even if it
-   doesn't share all of the keys of that map.
-   Only the keys of the partial map will be unified:
-
-   (run* [q]
-     (fresh [pm x]
-       (== pm (partial-map {:a x}))
-       (== pm {:a 1 :b 2})
-       (== pm q)))
-   ;;=> ({:a 1})"
+   doesn't share all of the keys of that map."
   [m]
   (map->PMap m))
 
@@ -4052,8 +4044,8 @@
   (instance? PMap x))
 
 (defn -featurec
-  ([fs x] (-featurec (partial-map fs) x nil))
-  ([fs x _id]
+  ([x fs] (-featurec x (partial-map fs) nil))
+  ([x fs _id]
      (reify
        clojure.lang.IFn
        (invoke [this a]
@@ -4064,15 +4056,15 @@
        (id [this] _id)
        IWithConstraintId
        (with-id [this _id]
-         (-featurec fs x _id))
+         (-featurec x fs _id))
        IConstraintOp
        (rator [_] `featurec)
-       (rands [_] [fs x])
+       (rands [_] [x])
        IReifiableConstraint
        (reifyc [_ v r a]
          (let [fs (into {} fs)
                r  (-reify* r (walk* a fs))]
-           `(featurec ~(walk* r fs) ~(walk* r x))))
+           `(featurec ~(walk* r x) ~(walk* r fs))))
        IRelevant
        (-relevant? [_ a] true)
        IRunnable
@@ -4081,8 +4073,13 @@
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
-(defn featurec [fs x]
-  (cgoal (-featurec fs x)))
+(defn featurec
+  "Ensure that a map contains at least the key-value pairs
+  in the map fs. fs must be partially instantiated - that is, 
+  it may contain values which are logic variables to support 
+  feature extraction."
+  [x fs]
+  (cgoal (-featurec x fs)))
 
 ;; =============================================================================
 ;; defc
@@ -4191,6 +4188,14 @@
 (declare treec)
 
 (extend-protocol IConstrainTree
+  clojure.core.logic.LCons
+  (-constrain-tree [t fc s]
+    (loop [t t s s]
+      (if (lvar? t)
+        (fc t s)
+        (when-let [s (fc (lfirst t) s)]
+          (recur (lnext t) s)))))
+  
   clojure.lang.Sequential
   (-constrain-tree [t fc s]
     (loop [t (seq t) s s]
