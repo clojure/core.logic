@@ -1034,6 +1034,9 @@
   (let [v (walk* s v)]
     (walk* (-reify* empty-s v) v)))
 
+(defn creify [v r a]
+  (walk* (-reify* r (walk* a v)) v))
+
 (defn build [s u]
   (build-term u s))
 
@@ -4225,9 +4228,11 @@
        (rator [_] `treec)
        (rands [_] [x])
        IReifiableConstraint
-       (reifyc [_ v r a]
-         (let [x (walk* r x)]
-           `(treec ~x ~cform)))
+       (reifyc [c v r a]
+         (if (fn? cform)
+           (cform c v r a)
+           (let [x (walk* r x)]
+             `(treec ~x ~cform))))
        IRelevant
        (-relevant? [_ a] true)
        IRunnable
