@@ -90,24 +90,31 @@
     (not (= x a))))
 
 (defn hash [a t]
-  (treec
-    t
-    #(predc % (make-nom-hash a))
-    (fn [_ x r s ap]
-      (let [x (walk* s x)
-            a (walk* s a)]
-        ;; Filter constraints unrelated to reified variables.
-        (when (and (symbol? a)  (empty? (->> (list x) flatten (filter lvar?))))
-          (symbol (str a "#" x)))))    
-    (fn [x]
-      (cond
-        (and (tie? x) (= (:binding-nom x) a))
-        (fn [s] s)
-
-        (susp? x)
-        (hash (apply-pi a (invert-pi (:pi x))) (:lvar x))
-
-        :else nil))))
+  (let [fc #(predc % (make-nom-hash a))
+        reifier
+        (fn [_ x r s ap]
+          (let [x (walk* s x)
+                a (walk* s a)]
+            ;; Filter constraints unrelated to reified variables.
+            (when (and (symbol? a)  (empty? (->> (list x) flatten (filter lvar?))))
+              (symbol (str a "#" x)))))
+         fspecial
+         (fn [x]
+           (cond
+             (and (tie? x) (= (:binding-nom x) a))
+             (fn [s] s)
+             (susp? x)
+             (hash (apply-pi a (invert-pi (:pi x))) (:lvar x))
+             :else nil))]
+    (fixc t
+      (fn loop [t a reifier]
+         (or
+           (fspecial t)
+           (if (tree-term? t)
+             (constrain-tree t
+               (fn [t a] ((fixc t loop reifier) a)))
+             (fc t))))
+      reifier)))
 
 ;; =============================================================================
 ;; Suspension
