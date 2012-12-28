@@ -9,8 +9,7 @@ Breaking Changes
 
 Enhancments
 ----
-* add `featurec` which replaces the function of `partial-map`
-* implementing 
+* add `featurec` which replaces the functionality of `partial-map`
 * disequality no longer relies on unification
 * added support for deep constraints via `fixc`, `treec` demonstrates usage
 * fail faster when unifying counted sequential collections
@@ -20,7 +19,7 @@ Bug Fixes
 ----
 * many bad interactions between unification, FD constraints and disequality resolved
 * LOGIC-77: failing CLP(FD) case where logic vars are aliased
-* LOGIC-81: fix bugs where constraint store need substitution to find root vars
+* LOGIC-81: constraint store needs substitutions to find root vars
 * LOGIC-82: LCons with logic var tail bound to nil would not unify properly with sequences
 * LOGIC-85: another logic var aliasing issue
 
