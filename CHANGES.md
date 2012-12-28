@@ -1,3 +1,32 @@
+From 0.8.0-beta3 to 0.8.0-beta4
+====
+
+Breaking Changes
+----
+* Type specific unification protocols removed
+* Simple application expression in pattern matches no longer supported
+* PMap is now INonStorable - cannot be unified with a logic var
+
+Enhancments
+----
+* add `featurec` which replaces the function of `partial-map`
+* implementing 
+* disequality no longer relies on unification
+* added support for deep constraints via `fixc`, `treec` demonstrates usage
+* fail faster when unifying counted sequential collections
+* add experimental support for `:when` in the simple unifier to support constraints
+
+Bug Fixes
+----
+* many bad interactions between unification, FD constraints and disequality resolved
+* LOGIC-77: failing CLP(FD) case where logic vars are aliased
+* LOGIC-81: fix bugs where constraint store need substitution to find root vars
+* LOGIC-82: LCons with logic var tail bound to nil would not unify properly with sequences
+* LOGIC-85: another logic var aliasing issue
+
+Fixes
+----
+
 From 0.8-beta2 to 0.8.0-beta3
 ====
 
