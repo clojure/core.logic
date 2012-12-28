@@ -24,9 +24,6 @@ Bug Fixes
 * LOGIC-82: LCons with logic var tail bound to nil would not unify properly with sequences
 * LOGIC-85: another logic var aliasing issue
 
-Fixes
-----
-
 From 0.8-beta2 to 0.8.0-beta3
 ====
 
