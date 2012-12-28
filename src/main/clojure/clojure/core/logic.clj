@@ -1827,10 +1827,13 @@
   "A goal that attempts to unify terms u and v."
   [u v]
   (fn [a]
-    (when-let [ap (unify (assoc a :vs #{}) u v)]
-      (if (pos? (count (:cs a)))
-        ((run-constraints* (:vs ap) (:cs ap) ::subst) (assoc ap :vs nil))
-        (assoc ap :vs nil)))))
+    (let [has-cs? (pos? (count (:cs a)))]
+      (let [ap (unify (if has-cs? (assoc a :vs []) a) u v)
+            vs (if has-cs? (:vs ap))
+            changed? (pos? (count vs))]
+        (if changed?
+          ((run-constraints* vs (:cs ap) ::subst) (assoc ap :vs nil))
+          ap)))))
 
 (defn- bind-conde-clause [a]
   (fn [g-rest]
