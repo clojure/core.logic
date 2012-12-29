@@ -17,6 +17,7 @@ Enhancments
 
 Bug Fixes
 ----
+* LOGIC-59: tabled goals reset between runs
 * many bad interactions between unification, FD constraints and disequality resolved
 * LOGIC-77: failing CLP(FD) case where logic vars are aliased
 * LOGIC-81: constraint store needs substitutions to find root vars
