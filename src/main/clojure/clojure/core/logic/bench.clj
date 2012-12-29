@@ -782,13 +782,13 @@
      0 4 0  0 0 0  0 0 0
      0 5 0  1 0 0  0 0 0])
 
-  ;; ~900ms
+  ;; ~50ms
   (time (sudokufd hard1))
 
   (-> (sudokufd hard1) first verify)
 
-  ;; 8.7s seconds w/o distribute
-  ;; < 800ms w/ distribute, 10X faster
+  ;; 3-3.4s seconds w/o distribute
+  ;; < 400ms w/ distribute, 10X faster
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
@@ -808,8 +808,7 @@
      0 0 7  0 0 0  0 0 5
      0 0 0  0 0 0  0 9 8])
 
-  ;; ~3.5s
-  ;; 900ms w/ distribute
+  ;; 1.2s w/ distribute
   (time (sudokufd hard2))
 
   (-> (sudokufd hard2) first print-solution)
@@ -817,6 +816,25 @@
   (dotimes [_ 5]
     (time
      (sudokufd hard2)))
+
+  (def ciao
+    [0 4 3  0 8 0  2 5 0
+     6 0 0  0 0 0  0 0 0
+     0 0 0  0 0 1  0 9 4
+
+     9 0 0  0 0 4  0 7 0
+     0 0 0  6 0 8  0 0 0
+     0 1 0  2 0 0  0 0 3
+     
+     8 2 0  5 0 0  0 0 0
+     0 0 0  0 0 0  0 0 5
+     0 3 4  0 9 0  7 1 0])
+
+  ;; ~2700ms
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 100]
+       (sudokufd ciao))))
   )
 
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
