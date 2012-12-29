@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [==])
   (:require [clojure.set :as set]
             [clojure.string :as string])
-  (:import [java.io Writer]))
+  (:import [java.io Writer]
+           [java.util UUID]))
 
 (def ^{:dynamic true} *occurs-check* true)
 (def ^{:dynamic true} *reify-vars* true)
@@ -1057,11 +1058,13 @@
 ;; -----
 ;; s   - persistent hashmap to store logic var bindings
 ;; vs  - changed var set
+;; ts  - atom containing a hashmap of
+;;       tabled goals -> atoms of sets containing cached answers
 ;; cs  - constraint store
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
 
-(deftype Substitutions [s vs cs cq cqs _meta]
+(deftype Substitutions [s vs ts cs cq cqs _meta]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -1076,7 +1079,7 @@
   clojure.lang.IObj
   (meta [this] _meta)
   (withMeta [this new-meta]
-    (Substitutions. s vs cs cq cqs new-meta))
+    (Substitutions. s vs ts cs cq cqs new-meta))
 
   clojure.lang.ILookup
   (valAt [this k]
@@ -1085,6 +1088,7 @@
     (case k
       :s   s
       :vs  vs
+      :ts  ts
       :cs  cs
       :cq  cq
       :cqs cqs
@@ -1106,17 +1110,19 @@
     (case k
       :s   [:s s]
       :vs  [:vs vs]
+      :ts  [:ts ts]
       :cs  [:cs cs]
       :cq  [:cq cq]
       :cqs [:cqs cqs]
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v vs cs cq cqs _meta)
-      :vs  (Substitutions. s  v cs cq cqs _meta)
-      :cs  (Substitutions. s vs  v cq cqs _meta)
-      :cq  (Substitutions. s vs cs  v cqs _meta)
-      :cqs (Substitutions. s vs cs cq   v _meta)
+      :s   (Substitutions. v vs ts cs cq cqs _meta)
+      :vs  (Substitutions. s  v ts cs cq cqs _meta)
+      :ts  (Substitutions. s vs  v cs cq cqs _meta)
+      :cs  (Substitutions. s vs ts  v cq cqs _meta)
+      :cq  (Substitutions. s vs ts cs  v cqs _meta)
+      :cqs (Substitutions. s vs ts cs cq   v _meta)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
@@ -1124,7 +1130,7 @@
     (let [u (if-not (lvar? (:tovar v))
               (assoc-meta u ::root true)
               u)]
-      (Substitutions. (assoc s u v) (if vs (conj vs u)) cs cq cqs _meta)))
+      (Substitutions. (assoc s u v) (if vs (conj vs u)) ts cs cq cqs _meta)))
 
   (walk [this v]
     (if (walkable? v)
@@ -1259,9 +1265,12 @@
       (-> v :doms dom))))
 
 (defn- make-s
-  ([] (Substitutions. {} nil (make-cs) nil #{} nil))
-  ([m] (Substitutions. m nil (make-cs) nil #{} nil))
-  ([m cs] (Substitutions. m nil cs nil #{} nil)))
+  ([] (Substitutions. {} nil nil (make-cs) nil #{} nil))
+  ([m] (Substitutions. m nil nil (make-cs) nil #{} nil))
+  ([m cs] (Substitutions. m nil nil cs nil #{} nil)))
+
+(defn tabled-s []
+  (Substitutions. {} nil (atom {}) (make-cs) nil #{} nil))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -1877,7 +1886,7 @@
                         ((fresh [~x]
                            ~@goals
                            (reifyg ~x))
-                         empty-s)))]
+                         (tabled-s))))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -2896,50 +2905,50 @@
    answer term."
   [argv cache]
   (fn [a]
-    (when-not (contains? @cache (-reify a argv))
-      (swap! cache conj (reify-tabled a argv))
-      a)))
+    (let [rargv (-reify a argv)]
+      (when-not (contains? @cache rargv)
+        (swap! cache
+          (fn [cache]
+            (if (contains? cache rargv)
+              cache
+              (conj cache (reify-tabled a argv)))))
+        a))))
 
 ;; -----------------------------------------------------------------------------
 ;; Syntax
 
 ;; TODO: consider the concurrency implications much more closely
 
-(defn table
-  "Function to table a goal. Useful when tabling should only persist
-  for the duration of a run."
-  [goal]
-  (let [table (atom {})]
-    (fn [& args]
-      (let [argv args]
-        (fn [a]
-          (let [key (-reify a argv)
-                cache (get @table key)]
-            (if (nil? cache)
-              (let [cache (atom #{})]
-                (swap! table assoc key cache)
-                ((fresh []
-                   (apply goal args)
-                   (master argv cache)) a))
-              (reuse a argv cache nil nil))))))))
-
 (defmacro tabled
   "Macro for defining a tabled goal. Prefer ^:tabled with the 
   defne/a/u forms over using this directly."
   [args & grest]
-  `(let [table# (atom {})]
-     (fn [~@args]
+  (let [uuid (symbol (str "tabled-" (UUID/randomUUID)))]
+    `(fn ~uuid [~@args]
        (let [argv# ~args]
          (fn [a#]
-           (let [key#   (-reify a# argv#)
-                 cache# (get @table# key#)]
-             (if (nil? cache#)
-               (let [cache# (atom #{})]
-                 (swap! table# assoc key# cache#)
+           (let [key#    (-reify a# argv#)
+                 tables# (:ts a#)
+                 tables# (if-not (contains? @tables# ~uuid)
+                           (swap! tables#
+                             (fn [tables#]
+                               (if (contains? tables# ~uuid)
+                                 tables#
+                                 (assoc tables# ~uuid (atom {})))))
+                           @tables#)
+                 table#  (get tables# ~uuid)]
+             (if-not (contains? @table# key#)
+               (let [table# (swap! table#
+                              (fn [table#]
+                                (if (contains? table# key#)
+                                  table#
+                                  (assoc table# key# (atom #{})))))
+                     cache# (get table# key#)]
                  ((fresh []
                     ~@grest
                     (master argv# cache#)) a#))
-               (reuse a# argv# cache# nil nil))))))))
+               (let [cache# (get @table# key#)]
+                 (reuse a# argv# cache# nil nil)))))))))
 
 ;; =============================================================================
 ;; cKanren
