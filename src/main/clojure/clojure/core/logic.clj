@@ -1048,7 +1048,8 @@
 ;; -----
 ;; s   - persistent hashmap to store logic var bindings
 ;; vs  - changed var set
-;; ts  - tables, a persistent hashmap of atoms
+;; ts  - atom containing a hashmap of
+;;       tabled goals -> atoms of sets containing cached answers
 ;; cs  - constraint store
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
