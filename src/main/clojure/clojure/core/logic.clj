@@ -4215,7 +4215,7 @@
   clojure.core.logic.LCons
   (-constrain-tree [t fc s]
     (loop [t t s s]
-      (if (lvar? t)
+      (if (not (lcons? t)) ;; Note(namin): change for suspensions.
         (fc t s)
         (when-let [s (fc (lfirst t) s)]
           (recur (lnext t) s)))))
