@@ -28,6 +28,7 @@
 ;; =============================================================================
 ;; Marker Interfaces
 
+(definterface IWalkable)
 (definterface ITreeTerm)
 (definterface IVar)
 
@@ -310,7 +311,7 @@
 ;; =============================================================================
 ;; Constraint Store
 
-(declare lvar? interval multi-interval)
+(declare lvar? walkable? interval multi-interval)
 
 (defn bounds [i]
   (pair (lb i) (ub i)))
@@ -981,7 +982,7 @@
 ;; =============================================================================
 ;; Substitutions
 
-(declare empty-s choice lvar lvar? pair lcons run-constraints*)
+(declare empty-s choice lvar lvar? pair lcons lcons? run-constraints*)
 
 (defn occurs-check [s u v]
   (let [v (walk s v)]
@@ -1003,6 +1004,9 @@
            (walk* s x)
            x))))))
 
+(defn special-var? [x]
+  (and (not (lvar? x)) (lvar? (:tovar x))))
+
 (defn unify [s u v]
   (if (identical? u v)
     s
@@ -1012,8 +1016,14 @@
       ;; because we add metadata on vars in walk - David
       (if (and (lvar? u) (= u v))
         s
-        (if (and (not (lvar? u)) (lvar? v))
+        (cond
+          (and (not (special-var? u)) (special-var? v))
           (unify-terms v u s)
+          (and (not (special-var? v)) (special-var? u))
+          (unify-terms u v s)
+          (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
+          (unify-terms v u s)
+          :else
           (unify-terms u v s))))))
 
 (def unbound-names
@@ -1120,18 +1130,18 @@
 
   ISubstitutions
   (ext-no-check [this u v]
-    (let [u (if-not (lvar? v)
+    (let [u (if-not (lvar? (:tovar v))
               (assoc-meta u ::root true)
               u)]
       (Substitutions. (assoc s u v) (if vs (conj vs u)) ts cs cq cqs oc _meta)))
 
   (walk [this v]
-    (if (lvar? v)
+    (if (walkable? v)
       (loop [lv v [v vp :as me] (find s v)]
         (cond
           (nil? me) lv
           
-          (not (lvar? vp))
+          (not (walkable? vp))
           (if-let [sv (and (subst-val? vp) (:v vp))]
             (if (= sv ::unbound)
               (with-meta v (assoc (meta vp) ::unbound true))
@@ -1143,33 +1153,37 @@
 
   ISubstitutionsCLP
   (root-val [this v]
-    (if (lvar? v)
-      (loop [lv v [v vp :as me] (find s v)]
-        (cond
-          (nil? me) lv
-          (not (lvar? vp)) vp
-          :else (recur vp (find s vp))))
-      v))
-
-  (root-var [this v]
-    (if (lvar? v)
-      (if (-> v meta ::root)
-        v
+    (if (lvar? (:tovar v))
+      (let [v (:tovar v)]
         (loop [lv v [v vp :as me] (find s v)]
           (cond
             (nil? me) lv
+            (not (lvar? (:tovar vp))) vp
+            :else (let [vp (:tovar vp)]
+                    (recur vp (find s vp))))))
+      v))
 
-            (not (lvar? vp))
-            (if (subst-val? vp)
-              (with-meta v (meta vp))
-              v)
+  (root-var [this v]
+    (if (lvar? (:tovar v))
+      (let [v (:tovar v)]
+        (if (-> v meta ::root)
+          v
+          (loop [lv v [v vp :as me] (find s v)]
+            (cond
+              (nil? me) lv
 
-            :else (recur vp (find s vp)))))
+              (not (lvar? (:tovar vp)))
+              (if (subst-val? vp)
+                (with-meta v (meta vp))
+                v)
+
+              :else (let [vp (:tovar vp)]
+                      (recur vp (find s vp)))))))
       v))
   
   (ext-run-cs [this x v]
     (let [x  (root-var this x)
-          xs (if (lvar? v)
+          xs (if (lvar? (:tovar v))
                [x (root-var this v)]
                [x])
           s  (if oc
@@ -1302,6 +1316,7 @@
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
+      :tovar this
       :name name
       :oname oname
       not-found))
@@ -1397,6 +1412,10 @@
 (defn lvar? [x]
   (instance? clojure.core.logic.IVar x))
 
+(defn walkable? [x]
+  (or (lvar? x)
+      (instance? clojure.core.logic.IWalkable x)))
+
 (defn lvars [n]
   (repeatedly n lvar))
 
@@ -1421,7 +1440,6 @@
 
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
   clojure.core.logic.ITreeTerm
-
   clojure.lang.IObj
   (meta [this]
     meta)
@@ -1451,14 +1469,14 @@
                     you o]
                (cond
                 (nil? me) (nil? you)
-                (lvar? me) true
-                (lvar? you) true
+                (lvar? (:tovar me)) true
+                (lvar? (:tovar you)) true
                 (and (lcons? me) (lcons? you))
                   (let [mef  (lfirst me)
                         youf (lfirst you)]
                     (and (or (= mef youf)
-                             (lvar? mef)
-                             (lvar? youf))
+                             (lvar? (:tovar mef))
+                             (lvar? (:tovar youf)))
                          (recur (lnext me) (lnext you))))
                 :else (= me you))))))
 
@@ -1481,7 +1499,7 @@
               (recur (lnext u) (next v) s)
               nil)
             (unify s u v))
-          (if (lvar? u)
+          (if (lvar? (:tovar u))
             (if-let [s (unify s u '())]
               s
               (unify s u nil))
@@ -1489,10 +1507,10 @@
       
       (lcons? v)
       (loop [u u v v s s]
-        (if (lvar? u)
+        (if (lvar? (:tovar u))
           (unify s u v)
           (cond
-            (lvar? v) (unify s v u)
+            (lvar? (:tovar v)) (unify s v u)
             (and (lcons? u) (lcons? v))
             (if-let [s (unify s (lfirst u) (lfirst v))]
               (recur (lnext u) (lnext v) s)
@@ -2207,14 +2225,14 @@
   "Goal to test whether a logic var is ground. Non-relational."
   [v]
   `(fn [a#]
-     (if (lvar? (walk a# ~v))
+     (if (lvar? (:tovar (walk a# ~v)))
        a# nil)))
 
 (defmacro nonlvaro
   "Goal to test whether a logic var is ground. Non-relational."
   [v]
   `(fn [a#]
-     (if (not (lvar? (walk a# ~v)))
+     (if (not (lvar? (:tovar (walk a# ~v))))
        a# nil)))
 
 ;; =============================================================================
@@ -2621,7 +2639,7 @@
 ;; TODO: for arity greater than 20, we need to use rest args
 
 (defn contains-lvar? [x]
-  (some lvar? (tree-seq coll? seq x)))
+  (some (fn [y] (lvar? (:tovar y))) (tree-seq coll? seq x)))
 
 (defmacro extend-rel [name & args]
   (let [arity (count args)
@@ -2935,13 +2953,14 @@
 
 (defn get-dom-fd
   [a x]
-  (if (lvar? x)
+  (if (lvar? (:tovar x))
     (get-dom a x ::fd)
     x))
 
 (defn ext-dom-fd
   [a x dom]
-  (let [domp (get-dom-fd a x)
+  (let [x (:tovar x)
+        domp (get-dom-fd a x)
         a    (add-dom a x ::fd dom)]
     (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::fd) a)
@@ -3012,12 +3031,12 @@
 (defn run-constraints [xcs]
   (fn [a]
     (let [cq (:cq a)
-          a  (reduce (fn [a c]
-                       (queue a c))
-               (assoc a :cq (or cq [])) xcs)]
-     (if cq
-       a
-       (fix-constraints a)))))
+           a  (reduce (fn [a c]
+                        (queue a c))
+                (assoc a :cq (or cq [])) xcs)]
+      (if cq
+        a
+        (fix-constraints a)))))
 
 (defn run-constraints* [xs cs ws]
   (if (or (zero? (count cs))
@@ -3037,8 +3056,8 @@
   (letfn [(verify-all-bound* [a constrained]
             (when constrained
               (let [x (first constrained)]
-                (if (and (lvar? x)
-                         (and (lvar? (walk a x))
+                (if (and (lvar? (:tovar x))
+                         (and (lvar? (:tovar (walk a (:tovar x))))
                               (nil? (get-dom-fd a x))))
                   (throw (Exception. (str "Constrained variable " x " without domain")))
                   (recur a (next constrained))))))]
@@ -3075,7 +3094,8 @@
   (let [cs  (:cs  a)
         rcs (->> (vals (:cm cs))
                  (filter reifiable?)
-                 (map #(reifyc % v r a)))]
+                 (map #(reifyc % v r a))
+                 (filter #(not (nil? %))))]
     (if (empty? rcs)
       (choice (list v) empty-f)
       (choice (list `(~v :- ~@rcs)) empty-f))))
@@ -3117,7 +3137,7 @@
   [a vars & body]
   (let [get-var-dom (fn [a [v b]]
                       `(~b (let [v# (walk ~a ~v)]
-                             (if (lvar? v#)
+                             (if (lvar? (:tovar v#))
                                (get-dom-fd ~a v#)
                                v#))))]
    `(let [~@(mapcat (partial get-var-dom a) (partition 2 vars))]
@@ -3145,7 +3165,7 @@
   (fn [a]
     (when dom
       (cond
-       (lvar? x) (update-var-dom a x dom)
+       (lvar? (:tovar x)) (update-var-dom a x dom)
        (member? dom x) a
        :else nil))))
 
@@ -3210,7 +3230,7 @@
 
   Object
   (-force-ans [v x]
-    (if (lvar? x)
+    (if (lvar? (:tovar x))
       (ext-run-csg x v)
       s#))
 
@@ -3262,7 +3282,7 @@
 (defn force-ans [x]
   (fn [a]
     ((let [v (walk a x)]
-       (if (lvar? v)
+       (if (lvar? (:tovar v))
          (-force-ans (get-dom-fd a x) v)
          (let [x (root-var a x)]
            (if (sequential? v)
@@ -3305,7 +3325,7 @@
       (runnable? proc s)
       (letfn [(has-dom? [x]
                 (let [x (walk s x)]
-                  (if (lvar? x)
+                  (if (lvar? (:tovar x))
                     (get-dom-fd s x)
                     x)))]
         (every? identity (map has-dom? (rands proc))))))
@@ -3342,7 +3362,7 @@
       (not (nil? (get-dom-fd s x))))
     IRunnable
     (runnable? [this s]
-      (not (lvar? (walk s x))))
+      (not (lvar? (:tovar (walk s x)))))
     IConstraintWatchedStores
     (watched-stores [this] #{::subst})))
 
@@ -3620,7 +3640,7 @@
                (if y*
                  (let [y (first y*)
                        v (or (get-dom-fd s y) (walk s y))
-                       s (if-not (lvar? v)
+                       s (if-not (lvar? (:tovar v))
                            (cond
                              (= x v) nil
                              (member? v x) ((process-dom y (difference v x)) s)
@@ -3673,7 +3693,7 @@
        clojure.lang.IFn
        (invoke [this s]
          (let [v* (walk s v*)
-               {x* true n* false} (group-by lvar? v*)
+              {x* true n* false} (group-by (fn [y] (lvar? (:tovar y))) v*)
                n* (sort < n*)]
            (when (list-sorted? < n*)
              (let [x* (into #{} x*)
@@ -3698,7 +3718,7 @@
        IRunnable
        (runnable? [this s]
          (let [v* (walk s v*)]
-           (not (lvar? v*))))
+           (not (lvar? (:tovar v*)))))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -3801,8 +3821,14 @@
              v (walk s v)]
          (if (identical? u v)
            cs
-           (if (and (not (lvar? u)) (lvar? v))
+           (cond
+             (and (not (special-var? u)) (special-var? v))
              (disunify-terms v u s cs)
+             (and (not (special-var? v)) (special-var? u))
+             (disunify-terms u v s cs)
+             (and (not (lvar? (:tovar u))) (lvar? (:tovar v)))
+             (disunify-terms v u s cs)
+             :else
              (disunify-terms u v s cs)))))))
 
 (extend-protocol IDisunifyTerms
@@ -3862,8 +3888,8 @@
   (loop [p (seq p) r #{}]
     (if p
       (let [[u v] (first p)]
-        (if (lvar? v)
-          (recur (next p) (conj r u v))
+        (if (lvar? (:tovar v))
+          (recur (next p) (conj r u (:tovar v)))
           (recur (next p) (conj r u))))
       r)))
 
@@ -3885,7 +3911,7 @@
                            vv (walk* a v)]
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
-                         (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
+                         (and (not (lvar? (:tovar xv))) (not (lvar? (:tovar vv))) (not= xv vv)) nil
                          :else (recur (next sp) p)))
                      p))]
            (if p
@@ -3920,13 +3946,13 @@
        (rands [_] (seq (recover-vars p)))
        IRunnable
        (runnable? [this s]
-         (some #(not= (walk s %) %) (recover-vars p)))
+         (some #(not= (:tovar (walk s %)) (:tovar %)) (recover-vars p)))
        IRelevant
        (-relevant? [this s]
          (not (empty? p)))
        IRelevantVar
        (-relevant-var? [this x]
-         ((recover-vars p) x))
+         ((recover-vars p) (:tovar x)))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -4067,7 +4093,7 @@
        (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
-         (not (lvar? (walk a x))))
+         (not (lvar? (:tovar (walk a x)))))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -4085,13 +4111,13 @@
 (defn ground-term? [x s]
   (letfn [(-ground-term? [x s]
             (let [x (walk s x)]
-              (if (lvar? x)
+              (if (lvar? (:tovar x))
                 (throw fk)
                 (walk-term x
                   (fn [x]
                     (let [x (walk s x)]
                       (cond
-                        (lvar? x) (throw fk)
+                        (lvar? (:tovar x)) (throw fk)
                         (coll? x) (-ground-term? x s)
                         :else x)))))))]
     (try
@@ -4168,7 +4194,7 @@
        (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
-         (not (lvar? (walk a x))))
+         (not (lvar? (:tovar (walk a x)))))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -4189,7 +4215,7 @@
   clojure.core.logic.LCons
   (-constrain-tree [t fc s]
     (loop [t t s s]
-      (if (lvar? t)
+      (if (not (lcons? t)) ;; Note(namin): change for suspensions.
         (fc t s)
         (when-let [s (fc (lfirst t) s)]
           (recur (lnext t) s)))))

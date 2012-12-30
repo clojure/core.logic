@@ -1,7 +1,7 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic :exclude [is] :as l]
-        clojure.test :reload)
+        clojure.test)
   (:require [clojure.pprint :as pp]))
 
 ;; =============================================================================
