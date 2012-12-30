@@ -5,7 +5,6 @@
   (:import [java.io Writer]
            [java.util UUID]))
 
-(def ^{:dynamic true} *occurs-check* true)
 (def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
@@ -990,7 +989,7 @@
     (occurs-check-term v u s)))
 
 (defn ext [s u v]
-  (if (and *occurs-check* (occurs-check s u (if (subst-val? v) (:v v) v)))
+  (if (and (:oc s) (occurs-check s u (if (subst-val? v) (:v v) v)))
     nil
     (ext-no-check s u v)))
 
@@ -1063,8 +1062,9 @@
 ;; cs  - constraint store
 ;; cq  - for the constraint queue
 ;; cqs - constraint ids in the queue
+;; oc  - occurs check
 
-(deftype Substitutions [s vs ts cs cq cqs _meta]
+(deftype Substitutions [s vs ts cs cq cqs oc _meta]
   Object
   (equals [this o]
     (or (identical? this o)
@@ -1079,7 +1079,7 @@
   clojure.lang.IObj
   (meta [this] _meta)
   (withMeta [this new-meta]
-    (Substitutions. s vs ts cs cq cqs new-meta))
+    (Substitutions. s vs ts cs cq cqs oc new-meta))
 
   clojure.lang.ILookup
   (valAt [this k]
@@ -1092,6 +1092,7 @@
       :cs  cs
       :cq  cq
       :cqs cqs
+      :oc  oc
       not-found))
 
   clojure.lang.IPersistentCollection
@@ -1114,15 +1115,17 @@
       :cs  [:cs cs]
       :cq  [:cq cq]
       :cqs [:cqs cqs]
+      :oc  [:oc cqs]
       nil))
   (assoc [this k v]
     (case k
-      :s   (Substitutions. v vs ts cs cq cqs _meta)
-      :vs  (Substitutions. s  v ts cs cq cqs _meta)
-      :ts  (Substitutions. s vs  v cs cq cqs _meta)
-      :cs  (Substitutions. s vs ts  v cq cqs _meta)
-      :cq  (Substitutions. s vs ts cs  v cqs _meta)
-      :cqs (Substitutions. s vs ts cs cq   v _meta)
+      :s   (Substitutions. v vs ts cs cq cqs oc _meta)
+      :vs  (Substitutions. s  v ts cs cq cqs oc _meta)
+      :ts  (Substitutions. s vs  v cs cq cqs oc _meta)
+      :cs  (Substitutions. s vs ts  v cq cqs oc _meta)
+      :cq  (Substitutions. s vs ts cs  v cqs oc _meta)
+      :cqs (Substitutions. s vs ts cs cq   v oc _meta)
+      :oc  (Substitutions. s vs ts cs cq cqs  v _meta)
       (throw (Exception. (str "Substitutions has no field for key" k)))))
 
   ISubstitutions
@@ -1130,7 +1133,7 @@
     (let [u (if-not (lvar? (:tovar v))
               (assoc-meta u ::root true)
               u)]
-      (Substitutions. (assoc s u v) (if vs (conj vs u)) ts cs cq cqs _meta)))
+      (Substitutions. (assoc s u v) (if vs (conj vs u)) ts cs cq cqs oc _meta)))
 
   (walk [this v]
     (if (walkable? v)
@@ -1183,7 +1186,7 @@
           xs (if (lvar? (:tovar v))
                [x (root-var this v)]
                [x])
-          s  (if *occurs-check*
+          s  (if oc
                (ext this x v)
                (ext-no-check this x v))]
       (when s
@@ -1265,12 +1268,13 @@
       (-> v :doms dom))))
 
 (defn- make-s
-  ([] (Substitutions. {} nil nil (make-cs) nil #{} nil))
-  ([m] (Substitutions. m nil nil (make-cs) nil #{} nil))
-  ([m cs] (Substitutions. m nil nil cs nil #{} nil)))
+  ([] (Substitutions. {} nil nil (make-cs) nil #{} true nil))
+  ([m] (Substitutions. m nil nil (make-cs) nil #{} true nil))
+  ([m cs] (Substitutions. m nil nil cs nil #{} true nil)))
 
-(defn tabled-s []
-  (Substitutions. {} nil (atom {}) (make-cs) nil #{} nil))
+(defn tabled-s
+  ([] (tabled-s false))
+  ([oc] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc nil)))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -1879,14 +1883,14 @@
 
 (declare reifyg)
 
-(defmacro solve [& [n [x :as bindings] & goals]]
+(defmacro -run [oc n [x :as bindings] & goals]
   (if (> (count bindings) 1)
-    `(solve ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
+    `(-run ~oc ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
     `(let [xs# (take* (fn []
                         ((fresh [~x]
                            ~@goals
                            (reifyg ~x))
-                         (tabled-s))))]
+                         (tabled-s ~oc))))]
        (if ~n
          (take ~n xs#)
          xs#))))
@@ -1894,34 +1898,23 @@
 (defmacro run
   "Executes goals until a maximum of n results are found."
   [n & goals]
-  `(doall (solve ~n ~@goals)))
+  `(-run true ~n ~@goals))
 
 (defmacro run*
   "Executes goals until results are exhausted."
   [& goals]
-  `(run false ~@goals))
+  `(-run true false ~@goals))
 
 (defmacro run-nc
   "Executes goals until a maximum of n results are found. Does not 
    occurs-check."
   [& [n & goals]]
-  `(binding [*occurs-check* false]
-     (run ~n ~@goals)))
+  `(-run false ~n ~@goals))
 
 (defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
   [& goals]
   `(run-nc false ~@goals))
-
-(defmacro lazy-run
-  "Lazily executes goals until a maximum of n results are found."
-  [& [n & goals]]
-  `(solve ~n ~@goals))
-
-(defmacro lazy-run*
-  "Lazily executes goals until results are exhausted."
-  [& goals]
-  `(solve false ~@goals))
 
 (defmacro all
   "Like fresh but does does not create logic variables."

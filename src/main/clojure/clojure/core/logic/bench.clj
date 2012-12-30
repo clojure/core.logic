@@ -13,8 +13,9 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e6]
-       (run* [q]
-         (== q true)))))
+       (doall
+         (run* [q]
+           (== q true))))))
  )
 
 (comment
@@ -26,9 +27,10 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 1]
-       (run 700 [q]
-         (fresh [x y]
-           (appendo x y q))))))
+       (doall
+         (run 700 [q]
+           (fresh [x y]
+             (appendo x y q)))))))
   )
 
 ;; =============================================================================
@@ -49,11 +51,10 @@
   ;; SWI-Prolog 0.06-0.08s
   ;; ~3.7s
   (let [data (into [] (range 30))]
-    (binding [*occurs-check* false]
-      (dotimes [_ 5]
-        (time
-         (dotimes [_ 1e3]
-           (run 1 [q] (nrevo data q)))))))
+    (dotimes [_ 5]
+      (time
+       (dotimes [_ 1e3]
+         (doall (run-nc 1 [q] (nrevo data q)))))))
 
   ;; the LIPS are ridiculously high for SWI-Prolog
   ;; clearly nrev is a case that SWI-Prolog can optimize away
@@ -93,18 +94,17 @@
   (run 1 [q] (zebrao q))
   
   ;; SWI-Prolog 6-8.5s
-  ;; ~2.4s
-  (binding [*occurs-check* false]
-    (dotimes [_ 5]
-      (time
-       (dotimes [_ 1e3]
-         (run 1 [q] (zebrao q))))))
-
-  ;; ~3.7s
+  ;; now 2.5-2.6s, old days <2.4s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1e3]
-       (run 1 [q] (zebrao q)))))
+       (doall (run-nc 1 [q] (zebrao q))))))
+
+  ;; now ~4s, in old days closer to ~3.7s
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1e3]
+       (doall (run 1 [q] (zebrao q))))))
   )
 
 ;; =============================================================================
@@ -147,11 +147,12 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
-      (run-nc 20 [q]
-        (fresh [a b d]
-          (== q (llist a b d))
-          (bounded-listo q 6)
-          (all-connected-to-allo q))))))
+      (doall
+       (run-nc 20 [q]
+         (fresh [a b d]
+           (== q (llist a b d))
+           (bounded-listo q 6)
+           (all-connected-to-allo q)))))))
 )
 
 ;; =============================================================================
@@ -193,25 +194,22 @@
 
   ;; < 3s for 100x
   ;; about 18X slower that SWI
-  (binding [*occurs-check* false]
-    (dotimes [_ 5]
-      (time
-       (dotimes [_ 1]
-         (take 1 (solve-nqueens))))))
+  (dotimes [_ 5]
+    (time
+     (dotimes [_ 1]
+       (doall (take 1 (solve-nqueens))))))
 
   ;; ~550ms
-  (binding [*occurs-check* false]
-    (dotimes [_ 10]
-      (time
-       (dotimes [_ 1]
-         (solve-nqueens)))))
+  (dotimes [_ 10]
+    (time
+     (dotimes [_ 1]
+       (doall (solve-nqueens)))))
 
   ;; ~610ms
   (dotimes [_ 10]
     (time
-     (binding [*occurs-check* false]
-      (dotimes [_ 1]
-        (solve-nqueens)))))
+     (dotimes [_ 1]
+       (doall (solve-nqueens)))))
 
   ;; nqueens benefits from constraints
   )
@@ -305,11 +303,10 @@
   ;; again I suspect the overhead here is from
   ;; interleaving, need to figure
   (time
-   (binding [*occurs-check* false]
-     (run 1 [q]
-       (fresh [send more money]
-         (send-money-quicklyo send more money)
-         (== [send more money] q)))))
+   (run-nc 1 [q]
+     (fresh [send more money]
+       (send-money-quicklyo send more money)
+       (== [send more money] q))))
   )
 
 ;; =============================================================================
@@ -366,17 +363,17 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
-       (cryptarithfd-1))))
+       (doall (cryptarithfd-1)))))
 
   ;; 3X slower still
   (dotimes [_ 5]
     (time
      (dotimes [_ 10] 
-       (cryptarithfd-1))))
+       (doall (cryptarithfd-1)))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
   ;; 1.9s now
-  (time (cryptarithfd-2))
+  (time (doall (cryptarithfd-2)))
   )
 
 ;; =============================================================================
@@ -454,7 +451,7 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
-       (dinesmanfd))))
+       (doall (dinesmanfd)))))
 
   (-> (dinesmanfd) first ->answer)  ; (:smith :cooper :baker :fletcher :miller)
   )
@@ -495,7 +492,7 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
-       (simple-eqfd))))
+       (doall (simple-eqfd)))))
   
   (run* [q]
     (fresh [a b]
@@ -569,7 +566,7 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
-       (matches 40))))
+       (doall (matches 40)))))
   )
 
 ;; =============================================================================
@@ -615,7 +612,7 @@
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
-       (small-sudokufd))))
+       (doall (small-sudokufd)))))
 
   (small-sudokufd)
   )
@@ -730,17 +727,17 @@
 
   (-> (sudokufd easy0) first verify)
 
-  ;; ~2250ms
+  ;; ~1600ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
-       (sudokufd easy0))))
+       (doall (sudokufd easy0)))))
 
   ;; ~2800ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
-       (sudokufd easy1))))
+       (doall (sudokufd easy1)))))
 
   ;; Hardest Norvig Random
   (def hard0
@@ -766,7 +763,7 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 1]
-       (sudokufd hard0))))
+       (doall (sudokufd hard0)))))
 
   ;; from GeCode test suite
   (def hard1
@@ -792,7 +789,7 @@
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
-       (sudokufd hard1))))
+       (doall (sudokufd hard1)))))
 
   ;; from Wikipedia
   (def hard2
@@ -815,7 +812,7 @@
 
   (dotimes [_ 5]
     (time
-     (sudokufd hard2)))
+      (doall (sudokufd hard2))))
 
   (def ciao
     [0 4 3  0 8 0  2 5 0
@@ -833,8 +830,8 @@
   ;; ~2700ms
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100]
-       (sudokufd ciao))))
+      (dotimes [_ 100]
+        (doall (sudokufd ciao)))))
   )
 
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
@@ -869,9 +866,9 @@
         (< c9 c8)))
     (safefd))
 
-  ;; 2800ms
+  ;; 2300ms
   (dotimes [_ 5]
     (time
       (dotimes [_ 100] 
-        (safefd))))
+        (doall (safefd)))))
   )
