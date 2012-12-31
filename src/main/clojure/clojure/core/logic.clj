@@ -28,6 +28,7 @@
 ;; =============================================================================
 ;; Marker Interfaces
 
+(definterface IBindable)
 (definterface ITreeTerm)
 (definterface IVar)
 
@@ -310,7 +311,7 @@
 ;; =============================================================================
 ;; Constraint Store
 
-(declare lvar? interval multi-interval)
+(declare lvar? bindable? interval multi-interval)
 
 (defn bounds [i]
   (pair (lb i) (ub i)))
@@ -1126,16 +1127,17 @@
       (Substitutions. (assoc s u v) (if vs (conj vs u)) ts cs cq cqs oc _meta)))
 
   (walk [this v]
-    (if (lvar? v)
+    (if (bindable? v)
       (loop [lv v [v vp :as me] (find s v)]
         (cond
           (nil? me) lv
           
-          (not (lvar? vp))
-          (if-let [sv (and (subst-val? vp) (:v vp))]
-            (if (= sv ::unbound)
-              (with-meta v (assoc (meta vp) ::unbound true))
-              sv)
+          (not (bindable? vp))
+          (if (subst-val? vp)
+            (let [sv (:v vp)]
+              (if (= sv ::unbound)
+                (with-meta v (assoc (meta vp) ::unbound true))
+                sv))
             vp)
           
           :else (recur vp (find s vp))))
@@ -1399,6 +1401,10 @@
 
 (defn lvars [n]
   (repeatedly n lvar))
+
+(defn bindable? [x]
+  (or (lvar? x)
+    (instance? clojure.core.logic.IBindable x)))
 
 ;; =============================================================================
 ;; LCons
@@ -3075,7 +3081,8 @@
   (let [cs  (:cs  a)
         rcs (->> (vals (:cm cs))
                  (filter reifiable?)
-                 (map #(reifyc % v r a)))]
+                 (map #(reifyc % v r a))
+                 (filter #(not (nil? %))))]
     (if (empty? rcs)
       (choice (list v) empty-f)
       (choice (list `(~v :- ~@rcs)) empty-f))))
