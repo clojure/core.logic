@@ -3432,10 +3432,11 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv]
-       (cond
-        (not (singleton-dom? du)) true
-        (not (singleton-dom? dv)) true
-        :else (not (<= du dv)))))))
+       (if (and (domain? du) (domain dv))
+         (if (and (singleton-dom? du) (singleton-dom? dv))
+           (not (<= du dv))
+           (not (interval-< du dv)))
+         true)))))
 
 (defn <=fd
   "A finite domain constraint. u must be less than or equal to v.
