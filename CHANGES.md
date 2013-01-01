@@ -1,3 +1,15 @@
+From 0.8.0-beta4 to 0.8.0-beta5
+====
+
+Enhancements
+----
+* run* and it's variants are now fully lazy
+* alphaKanren implementation - nominal logic programming now possible
+
+Bug Fixes
+----
+* LOGIC-90: `<=fd` could diverge
+
 From 0.8.0-beta3 to 0.8.0-beta4
 ====
 
