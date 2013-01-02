@@ -361,3 +361,21 @@
                (== y 'foo)
                (== [x y] q))))
         '())))
+
+;; tickets
+
+(deftest test-77-predc-not-purged
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (fresh [x]
+               (predc x number? `number?)
+               (== x 1)
+               (== (nom/tie a [a x]) q))))
+         [(nom/tie 'a_0 '(a_0 1))]))
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (fresh [x]
+               (== x 1)
+               (predc x number? `number?)
+               (== (nom/tie a [a x]) q))))
+         [(nom/tie 'a_0 '(a_0 1))])))

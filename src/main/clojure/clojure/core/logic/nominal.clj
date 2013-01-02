@@ -225,8 +225,6 @@
                   (symbol? (first swap))
                   (symbol? (second swap)))
             `(~'swap ~swap ~t1 ~t2))))
-      clojure.core.logic.IRelevant
-      (-relevant? [_ a] true)
       clojure.core.logic.IRunnable
       (runnable? [_ a]
         (let [t1 (walk a v1)

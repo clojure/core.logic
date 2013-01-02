@@ -2976,6 +2976,9 @@
   (fn [a]
     (assoc a :cs (runc (:cs a) c false))))
 
+(defn irelevant? [c]
+  (instance? clojure.core.logic.IRelevant c))
+
 (defn relevant? [c a]
   (let [id (id c)]
     (and (or ((-> a :cs :cm) id)
@@ -2984,7 +2987,7 @@
 
 (defn run-constraint [c]
   (fn [a]
-    (if (relevant? c a)
+    (if (or (not (irelevant? c)) (relevant? c a))
       (if (runnable? c a)
         ((composeg* (runcg c) c (stopcg c)) a)
         a)
@@ -3102,7 +3105,7 @@
     (invoke [_ a]
       (if (runnable? c a)
         (when-let [a (c a)]
-          (if (relevant? c a)
+          (if (and (irelevant? c) (relevant? c a))
             ((addcg c) a)
             a))
         ((addcg c) a)))
@@ -3643,7 +3646,7 @@
        (rator [_] `-distinctfd)
        (rands [_] [x])
        IRelevant
-       (-relevant? [this s] true) ;; we are relevant until we run
+       (-relevant? [this s] true) ;; FIXME: this is because FDConstraint delegates :( - David
        IRunnable
        (runnable? [this s]
          ;; we can only run if x is is bound to
@@ -3698,8 +3701,7 @@
        (rator [_] `distinctfd)
        (rands [_] [v*])
        IRelevant
-       (-relevant? [this s]
-         true)
+       (-relevant? [this s] true) ;; FIXME: this is because FDConstraint delegates :( - David
        IRunnable
        (runnable? [this s]
          (let [v* (walk s v*)]
@@ -4068,8 +4070,6 @@
          (let [fs (into {} fs)
                r  (-reify* r (walk* a fs))]
            `(featurec ~(walk* r x) ~(walk* r fs))))
-       IRelevant
-       (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
          (not (lvar? (walk a x))))
@@ -4130,8 +4130,6 @@
                       clojure.core.logic/IReifiableConstraint
                       (~'reifyc [_# _# r# a#]
                         (list '~name (map #(-reify r# %) ~args)))
-                      clojure.core.logic/IRelevant
-                      (~'-relevant? [_# s#] true)
                       clojure.core.logic/IRunnable
                       (~'runnable? [_# s#]
                         (ground-term? ~args s#))
@@ -4169,8 +4167,6 @@
        IReifiableConstraint
        (reifyc [_ v r a]
          pform)
-       IRelevant
-       (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
          (not (lvar? (walk a x))))
@@ -4243,8 +4239,6 @@
            (reifier c x v r a)
            (let [x (walk* r x)]
              `(fixc ~x ~reifier))))
-       IRelevant
-       (-relevant? [_ a] true)
        IRunnable
        (runnable? [_ a]
          (not (lvar? (walk a x))))
