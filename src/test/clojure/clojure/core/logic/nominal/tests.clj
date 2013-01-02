@@ -360,4 +360,44 @@
                (predc x number? `number?)
                (== y 'foo)
                (== [x y] q))))
-        '())))
+        '()))
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (fresh [x]
+               (predc x number? `number?)
+               (== x 1)
+               (== (nom/tie a [a x]) q))))
+        [(nom/tie 'a_0 '(a_0 1))]))
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (fresh [x]
+               (== x 1)
+               (predc x number? `number?)
+               (== (nom/tie a [a x]) q))))
+        [(nom/tie 'a_0 '(a_0 1))]))
+  (is (= (run* [q]
+           (nom/fresh [a b c]
+             (fresh [x]
+               (== x 1)
+               (predc x number? `number?)
+               (== (nom/tie b (nom/tie a [a x])) (nom/tie c q)))))
+        [(nom/tie 'a_0 '(a_0 1))]))
+  (is (= (run* [q]
+           (nom/fresh [a b c]
+             (fresh [x]
+               (== x 1)
+               (treec x #(predc %  number? `number?) `number?)
+               (== (nom/tie b (nom/tie a [a x])) (nom/tie c q)))))
+        [(nom/tie 'a_0 '(a_0 1))]))
+  (is (= (run* [q]
+           (fresh [x]
+             (nom/fresh [a]
+               (infd x (interval 1 3))
+               (== q (nom/tie a x)))))
+        [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
+  (is (= (run* [q]
+           (nom/fresh [a b c]
+             (fresh [x]
+               (infd x (interval 1 3))
+               (== (nom/tie b (nom/tie a x)) (nom/tie c q)))))
+        [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)])))

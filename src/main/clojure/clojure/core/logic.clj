@@ -903,7 +903,7 @@
     (let [vars (var-rands a c)
           c (with-id c cid)
           cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
-      (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
+      [(ConstraintStore. (:km cs) (:cm cs) (inc cid) running) c]))
 
   (updatec [this a c]
     (let [oc (cm (id c))
@@ -2957,8 +2957,9 @@
   (fn [a]
     (let [a (reduce (fn [a x]
                       (ext-no-check a x (subst-val ::unbound)))
-              a (unbound-rands a c))]
-      (assoc a :cs (addc (:cs a) a c)))))
+              a (unbound-rands a c))
+          [cs c] (addc (:cs a) a c)]
+      [(assoc a :cs cs) c])))
 
 (defn updatecg [c]
   (fn [a]
@@ -3100,12 +3101,12 @@
   (reify
     clojure.lang.IFn
     (invoke [_ a]
-      (if (runnable? c a)
-        (when-let [a (c a)]
-          (if (relevant? c a)
-            ((addcg c) a)
+      (if (relevant? c a)
+        (let [[a c] ((addcg c) a)]
+          (if (runnable? c a)
+            (c a)
             a))
-        ((addcg c) a)))
+        a))
     IUnwrapConstraint
     (unwrap [_] c)))
 
