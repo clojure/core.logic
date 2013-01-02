@@ -364,7 +364,7 @@
 
 ;; tickets
 
-(deftest test-77-predc-not-purged
+(deftest test-91-predc-not-purged
   (is (= (run* [q]
            (nom/fresh [a]
              (fresh [x]
