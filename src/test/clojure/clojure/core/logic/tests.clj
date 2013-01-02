@@ -1795,7 +1795,7 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        cs (addc (make-cs) empty-s c)
+        [cs c] (addc (make-cs) empty-s c)
         sc (first (constraints-for cs empty-s u ::l/fd))]
     (is (= c sc))
     (is (= (id sc) 0))
@@ -1809,9 +1809,9 @@
         c0 (fdc (+fdc u v w))
         x (lvar 'x)
         c1 (fdc (+fdc w v x))
-        cs  (-> (make-cs)
-                (addc empty-s c0)
-                (addc empty-s c1))
+        cs  (make-cs)
+        [cs c0] (addc cs empty-s c0)
+        [cs c1] (addc cs empty-s c1)
         sc0 (get (:cm cs) 0)
         sc1 (get (:cm cs) 1)]
     (is (= sc0 c0)) (is (= (id sc0) 0))
@@ -1825,7 +1825,7 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        s ((addcg c) empty-s)]
+        [s c] ((addcg c) empty-s)]
     (is (= (count (:km (:cs s))) 2))
     (is (= (count (:cm (:cs s))) 1))))
 
@@ -1834,7 +1834,7 @@
         v 1
         w (lvar 'w)
         c (fdc (+fdc u v w))
-        s ((addcg c) empty-s)
+        [s c] ((addcg c) empty-s)
         c (first (constraints-for (:cs s) s u ::l/fd))
         s (-> s
             (ext-no-check u 1)
@@ -2249,7 +2249,7 @@
         y (lvar 'y)
         z (lvar 'z)
         c (fdc (+fdc x y z))
-        cs (addc (make-cs) empty-s c)
+        [cs c] (addc (make-cs) empty-s c)
         cp (get (:cm cs) 0)
         cs (remc cs empty-s cp)]
     (is (= (:km cs) {}))
@@ -2265,7 +2265,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
-        cs (addc (make-cs) empty-s c)]
+        [cs c] (addc (make-cs) empty-s c)]
     (is (tree-constraint? ((:cm cs) 0)))
     (is (= (into #{} (keys (:km cs)))
            #{x y}))))
@@ -2333,7 +2333,7 @@
         y (lvar 'y)
         c (!=c (list (pair x 1)))
         sc (!=c (list (pair x 1) (pair y 2)))
-        cs (addc (make-cs) empty-s c)]
+        [cs c] (addc (make-cs) empty-s c)]
     ))
 
 (deftest test-multi-constraints-1 []
