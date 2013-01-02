@@ -39,6 +39,8 @@
     (let [t (walk* s t)]
       (if (lvar? t)
         (let [v (with-meta (lvar) (meta t))
+              rt (root-val s t)
+              s (if (subst-val? rt) (ext-no-check s v rt) s)
               s (update-dom s (root-var s v) ::nom (fnil (fn [d] (conj d t)) []))
               s (update-dom s (root-var s t) ::nom (fnil (fn [d] (conj d v)) []))
               s (bind s (suspc v t swap))]
@@ -300,6 +302,10 @@
   clojure.core.logic.IConstrainTree
   (-constrain-tree [t fc s]
     (fc (:body t) s))
+
+  clojure.core.logic.IForceAnswerTerm
+  (-force-ans [v x]
+    (force-ans (:body v)))
 
   INomSwap
   (swap-noms [t swap s]
