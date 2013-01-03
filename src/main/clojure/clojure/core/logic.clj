@@ -3921,7 +3921,7 @@
                                 (not (or (var? lhs)
                                          (var? rhs))))
                               p*)]
-               `(~'!= ~@(first p*))))))
+               `(~'!= ~@p*)))))
        IConstraintOp
        (rator [_] `!=)
        (rands [_] (seq (recover-vars p)))
