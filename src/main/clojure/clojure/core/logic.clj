@@ -25,6 +25,9 @@
 (defn dissoc-dom [x k]
   (assoc x :doms (dissoc (:doms x) k)))
 
+(defn record? [x]
+  (instance? clojure.lang.IRecord x))
+
 ;; =============================================================================
 ;; Marker Interfaces
 
@@ -1667,18 +1670,24 @@
 
   clojure.lang.IPersistentMap
   (walk-term [v f]
-    (with-meta
-      ;; TODO: call empty here on v to preserve the type
-      ;; we were given, we can have the transient bit
-      ;; for the cases where we have a concrete Clojure map
-      ;; type, and just usy empty + assoc for everything else
-      (loop [v v r (transient {})]
-        (if (seq v)
-          (let [[vfk vfv] (first v)]
-            (recur (next v) (assoc! r (walk-term (f vfk) f)
-                                    (walk-term (f vfv) f))))
-          (persistent! r)))
-      (meta v))))
+    (if (record? v)
+      (walk-record-term v f)
+      (with-meta
+        ;; TODO: call empty here on v to preserve the type
+        ;; we were given, we can have the transient bit
+        ;; for the cases where we have a concrete Clojure map
+        ;; type, and just usy empty + assoc for everything else
+        (loop [v v r (transient {})]
+          (if (seq v)
+            (let [[vfk vfv] (first v)]
+              (recur (next v) (assoc! r (walk-term (f vfk) f)
+                                      (walk-term (f vfv) f))))
+            (persistent! r)))
+        (meta v))))
+
+  clojure.lang.IRecord
+  (walk-term [v f]
+    (walk-record-term v f)))
 
 ;; =============================================================================
 ;; Occurs Check Term
@@ -4029,11 +4038,7 @@
       nil))
 
   IUninitialized
-  (-uninitialized [_] (PMap.))
-
-  IWalkTerm
-  (walk-term [v f]
-    (walk-record-term v f)))
+  (-uninitialized [_] (PMap.)))
 
 (defn partial-map
   "Given map m, returns partial map that unifies with maps even if it

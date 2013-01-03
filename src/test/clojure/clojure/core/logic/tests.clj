@@ -1375,6 +1375,16 @@
            (<fd d a))
          '([2 3 0 1]))))
 
+(defrecord RecordTest [a b]
+  IUninitialized
+  (-uninitialized [_]
+    (RecordTest. nil nil)))
+
+(deftest test-53-lossy-records
+  (is (= (run* [q]
+           (== q (RecordTest. 1 2)))
+         (list #clojure.core.logic.tests.RecordTest{:a 1, :b 2}))))
+
 ;; =============================================================================
 ;; cKanren
 
