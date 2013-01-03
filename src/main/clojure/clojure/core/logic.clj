@@ -3914,14 +3914,10 @@
        (enforceable? [_] false)
        IReifiableConstraint
        (reifyc [this v r a]
-         (let [p* (walk* r (map (fn [[lhs rhs]] `(~lhs ~rhs)) p))]
+         (let [p* (-reify a (map (fn [[lhs rhs]] `(~lhs ~rhs)) p) r)]
            (if (empty? p*)
              '()
-             (let [p* (filter (fn [[lhs rhs]]
-                                (not (or (var? lhs)
-                                         (var? rhs))))
-                              p*)]
-               `(~'!= ~@p*)))))
+             `(~'!= ~@p*))))
        IConstraintOp
        (rator [_] `!=)
        (rands [_] (seq (recover-vars p)))
