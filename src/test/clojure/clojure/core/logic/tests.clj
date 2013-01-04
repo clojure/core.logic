@@ -947,6 +947,24 @@
              (!= [x 1] [2 y])))
          '((_0 :- (!= (_1 1) (_2 2)))))))
 
+(deftest test-logic-95-disequality-1
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (!= x y)
+             (!= w z)
+             (== z y)
+             (== x 'foo)
+             (== y 'foo)))
+        ())))
+
+(deftest test-logic-95-disequality-2
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (!= x [y])
+             (== x ['foo])
+             (== y 'foo)))
+        ())))
+
 ;; -----------------------------------------------------------------------------
 ;; tabled
 

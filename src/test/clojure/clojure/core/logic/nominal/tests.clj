@@ -393,3 +393,13 @@
                (infd x (interval 1 3))
                (== (nom/tie b (nom/tie a x)) (nom/tie c q)))))
         [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)])))
+
+(deftest test-95-nominal-disequality
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (fresh [x y]
+               (!= x y)
+               (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
+               (== x 'foo)
+               (== [x y] q))))
+        ())))

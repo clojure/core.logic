@@ -3870,16 +3870,25 @@
     (when sp
       (identical? s sp))))
 
+(defn recover-vars-from-term [x]
+  (let [r (atom #{})]
+    (walk-term x
+      (fn [x]
+        (if (lvar? x)
+          (do (swap! r conj x) x)
+          x)))
+    @r))
+
 (defn recover-vars [p]
   (loop [p (seq p) r #{}]
     (if p
       (let [[u v] (first p)]
-        (if (lvar? v)
-          (recur (next p) (conj r u v))
-          (recur (next p) (conj r u))))
+        (recur (next p)
+          (clojure.set/union
+            r (recover-vars-from-term u) (recover-vars-from-term v))))
       r)))
 
-(declare normalize-store)
+(declare normalize-store ground-term?)
 
 (defn !=c
   ([p] (!=c p nil))
@@ -3897,7 +3906,7 @@
                            vv (walk* a v)]
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
-                         (and (not (lvar? xv)) (not (lvar? vv)) (not= xv vv)) nil
+                         (and (ground-term? xv a) (ground-term? vv a) (not= xv vv)) nil
                          :else (recur (next sp) p)))
                      p))]
            (if p
@@ -3932,9 +3941,6 @@
        IRelevant
        (-relevant? [this s]
          (not (empty? p)))
-       IRelevantVar
-       (-relevant-var? [this x]
-         ((recover-vars p) x))
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
@@ -4094,7 +4100,7 @@
                     (let [x (walk s x)]
                       (cond
                         (lvar? x) (throw fk)
-                        (coll? x) (-ground-term? x s)
+                        (tree-term? x) (-ground-term? x s)
                         :else x)))))))]
     (try
       (-ground-term? x s)
