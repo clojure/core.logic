@@ -3907,12 +3907,12 @@
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
                          (and (ground-term? xv a) (ground-term? vv a) (not= xv vv)) nil
-                         :else (recur (next sp) p)))
+                         :else (recur (next sp) (assoc (dissoc p x) xv vv))))
                      p))]
            (if p
              (when-not (empty? p)
                #_((normalize-store (with-prefix this p)) a)
-               ((updatecg (with-prefix this p)) a))
+               (bind* a (remcg this) (cgoal (!=c p))))
              ((remcg this) a))))
        ITreeConstraint
        (tree-constraint? [_] true)
