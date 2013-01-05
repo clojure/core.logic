@@ -4259,3 +4259,13 @@
           (fn [t a] ((fixc t loop reifier) a)))
         (fc t)))
     reifier))
+
+(defn seqc [v]
+  (fixc v
+    (fn [t _ _]
+      (cond
+        (sequential? t) succeed
+        (lcons? t) (seqc (lnext t))
+        :else fail))
+    (fn [_ v _ r a]
+      `(seqc ~(-reify a v r)))))
