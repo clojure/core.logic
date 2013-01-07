@@ -137,38 +137,71 @@
 ;; =============================================================================
 ;; hash: ensure a nom is free in a term
 
-(declare tie?)
+(declare tie? hash)
 
-(defn- make-nom-hash [a]
-  (fn [x]
-    (not (= x a))))
-
-(defn- -reify-hash [s a x]
-  (let [x (walk* s x)
-        a (walk* s a)]
-    ;; Filter constraints unrelated to reified variables.
-    (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
-      (symbol (str a "#" x)))))
+(defn- -hash
+  ([a x] (-hash a x nil))
+  ([a x _id]
+    (reify
+      Object
+      (toString [_]
+        (str a "#" x))
+      clojure.lang.IFn
+      (invoke [c s]
+        (let [a (walk* s a)
+              x (walk* s x)]
+          (if (lvar? a)
+            (when (and
+                    (not (and (lvar? x) (= x a)))
+                    (tree-term? x) (not (tie? x)))
+              (bind* s
+                (remcg c)
+                (constrain-tree x
+                  (fn [t s] (bind s (hash a t))))))
+            (when (nom? a)
+              (cond
+                (and (tie? x)  (= (:binding-nom x) a))
+                (bind s (remcg c))
+                (tree-term? x)
+                (bind* s
+                  (remcg c)
+                  (constrain-tree x
+                    (fn [t s] (bind s (hash a t)))))
+                (= x a)
+                nil
+                :else
+                (bind s (remcg c)))))))
+      clojure.core.logic.IConstraintId
+      (id [this] _id)
+      clojure.core.logic.IWithConstraintId
+      (with-id [this _id]
+        (-hash a x _id))
+      clojure.core.logic.IConstraintOp
+       (rator [_] `hash)
+       (rands [_] [a x])
+      clojure.core.logic.IReifiableConstraint
+      (reifyc [_ v r s]
+        (let [x (walk* r (walk* s x))
+              a (walk* r (walk* s a))]
+          ;; Filter constraints unrelated to reified variables.
+          (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
+            (symbol (str a "#" x)))))
+      clojure.core.logic.IRunnable
+      (runnable? [_ s]
+        (let [a (walk* s a)
+              x (walk* s x)]
+          (if (lvar? a)
+            (or
+              (and (lvar? x) (= x a))
+              (and (tree-term? x) (not (tie? x))))
+            (or
+              (not (nom? a))
+              (not (lvar? x))))))
+      clojure.core.logic.IConstraintWatchedStores
+      (watched-stores [this] #{::clojure.core.logic/subst}))))
 
 (defn hash [a t]
-  (if (nom? a)
-    (fixc t
-      (fn loop [t s reifier]
-        (or
-          (and (tie? t) (= (:binding-nom t) a) (fn [s] s))
-          (if (tree-term? t)
-            (constrain-tree t
-              (fn [t s] ((fixc t loop reifier) s)))
-            (predc t (make-nom-hash a)))))
-      (fn [_ x r s ap]
-        (-reify-hash s a x)))
-    (fixc a
-      (fn loop [a s reifier]
-        (if (nom? a)
-          (hash a t)
-          (throw (Exception. (str "nom/hash expects a nom first, not: " a)))))
-      (fn [_ _ r s ap]
-        (-reify-hash s a t)))))
+  (cgoal (-hash a t)))
 
 ;; =============================================================================
 ;; Suspensions as constraints

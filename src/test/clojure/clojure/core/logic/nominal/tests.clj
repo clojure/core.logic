@@ -412,3 +412,44 @@
                (nom/hash y x)
                (== x y))))
         ())))
+
+(deftest test-102-not-nom-in-hash-and-tweaks
+  (is (= (run* [q]
+           (fresh [y]
+             (nom/hash y q)
+             (== y 'foo)))
+        ;; fails b/c of implicit nom?-check on y
+        ()))
+  (is (= (run* [q]
+           (fresh [y]
+             (nom/hash y y)))
+        ()))
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (nom/hash y [x z])
+             (== z [w])
+             (== y w)
+             (== q [y w z])))
+        ()))
+  (is (= (run* [q]
+           (fresh [y w z]
+             (nom/hash y z)
+             (== z [w])
+             (== y w)
+             (== q [y w z])))
+          ()))
+  (is (= (run* [q]
+           (nom/fresh [x]
+             (fresh [y w z]
+               (nom/hash y z)
+               (== z [w])
+               (== y x)
+               (== q [x y w z]))))
+        '(([a_0 a_0 _1 [_1]] :- a_0#_1))))
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (nom/hash y z)
+             (== z [w])
+             (== y x)
+             (== q [x y w z])))
+        '(([_0 _0 _1 [_1]] :- _0#_1)))))
