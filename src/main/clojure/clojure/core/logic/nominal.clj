@@ -143,15 +143,15 @@
   (fn [x]
     (not (= x a))))
 
+(defn- -reify-hash [s a x]
+  (let [x (walk* s x)
+        a (walk* s a)]
+    ;; Filter constraints unrelated to reified variables.
+    (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
+      (symbol (str a "#" x)))))
+
 (defn hash [a t]
-  (let [fc #(predc % (make-nom-hash a))
-        reifier
-        (fn [_ x r s ap]
-          (let [x (walk* s x)
-                a (walk* s a)]
-            ;; Filter constraints unrelated to reified variables.
-            (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
-              (symbol (str a "#" x)))))]
+  (if (nom? a)
     (fixc t
       (fn loop [t s reifier]
         (or
@@ -159,8 +159,16 @@
           (if (tree-term? t)
             (constrain-tree t
               (fn [t s] ((fixc t loop reifier) s)))
-            (fc t))))
-      reifier)))
+            (predc t (make-nom-hash a)))))
+      (fn [_ x r s ap]
+        (-reify-hash s a x)))
+    (fixc a
+      (fn loop [a s reifier]
+        (if (nom? a)
+          (hash a t)
+          (throw (Exception. (str "nom/hash expects a nom first, not: " a)))))
+      (fn [_ _ r s ap]
+        (-reify-hash s a t)))))
 
 ;; =============================================================================
 ;; Suspensions as constraints

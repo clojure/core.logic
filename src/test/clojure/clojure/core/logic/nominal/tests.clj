@@ -403,3 +403,12 @@
                (== x 'foo)
                (== [x y] q))))
         ())))
+
+(deftest test-101-variable-nom-in-hash
+  (is (= (run* [q]
+           (nom/fresh [x]
+             (fresh [y]
+               (predc y nom? `nom?)
+               (nom/hash y x)
+               (== x y))))
+        ())))
