@@ -3906,7 +3906,7 @@
                            vv (walk* a v)]
                        (cond
                          (= xv vv) (recur (next sp) (dissoc p x))
-                         (and (ground-term? xv a) (ground-term? vv a) (not= xv vv)) nil
+                         (nil? (unify a xv vv)) nil
                          :else (recur (next sp) (assoc (dissoc p x) xv vv))))
                      p))]
            (if p
@@ -3976,7 +3976,9 @@
       (if-not (nil? cs)
         (let [p (:prefixc cs)]
           (when-not (empty? p)
-            ((cgoal (!=c p)) a)))
+            (if  (some (fn [[u v]] (nil? (unify a u v))) p)
+              a
+              ((cgoal (!=c p)) a))))
         a))))
 
 (defne distincto

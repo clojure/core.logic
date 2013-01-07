@@ -974,6 +974,39 @@
              (== z 'bar)))
         '(_0))))
 
+(deftest test-logic-100-disequality-1
+  (is (= (run* [q]
+           (fresh [a b]
+             (== q [a b])
+             (!= a q)
+             (== a 1)))
+        '([1 _0]))))
+
+(deftest test-logic-100-disequality-2
+  (is (= (run* [q]
+           (fresh [a b]
+             (!= a q)
+             (== q [a b])))
+        '([_0 _1])))
+  (is (= (run* [q]
+           (fresh [a b]
+             (== q [a b])
+             (!= a q)))
+        '([_0 _1]))))
+
+(deftest test-logic-100-disequality-3
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (== x [1 w])
+             (== y [2 z])
+             (!= x y)))
+        '(_0)))
+  (is (= (run* [q]
+           (fresh [x y w z]
+             (!= x y)
+             (== x [1 w])
+             (== y [2 z])))
+        '(_0))))
 ;; -----------------------------------------------------------------------------
 ;; tabled
 
