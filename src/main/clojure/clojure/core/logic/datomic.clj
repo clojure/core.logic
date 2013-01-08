@@ -20,31 +20,29 @@
      (:use clojure.core.logic
            [datomic.api :only [db q] :as d]))
 
-   (defprotocol IUnifyWithDatom
-     (unify-with-datom [u v s]))
+   (defn datom? [x]
+     (instance? datomic.Datom x))
 
-   (extend-type datomic.Datom
-     IUnifyTerms
-     (unify-terms [u v s]
-       (unify-with-datom v u s)))
-
-   (defn unify-with-datom* [v u s]
-     (when (> (count v) 1)
+   (defn unify-with-datom* [u v s]
+     (when (and (instance? clojure.lang.PersistentVector v) (> (count v) 1))
        (loop [i 0 v v s s]
          (if (empty? v)
            s
            (when-let [s (unify s (first v) (nth u i))]
              (recur (inc i) (next v) s))))))
 
-   (extend-type clojure.lang.Sequential
-     IUnifyWithDatom
-     (unify-with-datom [v u s]
-       (unify-with-datom* v u s)))
-
    (extend-type datomic.Datom
-     IUnifyWithSequential
-     (unify-with-seq [v u s]
+     IUnifyTerms
+     (unify-terms [u v s]
        (unify-with-datom* u v s)))
+
+   (extend-type clojure.lang.PersistentVector
+     IUnifyTerms
+     (unify-terms [u v s]
+       (if (datom? v)
+         (unify-with-datom* v u s)
+         (when (sequential? v)
+           (unify-with-sequential* u v s)))))
 
    (defn fillq [q]
      (reduce conj q (repeatedly (- 4 (count q)) lvar)))
