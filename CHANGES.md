@@ -1,6 +1,6 @@
 From 0.8.0-beta5 to 0.8.0-rc1
 
-Enhancments
+Enhancements
 ----
 * Add `seqc` constraint, this is preferred over `listo` as found in TRS
 
