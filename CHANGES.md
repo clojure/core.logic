@@ -1,3 +1,20 @@
+From 0.8.0-beta5 to 0.8.0-rc1
+
+Enhancments
+----
+* Add `seqc` constraint, this is preferred over `listo` as found in TRS
+
+Bux Fixes
+----
+* LOGIC-100: undiscard diseqality constraints
+* LOGIC-101: fix suprising behavior with vars in nom/hash
+* LOGIC-96: fix disequality constraints
+* LOGIC-95: fix disequality constraints
+* LOGIC-53: core.logic converts defrecords
+* LOGIC-88: fix disequality reification
+* LOGIC-92: improve interaction between nominal & CLP(FD) functionality
+* LOGIC-91: fix `predc` entailment issues
+
 From 0.8.0-beta4 to 0.8.0-beta5
 ====
 
