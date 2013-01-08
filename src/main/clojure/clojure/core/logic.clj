@@ -1567,6 +1567,24 @@
 
 ;; TODO : a lot of cascading ifs need to be converted to cond
 
+(defn unify-with-sequential* [u v s]
+  (cond
+    (sequential? v)
+    (if (and (counted? u) (counted? v)
+          (not= (count u) (count v)))
+      nil
+      (loop [u u v v s s]
+        (if (seq u)
+          (if (seq v)
+            (if-let [s (unify s (first u) (first v))]
+              (recur (next u) (next v) s)
+              nil)
+            nil)
+          (if (seq v) nil s))))
+    
+    (lcons? v) (unify-terms v u s)
+    :else nil))
+
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
@@ -1580,22 +1598,7 @@
 
   clojure.lang.Sequential
   (unify-terms [u v s]
-    (cond
-      (sequential? v)
-      (if (and (counted? u) (counted? v)
-            (not= (count u) (count v)))
-        nil
-        (loop [u u v v s s]
-          (if (seq u)
-            (if (seq v)
-              (if-let [s (unify s (first u) (first v))]
-                (recur (next u) (next v) s)
-                nil)
-              nil)
-            (if (seq v) nil s))))
-      
-      (lcons? v) (unify-terms v u s)
-      :else nil))
+    (unify-with-sequential* u v s))
 
   clojure.lang.IPersistentMap
   (unify-terms [u v s]
