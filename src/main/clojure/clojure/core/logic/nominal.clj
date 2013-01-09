@@ -41,8 +41,8 @@
         (let [v (with-meta (lvar) (meta t))
               rt (root-val s t)
               s (if (subst-val? rt) (ext-no-check s v rt) s)
-              s (update-dom s (root-var s v) ::nom (fnil (fn [d] (conj d t)) []))
-              s (update-dom s (root-var s t) ::nom (fnil (fn [d] (conj d v)) []))
+              s (update-dom s v ::nom (fnil (fn [d] (conj d t)) []))
+              s (update-dom s t ::nom (fnil (fn [d] (conj d v)) []))
               s (bind s (suspc v t swap))]
           [v s])
         (swap-noms t swap s))))
