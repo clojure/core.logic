@@ -15,7 +15,7 @@ For more information & documentation please consult the [wiki](http://github.com
 Differences from core.unify
 ----
 
-[core.unify](http://github.com/clojure/core.unify) provides a la carte unification facilities that are not deeply tied into the operation of a logic engine. While core.logic does provide a similar simple unifier interface with support for specifying fine-grained constraints, if you have no need for logic programming system, core.unify may be a better fit.
+[core.unify](http://github.com/clojure/core.unify) provides a la carte unification facilities that are not deeply tied into the operation of a logic engine. While core.logic does provide a similar simple unifier interface with support for specifying fine-grained constraints, if you have no need for a logic programming system, core.unify may be a better fit.
 
 YourKit
 ----
