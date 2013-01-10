@@ -322,8 +322,14 @@
 (defn interval-< [i j]
   (< (ub i) (lb j)))
 
+(defn interval-<= [i j]
+  (<= (ub i) (lb j)))
+
 (defn interval-> [i j]
   (> (lb i) (ub j)))
+
+(defn interval->= [i j]
+  (>= (lb i) (ub j)))
 
 (declare domain sorted-set->domain
          difference* intersection* disjoint?*
@@ -3444,9 +3450,7 @@
     (-relevant? [this s]
       (let-dom s [u du v dv]
        (if (and (domain? du) (domain dv))
-         (if (and (singleton-dom? du) (singleton-dom? dv))
-           (not (<= du dv))
-           (not (interval-< du dv)))
+         (not (interval-<= du dv))
          true)))))
 
 (defn <=fd
