@@ -41,8 +41,8 @@
         (let [v (with-meta (lvar) (meta t))
               rt (root-val s t)
               s (if (subst-val? rt) (ext-no-check s v rt) s)
-              s (update-dom s v ::nom (fnil (fn [d] (conj d t)) []))
-              s (update-dom s t ::nom (fnil (fn [d] (conj d v)) []))
+              s (update-dom s v ::nom (fnil (fn [d] (conj d t)) #{}))
+              s (update-dom s t ::nom (fnil (fn [d] (conj d v)) #{}))
               s (bind s (suspc v t swap))]
           [v s])
         (swap-noms t swap s))))
@@ -64,9 +64,9 @@
       [t s])))
 
 (extend-protocol IMergeDomains
-  clojure.lang.IPersistentVector
+  clojure.lang.IPersistentSet
   (-merge-doms [a b]
-    (concat a b)))
+    (clojure.set/union a b)))
 
 ;; =============================================================================
 ;; Nom
@@ -215,10 +215,9 @@
               (some #(occurs-check a % t1) vs)
               false
               :else
-              (let [vs2 (set
-                          (flatten
-                            (map (fn [x] (if (nil? x) [] x))
-                              (map #(get-dom a (root-var a %) ::nom) vs))))
+              (let [vs2 (apply clojure.set/union
+                          (map (fn [x] (if (nil? x) #{} x))
+                            (map #(get-dom a (root-var a %) ::nom) vs)))
                     seen (clojure.set/union vs seen)]
                 (recur vs2 seen)))))
     (let [[t1 a] (swap-noms t1 swap a)]

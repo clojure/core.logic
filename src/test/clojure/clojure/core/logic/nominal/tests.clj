@@ -453,3 +453,13 @@
              (== y x)
              (== q [x y w z])))
         '(([_0 _0 _1 [_1]] :- _0#_1)))))
+
+(deftest test-104-merge-complex-nom-doms
+  (is (= (run* [q]
+           (nom/fresh [a b c d]
+             (fresh [x y z]
+               (== (nom/tie a (nom/tie b y)) (nom/tie b (nom/tie a x)))
+               (== (nom/tie c (nom/tie d x)) (nom/tie d (nom/tie c z)))
+               (== x y)
+               (== z x))))
+        '(_0))))
