@@ -217,7 +217,7 @@
               :else
               (let [vs2 (apply clojure.set/union
                           (map (fn [x] (if (nil? x) #{} x))
-                            (map #(get-dom a (root-var a %) ::nom) vs)))
+                            (map #(get-dom a % ::nom) vs)))
                     seen (clojure.set/union vs seen)]
                 (recur vs2 seen)))))
     (let [[t1 a] (swap-noms t1 swap a)]
