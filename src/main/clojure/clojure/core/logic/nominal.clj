@@ -233,6 +233,7 @@
       clojure.lang.IFn
       (invoke [c a]
         (bind* a
+          (remcg c)
           (fn [a]
             (let [t1 (walk a v1)
                   t2 (walk a v2)]
@@ -241,13 +242,18 @@
                 (-do-suspc t1 t2 swap a)
                 (not (lvar? t2))
                 (-do-suspc t2 t1 swap a)
+                (= t1 t2)
+                (loop [a* swap
+                        a a]
+                  (if (empty? a*) a
+                    (recur (rest a*) (bind a (hash (first a*) t2)))))
                 :else
-                (do (assert (= t1 t2))
-                  (loop [a* swap
-                         a a]
-                    (if (empty? a*) a
-                      (recur (rest a*) (bind a (hash (first a*) t2)))))))))
-          (remcg c)))
+                (let [d1 (get-dom-fd a t1)
+                      d2 (get-dom-fd a t2)]
+                  (bind* a
+                    (if (nil? d2) identity (domfd t1 d2))
+                    (if (nil? d1) identity (domfd t2 d1))
+                    (addcg c))))))))
       clojure.core.logic.IConstraintId
       (id [this] _id)
       clojure.core.logic.IWithConstraintId
@@ -271,9 +277,10 @@
       (runnable? [_ a]
         (let [t1 (walk a v1)
               t2 (walk a v2)]
-          (or (not (lvar? t1)) (not (lvar? t2)) (= t1 t2))))
+          (or (not (lvar? t1)) (not (lvar? t2)) (= t1 t2)
+            (not= (get-dom-fd a t1) (get-dom-fd a t2)))))
       clojure.core.logic.IConstraintWatchedStores
-      (watched-stores [this] #{::clojure.core.logic/subst}))))
+      (watched-stores [this] #{::clojure.core.logic/subst ::clojure.core.logic/fd}))))
 
 (defn suspc [v1 v2 swap]
   (cgoal (-suspc v1 v2 swap)))

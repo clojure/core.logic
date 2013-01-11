@@ -404,6 +404,28 @@
                (== [x y] q))))
         ())))
 
+(deftest test-98-entanglement
+  (is (= (run* [q]
+           (nom/fresh [a b c]
+             (fresh [x y]
+               (== (nom/tie b (nom/tie a x)) (nom/tie c q))
+               (infd x (interval 1 3)))))
+        [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
+  (is (= (run* [q]
+           (nom/fresh [a b c]
+             (fresh [x y]
+               (infd y (interval 1 3))
+               (== (nom/tie b (nom/tie a x)) (nom/tie c q))
+               (== x y))))
+        [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
+  (is (= (run* [q]
+           (nom/fresh [a b c d]
+             (fresh [x y z]
+               (== (nom/tie b (nom/tie a x)) (nom/tie c z))
+               (infd x (interval 1 3))
+               (== (nom/tie d q) z))))
+        '(1 2 3))))
+
 (deftest test-101-variable-nom-in-hash
   (is (= (run* [q]
            (nom/fresh [x]
