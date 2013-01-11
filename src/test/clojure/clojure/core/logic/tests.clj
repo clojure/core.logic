@@ -1435,6 +1435,15 @@
            (<fd d a))
          '([2 3 0 1]))))
 
+(deftest test-103-<=fd-diverge
+  (is (= (into #{}
+           (run 2 [a b s p]
+             (infd a b (interval 2 99))
+             (>=fd a b)
+             (+fd a b s)
+             (*fd a b p)))
+         (into #{} '([2 2 4 4] [3 2 5 6])))))
+
 (defrecord RecordTest [a b]
   IUninitialized
   (-uninitialized [_]
