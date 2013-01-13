@@ -36,7 +36,7 @@
 
   clojure.core.logic.LVar
   (swap-noms [t swap s]
-    (let [t (walk* s t)]
+    (let [t (walk s t)]
       (if (lvar? t)
         (let [v (with-meta (lvar) (meta t))
               rt (root-val s t)
@@ -148,8 +148,8 @@
         (str a "#" x))
       clojure.lang.IFn
       (invoke [c s]
-        (let [a (walk* s a)
-              x (walk* s x)]
+        (let [a (walk s a)
+              x (walk s x)]
           (if (lvar? a)
             (when (and
                     (not (and (lvar? x) (= x a)))
@@ -188,8 +188,8 @@
             (symbol (str a "#" x)))))
       clojure.core.logic.IRunnable
       (runnable? [_ s]
-        (let [a (walk* s a)
-              x (walk* s x)]
+        (let [a (walk s a)
+              x (walk s x)]
           (if (lvar? a)
             (or
               (and (lvar? x) (= x a))
