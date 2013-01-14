@@ -3615,45 +3615,37 @@
    determine the current non-singleton bound vars and singleton vlaues. if x
    is in n* or the new singletons we have failed. If not we simply remove 
    the value of x from the remaining non-singleton domains bound to vars."
-  ([x y* n*] (-distinctfdc x y* n* nil))
-  ([x y* n* id]
-     (reify
-       clojure.lang.IFn
-       (invoke [this s]
-         (let [x (walk s x)]
-           (when-not (n* x)
-             (loop [y* (seq y*) s s]
-               (if y*
-                 (let [y (first y*)
-                       v (or (get-dom-fd s y) (walk s y))
-                       s (if-not (lvar? v)
-                           (cond
-                             (= x v) nil
-                             (member? v x) ((process-dom y (difference v x)) s)
-                             :else s)
-                           s)]
-                   (when s
-                     (recur (next y*) s)))
-                 ((remcg this) s))))))
-       IEnforceableConstraint
-       (enforceable? [_] true)
-       IWithConstraintId
-       (-with-id [this id]
-         (-distinctfdc x y* n* id))
-       IConstraintId
-       (-id [this] id)
-       IConstraintOp
-       (rator [_] `-distinctfd)
-       (rands [_] [x])
-       IRelevant
-       (-relevant? [this s] true) ;; FIXME: this is because FDConstraint delegates :( - David
-       IRunnable
-       (runnable? [this s]
-         ;; we can only run if x is is bound to
-         ;; a single value
-         (singleton-dom? (walk s x)))
-       IConstraintWatchedStores
-       (watched-stores [this] #{::subst}))))
+  [x y* n*]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let [x (walk s x)]
+        (when-not (n* x)
+          (loop [y* (seq y*) s s]
+            (if y*
+              (let [y (first y*)
+                    v (or (get-dom-fd s y) (walk s y))
+                    s (if-not (lvar? v)
+                        (cond
+                          (= x v) nil
+                          (member? v x) ((process-dom y (difference v x)) s)
+                          :else s)
+                        s)]
+                (when s
+                  (recur (next y*) s)))
+              ((remcg this) s))))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
+    IConstraintOp
+    (rator [_] `-distinctfd)
+    (rands [_] [x])
+    IRunnable
+    (runnable? [this s]
+      ;; we can only run if x is is bound to
+      ;; a single value
+      (singleton-dom? (walk s x)))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 (defn -distinctfd [x y* n*]
   (cgoal (-distinctfdc x y* n*)))
@@ -3675,41 +3667,33 @@
    run until v* has become ground. When it has become ground we group
    v* into a set of logic vars and a sorted set of known singleton 
    values. We then construct the individual constraint for each var."
-  ([v*] (distinctfdc v* nil))
-  ([v* id]
-     (reify
-       clojure.lang.IFn
-       (invoke [this s]
-         (let [v* (walk s v*)
-               {x* true n* false} (group-by lvar? v*)
-               n* (sort < n*)]
-           (when (list-sorted? < n*)
-             (let [x* (into #{} x*)
-                   n* (into (sorted-set) n*)]
-               (loop [xs (seq x*) s s]
-                 (if xs
-                   (let [x (first xs)]
-                     (when-let [s ((-distinctfd x (disj x* x) n*) s)]
-                       (recur (next xs) s)))
-                   ((remcg this) s)))))))
-       IEnforceableConstraint
-       (enforceable? [_] true)
-       IWithConstraintId
-       (-with-id [this id]
-         (distinctfdc v* id))
-       IConstraintId
-       (-id [this] id)
-       IConstraintOp
-       (rator [_] `distinctfd)
-       (rands [_] [v*])
-       IRelevant
-       (-relevant? [this s] true) ;; FIXME: this is because FDConstraint delegates :( - David
-       IRunnable
-       (runnable? [this s]
-         (let [v* (walk s v*)]
-           (not (lvar? v*))))
-       IConstraintWatchedStores
-       (watched-stores [this] #{::subst}))))
+  [v*]
+  (reify
+    clojure.lang.IFn
+    (invoke [this s]
+      (let [v* (walk s v*)
+            {x* true n* false} (group-by lvar? v*)
+            n* (sort < n*)]
+        (when (list-sorted? < n*)
+          (let [x* (into #{} x*)
+                n* (into (sorted-set) n*)]
+            (loop [xs (seq x*) s s]
+              (if xs
+                (let [x (first xs)]
+                  (when-let [s ((-distinctfd x (disj x* x) n*) s)]
+                    (recur (next xs) s)))
+                ((remcg this) s)))))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
+    IConstraintOp
+    (rator [_] `distinctfd)
+    (rands [_] [v*])
+    IRunnable
+    (runnable? [this s]
+      (let [v* (walk s v*)]
+        (not (lvar? v*))))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 (defn distinctfd
   "A finite domain constraint that will guarantee that 
@@ -3888,58 +3872,53 @@
 (declare normalize-store ground-term?)
 
 (defn !=c
-  ([p] (!=c p nil))
-  ([p id]
-     (reify
-       clojure.lang.IFn
-       (invoke [this a]
-         (let [p (loop [sp (seq p) p p]
-                   (if sp
-                     (let [[x v] (first sp)
-                           ;; TODO: this seems expensive to walk* both sides
-                           ;; and run an equality test there must be a better
-                           ;; way - David
-                           xv (walk* a x)
-                           vv (walk* a v)]
-                       (cond
-                         (= xv vv) (recur (next sp) (dissoc p x))
-                         (nil? (unify a xv vv)) nil
-                         :else (recur (next sp) (assoc (dissoc p x) xv vv))))
-                     p))]
-           (if p
-             (when-not (empty? p)
-               #_((normalize-store (with-prefix this p)) a)
-               (bind* a (remcg this) (cgoal (!=c p))))
-             ((remcg this) a))))
-       ITreeConstraint
-       (tree-constraint? [_] true)
-       IWithConstraintId
-       (-with-id [_ id] (!=c p id))
-       IConstraintId
-       (-id [_] id)
-       IPrefix
-       (prefix [_] p)
-       IWithPrefix
-       (with-prefix [_ p] (!=c p id))
-       IEnforceableConstraint
-       (enforceable? [_] false)
-       IReifiableConstraint
-       (reifyc [this v r a]
-         (let [p* (-reify a (map (fn [[lhs rhs]] `(~lhs ~rhs)) p) r)]
-           (if (empty? p*)
-             '()
-             `(~'!= ~@p*))))
-       IConstraintOp
-       (rator [_] `!=)
-       (rands [_] (seq (recover-vars p)))
-       IRunnable
-       (runnable? [this s]
-         (some #(not= (walk s %) %) (recover-vars p)))
-       IRelevant
-       (-relevant? [this s]
-         (not (empty? p)))
-       IConstraintWatchedStores
-       (watched-stores [this] #{::subst}))))
+  [p]
+  (reify
+    clojure.lang.IFn
+    (invoke [this a]
+      (let [p (loop [sp (seq p) p p]
+                (if sp
+                  (let [[x v] (first sp)
+                        ;; TODO: this seems expensive to walk* both sides
+                        ;; and run an equality test there must be a better
+                        ;; way - David
+                        xv (walk* a x)
+                        vv (walk* a v)]
+                    (cond
+                      (= xv vv) (recur (next sp) (dissoc p x))
+                      (nil? (unify a xv vv)) nil
+                      :else (recur (next sp) (assoc (dissoc p x) xv vv))))
+                  p))]
+        (if p
+          (when-not (empty? p)
+            #_((normalize-store (with-prefix this p)) a)
+            (bind* a (remcg this) (cgoal (!=c p))))
+          ((remcg this) a))))
+    ITreeConstraint
+    (tree-constraint? [_] true)
+    IPrefix
+    (prefix [_] p)
+    IWithPrefix
+    (with-prefix [_ p] (!=c p))
+    IEnforceableConstraint
+    (enforceable? [_] false)
+    IReifiableConstraint
+    (reifyc [this v r a]
+      (let [p* (-reify a (map (fn [[lhs rhs]] `(~lhs ~rhs)) p) r)]
+        (if (empty? p*)
+          '()
+          `(~'!= ~@p*))))
+    IConstraintOp
+    (rator [_] `!=)
+    (rands [_] (seq (recover-vars p)))
+    IRunnable
+    (runnable? [this s]
+      (some #(not= (walk s %) %) (recover-vars p)))
+    IRelevant
+    (-relevant? [this s]
+      (not (empty? p)))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 #_(defn normalize-store [c]
   (fn [a]
@@ -4051,32 +4030,26 @@
   (instance? PMap x))
 
 (defn -featurec
-  ([x fs] (-featurec x (partial-map fs) nil))
-  ([x fs _id]
-     (reify
-       clojure.lang.IFn
-       (invoke [this a]
-         ((composeg
-           (== fs x)
-           (remcg this)) a))
-       IConstraintId
-       (-id [this] _id)
-       IWithConstraintId
-       (-with-id [this _id]
-         (-featurec x fs _id))
-       IConstraintOp
-       (rator [_] `featurec)
-       (rands [_] [x])
-       IReifiableConstraint
-       (reifyc [_ v r a]
-         (let [fs (into {} fs)
-               r  (-reify* r (walk* a fs))]
-           `(featurec ~(walk* r x) ~(walk* r fs))))
-       IRunnable
-       (runnable? [_ a]
-         (not (lvar? (walk a x))))
-       IConstraintWatchedStores
-       (watched-stores [this] #{::subst}))))
+  [x fs]
+  (reify
+    clojure.lang.IFn
+    (invoke [this a]
+      ((composeg
+        (== fs x)
+        (remcg this)) a))
+    IConstraintOp
+    (rator [_] `featurec)
+    (rands [_] [x])
+    IReifiableConstraint
+    (reifyc [_ v r a]
+      (let [fs (into {} fs)
+            r  (-reify* r (walk* a fs))]
+        `(featurec ~(walk* r x) ~(walk* r fs))))
+    IRunnable
+    (runnable? [_ a]
+      (not (lvar? (walk a x))))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 (defn featurec
   "Ensure that a map contains at least the key-value pairs
@@ -4084,7 +4057,7 @@
   it may contain values which are logic variables to support 
   feature extraction."
   [x fs]
-  (cgoal (-featurec x fs)))
+  (cgoal (-featurec x (partial-map fs))))
 
 ;; =============================================================================
 ;; defc
@@ -4113,30 +4086,25 @@
 (defmacro defc [name args & body]
   (let [-name (symbol (str "-" name))]
    `(let [~-name (fn ~-name
-                   (~args (~-name ~@args nil))
-                   ([~@args id#]
-                    (reify
-                      ~'clojure.lang.IFn
-                      (~'invoke [this# a#]
-                        (let [[~@args :as args#] (map #(walk* a# %) ~args)
-                              test# (do ~@body)]
-                          (when test#
-                            ((remcg this#) a#))))
-                      clojure.core.logic/IConstraintId
-                      (~'-id [_#] id#)
-                      clojure.core.logic/IWithConstraintId
-                      (~'-with-id [_# id#] (~-name ~@args id#))
-                      clojure.core.logic/IConstraintOp
-                      (~'rator [_#] '~name)
-                      (~'rands [_#] (filter lvar? (flatten ~args)))
-                      clojure.core.logic/IReifiableConstraint
-                      (~'reifyc [_# _# r# a#]
-                        (list '~name (map #(-reify r# %) ~args)))
-                      clojure.core.logic/IRunnable
-                      (~'runnable? [_# s#]
-                        (ground-term? ~args s#))
-                      clojure.core.logic/IConstraintWatchedStores
-                      (~'watched-stores [_#] #{::subst}))))]
+                   [~@args]
+                   (reify
+                     ~'clojure.lang.IFn
+                     (~'invoke [this# a#]
+                       (let [[~@args :as args#] (map #(walk* a# %) ~args)
+                             test# (do ~@body)]
+                         (when test#
+                           ((remcg this#) a#))))
+                     clojure.core.logic/IConstraintOp
+                     (~'rator [_#] '~name)
+                     (~'rands [_#] (filter lvar? (flatten ~args)))
+                     clojure.core.logic/IReifiableConstraint
+                     (~'reifyc [_# _# r# a#]
+                       (list '~name (map #(-reify r# %) ~args)))
+                     clojure.core.logic/IRunnable
+                     (~'runnable? [_# s#]
+                       (ground-term? ~args s#))
+                     clojure.core.logic/IConstraintWatchedStores
+                     (~'watched-stores [_#] #{::subst})))]
       (defn ~name ~args
         (cgoal (~-name ~@args))))))
 
@@ -4144,9 +4112,8 @@
 ;; Predicate Constraint
 
 (defn -predc
-  ([x p] (-predc x p p nil))
-  ([x p pform] (-predc x p pform nil))
-  ([x p pform _id]
+  ([x p] (-predc x p p))
+  ([x p pform]
      (reify
        Object
        (toString [_]
@@ -4156,11 +4123,6 @@
          (let [x (walk a x)]
            (when (p x)
              ((remcg this) a))))
-       IConstraintId
-       (-id [this] _id)
-       IWithConstraintId
-       (-with-id [this _id]
-         (-predc x p pform _id))
        IConstraintOp
        (rator [_] (if (seq? pform)
                     `(predc ~pform)
@@ -4220,32 +4182,26 @@
     (-constrain-tree t fc a)))
 
 (defn -fixc
-  ([x f reifier] (-fixc x f reifier nil))
-  ([x f reifier _id]
-     (reify
-       clojure.lang.IFn
-       (invoke [this a]
-         (let [x (walk a x)]
-           ((composeg (f x a reifier) (remcg this)) a)))
-       IConstraintId
-       (-id [this] _id)
-       IWithConstraintId
-       (-with-id [this _id]
-         (-fixc x f reifier _id))
-       IConstraintOp
-       (rator [_] `fixc)
-       (rands [_] [x])
-       IReifiableConstraint
-       (reifyc [c v r a]
-         (if (fn? reifier)
-           (reifier c x v r a)
-           (let [x (walk* r x)]
-             `(fixc ~x ~reifier))))
-       IRunnable
-       (runnable? [_ a]
-         (not (lvar? (walk a x))))
-       IConstraintWatchedStores
-       (watched-stores [this] #{::subst}))))
+  [x f reifier]
+  (reify
+    clojure.lang.IFn
+    (invoke [this a]
+      (let [x (walk a x)]
+        ((composeg (f x a reifier) (remcg this)) a)))
+    IConstraintOp
+    (rator [_] `fixc)
+    (rands [_] [x])
+    IReifiableConstraint
+    (reifyc [c v r a]
+      (if (fn? reifier)
+        (reifier c x v r a)
+        (let [x (walk* r x)]
+          `(fixc ~x ~reifier))))
+    IRunnable
+    (runnable? [_ a]
+      (not (lvar? (walk a x))))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::subst})))
 
 (defn fixc [x f reifier]
   (cgoal (-fixc x f reifier)))

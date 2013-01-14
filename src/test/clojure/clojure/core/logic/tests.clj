@@ -1917,7 +1917,7 @@
     (is (= (count (:km (:cs s))) 2))
     (is (= (count (:cm (:cs s))) 1))))
 
-#_(deftest test-purge-c
+(deftest test-purge-c
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
@@ -1925,9 +1925,8 @@
         s ((addcg c) empty-s)
         c (first (constraints-for (:cs s) s u ::l/fd))
         s (-> s
-            (ext-no-check u 1)
-            (ext-no-check w 2))
-        s ((checkcg c) s)]
+            (ext-run-cs u 1)
+            (ext-run-cs w 2))]
     (is (zero? (count (:km (:cs s)))))
     (is (zero? (count (:cm (:cs s)))))))
 
@@ -2345,7 +2344,7 @@
 (deftest test-treec-id-1 []
   (let [x (lvar 'x)
         y (lvar 'y)
-        c (with-id (!=c x y) 0)]
+        c (with-id (!= x y) 0)]
     (is (zero? (id c)))))
 
 (deftest test-tree-constraint? []

@@ -140,65 +140,59 @@
 (declare tie? hash)
 
 (defn- -hash
-  ([a x] (-hash a x nil))
-  ([a x _id]
-    (reify
-      Object
-      (toString [_]
-        (str a "#" x))
-      clojure.lang.IFn
-      (invoke [c s]
-        (let [a (walk s a)
-              x (walk s x)]
-          (if (lvar? a)
-            (when (and
-                    (not (and (lvar? x) (= x a)))
-                    (tree-term? x) (not (tie? x)))
+  [a x]
+  (reify
+    Object
+    (toString [_]
+      (str a "#" x))
+    clojure.lang.IFn
+    (invoke [c s]
+      (let [a (walk s a)
+            x (walk s x)]
+        (if (lvar? a)
+          (when (and
+                  (not (and (lvar? x) (= x a)))
+                  (tree-term? x) (not (tie? x)))
+            (bind* s
+                   (remcg c)
+                   (constrain-tree x
+                                   (fn [t s] (bind s (hash a t))))))
+          (when (nom? a)
+            (cond
+              (and (tie? x)  (= (:binding-nom x) a))
+              (bind s (remcg c))
+              (tree-term? x)
               (bind* s
-                (remcg c)
-                (constrain-tree x
-                  (fn [t s] (bind s (hash a t))))))
-            (when (nom? a)
-              (cond
-                (and (tie? x)  (= (:binding-nom x) a))
-                (bind s (remcg c))
-                (tree-term? x)
-                (bind* s
-                  (remcg c)
-                  (constrain-tree x
-                    (fn [t s] (bind s (hash a t)))))
-                (= x a)
-                nil
-                :else
-                (bind s (remcg c)))))))
-      clojure.core.logic.IConstraintId
-      (-id [this] _id)
-      clojure.core.logic.IWithConstraintId
-      (-with-id [this _id]
-        (-hash a x _id))
-      clojure.core.logic.IConstraintOp
-       (rator [_] `hash)
-       (rands [_] [a x])
-      clojure.core.logic.IReifiableConstraint
-      (reifyc [_ v r s]
-        (let [x (walk* r (walk* s x))
-              a (walk* r (walk* s a))]
-          ;; Filter constraints unrelated to reified variables.
-          (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
-            (symbol (str a "#" x)))))
-      clojure.core.logic.IRunnable
-      (runnable? [_ s]
-        (let [a (walk s a)
-              x (walk s x)]
-          (if (lvar? a)
-            (or
-              (and (lvar? x) (= x a))
-              (and (tree-term? x) (not (tie? x))))
-            (or
-              (not (nom? a))
-              (not (lvar? x))))))
-      clojure.core.logic.IConstraintWatchedStores
-      (watched-stores [this] #{::clojure.core.logic/subst}))))
+                     (remcg c)
+                     (constrain-tree x
+                                     (fn [t s] (bind s (hash a t)))))
+              (= x a)
+              nil
+              :else
+              (bind s (remcg c)))))))
+    clojure.core.logic.IConstraintOp
+    (rator [_] `hash)
+    (rands [_] [a x])
+    clojure.core.logic.IReifiableConstraint
+    (reifyc [_ v r s]
+      (let [x (walk* r (walk* s x))
+            a (walk* r (walk* s a))]
+        ;; Filter constraints unrelated to reified variables.
+        (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
+          (symbol (str a "#" x)))))
+    clojure.core.logic.IRunnable
+    (runnable? [_ s]
+      (let [a (walk s a)
+            x (walk s x)]
+        (if (lvar? a)
+          (or
+           (and (lvar? x) (= x a))
+           (and (tree-term? x) (not (tie? x))))
+          (or
+           (not (nom? a))
+           (not (lvar? x))))))
+    clojure.core.logic.IConstraintWatchedStores
+    (watched-stores [this] #{::clojure.core.logic/subst})))
 
 (defn hash [a t]
   (cgoal (-hash a t)))
@@ -224,63 +218,57 @@
       (bind a (== t1 t2)))))
 
 (defn -suspc
-  ([v1 v2 swap] (-suspc v1 v2 swap nil))
-  ([v1 v2 swap _id]
-    (reify
-      Object
-      (toString [_]
-        (str "suspc" v1 v2 swap))
-      clojure.lang.IFn
-      (invoke [c a]
-        (bind* a
-          (remcg c)
-          (fn [a]
-            (let [t1 (walk a v1)
-                  t2 (walk a v2)]
-              (cond
+  [v1 v2 swap]
+  (reify
+    Object
+    (toString [_]
+      (str "suspc" v1 v2 swap))
+    clojure.lang.IFn
+    (invoke [c a]
+      (bind* a
+             (remcg c)
+             (fn [a]
+               (let [t1 (walk a v1)
+                     t2 (walk a v2)]
+                 (cond
+                   (not (lvar? t1))
+                   (-do-suspc t1 t2 swap a)
+                   (not (lvar? t2))
+                   (-do-suspc t2 t1 swap a)
+                   (= t1 t2)
+                   (loop [a* swap
+                          a a]
+                     (if (empty? a*) a
+                         (recur (rest a*) (bind a (hash (first a*) t2)))))
+                   :else
+                   (let [d1 (get-dom-fd a t1)
+                         d2 (get-dom-fd a t2)]
+                     (bind* a
+                            (if (nil? d2) identity (domfd t1 d2))
+                            (if (nil? d1) identity (domfd t2 d1))
+                            (addcg c))))))))
+    clojure.core.logic.IConstraintOp
+    (rator [_] `suspc)
+    (rands [_] [v1 v2])
+    clojure.core.logic.IReifiableConstraint
+    (reifyc [c v r a]
+      (let [t1 (walk* r (walk* a v1))
+            t2 (walk* r (walk* a v2))
+            swap (walk* r swap)]
+        (when (and
                 (not (lvar? t1))
-                (-do-suspc t1 t2 swap a)
                 (not (lvar? t2))
-                (-do-suspc t2 t1 swap a)
-                (= t1 t2)
-                (loop [a* swap
-                        a a]
-                  (if (empty? a*) a
-                    (recur (rest a*) (bind a (hash (first a*) t2)))))
-                :else
-                (let [d1 (get-dom-fd a t1)
-                      d2 (get-dom-fd a t2)]
-                  (bind* a
-                    (if (nil? d2) identity (domfd t1 d2))
-                    (if (nil? d1) identity (domfd t2 d1))
-                    (addcg c))))))))
-      clojure.core.logic.IConstraintId
-      (-id [this] _id)
-      clojure.core.logic.IWithConstraintId
-      (-with-id [this _id]
-        (-suspc v1 v2 swap _id))
-      clojure.core.logic.IConstraintOp
-      (rator [_] `suspc)
-      (rands [_] [v1 v2])
-      clojure.core.logic.IReifiableConstraint
-      (reifyc [c v r a]
-        (let [t1 (walk* r (walk* a v1))
-              t2 (walk* r (walk* a v2))
-              swap (walk* r swap)]
-          (when (and
-                  (not (lvar? t1))
-                  (not (lvar? t2))
-                  (symbol? (first swap))
-                  (symbol? (second swap)))
-            `(~'swap ~swap ~t1 ~t2))))
-      clojure.core.logic.IRunnable
-      (runnable? [_ a]
-        (let [t1 (walk a v1)
-              t2 (walk a v2)]
-          (or (not (lvar? t1)) (not (lvar? t2)) (= t1 t2)
+                (symbol? (first swap))
+                (symbol? (second swap)))
+          `(~'swap ~swap ~t1 ~t2))))
+    clojure.core.logic.IRunnable
+    (runnable? [_ a]
+      (let [t1 (walk a v1)
+            t2 (walk a v2)]
+        (or (not (lvar? t1)) (not (lvar? t2)) (= t1 t2)
             (not= (get-dom-fd a t1) (get-dom-fd a t2)))))
-      clojure.core.logic.IConstraintWatchedStores
-      (watched-stores [this] #{::clojure.core.logic/subst ::clojure.core.logic/fd}))))
+    clojure.core.logic.IConstraintWatchedStores
+    (watched-stores [this] #{::clojure.core.logic/subst ::clojure.core.logic/fd})))
 
 (defn suspc [v1 v2 swap]
   (cgoal (-suspc v1 v2 swap)))
