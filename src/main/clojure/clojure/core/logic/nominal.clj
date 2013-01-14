@@ -1,7 +1,8 @@
 (ns clojure.core.logic.nominal
   (:refer-clojure :exclude [== hash])
   (:use [clojure.core.logic :exclude [fresh] :as l])
-  (:import [java.io Writer]))
+  (:import [java.io Writer]
+           [clojure.core.logic LVar LCons IBindable ITreeTerm]))
 
 (def ^{:dynamic true} *reify-noms* true)
 
@@ -34,7 +35,7 @@
   Object
   (swap-noms [t swap s] [t s])
 
-  clojure.core.logic.LVar
+  LVar
   (swap-noms [t swap s]
     (let [t (walk s t)]
       (if (lvar? t)
@@ -47,7 +48,7 @@
           [v s])
         (swap-noms t swap s))))
 
-  clojure.core.logic.LCons
+  LCons
   (swap-noms [t swap s]
     (let [[tfirst s] (swap-noms (lfirst t) swap s)
           [tnext s] (swap-noms (lnext t) swap s)]
@@ -74,7 +75,7 @@
 (declare nom)
 
 (deftype Nom [lvar]
-  clojure.core.logic.IBindable
+  IBindable
 
   Object
   (toString [_]
@@ -101,7 +102,7 @@
       :oname (:oname lvar)
       not-found))
 
-  clojure.core.logic.IReifyTerm
+  IReifyTerm
   (reify-term [v s]
     (ext s v (symbol (str (if *reify-noms* "a" (:oname v)) "_" (count s)))))
 
@@ -170,17 +171,17 @@
               nil
               :else
               (bind s (remcg c)))))))
-    clojure.core.logic.IConstraintOp
+    IConstraintOp
     (rator [_] `hash)
     (rands [_] [a x])
-    clojure.core.logic.IReifiableConstraint
+    IReifiableConstraint
     (reifyc [_ v r s]
       (let [x (walk* r (walk* s x))
             a (walk* r (walk* s a))]
         ;; Filter constraints unrelated to reified variables.
         (when (and (symbol? a) (empty? (->> (list x) flatten (filter lvar?))))
           (symbol (str a "#" x)))))
-    clojure.core.logic.IRunnable
+    IRunnable
     (runnable? [_ s]
       (let [a (walk s a)
             x (walk s x)]
@@ -191,8 +192,8 @@
           (or
            (not (nom? a))
            (not (lvar? x))))))
-    clojure.core.logic.IConstraintWatchedStores
-    (watched-stores [this] #{::clojure.core.logic/subst})))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::l/subst})))
 
 (defn hash [a t]
   (cgoal (-hash a t)))
@@ -247,10 +248,10 @@
                             (if (nil? d2) identity (domfd t1 d2))
                             (if (nil? d1) identity (domfd t2 d1))
                             (addcg c))))))))
-    clojure.core.logic.IConstraintOp
+    IConstraintOp
     (rator [_] `suspc)
     (rands [_] [v1 v2])
-    clojure.core.logic.IReifiableConstraint
+    IReifiableConstraint
     (reifyc [c v r a]
       (let [t1 (walk* r (walk* a v1))
             t2 (walk* r (walk* a v2))
@@ -261,14 +262,14 @@
                 (symbol? (first swap))
                 (symbol? (second swap)))
           `(~'swap ~swap ~t1 ~t2))))
-    clojure.core.logic.IRunnable
+    IRunnable
     (runnable? [_ a]
       (let [t1 (walk a v1)
             t2 (walk a v2)]
         (or (not (lvar? t1)) (not (lvar? t2)) (= t1 t2)
             (not= (get-dom-fd a t1) (get-dom-fd a t2)))))
-    clojure.core.logic.IConstraintWatchedStores
-    (watched-stores [this] #{::clojure.core.logic/subst ::clojure.core.logic/fd})))
+    IConstraintWatchedStores
+    (watched-stores [this] #{::l/subst ::l/fd})))
 
 (defn suspc [v1 v2 swap]
   (cgoal (-suspc v1 v2 swap)))
@@ -279,7 +280,7 @@
 (declare tie)
 
 (deftype Tie [binding-nom body _meta]
-  clojure.core.logic.ITreeTerm
+  ITreeTerm
 
   Object
   (toString [_]
@@ -305,7 +306,7 @@
       :body body
       not-found))
 
-  clojure.core.logic.IUnifyTerms
+  IUnifyTerms
   (unify-terms [v u s]
     (cond
       (tie? u)
@@ -317,28 +318,28 @@
             (== t (:body u)))))
       :else nil))
 
-  clojure.core.logic.IReifyTerm
+  IReifyTerm
   (reify-term [v s]
     (let [s (-reify* s binding-nom)]
       (let [s (-reify* s body)]
         s)))
 
-  clojure.core.logic.IWalkTerm
+  IWalkTerm
   (walk-term [v f]
     (with-meta
       (tie (walk-term (:binding-nom v) f)
            (walk-term (:body v) f))
       (meta v)))
 
-  clojure.core.logic.IOccursCheckTerm
+  IOccursCheckTerm
   (occurs-check-term [v x s]
     (occurs-check s x (:body v)))
 
-  clojure.core.logic.IConstrainTree
+  IConstrainTree
   (-constrain-tree [t fc s]
     (fc (:body t) s))
 
-  clojure.core.logic.IForceAnswerTerm
+  IForceAnswerTerm
   (-force-ans [v x]
     (force-ans (:body v)))
 
