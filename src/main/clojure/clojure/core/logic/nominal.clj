@@ -172,9 +172,9 @@
                 :else
                 (bind s (remcg c)))))))
       clojure.core.logic.IConstraintId
-      (id [this] _id)
+      (-id [this] _id)
       clojure.core.logic.IWithConstraintId
-      (with-id [this _id]
+      (-with-id [this _id]
         (-hash a x _id))
       clojure.core.logic.IConstraintOp
        (rator [_] `hash)
@@ -255,9 +255,9 @@
                     (if (nil? d1) identity (domfd t2 d1))
                     (addcg c))))))))
       clojure.core.logic.IConstraintId
-      (id [this] _id)
+      (-id [this] _id)
       clojure.core.logic.IWithConstraintId
-      (with-id [this _id]
+      (-with-id [this _id]
         (-suspc v1 v2 swap _id))
       clojure.core.logic.IConstraintOp
       (rator [_] `suspc)

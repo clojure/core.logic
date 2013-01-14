@@ -159,18 +159,28 @@
   (runnable? [c s]))
 
 (defprotocol IWithConstraintId
-  (with-id [this id]))
+  (-with-id [this id]))
 
 (extend-type Object
   IWithConstraintId
-  (with-id [this id] this))
+  (-with-id [this id] this))
 
 (defprotocol IConstraintId
-  (id [this]))
+  (-id [this]))
 
 (extend-type Object
   IConstraintId
-  (id [this] nil))
+  (-id [this] nil))
+
+(defn id [c]
+  (if (instance? clojure.core.logic.IConstraintId c)
+    (-id c)
+    (-> c meta ::id)))
+
+(defn with-id [c id]
+  (if (instance? clojure.core.logic.IWithConstraintId c)
+    (-with-id c id)
+    (vary-meta c assoc ::id id)))
 
 (defprotocol IConstraintWatchedStores
   (watched-stores [this]))
@@ -3290,71 +3300,14 @@
              (-force-ans (sort-by-strategy v x a) x)
              (-force-ans v x))))) a)))
 
-(deftype FDConstraint [proc _id _meta]
-  clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [this k not-found]
-    (case k
-      :proc proc
-      not-found))
-  Object
-  (equals [this o]
-    (if (instance? FDConstraint o)
-      (and (= (rator this) (rator o))
-           (= (rands this) (rands o)))
-      false))
-  clojure.lang.IObj
-  (meta [this]
-    _meta)
-  (withMeta [this new-meta]
-    (FDConstraint. proc _id new-meta))
-  clojure.lang.IFn
-  (invoke [_ s]
-    (proc s))
-  IEnforceableConstraint
-  (enforceable? [_] true)
-  IConstraintOp
-  (rator [_] (rator proc))
-  (rands [_] (rands proc))
-  IRelevant
-  (-relevant? [this s]
-    (-relevant? proc s))
-  IRunnable
-  (runnable? [this s]
-    (if (instance? clojure.core.logic.IRunnable proc)
-      (runnable? proc s)
-      (letfn [(has-dom? [x]
-                (let [x (walk s x)]
-                  (if (lvar? x)
-                    (get-dom-fd s x)
-                    x)))]
-        (every? identity (map has-dom? (rands proc))))))
-  IWithConstraintId
-  (with-id [this new-id] (FDConstraint. (with-id proc new-id) new-id _meta))
-  IConstraintId
-  (id [this] _id)
-  IConstraintWatchedStores
-  (watched-stores [this]
-    (if (instance? clojure.core.logic.IConstraintWatchedStores proc)
-      (watched-stores proc)
-      #{::subst ::fd})))
-
-(defn fdc [proc]
-  (FDConstraint. proc nil nil))
-
-(defmethod print-method FDConstraint [x ^Writer writer]
-  (let [cid (if-let [cid (id x)]
-             (str cid ":")
-             "")]
-    (.write writer (str "(" cid (rator (:proc x)) " " (apply str (interpose " " (rands (:proc x)))) ")"))))
-
 (defn -domfdc [x]
   (reify
     clojure.lang.IFn
     (invoke [this s]
       (when (member? (get-dom-fd s x) (walk s x))
         (rem-dom s x ::fd)))
+    IEnforceableConstraint
+    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
@@ -3368,7 +3321,7 @@
     (watched-stores [this] #{::subst})))
 
 (defn domfdc [x]
-  (cgoal (fdc (-domfdc x))))
+  (cgoal (-domfdc x)))
 
 (defn =fdc [u v]
   (reify
@@ -3379,6 +3332,8 @@
           ((composeg
             (process-dom u i)
             (process-dom v i)) s))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `=fd)
     (rands [_] [u v])
@@ -3388,13 +3343,20 @@
         (cond
          (not (singleton-dom? du)) true
          (not (singleton-dom? dv)) true
-         :else (not= du dv))))))
+         :else (not= du dv))))
+    IRunnable
+    (runnable? [this s]
+      (let-dom s [u du v dv]
+        (and (domain? du) (domain? dv))))
+    IConstraintWatchedStores
+    (watched-stores [this]
+      #{::subst ::fd})))
 
 (defn =fd
   "A finite domain constraint. u and v must be equal. u and v must
    eventually be given domains if vars."
   [u v]
-  (cgoal (fdc (=fdc u v))))
+  (cgoal (=fdc u v)))
 
 (defn !=fdc [u v]
   (reify 
@@ -3411,6 +3373,8 @@
            ((process-dom v vdiff) s))
          :else (when-let [udiff (difference du dv)]
                  ((process-dom u udiff) s)))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
@@ -3425,13 +3389,16 @@
         ;; and at least du or dv has a singleton domain
         (and (domain? du) (domain? dv)
              (or (singleton-dom? du)
-                 (singleton-dom? dv))))))) 
+                 (singleton-dom? dv)))))
+    IConstraintWatchedStores
+    (watched-stores [this]
+      #{::subst ::fd}))) 
 
 (defn !=fd
   "A finite domain constraint. u and v must not be equal. u and v
    must eventually be given domains if vars."
   [u v]
-  (cgoal (fdc (!=fdc u v))))
+  (cgoal (!=fdc u v)))
 
 (defn <=fdc [u v]
   (reify 
@@ -3443,6 +3410,8 @@
          ((composeg*
            (process-dom u (keep-before du (inc vmax)))
            (process-dom v (drop-before dv umin))) s))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `<=fd)
     (rands [_] [u v])
@@ -3451,13 +3420,20 @@
       (let-dom s [u du v dv]
        (if (and (domain? du) (domain dv))
          (not (interval-<= du dv))
-         true)))))
+         true)))
+    IRunnable
+    (runnable? [this s]
+      (let-dom s [u du v dv]
+        (and (domain? du) (domain? dv))))
+    IConstraintWatchedStores
+    (watched-stores [this]
+      #{::subst ::fd})))
 
 (defn <=fd
   "A finite domain constraint. u must be less than or equal to v.
    u and v must eventually be given domains if vars."
   [u v]
-  (cgoal (fdc (<=fdc u v))))
+  (cgoal (<=fdc u v)))
 
 (defn <fd
   "A finite domain constraint. u must be less than v. u and v
@@ -3511,6 +3487,8 @@
             (process-dom v (interval (- wmin umax) (- wmax umin)))
             (+fdc-guard u v w))
            s))))
+    IEnforceableConstraint
+    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `+fd)
     (rands [_] [u v w])
@@ -3531,13 +3509,16 @@
           (domain? du) (or (domain? dv) (domain? dw))
           (domain? dv) (or (domain? du) (domain? dw))
           (domain? dw) (or (domain? du) (domain? dv))
-          :else false)))))
+          :else false)))
+    IConstraintWatchedStores
+    (watched-stores [this]
+      #{::subst ::fd})))
 
 (defn +fd
   "A finite domain constraint for addition and subtraction.
    u, v & w must eventually be given domains if vars."
   [u v w]
-  (cgoal (fdc (+fdc u v w))))
+  (cgoal (+fdc u v w)))
 
 (defn -fd
   [u v w]
@@ -3589,6 +3570,8 @@
              (process-dom u ui)
              (process-dom v vi)
              (*fdc-guard u v w)) s))))
+     IEnforceableConstraint
+     (enforceable? [_] true)
      IConstraintOp
      (rator [_] `*fd)
      (rands [_] [u v w])
@@ -3609,14 +3592,17 @@
           (domain? du) (or (domain? dv) (domain? dw))
           (domain? dv) (or (domain? du) (domain? dw))
           (domain? dw) (or (domain? du) (domain? dv))
-          :else false))))))
+          :else false)))
+     IConstraintWatchedStores
+     (watched-stores [this]
+       #{::subst ::fd}))))
 
 (defn *fd
   "A finite domain constraint for multiplication and
    thus division. u, v & w must be eventually be given 
    domains if vars."
   [u v w]
-  (cgoal (fdc (*fdc u v w))))
+  (cgoal (*fdc u v w)))
 
 (defn quotfd [u v w]
   (*fd v w u))
@@ -3649,11 +3635,13 @@
                    (when s
                      (recur (next y*) s)))
                  ((remcg this) s))))))
+       IEnforceableConstraint
+       (enforceable? [_] true)
        IWithConstraintId
-       (with-id [this id]
+       (-with-id [this id]
          (-distinctfdc x y* n* id))
        IConstraintId
-       (id [this] id)
+       (-id [this] id)
        IConstraintOp
        (rator [_] `-distinctfd)
        (rands [_] [x])
@@ -3668,7 +3656,7 @@
        (watched-stores [this] #{::subst}))))
 
 (defn -distinctfd [x y* n*]
-  (cgoal (fdc (-distinctfdc x y* n*))))
+  (cgoal (-distinctfdc x y* n*)))
 
 (defn list-sorted? [pred ls]
   (if (empty? ls)
@@ -3704,11 +3692,13 @@
                      (when-let [s ((-distinctfd x (disj x* x) n*) s)]
                        (recur (next xs) s)))
                    ((remcg this) s)))))))
+       IEnforceableConstraint
+       (enforceable? [_] true)
        IWithConstraintId
-       (with-id [this id]
+       (-with-id [this id]
          (distinctfdc v* id))
        IConstraintId
-       (id [this] id)
+       (-id [this] id)
        IConstraintOp
        (rator [_] `distinctfd)
        (rands [_] [v*])
@@ -3727,7 +3717,7 @@
    values. v* need not be ground. Any vars in v* should
    eventually be given a domain."
   [v*]
-  (cgoal (fdc (distinctfdc v*))))
+  (cgoal (distinctfdc v*)))
 
 (defne bounded-listo
   "Ensure that the list l never grows beyond bound n.
@@ -3924,9 +3914,9 @@
        ITreeConstraint
        (tree-constraint? [_] true)
        IWithConstraintId
-       (with-id [_ id] (!=c p id))
+       (-with-id [_ id] (!=c p id))
        IConstraintId
-       (id [_] id)
+       (-id [_] id)
        IPrefix
        (prefix [_] p)
        IWithPrefix
@@ -4070,9 +4060,9 @@
            (== fs x)
            (remcg this)) a))
        IConstraintId
-       (id [this] _id)
+       (-id [this] _id)
        IWithConstraintId
-       (with-id [this _id]
+       (-with-id [this _id]
          (-featurec x fs _id))
        IConstraintOp
        (rator [_] `featurec)
@@ -4133,9 +4123,9 @@
                           (when test#
                             ((remcg this#) a#))))
                       clojure.core.logic/IConstraintId
-                      (~'id [_#] id#)
+                      (~'-id [_#] id#)
                       clojure.core.logic/IWithConstraintId
-                      (~'with-id [_# id#] (~-name ~@args id#))
+                      (~'-with-id [_# id#] (~-name ~@args id#))
                       clojure.core.logic/IConstraintOp
                       (~'rator [_#] '~name)
                       (~'rands [_#] (filter lvar? (flatten ~args)))
@@ -4167,9 +4157,9 @@
            (when (p x)
              ((remcg this) a))))
        IConstraintId
-       (id [this] _id)
+       (-id [this] _id)
        IWithConstraintId
-       (with-id [this _id]
+       (-with-id [this _id]
          (-predc x p pform _id))
        IConstraintOp
        (rator [_] (if (seq? pform)
@@ -4238,9 +4228,9 @@
          (let [x (walk a x)]
            ((composeg (f x a reifier) (remcg this)) a)))
        IConstraintId
-       (id [this] _id)
+       (-id [this] _id)
        IWithConstraintId
-       (with-id [this _id]
+       (-with-id [this _id]
          (-fixc x f reifier _id))
        IConstraintOp
        (rator [_] `fixc)

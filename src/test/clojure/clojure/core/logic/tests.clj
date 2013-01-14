@@ -1848,7 +1848,7 @@
 (deftest test-make-fdc-prim-1
   (let [u (lvar 'u)
         w (lvar 'w)
-        c (fdc (=fdc u w))]
+        c (=fdc u w)]
     (is (= (var-rands empty-s c)
            [u w]))
     (is (= (rator c)
@@ -1872,7 +1872,7 @@
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fdc (+fdc u v w))]
+        c (+fdc u v w)]
     (is (= (var-rands empty-s c)
            [u w]))
     (is (= (rator c)
@@ -1884,10 +1884,9 @@
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fdc (+fdc u v w))
+        c (+fdc u v w)
         cs (addc (make-cs) empty-s c)
         sc (first (constraints-for cs empty-s u ::l/fd))]
-    (is (= c sc))
     (is (= (id sc) 0))
     (is (= (count (:km cs)) 2))
     (is (= (count (:cm cs)) 1))))
@@ -1896,17 +1895,16 @@
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c0 (fdc (+fdc u v w))
+        c0 (+fdc u v w)
         x (lvar 'x)
-        c1 (fdc (+fdc w v x))
+        c1 (+fdc w v x)
         cs  (-> (make-cs)
                 (addc empty-s c0)
                 (addc empty-s c1))
         sc0 (get (:cm cs) 0)
         sc1 (get (:cm cs) 1)]
-    (is (= sc0 c0)) (is (= (id sc0) 0))
-    (is (= sc1 c1)) (is (= (id sc1) 1))
     (is (= (id sc0) 0))
+    (is (= (id sc1) 1))
     (is (= (count (:km cs)) 3))
     (is (= (count (:cm cs)) 2))))
 
@@ -1914,7 +1912,7 @@
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fdc (+fdc u v w))
+        c (+fdc u v w)
         s ((addcg c) empty-s)]
     (is (= (count (:km (:cs s))) 2))
     (is (= (count (:cm (:cs s))) 1))))
@@ -1923,7 +1921,7 @@
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fdc (+fdc u v w))
+        c (+fdc u v w)
         s ((addcg c) empty-s)
         c (first (constraints-for (:cs s) s u ::l/fd))
         s (-> s
@@ -2199,9 +2197,8 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         n* (sorted-set 1 3 5)
-        c (with-id (fdc (-distinctfdc x #{y} (conj n* 7))) 1)]
-    (is (= (id c) 1))
-    (is (= (id (:proc c)) 1))))
+        c (with-id (-distinctfdc x #{y} (conj n* 7)) 1)]
+    (is (= (id c) 1))))
 
 (deftest test-distinctfd
   (is (= (into #{}
@@ -2338,7 +2335,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
-        c (fdc (+fdc x y z))
+        c (+fdc x y z)
         cs (addc (make-cs) empty-s c)
         cp (get (:cm cs) 0)
         cs (remc cs empty-s cp)]
