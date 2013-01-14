@@ -201,12 +201,10 @@
 (defn reifiable? [x]
   (instance? clojure.core.logic.IReifiableConstraint x))
 
-(defprotocol IEnforceableConstraint
-  (enforceable? [c]))
+(definterface IEnforceableConstraint)
 
-(extend-type Object
-  IEnforceableConstraint
-  (enforceable? [x] false))
+(defn enforceable? [x]
+  (instance? clojure.core.logic.IEnforceableConstraint x))
 
 (defprotocol IUnwrapConstraint
   (unwrap [c]))
@@ -1316,8 +1314,7 @@
 ;; Logic Variables
 
 (deftype LVar [name oname hash meta]
-  clojure.core.logic.IVar
-
+  IVar
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
@@ -1445,8 +1442,7 @@
 ;; TODO: clean up the printing code
 
 (deftype LCons [a d ^{:unsynchronized-mutable true :tag int} cache meta]
-  clojure.core.logic.ITreeTerm
-
+  ITreeTerm
   clojure.lang.IObj
   (meta [this]
     meta)
@@ -3268,7 +3264,7 @@
                 s#))]
       (loop (seq v))))
 
-  clojure.core.logic.LCons
+  LCons
   (-force-ans [v x]
     (letfn [(loop [ys]
               (all
@@ -3302,12 +3298,11 @@
 
 (defn -domfdc [x]
   (reify
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (when (member? (get-dom-fd s x) (walk s x))
         (rem-dom s x ::fd)))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `domfdc)
     (rands [_] [x])
@@ -3325,6 +3320,7 @@
 
 (defn =fdc [u v]
   (reify
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3332,8 +3328,6 @@
           ((composeg
             (process-dom u i)
             (process-dom v i)) s))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `=fd)
     (rands [_] [u v])
@@ -3360,6 +3354,7 @@
 
 (defn !=fdc [u v]
   (reify 
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3373,8 +3368,6 @@
            ((process-dom v vdiff) s))
          :else (when-let [udiff (difference du dv)]
                  ((process-dom u udiff) s)))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `!=fd)
     (rands [_] [u v])
@@ -3402,6 +3395,7 @@
 
 (defn <=fdc [u v]
   (reify 
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv]
@@ -3410,8 +3404,6 @@
          ((composeg*
            (process-dom u (keep-before du (inc vmax)))
            (process-dom v (drop-before dv umin))) s))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `<=fd)
     (rands [_] [u v])
@@ -3469,6 +3461,7 @@
 
 (defn +fdc [u v w]
   (reify 
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
@@ -3487,8 +3480,6 @@
             (process-dom v (interval (- wmin umax) (- wmax umin)))
             (+fdc-guard u v w))
            s))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `+fd)
     (rands [_] [u v w])
@@ -3546,6 +3537,7 @@
                            q)
                   :upper q))))]
    (reify
+     IEnforceableConstraint
      clojure.lang.IFn
      (invoke [this s]
        (let-dom s [u du v dv w dw]
@@ -3570,8 +3562,6 @@
              (process-dom u ui)
              (process-dom v vi)
              (*fdc-guard u v w)) s))))
-     IEnforceableConstraint
-     (enforceable? [_] true)
      IConstraintOp
      (rator [_] `*fd)
      (rands [_] [u v w])
@@ -3617,6 +3607,7 @@
    the value of x from the remaining non-singleton domains bound to vars."
   [x y* n*]
   (reify
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let [x (walk s x)]
@@ -3634,8 +3625,6 @@
                 (when s
                   (recur (next y*) s)))
               ((remcg this) s))))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `-distinctfd)
     (rands [_] [x])
@@ -3669,6 +3658,7 @@
    values. We then construct the individual constraint for each var."
   [v*]
   (reify
+    IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
       (let [v* (walk s v*)
@@ -3683,8 +3673,6 @@
                   (when-let [s ((-distinctfd x (disj x* x) n*) s)]
                     (recur (next xs) s)))
                 ((remcg this) s)))))))
-    IEnforceableConstraint
-    (enforceable? [_] true)
     IConstraintOp
     (rator [_] `distinctfd)
     (rands [_] [v*])
@@ -3807,7 +3795,7 @@
   (disunify-terms [u v s cs]
     (if-not (= u v) nil cs))
 
-  clojure.core.logic.LVar
+  LVar
   (disunify-terms [u v s {pc :prefixc :as cs}]
     (assoc cs :prefixc (assoc pc u v)))
 
@@ -3900,8 +3888,6 @@
     (prefix [_] p)
     IWithPrefix
     (with-prefix [_ p] (!=c p))
-    IEnforceableConstraint
-    (enforceable? [_] false)
     IReifiableConstraint
     (reifyc [this v r a]
       (let [p* (-reify a (map (fn [[lhs rhs]] `(~lhs ~rhs)) p) r)]
@@ -4151,7 +4137,7 @@
 (declare treec)
 
 (extend-protocol IConstrainTree
-  clojure.core.logic.LCons
+  LCons
   (-constrain-tree [t fc s]
     (loop [t t s s]
       (if (lvar? t)
