@@ -252,12 +252,10 @@
 (defprotocol IDisunifyTerms
   (disunify-terms [u v s cs]))
 
-(defprotocol ITreeConstraint
-  (tree-constraint? [this]))
+(definterface ITreeConstraint)
 
-(extend-type Object
-  ITreeConstraint
-  (tree-constraint? [this] false))
+(defn tree-constraint? [x]
+  (instance? clojure.core.logic.ITreeConstraint x))
 
 (defprotocol IPrefix
   (prefix [this]))
@@ -3862,6 +3860,7 @@
 (defn !=c
   [p]
   (reify
+    ITreeConstraint
     clojure.lang.IFn
     (invoke [this a]
       (let [p (loop [sp (seq p) p p]
@@ -3882,8 +3881,6 @@
             #_((normalize-store (with-prefix this p)) a)
             (bind* a (remcg this) (cgoal (!=c p))))
           ((remcg this) a))))
-    ITreeConstraint
-    (tree-constraint? [_] true)
     IPrefix
     (prefix [_] p)
     IWithPrefix
