@@ -2872,4 +2872,3 @@
   (let [x (lvar 'x)
         s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
     (is (= (get-dom s x ::nom) '[(swap x y)]))))
-()
