@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic :as l])
   (:require [clojure.core.logic.arithmetic :as a]
+            [clojure.core.logic.fd :as fd]
             [clojure.repl :as r]
             [clojure.pprint :as pp]
             [clojure.set :as set]))
@@ -228,33 +229,33 @@
     ([_ () _])
     ([y1 [y2 . yr] d]
        (fresh [x nd]
-         (infd x nd (interval 1 8))
-         (!=fd d x)
+         (fd/in x nd (fd/interval 1 8))
+         (fd/!= d x)
          (conde
-           [(<fd y1 y2) (+fd y1 x y2)]
-           [(<fd y2 y1) (+fd y2 x y1)])
-         (+fd d 1 nd)
-         (noattackfd y1 yr nd))))
+           [(fd/< y1 y2) (fd/+ y1 x y2)]
+           [(fd/< y2 y1) (fd/+ y2 x y1)])
+         (fd/+ d 1 nd)
+         (noattackfd y1 yr nd)))
 
-  (defne safefd [l]
-    ([()])
-    ([[y . ys]]
-       (noattackfd y ys 1)
-       (safefd ys)))
+    (defne safefd [l]
+      ([()])
+      ([[y . ys]]
+         (noattackfd y ys 1)
+         (safefd ys))))
 
   (defn nqueensfd []
     (run* [q]
       (fresh [a b c d e f g h]
-        (infd a b c d e f g h (interval 1 8))
+        (fd/in a b c d e f g h (fd/interval 1 8))
         (== q [a b c d e f g h])
-        (distinctfd q)
+        (fd/distinct q)
         (safefd q))))
 
   (nqueensfd)
 
   (run* [q]
     (fresh [a b]
-      (infd a b (interval 1 8))
+      (fd/in a b (fd/interval 1 8))
       (== q [a b])
       (safefd q)))
   )
@@ -329,11 +330,11 @@
   (run* [q]
     (fresh [s e n d m o r y]
       (== q [s e n d m o r y])
-      (infd s e n d m o r y (interval 0 9))
-      (distinctfd q)
+      (fd/in s e n d m o r y (fd/interval 0 9))
+      (fd/distinct q)
       (distribute q ::l/ff)
-      (!=fd m 0) (!=fd s 0)
-      (eqfd
+      (fd/!= m 0) (fd/!= s 0)
+      (fd/eq
         (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
                           (* 1000 m) (* 100 o) (* 10 r) e)
            (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
@@ -345,9 +346,9 @@
     (fresh [d o n a l g e r b t]
       (== q [d o n a l g e r b t])
       (distribute q ::l/ff)
-      (infd d o n a l g e r b t (interval 0 9))
-      (distinctfd q)
-      (eqfd
+      (fd/in d o n a l g e r b t (fd/interval 0 9))
+      (fd/distinct q)
+      (fd/eq
         (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
               (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
            (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
@@ -419,21 +420,21 @@
 
 (defn not-adjacento [x y]
   (fresh [f]
-    (infd f (interval 1 5))
+    (fd/in f (fd/interval 1 5))
     (conde
-      [(+fd x f y) (<fd 1 f)]
-      [(+fd y f x) (<fd 1 f)])))
+      [(fd/+ x f y) (fd/< 1 f)]
+      [(fd/+ y f x) (fd/< 1 f)])))
 
 (defn dinesmanfd []
   (run* [q]
     (let [[baker cooper fletcher miller smith :as vs] (lvars 5)]
       (all
        (== q vs)
-       (distinctfd vs)
-       (everyg #(infd % (interval 1 5)) vs)
-       (!=fd baker 5) (!=fd cooper 1)
-       (!=fd fletcher 5) (!=fd fletcher 1)
-       (<fd cooper miller) 
+       (fd/distinct vs)
+       (everyg #(fd/in % (fd/interval 1 5)) vs)
+       (fd/!= baker 5) (fd/!= cooper 1)
+       (fd/!= fletcher 5) (fd/!= fletcher 1)
+       (fd/< cooper miller) 
        (not-adjacento smith fletcher)
        (not-adjacento fletcher cooper)))))
 
@@ -446,6 +447,7 @@
        (map second)))
 
 (comment
+  (time (doall (dinesmanfd)))
   ;; close to 2X faster than Petite Chez
   ;; ~2800ms
   (dotimes [_ 5]
@@ -463,20 +465,20 @@
   (run* [q]
     (fresh [x y]
       (== q [x y])
-      (infd x y (interval 0 9))
-      (+fd x y 9)
+      (fd/in x y (fd/interval 0 9))
+      (fd/+ x y 9)
       (fresh [p0 p1]
-        (*fd 2 x p0)
-        (*fd 4 y p1)
-        (+fd p0 p1 24)))))
+        (fd/* 2 x p0)
+        (fd/* 4 y p1)
+        (fd/+ p0 p1 24)))))
 
-;; with eqfd sugar
+;; with fd/eq sugar
 
-(defn simple-eqfd []
+(defn simple-fd-eq []
   (run* [q]
     (fresh [x y]
-      (infd x y (interval 0 9))
-      (eqfd
+      (fd/in x y (fd/interval 0 9))
+      (fd/eq
         (= (+ x y) 9)
         (= (+ (* x 2) (* y 4)) 24))
       (== q [x y]))))
@@ -486,17 +488,17 @@
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
 
-  (simple-eqfd)
+  (simple-fd/eq)
 
   ;; 620ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
-       (doall (simple-eqfd)))))
+       (doall (simple-fd/eq)))))
   
   (run* [q]
     (fresh [a b]
-      (*fd a 3 34)
+      (fd/* a 3 34)
       (debug-doms)))
   )
 
@@ -513,19 +515,19 @@
   ;; we have no more stones to test in sl to test w with
   ([_ () _ _ _]
      (fresh [hr]
-       (infd hr (interval 1 n))
+       (fd/in hr (fd/interval 1 n))
        (matche [r o]
          ;; r is not empty, we add w to the output only if
          ;; w is head of r + 1
-         ([[hr . _] [w . r]] (+fd hr 1 w))
+         ([[hr . _] [w . r]] (fd/+ hr 1 w))
          ;; r is empty, just add the weight
          ;; only works for w == 1
          ([() [w . r]]))))
   ;; we have stones to in sl to test w with
   ([_ [hsl . rsl] _ _ _]
      (fresh [w-hsl w+hsl o0 o1 nw]
-       (infd hsl w-hsl w+hsl (interval 1 n))
-       (+fd hsl w-hsl w) (+fd hsl w w+hsl)
+       (fd/in hsl w-hsl w+hsl (fd/interval 1 n))
+       (fd/+ hsl w-hsl w) (fd/+ hsl w w+hsl)
        ;; attempt to construct values prior w
        (subchecko w-hsl rsl r  o0 n)
        ;; attempt to construct values around w
@@ -551,11 +553,11 @@
 (defn matches [n]
   (run 1 [q]
     (fresh [a b c d]
-      (infd a b c d (interval 1 n)) 
-      (distinctfd [a b c d])
+      (fd/in a b c d (fd/interval 1 n)) 
+      (fd/distinct [a b c d])
       (== a 1)
-      (<=fd a b) (<=fd b c) (<=fd c d)
-      (eqfd (= (+ a b c d) n))
+      (fd/<= a b) (fd/<= b c) (fd/<= c d)
+      (fd/eq (= (+ a b c d) n))
       (checko [a b c d] () () n)
       (== q [a b c d]))))
 
@@ -585,11 +587,11 @@
              [b1 b2 b3 b4]
              [c1 c2 c3 c4]
              [d1 d2 d3 d4]])
-      (infd a1 a2 a3 a4
+      (fd/in a1 a2 a3 a4
             b1 b2 b3 b4
             c1 c2 c3 c4
             d1 d2 d3 d4
-            (domain 1 2 3 4))
+            (fd/domain 1 2 3 4))
       (let [row1 [a1 a2 a3 a4]
             row2 [b1 b2 b3 b4]
             row3 [c1 c2 c3 c4]
@@ -602,7 +604,7 @@
             sq2 [a3 a4 b3 b4]
             sq3 [c1 c2 d1 d2]
             sq4 [c3 c4 d3 d4]]
-        (everyg distinctfd
+        (everyg fd/distinct
            [row1 row2 row3 row4
             col1 col2 col3 col4
             sq1 sq2 sq3 sq4])))))
@@ -654,11 +656,11 @@
     (run-nc 1 [q]
       (== q vars)
       (distribute q ::l/ff)
-      (everyg #(infd % (domain 1 2 3 4 5 6 7 8 9)) vars)
+      (everyg #(fd/in % (fd/domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
-      (everyg distinctfd rows)
-      (everyg distinctfd cols)
-      (everyg distinctfd sqs))))
+      (everyg fd/distinct rows)
+      (everyg fd/distinct cols)
+      (everyg fd/distinct sqs))))
 
 ;; Helpers
 
@@ -718,7 +720,7 @@
      0 0 4  0 1 0  0 0 3])
   
   (sudokufd easy0)
-  (time (sudokufd easy0))
+  (time (doall (sudokufd easy0)))
   
   (sudokufd easy1)
   (time (sudokufd easy1))
@@ -840,15 +842,15 @@
   (run* [q]
     (let [[c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs] (lvars 9)]
       (all
-       (everyg #(infd % (interval 1 9)) vs)
+       (everyg #(fd/in % (fd/interval 1 9)) vs)
        (== q vs)
-       (distinctfd q)
-       (eqfd
+       (fd/distinct q)
+       (fd/eq
          (= (- c4 c6) c7)
          (= (* c1 c2 c3) (+ c8 c9))
          (< (+ c2 c3 c6) c8)
          (< c9 c8))
-       (everyg (fn [[v n]] (!=fd v n))
+       (everyg (fn [[v n]] (fd/!= v n))
          (map vector vs (range 1 10)))))))
 
 (comment

@@ -3,7 +3,8 @@
   (:use [clojure.core.logic :exclude [is] :as l]
         [clojure.core.logic.nominal :exclude [fresh hash] :as nom]
         clojure.test :reload)
-  (:require [clojure.pprint :as pp]))
+  (:require [clojure.pprint :as pp]
+            [clojure.core.logic.fd :as fd]))
 
 ;; =============================================================================
 ;; nominal unification
@@ -303,14 +304,14 @@
            (nom/fresh [a b]
              (fresh [x y]
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
-               (infd x (interval 1 3))
+               (fd/in x (fd/interval 1 3))
                (== [x y] q))))
         '([1 1] [2 2] [3 3])))
   (is (= (run* [q]
            (nom/fresh [a b]
              (fresh [x y]
                (== (nom/tie a (nom/tie b [b y])) (nom/tie b (nom/tie a [a x])))
-               (infd y (interval 1 3))
+               (fd/in y (fd/interval 1 3))
                (== [x y] q))))
         '([1 1] [2 2] [3 3])))
   (is (= (run* [q]
@@ -380,17 +381,17 @@
                (== (nom/tie a [a x]) q))))
          [(nom/tie 'a_0 '(a_0 1))])))
 
-(deftest test-92-infd-lost
+(deftest test-92-fd-in-lost
   (is (= (run* [q]
            (fresh [x]
              (nom/fresh [a]
-               (infd x (interval 1 3))
+               (fd/in x (fd/interval 1 3))
                (== q (nom/tie a x)))))
         [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
   (is (= (run* [q]
            (nom/fresh [a b c]
              (fresh [x]
-               (infd x (interval 1 3))
+               (fd/in x (fd/interval 1 3))
                (== (nom/tie b (nom/tie a x)) (nom/tie c q)))))
         [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)])))
 
@@ -409,12 +410,12 @@
            (nom/fresh [a b c]
              (fresh [x y]
                (== (nom/tie b (nom/tie a x)) (nom/tie c q))
-               (infd x (interval 1 3)))))
+               (fd/in x (fd/interval 1 3)))))
         [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
   (is (= (run* [q]
            (nom/fresh [a b c]
              (fresh [x y]
-               (infd y (interval 1 3))
+               (fd/in y (fd/interval 1 3))
                (== (nom/tie b (nom/tie a x)) (nom/tie c q))
                (== x y))))
         [(nom/tie 'a_0 1) (nom/tie 'a_0 2) (nom/tie 'a_0 3)]))
@@ -422,7 +423,7 @@
            (nom/fresh [a b c d]
              (fresh [x y z]
                (== (nom/tie b (nom/tie a x)) (nom/tie c z))
-               (infd x (interval 1 3))
+               (fd/in x (fd/interval 1 3))
                (== (nom/tie d q) z))))
         '(1 2 3))))
 

@@ -1,6 +1,8 @@
 (ns clojure.core.logic.nominal
   (:refer-clojure :exclude [== hash])
-  (:use [clojure.core.logic :exclude [fresh] :as l])
+  (:use clojure.core.logic.protocols
+        [clojure.core.logic :exclude [fresh] :as l])
+  (:require [clojure.core.logic.fd :as fd])
   (:import [java.io Writer]
            [clojure.core.logic LVar LCons IBindable ITreeTerm]))
 
@@ -245,8 +247,8 @@
                    (let [d1 (get-dom-fd a t1)
                          d2 (get-dom-fd a t2)]
                      (bind* a
-                            (if (nil? d2) identity (domfd t1 d2))
-                            (if (nil? d1) identity (domfd t2 d1))
+                            (if (nil? d2) identity (fd/dom t1 d2))
+                            (if (nil? d1) identity (fd/dom t2 d1))
                             (addcg c))))))))
     IConstraintOp
     (rator [_] `suspc)
