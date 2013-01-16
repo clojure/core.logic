@@ -181,7 +181,7 @@
       (noattacko [x y] r)))
 
  (defn solve-nqueens []
-   (run* [q]
+   (run-nc* [q]
      (fresh [y1 y2 y3 y4 y5 y6 y7 y8]
        (== q [[1 y1] [2 y2] [3 y3] [4 y4] [5 y5] [6 y6] [7 y7] [8 y8]])
        (nqueenso q))))
@@ -374,7 +374,8 @@
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
   ;; 1.9s now
-  (time (doall (cryptarithfd-2)))
+  (dotimes [_ 5]
+    (time (doall (cryptarithfd-2))))
   )
 
 ;; =============================================================================
@@ -488,13 +489,13 @@
   ;; currently none of the constraints above trigger any refinements!
   (simplefd)
 
-  (simple-fd/eq)
+  (simple-fd-eq)
 
   ;; 620ms
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
-       (doall (simple-fd/eq)))))
+       (doall (simple-fd-eq)))))
   
   (run* [q]
     (fresh [a b]
@@ -562,7 +563,7 @@
       (== q [a b c d]))))
 
 (comment
-  (time (matches 40))
+  (time (doall (matches 40)))
 
   ;; ~7500-8000ms
   (dotimes [_ 5]
@@ -808,7 +809,7 @@
      0 0 0  0 0 0  0 9 8])
 
   ;; 1.2s w/ distribute
-  (time (sudokufd hard2))
+  (time (doall (sudokufd hard2)))
 
   (-> (sudokufd hard2) first print-solution)
 
