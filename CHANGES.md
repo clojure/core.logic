@@ -1,10 +1,28 @@
+From 0.8.0-rc1 to 0.8.0-rc2
+====
+
+Breaking Changes
+----
+* CLP(FD) functionality now lives in it's own namespace, +fd -> fd/+, etc.
+
+Enhancements
+----
+* explicit constraint id management no longer required
+
+Bug Fixes
+----
+* LOGIC-98: fd terms in nominal terms return mutiple results
+* LOGIC-104: nominal dom representation changed to set
+* LOGIC-103: `<=fd` non-termination bug
+
 From 0.8.0-beta5 to 0.8.0-rc1
+====
 
 Enhancements
 ----
 * Add `seqc` constraint, this is preferred over `listo` as found in TRS
 
-Bux Fixes
+Bug Fixes
 ----
 * LOGIC-100: undiscard diseqality constraints
 * LOGIC-101: fix suprising behavior with vars in nom/hash

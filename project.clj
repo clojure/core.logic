@@ -1,4 +1,4 @@
-(defproject org.clojure/core.logic "0.8.0-rc2-SNAPSHOT" 
+(defproject org.clojure/core.logic "0.8.0-rc3-SNAPSHOT" 
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
 
@@ -15,7 +15,7 @@
                  ;"clojurescript/src/cljs"
                  ]
   :test-paths ["src/test/clojure"]
-  :dependencies [[org.clojure/clojure "1.4.0"]
+  :dependencies [[org.clojure/clojure "1.5.0-RC1"]
                  [org.clojure/clojurescript "0.0-1535"]
                  [org.clojure/google-closure-library "0.0-2029"]
                  [org.clojure/google-closure-library-third-party "0.0-2029"] 
