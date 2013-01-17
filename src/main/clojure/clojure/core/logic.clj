@@ -161,16 +161,8 @@
 (defprotocol IWithConstraintId
   (-with-id [this id]))
 
-(extend-type Object
-  IWithConstraintId
-  (-with-id [this id] this))
-
 (defprotocol IConstraintId
   (-id [this]))
-
-(extend-type Object
-  IConstraintId
-  (-id [this] nil))
 
 (defn id [c]
   (if (instance? clojure.core.logic.IConstraintId c)
