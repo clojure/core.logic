@@ -1,7 +1,6 @@
 (ns clojure.core.logic.nominal
   (:refer-clojure :exclude [== hash])
-  (:use clojure.core.logic.protocols
-        [clojure.core.logic :exclude [fresh] :as l])
+  (:use [clojure.core.logic :exclude [fresh] :as l])
   (:require [clojure.core.logic.fd :as fd])
   (:import [java.io Writer]
            [clojure.core.logic LVar LCons IBindable ITreeTerm]))

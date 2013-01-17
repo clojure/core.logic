@@ -1,6 +1,5 @@
 (ns clojure.core.logic
   (:refer-clojure :exclude [==])
-  (:use clojure.core.logic.protocols)
   (:require [clojure.set :as set]
             [clojure.string :as string])
   (:import [java.io Writer]
@@ -215,6 +214,9 @@
 
 (defprotocol IMemberCount
   (member-count [this]))
+
+(defprotocol IForceAnswerTerm
+  (-force-ans [v x]))
 
 ;; -----------------------------------------------------------------------------
 ;; Tree Constraints
