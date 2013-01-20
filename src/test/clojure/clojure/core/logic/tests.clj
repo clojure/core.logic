@@ -2583,8 +2583,13 @@
 
 (deftest test-predc-custom-reify-1
   (is (= (run* [q]
-           (predc q number? (fn [c v r a] `(~'num ~v))))
+           (predc q number? (fn [c v r a] `(~'num ~(walk* r (walk* a q))))))
         '((_0 :- (num _0)))))
+  (is (= (run* [q]
+           (fresh [x y]
+             (predc x number? (fn [c v r a] `(~'num ~(walk* r (walk* a x)))))
+             (== [x y] q)))
+        '(([_0 _1] :- (num _0)))))
   (is (= (run* [q]
            (predc q number? (fn [c v r a] nil)))
         '(_0))))
