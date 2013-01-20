@@ -2928,9 +2928,6 @@
   ([x p] (-predc x p p))
   ([x p pform]
      (reify
-       Object
-       (toString [_]
-         (str pform))
        clojure.lang.IFn
        (invoke [this a]
          (let [x (walk a x)]
@@ -2942,8 +2939,10 @@
                     `predc))
        (rands [_] [x])
        IReifiableConstraint
-       (reifyc [_ v r a]
-         pform)
+       (reifyc [c v r a]
+         (if (fn? pform)
+           (pform c v r a)
+           pform))
        IRunnable
        (runnable? [_ a]
          (not (lvar? (walk a x))))
