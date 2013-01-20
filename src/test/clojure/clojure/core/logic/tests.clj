@@ -2581,6 +2581,14 @@
              (== x "foo")))
         ())))
 
+(deftest test-predc-custom-reify-1
+  (is (= (run* [q]
+           (predc q number? (fn [c v r a] `(~'num ~v))))
+        '((_0 :- (num _0)))))
+  (is (= (run* [q]
+           (predc q number? (fn [c v r a] nil)))
+        '(_0))))
+
 ;; =============================================================================
 ;; Real cKanren programs
 
