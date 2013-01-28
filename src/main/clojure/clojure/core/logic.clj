@@ -1512,6 +1512,8 @@
   `(project [~v]
      (== (~f ~v) true)))
 
+;; TODO: remove v argument - David
+
 (defmacro is
   "Set the value of a var to value of another var with the operation
    applied. Non-relational."
