@@ -5,7 +5,6 @@
   (:import [java.io Writer]
            [java.util UUID]))
 
-(def ^{:dynamic true} *reify-vars* true)
 (def ^{:dynamic true} *locals*)
 
 (def fk (Exception.))
@@ -444,7 +443,7 @@
 (defn -reify
   ([s v]
      (let [v (walk* s v)]
-       (walk* (-reify* empty-s v) v)))
+       (walk* (-reify* (with-meta empty-s (meta s)) v) v)))
   ([s v r]
      (let [v (walk* s v)]
        (walk* (-reify* r v) v))))
@@ -672,7 +671,8 @@
 
 (defn tabled-s
   ([] (tabled-s false))
-  ([oc] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc nil)))
+  ([oc] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc nil))
+  ([oc meta] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc meta)))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
@@ -767,7 +767,7 @@
 
   IReifyTerm
   (reify-term [v s]
-    (if *reify-vars*
+    (if (-> s clojure.core/meta :reify-vars)
       (ext s v (reify-lvar-name s))
       (ext s v (:oname v))))
 
@@ -1284,33 +1284,35 @@
 
 (declare reifyg)
 
-(defmacro -run [oc n [x :as bindings] & goals]
+(defmacro -run [opts [x :as bindings] & goals]
   (if (> (count bindings) 1)
-    `(-run ~oc ~n [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
-    `(let [xs# (take* (fn []
+    `(-run ~opts [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
+    `(let [opts# ~opts
+           xs# (take* (fn []
                         ((fresh [~x]
                            ~@goals
                            (reifyg ~x))
-                         (tabled-s ~oc))))]
-       (if ~n
-         (take ~n xs#)
+                         (tabled-s (:occurs-check opts#)
+                            (merge {:reify-vars true} opts#)))))]
+       (if-let [n# (:n opts#)]
+         (take n# xs#)
          xs#))))
 
 (defmacro run
   "Executes goals until a maximum of n results are found."
-  [n & goals]
-  `(-run true ~n ~@goals))
+  [n bindings & goals]
+  `(-run {:occurs-check true :n ~n} ~bindings ~@goals))
 
 (defmacro run*
   "Executes goals until results are exhausted."
-  [& goals]
-  `(-run true false ~@goals))
+  [bindings & goals]
+  `(-run {:occurs-check true :n false} ~bindings ~@goals))
 
 (defmacro run-nc
   "Executes goals until a maximum of n results are found. Does not 
    occurs-check."
-  [& [n & goals]]
-  `(-run false ~n ~@goals))
+  [n bindings & goals]
+  `(-run {:occurs-check false :n ~n} ~bindings ~@goals))
 
 (defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
@@ -1419,7 +1421,7 @@
                     (fn [s [vs cs]]
                       (let [vs (if (seq? vs) vs (list vs))]
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
-                    empty-s (-> u meta ::when))]
+                    (with-meta empty-s {:reify-vars false}) (-> u meta ::when))]
        (first
          (take*
            (fn []
@@ -1444,11 +1446,12 @@
   ([u w]
      (let [lvars (merge (-> u meta :lvars)
                         (-> w meta :lvars))
-           s (unify empty-s u w)]
+           s (unify (with-meta empty-s {:reify-vars false}) u w)]
        (when s
-         (into {} (map (fn [[k v]]
-                         [k (-reify s v)])
-                       lvars)))))
+         (->> lvars
+           (filter (fn [[name var]] (not= (walk s var) var)))   
+           (map (fn [[name var]] [name (-reify s var)]))
+           (into {})))))
   ([u w & ts]
      (apply binding-map* (binding-map* u w) ts)))
 
@@ -2491,7 +2494,7 @@
    (enforce-constraints x)
    (fn [a]
      (let [v (walk* a x)
-           r (-reify* empty-s v)]
+           r (-reify* (with-meta empty-s (meta a)) v)]
        (if (zero? (count r))
          (choice (list v) empty-f)
          (let [v (walk* r v)]

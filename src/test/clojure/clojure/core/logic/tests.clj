@@ -1167,7 +1167,7 @@
 
 (deftest test-unifier-4
   (is (= (unifier '(?x . ?y) '(1 . ?z))
-         (lcons 1 '_0))))
+         (lcons 1 '?z))))
 
 (deftest test-unifier-5
   (is (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1212,7 +1212,7 @@
 
 (deftest test-binding-map-4
   (is (= (binding-map '(?x . ?y) '(1 . ?z))
-         '{?z _0, ?x 1, ?y _0})))
+         '{?x 1, ?y ?z})))
 
 (deftest test-binding-map-5
   (is (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
@@ -1349,11 +1349,9 @@
 ;; Tickets
 
 (deftest test-31-unifier-associative
-  (is (= (binding [*reify-vars* false]
-           (unifier '{:a ?x} '{:a ?y} '{:a 5}))
+  (is (= (unifier '{:a ?x} '{:a ?y} '{:a 5})
          {:a 5}))
-  (is (= (binding [*reify-vars* false]
-           (unifier '{:a ?x} '{:a 5} '{:a ?y}))
+  (is (= (unifier '{:a ?x} '{:a 5} '{:a ?y})
          {:a 5})))
 
 (deftest test-34-unify-with-metadata
