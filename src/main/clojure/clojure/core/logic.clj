@@ -665,14 +665,17 @@
       (-> v :doms dom))))
 
 (defn- make-s
-  ([] (Substitutions. {} nil nil (make-cs) nil #{} true nil))
-  ([m] (Substitutions. m nil nil (make-cs) nil #{} true nil))
+  ([] (make-s {}))
+  ([m] (make-s m (make-cs)))
   ([m cs] (Substitutions. m nil nil cs nil #{} true nil)))
 
 (defn tabled-s
   ([] (tabled-s false))
-  ([oc] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc nil))
-  ([oc meta] (Substitutions. {} nil (atom {}) (make-cs) nil #{} oc meta)))
+  ([oc] (tabled-s oc nil))
+  ([oc meta]
+     (-> (with-meta (make-s) meta)
+       (assoc :oc oc)
+       (assoc :ts (atom {})))))
 
 (def empty-s (make-s))
 (def empty-f (fn []))
