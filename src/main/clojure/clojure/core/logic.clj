@@ -506,7 +506,7 @@
 
   clojure.lang.Associative
   (containsKey [this k]
-    (contains? #{:s :vs :cs :cq :cqs} k))
+    (contains? #{:s :vs :cs :cq :cqs :oc} k))
   (entryAt [this k]
     (case k
       :s   [:s s]
