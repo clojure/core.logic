@@ -2911,21 +2911,21 @@
                    (reify
                      ~'clojure.lang.IFn
                      (~'invoke [this# a#]
-                       (let [[~@args :as args#] (map #(walk* a# %) ~args)
+                       (let [[~@args :as args#] (map #(clojure.core.logic/walk* a# %) ~args)
                              test# (do ~@body)]
                          (when test#
-                           ((remcg this#) a#))))
+                           ((clojure.core.logic/remcg this#) a#))))
                      clojure.core.logic/IConstraintOp
                      (~'rator [_#] '~name)
-                     (~'rands [_#] (filter lvar? (flatten ~args)))
+                     (~'rands [_#] (filter clojure.core.logic/lvar? (flatten ~args)))
                      clojure.core.logic/IReifiableConstraint
                      (~'reifyc [_# _# r# a#]
-                       (list '~name (map #(-reify r# %) ~args)))
+                       (list '~name (map #(clojure.core.logic/-reify r# %) ~args)))
                      clojure.core.logic/IRunnable
                      (~'runnable? [_# s#]
-                       (ground-term? ~args s#))
+                       (clojure.core.logic/ground-term? ~args s#))
                      clojure.core.logic/IConstraintWatchedStores
-                     (~'watched-stores [_#] #{::subst})))]
+                     (~'watched-stores [_#] #{:clojure.core.logic/subst})))]
       (defn ~name ~args
         (cgoal (~-name ~@args))))))
 
