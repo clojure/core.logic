@@ -423,17 +423,14 @@
       [(fd/+ y f x) (fd/< 1 f)])))
 
 (defn dinesmanfd []
-  (run* [q]
-    (let [[baker cooper fletcher miller smith :as vs] (lvars 5)]
-      (all
-       (== q vs)
-       (fd/distinct vs)
-       (everyg #(fd/in % (fd/interval 1 5)) vs)
-       (fd/!= baker 5) (fd/!= cooper 1)
-       (fd/!= fletcher 5) (fd/!= fletcher 1)
-       (fd/< cooper miller) 
-       (not-adjacento smith fletcher)
-       (not-adjacento fletcher cooper)))))
+  (run* [baker cooper fletcher miller smith :as vs]
+    (fd/distinct vs)
+    (everyg #(fd/in % (fd/interval 1 5)) vs)
+    (fd/!= baker 5) (fd/!= cooper 1)
+    (fd/!= fletcher 5) (fd/!= fletcher 1)
+    (fd/< cooper miller) 
+    (not-adjacento smith fletcher)
+    (not-adjacento fletcher cooper)))
 
 (defn sort-dwellers [[fa _] [fb _]]
   (cond (< fa fb) -1 (= fa fb) 0 :else 1))
@@ -459,26 +456,22 @@
 ;; Simple
 
 (defn simplefd []
-  (run* [q]
-    (fresh [x y]
-      (== q [x y])
-      (fd/in x y (fd/interval 0 9))
-      (fd/+ x y 9)
-      (fresh [p0 p1]
-        (fd/* 2 x p0)
-        (fd/* 4 y p1)
-        (fd/+ p0 p1 24)))))
+  (run* [x y]
+    (fd/in x y (fd/interval 0 9))
+    (fd/+ x y 9)
+    (fresh [p0 p1]
+      (fd/* 2 x p0)
+      (fd/* 4 y p1)
+      (fd/+ p0 p1 24))))
 
 ;; with fd/eq sugar
 
 (defn simple-fd-eq []
-  (run* [q]
-    (fresh [x y]
-      (fd/in x y (fd/interval 0 9))
-      (fd/eq
-        (= (+ x y) 9)
-        (= (+ (* x 2) (* y 4)) 24))
-      (== q [x y]))))
+  (run* [x y]
+    (fd/in x y (fd/interval 0 9))
+    (fd/eq
+     (= (+ x y) 9)
+     (= (+ (* x 2) (* y 4)) 24))))
 
 (comment
   ;; "Finite Domain Constraint Programming in Oz. A Tutorial." (Schulte & Smolka)
@@ -548,15 +541,13 @@
        (checko wr nsl nr n))))
 
 (defn matches [n]
-  (run 1 [q]
-    (fresh [a b c d]
-      (fd/in a b c d (fd/interval 1 n)) 
-      (fd/distinct [a b c d])
-      (== a 1)
-      (fd/<= a b) (fd/<= b c) (fd/<= c d)
-      (fd/eq (= (+ a b c d) n))
-      (checko [a b c d] () () n)
-      (== q [a b c d]))))
+  (run 1 [a b c d]
+    (fd/in a b c d (fd/interval 1 n)) 
+    (fd/distinct [a b c d])
+    (== a 1)
+    (fd/<= a b) (fd/<= b c) (fd/<= c d)
+    (fd/eq (= (+ a b c d) n))
+    (checko [a b c d] () () n)))
 
 (comment
   (time (doall (matches 40)))
@@ -830,25 +821,22 @@
   (dotimes [_ 5]
     (time
       (dotimes [_ 100]
-        (doall (sudokufd ciao)))))
-  )
+        (doall (sudokufd ciao))))))
 
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
 
 (defn safefd []
-  (run* [q]
-    (let [[c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs] (lvars 9)]
-      (all
-       (everyg #(fd/in % (fd/interval 1 9)) vs)
-       (== q vs)
-       (fd/distinct q)
-       (fd/eq
-         (= (- c4 c6) c7)
-         (= (* c1 c2 c3) (+ c8 c9))
-         (< (+ c2 c3 c6) c8)
-         (< c9 c8))
-       (everyg (fn [[v n]] (fd/!= v n))
-         (map vector vs (range 1 10)))))))
+  (run* [c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs]
+    (everyg #(fd/in % (fd/interval 1 9)) vs)
+    (fd/distinct vs)
+    (fd/eq
+     (= (- c4 c6) c7)
+     (= (* c1 c2 c3) (+ c8 c9))
+     (< (+ c2 c3 c6) c8)
+     (< c9 c8))
+    (project [vs]
+      (everyg (fn [[v n]] (fd/!= v n))
+        (map vector vs (range 1 10))))))
 
 (comment
   (time (safefd))
