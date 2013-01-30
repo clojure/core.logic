@@ -2603,17 +2603,14 @@
       [(fd/+ y f x) (fd/< 1 f)])))
 
 (defn dinesmanfd []
-  (run* [q]
-    (let [[baker cooper fletcher miller smith :as vs] (lvars 5)]
-      (all
-       (== q vs)
-       (fd/distinct vs)
-       (everyg #(fd/in % (fd/interval 1 5)) vs)
-       (fd/!= baker 5) (fd/!= cooper 1)
-       (fd/!= fletcher 5) (fd/!= fletcher 1)
-       (fd/< cooper miller) 
-       (not-adjacento smith fletcher)
-       (not-adjacento fletcher cooper)))))
+  (run* [baker cooper fletcher miller smith :as vs]
+    (fd/distinct vs)
+    (everyg #(fd/in % (fd/interval 1 5)) vs)
+    (fd/!= baker 5) (fd/!= cooper 1)
+    (fd/!= fletcher 5) (fd/!= fletcher 1)
+    (fd/< cooper miller) 
+    (not-adjacento smith fletcher)
+    (not-adjacento fletcher cooper)))
 
 (deftest test-dinesmandfd []
   (is (= (dinesmanfd) '([3 2 4 5 1]))))
@@ -2642,15 +2639,13 @@
        (checko wr nsl nr n))))
 
 (defn matches [n]
-  (run 1 [q]
-    (fresh [a b c d]
-      (fd/in a b c d (fd/interval 1 n)) 
-      (fd/distinct [a b c d])
-      (== a 1)
-      (fd/<= a b) (fd/<= b c) (fd/<= c d)
-      (fd/eq (= (+ a b c d) n))
-      (checko [a b c d] () () n)
-      (== q [a b c d]))))
+  (run 1 [a b c d]
+    (fd/in a b c d (fd/interval 1 n)) 
+    (fd/distinct [a b c d])
+    (== a 1)
+    (fd/<= a b) (fd/<= b c) (fd/<= c d)
+    (fd/eq (= (+ a b c d) n))
+    (checko [a b c d] () () n)))
 
 (deftest test-matches
   (is (= (matches 40) '([1 3 9 27]))))
@@ -2723,19 +2718,17 @@
   (is (-> (sudokufd easy0) first verify)))
 
 (defn safefd []
-  (run* [q]
-    (let [[c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs] (lvars 9)]
-      (all
-       (everyg #(fd/in % (fd/interval 1 9)) vs)
-       (== q vs)
-       (fd/distinct q)
-       (fd/eq
-         (= (- c4 c6) c7)
-         (= (* c1 c2 c3) (+ c8 c9))
-         (< (+ c2 c3 c6) c8)
-         (< c9 c8))
-       (everyg (fn [[v n]] (fd/!= v n))
-         (map vector vs (range 1 10)))))))
+  (run* [c1 c2 c3 c4 c5 c6 c7 c8 c9 :as vs]
+    (everyg #(fd/in % (fd/interval 1 9)) vs)
+    (fd/distinct vs)
+    (fd/eq
+     (= (- c4 c6) c7)
+     (= (* c1 c2 c3) (+ c8 c9))
+     (< (+ c2 c3 c6) c8)
+     (< c9 c8))
+    (project [vs]
+      (everyg (fn [[v n]] (fd/!= v n))
+        (map vector vs (range 1 10))))))
 
 (deftest test-safefd
   (is (= (safefd)
