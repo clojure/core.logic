@@ -1289,7 +1289,10 @@
 
 (defmacro -run [opts [x :as bindings] & goals]
   (if (> (count bindings) 1)
-    `(-run ~opts [q#] (fresh ~bindings ~@goals (== q# ~bindings)))
+    (let [[rbindings as-key [as]] (partition-by #{:as} bindings)]
+      (if (seq as-key)
+        `(-run ~opts [~as] (fresh [~@rbindings] (== ~as [~@rbindings]) ~@goals))
+        `(-run ~opts [q#] (fresh ~bindings (== q# ~bindings) ~@goals))))
     `(let [opts# ~opts
            xs# (take* (fn []
                         ((fresh [~x]

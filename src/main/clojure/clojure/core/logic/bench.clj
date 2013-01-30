@@ -327,31 +327,27 @@
     a))
 
 (defn cryptarithfd-1 []
-  (run* [q]
-    (fresh [s e n d m o r y]
-      (== q [s e n d m o r y])
-      (fd/in s e n d m o r y (fd/interval 0 9))
-      (fd/distinct q)
-      (distribute q ::l/ff)
-      (fd/!= m 0) (fd/!= s 0)
-      (fd/eq
-        (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
-                          (* 1000 m) (* 100 o) (* 10 r) e)
-           (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y))))))
+  (run-nc* [s e n d m o r y :as q]
+    (fd/in s e n d m o r y (fd/interval 0 9))
+    (fd/distinct q)
+    (distribute q ::l/ff)
+    (fd/!= m 0) (fd/!= s 0)
+    (fd/eq
+      (=             (+ (* 1000 s) (* 100 e) (* 10 n) d
+                        (* 1000 m) (* 100 o) (* 10 r) e)
+         (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))))
 
 ;; Bratko 3rd ed pg 343
 
 (defn cryptarithfd-2 []
-  (run* [q]
-    (fresh [d o n a l g e r b t]
-      (== q [d o n a l g e r b t])
-      (distribute q ::l/ff)
-      (fd/in d o n a l g e r b t (fd/interval 0 9))
-      (fd/distinct q)
-      (fd/eq
-        (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
-              (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
-           (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t))))))
+  (run-nc* [d o n a l g e r b t :as q]
+    (distribute q ::l/ff)
+    (fd/in d o n a l g e r b t (fd/interval 0 9))
+    (fd/distinct q)
+    (fd/eq
+     (= (+ (* 100000 d) (* 10000 o) (* 1000 n) (* 100 a) (* 10 l) d
+           (* 100000 g) (* 10000 e) (* 1000 r) (* 100 a) (* 10 l) d)
+        (+ (* 100000 r) (* 10000 o) (* 1000 b) (* 100 e) (* 10 r) t)))))
 
 (comment
   ;; FIXME: we don't see as much propagation as Oz, why not?
