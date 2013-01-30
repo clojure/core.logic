@@ -1853,11 +1853,14 @@
   "A pseudo-relation that takes a coll and ensures that the goal g
    succeeds on every element of the collection."
   [g coll]
-  (if (seq coll)
-    (all
-     (g (first coll))
-     (everyg g (next coll)))
-    s#))
+  (fn [a]
+    (let [coll (walk a coll)]
+      (((fn everyg* [g coll]
+          (if (seq coll)
+            (all
+             (g (first coll))
+             (everyg* g (next coll)))
+            s#)) g coll) a))))
 
 ;; =============================================================================
 ;; Goal sugar syntax
