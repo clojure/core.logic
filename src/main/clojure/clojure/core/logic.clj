@@ -2887,7 +2887,7 @@
   (cgoal (-featurec x (partial-map fs))))
 
 ;; =============================================================================
-;; defc
+;; defnc
 
 (defn ground-term? [x s]
   (letfn [(-ground-term? [x s]
@@ -2910,30 +2910,47 @@
 ;; consider ^:partial type hint for arguments
 ;; these argument only need to be partially instantiated
 
-(defmacro defc [name args & body]
-  (let [-name (symbol (str "-" name))]
-   `(let [~-name (fn ~-name
-                   [~@args]
-                   (reify
-                     ~'clojure.lang.IFn
-                     (~'invoke [this# a#]
-                       (let [[~@args :as args#] (map #(clojure.core.logic/walk* a# %) ~args)
-                             test# (do ~@body)]
-                         (when test#
-                           ((clojure.core.logic/remcg this#) a#))))
-                     clojure.core.logic/IConstraintOp
-                     (~'rator [_#] '~name)
-                     (~'rands [_#] (filter clojure.core.logic/lvar? (flatten ~args)))
-                     clojure.core.logic/IReifiableConstraint
-                     (~'reifyc [_# _# r# a#]
-                       (list '~name (map #(clojure.core.logic/-reify r# %) ~args)))
-                     clojure.core.logic/IRunnable
-                     (~'runnable? [_# s#]
-                       (clojure.core.logic/ground-term? ~args s#))
-                     clojure.core.logic/IConstraintWatchedStores
-                     (~'watched-stores [_#] #{:clojure.core.logic/subst})))]
-      (defn ~name ~args
-        (cgoal (~-name ~@args))))))
+(defmacro fnc
+  "Define an anonymous constraint that can be used with the unifier:
+
+     (let [oddc (fnc [x] (odd? x))]
+
+       (unifier {:a '?a} {:a 1} :when {'?a oddc})
+         ;;=> {:a 1}
+
+       (unifier {:a '?a} {:a 2} :when {'?a oddc})
+         ;;=> nil
+     )
+
+  Use defnc to define a constraint and assign a toplevel var."
+  [args & body]
+  (let [name (gensym "constraint")
+        -name (symbol (str "-" name))]
+    `(letfn [(~name [~@args]
+               (cgoal (~-name ~@args)))
+             (~-name [~@args]
+               (reify
+                 ~'clojure.lang.IFn
+                 (~'invoke [this# a#]
+                   (let [[~@args :as args#] (map #(clojure.core.logic/walk* a# %) ~args)
+                         test# (do ~@body)]
+                     (when test#
+                       ((clojure.core.logic/remcg this#) a#))))
+                 clojure.core.logic/IConstraintOp
+                 (~'rator [_#] '~name)
+                 (~'rands [_#] (filter clojure.core.logic/lvar? (flatten ~args)))
+                 clojure.core.logic/IReifiableConstraint
+                 (~'reifyc [_# _# r# a#]
+                   (list '~name (map #(clojure.core.logic/-reify r# %) ~args)))
+                 clojure.core.logic/IRunnable
+                 (~'runnable? [_# s#]
+                   (clojure.core.logic/ground-term? ~args s#))
+                 clojure.core.logic/IConstraintWatchedStores
+                 (~'watched-stores [_#] #{:clojure.core.logic/subst})))]
+       ~name)))
+
+(defmacro defnc [name args & body]
+  `(def ~name (fnc ~args ~@body)))
 
 ;; =============================================================================
 ;; Predicate Constraint

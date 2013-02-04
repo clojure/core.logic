@@ -1197,6 +1197,31 @@
   (is (= (unifier '{:a [?b (?c [?d {:e ?e}])]} {:a [:b '(:c [:d {:e :e}])]})
          {:a [:b '(:c [:d {:e :e}])]})))
 
+;; -----------------------------------------------------------------------------
+;; Unifier with constraints
+
+(defnc evenc [x]
+  (even? x))
+
+(deftest test-unifier-constraints-1 ;;One var
+  (is (= (unifier '{:a ?a} {:a 2} :when {'?a evenc})
+         {:a 2}))
+  (is (= (unifier '{:a ?a} {:a 1} :when {'?a evenc})
+         nil)))
+
+(deftest test-unifier-constraints-2 ;;Two vars
+  (is (= (unifier '{:a ?a :b ?b} {:a 2 :b 2} :when {'?a evenc '?b evenc})
+         {:a 2 :b 2}))
+  (is (= (unifier '{:a ?a :b ?b} {:a 1 :b 2} :when {'?a evenc '?b evenc})
+         nil)))
+
+;;Anonymous constraints
+(deftest test-unifier-constraints-3 ;;One var
+  (is (= (unifier '{:a ?a} {:a 2} :when {'?a (fnc [x] (even? x))})
+         {:a 2}))
+  (is (= (unifier '{:a ?a} {:a 1} :when {'?a (fnc [x] (even? x))})
+         nil)))
+
 
 (deftest test-binding-map-1
   (is (= (binding-map '(?x ?y) '(1 2))
