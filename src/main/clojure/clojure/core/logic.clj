@@ -2727,30 +2727,28 @@
 
   Use defnc to define a constraint and assign a toplevel var."
   [args & body]
-  (let [name (gensym "constraint")
-        -name (symbol (str "-" name))]
-    `(letfn [(~name [~@args]
-               (cgoal (~-name ~@args)))
-             (~-name [~@args]
-               (reify
-                 ~'clojure.lang.IFn
-                 (~'invoke [this# a#]
-                   (let [[~@args :as args#] (map #(clojure.core.logic/walk* a# %) ~args)
-                         test# (do ~@body)]
-                     (when test#
-                       ((clojure.core.logic/remcg this#) a#))))
-                 clojure.core.logic.protocols/IConstraintOp
-                 (~'rator [_#] '~name)
-                 (~'rands [_#] (filter clojure.core.logic/lvar? (flatten ~args)))
-                 clojure.core.logic.protocols/IReifiableConstraint
-                 (~'reifyc [_# _# r# a#]
-                   (list '~name (map #(clojure.core.logic/-reify r# %) ~args)))
-                 clojure.core.logic.protocols/IRunnable
-                 (~'runnable? [_# s#]
-                   (clojure.core.logic/ground-term? ~args s#))
-                 clojure.core.logic.protocols/IConstraintWatchedStores
-                 (~'watched-stores [_#] #{:clojure.core.logic/subst})))]
-       ~name)))
+  (let [name (symbol (gensym "fnc"))]
+    `(fn ~args
+       (letfn [(~name [~@args]
+                 (reify
+                   ~'clojure.lang.IFn
+                   (~'invoke [this# a#]
+                     (let [[~@args :as args#] (map #(clojure.core.logic/walk* a# %) ~args)
+                           test# (do ~@body)]
+                       (when test#
+                         ((clojure.core.logic/remcg this#) a#))))
+                   clojure.core.logic.protocols/IConstraintOp
+                   (~'rator [_#] '~name)
+                   (~'rands [_#] (filter clojure.core.logic/lvar? (flatten ~args)))
+                   clojure.core.logic.protocols/IReifiableConstraint
+                   (~'reifyc [_# _# r# a#]
+                     (list '~name (map #(clojure.core.logic/-reify r# %) ~args)))
+                   clojure.core.logic.protocols/IRunnable
+                   (~'runnable? [_# s#]
+                     (clojure.core.logic/ground-term? ~args s#))
+                   clojure.core.logic.protocols/IConstraintWatchedStores
+                   (~'watched-stores [_#] #{:clojure.core.logic/subst})))]
+         (cgoal (~name ~@args))))))
 
 (defmacro defnc [name args & body]
   `(def ~name (fnc ~args ~@body)))
