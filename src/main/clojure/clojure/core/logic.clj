@@ -2723,6 +2723,8 @@
          ;;=> nil
      )
 
+  Note, the constraint will not run until all arguments are fully ground.
+
   Use defnc to define a constraint and assign a toplevel var."
   [args & body]
   (let [name (gensym "constraint")
