@@ -1,7 +1,7 @@
 (ns clojure.core.logic.fd
   (:refer-clojure :exclude [== < > <= >= + - * quot distinct])
-  (:use [clojure.core.logic :exclude [get-dom == != !=c] :as l]
-        [clojure.core.logic.protocols])
+  (:use [clojure.core.logic.protocols]
+        [clojure.core.logic :exclude [get-dom == != !=c] :as l])
   (:require [clojure.set :as set]
             [clojure.string :as string])
   (:import [java.io Writer]

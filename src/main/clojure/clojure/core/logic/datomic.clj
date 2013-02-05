@@ -17,7 +17,8 @@
  (do
    (ns clojure.core.logic.datomic
      (:refer-clojure :exclude [==])
-     (:use clojure.core.logic
+     (:use [clojure.core.logic.protocols]
+           [clojure.core.logic]
            [datomic.api :only [db q] :as d]))
 
    (defn datom? [x]
