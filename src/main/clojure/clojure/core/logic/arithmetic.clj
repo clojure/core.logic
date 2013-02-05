@@ -1,6 +1,7 @@
 (ns clojure.core.logic.arithmetic
   (:refer-clojure :exclude [== = > < >= <=])
-  (:use clojure.core.logic))
+  (:use [clojure.core.logic.protocols]
+        [clojure.core.logic]))
 
 (defmacro = [x y]
   "Goal for testing whether x and y are equal. Non-relational."

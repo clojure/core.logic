@@ -313,19 +313,6 @@
 ;; =============================================================================
 ;; Cryptarithmetic Puzzle
 
-(defn debug-doms []
-  (fn [a]
-    (let [s (:s a)]
-      (pp/pprint
-       (zipmap (keys s)
-         (map (fn [v]
-                (let [v (walk a v)]
-                  (if (lvar? v)
-                    (get-dom a v)
-                    v)))
-              (keys s)))))
-    a))
-
 (defn cryptarithfd-1 []
   (run-nc* [s e n d m o r y :as q]
     (fd/in s e n d m o r y (fd/interval 0 9))
