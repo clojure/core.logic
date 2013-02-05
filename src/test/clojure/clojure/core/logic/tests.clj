@@ -1,6 +1,7 @@
 (ns clojure.core.logic.tests
   (:refer-clojure :exclude [==])
-  (:use [clojure.core.logic :exclude [is] :as l]
+  (:use [clojure.core.logic.protocols]
+        [clojure.core.logic :exclude [is] :as l]
         clojure.test)
   (:require [clojure.core.logic.fd :as fd])
   (:require [clojure.pprint :as pp]))

@@ -1,11 +1,12 @@
 (ns clojure.core.logic.fd
   (:refer-clojure :exclude [== < > <= >= + - * quot distinct])
-  (:use [clojure.core.logic :exclude [get-dom == != !=c] :as l])
+  (:use [clojure.core.logic :exclude [get-dom == != !=c] :as l]
+        [clojure.core.logic.protocols])
   (:require [clojure.set :as set]
             [clojure.string :as string])
   (:import [java.io Writer]
            [java.util UUID]
-           [clojure.core.logic IEnforceableConstraint]))
+           [clojure.core.logic.protocols IEnforceableConstraint]))
 
 (alias 'core 'clojure.core)
 
