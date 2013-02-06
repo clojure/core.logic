@@ -4,6 +4,7 @@
         [clojure.core.logic :exclude [is] :as l]
         clojure.test)
   (:require [clojure.core.logic.fd :as fd])
+  (:require [clojure.core.logic.unifier :as u])
   (:require [clojure.pprint :as pp]))
 
 ;; =============================================================================
@@ -1155,47 +1156,47 @@
 ;; Unifier
 
 (deftest test-unifier-1
-  (is (= (unifier '(?x ?y) '(1 2))
+  (is (= (u/unify '(?x ?y) '(1 2))
          '(1 2))))
 
 (deftest test-unifier-2
-  (is (= (unifier '(?x ?y 3) '(1 2 ?z))
+  (is (= (u/unify '(?x ?y 3) '(1 2 ?z))
          '(1 2 3))))
 
 (deftest test-unifier-3
-  (is (= (unifier '[(?x . ?y) 3] [[1 2] 3])
+  (is (= (u/unify '[(?x . ?y) 3] [[1 2] 3])
          '[(1 2) 3])))
 
 (deftest test-unifier-4
-  (is (= (unifier '(?x . ?y) '(1 . ?z))
+  (is (= (u/unify '(?x . ?y) '(1 . ?z))
          (lcons 1 '?z))))
 
 (deftest test-unifier-5
-  (is (= (unifier '(?x 2 . ?y) '(1 2 3 4 5))
+  (is (= (u/unify '(?x 2 . ?y) '(1 2 3 4 5))
          '(1 2 3 4 5))))
 
 (deftest test-unifier-6
-  (is (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+  (is (= (u/unify '(?x 2 . ?y) '(1 9 3 4 5))
          nil)))
 
 (deftest test-unifier-7
-  (is (= (unifier '(?x 2 . ?y) '(1 9 3 4 5))
+  (is (= (u/unify '(?x 2 . ?y) '(1 9 3 4 5))
          nil)))
 
 (deftest test-unifier-8 ;;nested maps
-  (is (= (unifier '{:a {:b ?b}} {:a {:b 1}})
+  (is (= (u/unify '{:a {:b ?b}} {:a {:b 1}})
          {:a {:b 1}})))
 
 (deftest test-unifier-9 ;;nested vectors
-  (is (= (unifier '[?a [?b ?c] :d] [:a [:b :c] :d])
+  (is (= (u/unify '[?a [?b ?c] :d] [:a [:b :c] :d])
          [:a [:b :c] :d])))
 
 (deftest test-unifier-10 ;;nested seqs
-  (is (= (unifier '(?a (?b ?c) :d) '(:a (:b :c) :d))
+  (is (= (u/unify '(?a (?b ?c) :d) '(:a (:b :c) :d))
          '(:a (:b :c) :d))))
 
 (deftest test-unifier-11 ;;all together now
-  (is (= (unifier '{:a [?b (?c [?d {:e ?e}])]} {:a [:b '(:c [:d {:e :e}])]})
+  (is (= (u/unify '{:a [?b (?c [?d {:e ?e}])]} {:a [:b '(:c [:d {:e :e}])]})
          {:a [:b '(:c [:d {:e :e}])]})))
 
 ;; -----------------------------------------------------------------------------
@@ -1205,47 +1206,47 @@
   (even? x))
 
 (deftest test-unifier-constraints-1 ;;One var
-  (is (= (unifier '{:a ?a} {:a 2} :when {'?a evenc})
+  (is (= (u/unify '{:a ?a} {:a 2} :when {'?a evenc})
          {:a 2}))
-  (is (= (unifier '{:a ?a} {:a 1} :when {'?a evenc})
+  (is (= (u/unify '{:a ?a} {:a 1} :when {'?a evenc})
          nil)))
 
 (deftest test-unifier-constraints-2 ;;Two vars
-  (is (= (unifier '{:a ?a :b ?b} {:a 2 :b 2} :when {'?a evenc '?b evenc})
+  (is (= (u/unify '{:a ?a :b ?b} {:a 2 :b 2} :when {'?a evenc '?b evenc})
          {:a 2 :b 2}))
-  (is (= (unifier '{:a ?a :b ?b} {:a 1 :b 2} :when {'?a evenc '?b evenc})
+  (is (= (u/unify '{:a ?a :b ?b} {:a 1 :b 2} :when {'?a evenc '?b evenc})
          nil)))
 
 ;;Anonymous constraints
 (deftest test-unifier-constraints-3 ;;One var
-  (is (= (unifier '{:a ?a} {:a 2} :when {'?a (fnc [x] (even? x))})
+  (is (= (u/unify '{:a ?a} {:a 2} :when {'?a (fnc [x] (even? x))})
          {:a 2}))
-  (is (= (unifier '{:a ?a} {:a 1} :when {'?a (fnc [x] (even? x))})
+  (is (= (u/unify '{:a ?a} {:a 1} :when {'?a (fnc [x] (even? x))})
          nil)))
 
 
 (deftest test-binding-map-1
-  (is (= (binding-map '(?x ?y) '(1 2))
+  (is (= (u/unifier '(?x ?y) '(1 2))
          '{?x 1 ?y 2})))
 
 (deftest test-binding-map-2
-  (is (= (binding-map '(?x ?y 3) '(1 2 ?z))
+  (is (= (u/unifier '(?x ?y 3) '(1 2 ?z))
          '{?x 1 ?y 2 ?z 3})))
 
 (deftest test-binding-map-3
-  (is (= (binding-map '[(?x . ?y) 3] [[1 2] 3])
+  (is (= (u/unifier '[(?x . ?y) 3] [[1 2] 3])
          '{?x 1 ?y (2)})))
 
 (deftest test-binding-map-4
-  (is (= (binding-map '(?x . ?y) '(1 . ?z))
+  (is (= (u/unifier '(?x . ?y) '(1 . ?z))
          '{?x 1, ?y ?z})))
 
 (deftest test-binding-map-5
-  (is (= (binding-map '(?x 2 . ?y) '(1 2 3 4 5))
+  (is (= (u/unifier '(?x 2 . ?y) '(1 2 3 4 5))
          '{?x 1 ?y (3 4 5)})))
 
 (deftest test-binding-map-6
-  (is (= (binding-map '(?x 2 . ?y) '(1 9 3 4 5))
+  (is (= (u/unifier '(?x 2 . ?y) '(1 9 3 4 5))
          nil)))
 
 ;; -----------------------------------------------------------------------------
@@ -1375,9 +1376,9 @@
 ;; Tickets
 
 (deftest test-31-unifier-associative
-  (is (= (unifier '{:a ?x} '{:a ?y} '{:a 5})
+  (is (= (u/unify '{:a ?x} '{:a ?y} '{:a 5})
          {:a 5}))
-  (is (= (unifier '{:a ?x} '{:a 5} '{:a ?y})
+  (is (= (u/unify '{:a ?x} '{:a 5} '{:a ?y})
          {:a 5})))
 
 (deftest test-34-unify-with-metadata
