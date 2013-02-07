@@ -37,15 +37,19 @@
                   (first expr)
                   expr)]
        (cond
-        (lvarq-sym? expr) (proc-lvar expr store)
-        (seq? expr) (if (or lcons? (lcons-expr? expr))
-                      (let [[f & n] expr
-                            skip (= f '.)
-                            tail (prep* n store lcons? skip)]
-                        (if skip
-                          tail
-                          (lcons (prep* f store) tail)))
-                      (doall (walk-term expr (replace-lvar store))))
+         (lvarq-sym? expr)
+         (proc-lvar expr store)
+        
+         (seq? expr)
+         (if (or lcons? (lcons-expr? expr))
+           (let [[f & n] expr
+                 skip (= f '.)
+                 tail (prep* n store lcons? skip)]
+             (if skip
+               tail
+               (lcons (prep* f store) tail)))
+           (doall (walk-term expr (replace-lvar store))))
+         
         :else expr))))
 
 (defn prep
@@ -78,9 +82,9 @@
                               (reifyg q))
                             init-s)))))]
        (-unify*
-          (vary-meta c-s assoc :reify-vars false)
-          (reduce #(-unify* c-s %1 %2) (butlast ts))
-          (last ts)))))
+         (vary-meta c-s assoc :reify-vars false)
+         (reduce #(-unify* c-s %1 %2) (butlast ts))
+         (last ts)))))
 
 (defn unifier*
   "Return the unifier that unifies terms ts.
@@ -88,22 +92,22 @@
   ([ts] (unifier* {} ts))
   ([opts ts]
      (letfn [(-unifier* [u w]
-               (let [lvars (merge (-> u meta :lvars)
+               (let [lvars (merge
+                             (-> u meta :lvars)
                              (-> w meta :lvars))
                      s (l/unify (with-meta empty-s {:reify-vars false}) u w)]
                  (when s
                    (->> lvars
-                        (filter (fn [[name var]] (not= (walk s var) var)))   
-                        (map (fn [[name var]] [name (-reify s var)]))
-                        (into {})))))]
+                     (filter (fn [[name var]] (not= (walk s var) var)))   
+                     (map (fn [[name var]] [name (-reify s var)]))
+                     (into {})))))]
        (reduce -unifier* ts))))
 
 (defn unify
   "Unify the terms ts returning a the value that represents their
    unificaiton. Will prep the terms."
   ([ts] (unify {} ts))
-  ([opts ts]
-     (unify* opts (map prep ts))))
+  ([opts ts] (unify* opts (map prep ts))))
 
 (defn unifier
   "Return the unifier for terms ts. Will prep the terms."
