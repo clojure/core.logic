@@ -2620,6 +2620,11 @@
              (== x "foo")))
         ())))
 
+(deftest test-predc-sans-pform
+  (is (= (run* [q]
+           (predc q symbol?))
+         (list (list '_0 ':- symbol?)))))
+
 (deftest test-predc-custom-reify-1
   (is (= (run* [q]
            (predc q number? (fn [c v r a] `(~'num ~(walk* r (walk* a q))))))

@@ -2648,7 +2648,7 @@
        (rands [_] [x])
        IReifiableConstraint
        (reifyc [c v r a]
-         (if (fn? pform)
+         (if (and (not= p pform) (fn? pform))
            (pform c v r a)
            pform))
        IRunnable
