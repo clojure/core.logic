@@ -1238,6 +1238,15 @@
   (is (= (u/unify {:when {'#{?a ?b} evenc}} ['{:a ?a :b ?b} {:a 1 :b 2}])
          nil)))
 
+(defnc div3c [x]
+  (zero? (mod x 3)))
+
+(deftest test-unifier-constraints-4
+  (is (= (u/unify {:when {'#{?a ?b} [evenc div3c]}} ['{:a ?a :b ?b} {:a 6 :b 12}])
+         {:a 6 :b 12}))
+  (is (= (u/unify {:when {'#{?a ?b} [evenc div3c]}} ['{:a ?a :b ?b} {:a 2 :b 6}])
+         nil)))
+
 ;;Anonymous constraints
 (deftest test-unifier-constraints-3 ;;One var
   (is (= (u/unify {:when {'?a (fnc [x] (even? x))}} ['{:a ?a} {:a 2}])

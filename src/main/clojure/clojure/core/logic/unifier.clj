@@ -62,7 +62,7 @@
                   (doall (walk-term expr (replace-lvar lvars))))]
     (with-meta prepped {:lvars @lvars})))
 
-(defn queue-constraints [s [vs c]]
+(defn queue-constraint [s c vs]
   (cond
     (vector? vs)
     (queue s (unwrap (apply c (map #(lvar % false) vs))))
@@ -78,6 +78,10 @@
      (Exception.
       (str "Only symbol, set of symbols, or vector of symbols allowed "
            "on left hand side")))))
+
+(defn queue-constraints [s [vs cs]]
+  (let [cs (if-not (sequential? cs) [cs] cs)]
+    (reduce (fn [s c] (queue-constraint s c vs)) s cs)))
 
 (defn -unify* [init-s u w]
   (first
