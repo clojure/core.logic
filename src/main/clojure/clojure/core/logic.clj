@@ -574,9 +574,12 @@
 
   IReifyTerm
   (reify-term [v s]
-    (if (-> s clojure.core/meta :reify-vars)
-      (ext s v (reify-lvar-name s))
-      (ext s v (:oname v))))
+    (let [rf (-> s clojure.core/meta :reify-vars)]
+      (if (fn? rf)
+        (rf v s)
+        (if rf
+          (ext s v (reify-lvar-name s))
+          (ext s v (:oname v))))))
 
   IWalkTerm
   (walk-term [v f] (f v))

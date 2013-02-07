@@ -1200,6 +1200,21 @@
          {:a [:b '(:c [:d {:e :e}])]})))
 
 ;; -----------------------------------------------------------------------------
+;; custom var reification
+
+(deftest test-reify-vars-false
+  (is (-run {:reify-vars false} [q]
+        (fresh [x]
+          (== q x)))
+      '(x)))
+
+(deftest test-custom-var-reifier-1
+  (let [x (lvar 'x)]
+    (is (= (-run {:reify-vars (fn [v rs] rs)} [q]
+             (== q x))
+           `(~x)))))
+
+;; -----------------------------------------------------------------------------
 ;; Unifier with constraints
 
 (defnc evenc [x]
