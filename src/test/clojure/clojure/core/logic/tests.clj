@@ -1256,8 +1256,11 @@
   (is (= (u/unify {:when {'[?a ?b] complexc}} ['{:a ?a :b ?b} {:a 2 :b 4}])
          nil)))
 
+;; (deftest test-unifier-as-1
+;;   (is (= (u/unify {:as '{?x (?y ?z)}} ['(?x) '(1 2)]))))
+
 ;;Anonymous constraints
-(deftest test-unifier-constraints-3 ;;One var
+(deftest test-unifier-anon-constraints-3 ;;One var
   (is (= (u/unify {:when {'?a (fnc [x] (even? x))}} ['{:a ?a} {:a 2}])
          {:a 2}))
   (is (= (u/unify {:when {'?a (fnc [x] (even? x))}} ['{:a ?a} {:a 1}])
