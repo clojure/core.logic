@@ -62,16 +62,16 @@
                   (doall (walk-term expr (replace-lvar lvars))))]
     (with-meta prepped {:lvars @lvars})))
 
-(defn queue-constraints [s [vs cs]]
+(defn queue-constraints [s [vs c]]
   (cond
     (vector? vs)
-    (queue s (unwrap (apply cs (map #(lvar % false) vs))))
+    (queue s (unwrap (apply c (map #(lvar % false) vs))))
 
     (set? vs)
-    (queue s (unwrap (apply cs (map #(lvar % false) vs))))
+    (reduce (fn [s v] (queue s (unwrap (c (lvar v false))))) s vs)
 
     (symbol? vs)
-    (queue s (unwrap (apply cs (map #(lvar % false) (list vs)))))
+    (queue s (unwrap (apply c (map #(lvar % false) (list vs)))))
 
     :else
     (throw
