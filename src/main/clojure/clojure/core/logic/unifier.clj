@@ -57,9 +57,13 @@
   be replaced with logic vars."
   [expr]
   (let [lvars (atom {})
-        prepped (if (lcons-expr? expr)
+        prepped (cond
+                  (lvarq-sym? expr) (lvar expr false)
+
+                  (lcons-expr? expr)
                   (prep* expr lvars true)
-                  (doall (walk-term expr (replace-lvar lvars))))]
+
+                  :else (doall (walk-term expr (replace-lvar lvars))))]
     (with-meta prepped {:lvars @lvars})))
 
 (defn queue-constraint [s c vs]
