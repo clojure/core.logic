@@ -59,71 +59,53 @@
     (with-meta prepped {:lvars @lvars})))
 
 (defn unify*
-  "Unify the terms u and w."
-  ([u w]
-     (let [init-s (reduce
+  "Unify the terms ts."
+  ([ts] (unify* {} ts))
+  ([opts ts]
+     (let [c-s (reduce
                     (fn [s [vs cs]]
                       (let [vs (if (seq? vs) vs (list vs))]
                         (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
-                    (with-meta empty-s {:reify-vars false}) (-> u meta ::when))]
-       (first
-         (take*
-           (fn []
-             ((fresh [q]
-                (== u w) (== q u)
-                (fn [a]
-                  (fix-constraints a))
-                (reifyg q))
-              init-s))))))
-  ([u w & ts]
-     (if (some #{:when} ts)
-       (let [terms (take-while #(not= % :when) ts)
-             constraints (last ts)]
-         (reduce #(unify* %1 %2)
-           (unify* (vary-meta u assoc ::when constraints) w)
-           terms))
-       (apply unify* (unify* u w) ts))))
+                    (with-meta empty-s {:reify-vars (fn [v rs] rs)}) (:when opts))
+           -unify* (fn [init-s u w]
+                     (first
+                       (take*
+                         (fn []
+                           ((fresh [q]
+                              (== u w) (== q u)
+                              (fn [a]
+                                (fix-constraints a))
+                              (reifyg q))
+                            init-s)))))]
+       (-unify*
+          (vary-meta c-s assoc :reify-vars false)
+          (reduce #(-unify* c-s %1 %2) (butlast ts))
+          (last ts)))))
 
 (defn unifier*
-  "Return the binding map that unifies terms u and w.
-  u and w should prepped terms."
-  ([u w]
-     (let [lvars (merge (-> u meta :lvars)
-                        (-> w meta :lvars))
-           s (l/unify (with-meta empty-s {:reify-vars false}) u w)]
-       (when s
-         (->> lvars
-           (filter (fn [[name var]] (not= (walk s var) var)))   
-           (map (fn [[name var]] [name (-reify s var)]))
-           (into {})))))
-  ([u w & ts]
-     (apply unifier* (unifier* u w) ts)))
+  "Return the unifier that unifies terms ts.
+  All terms in ts should prepped terms."
+  ([ts] (unifier* {} ts))
+  ([opts ts]
+     (letfn [(-unifier* [u w]
+               (let [lvars (merge (-> u meta :lvars)
+                             (-> w meta :lvars))
+                     s (l/unify (with-meta empty-s {:reify-vars false}) u w)]
+                 (when s
+                   (->> lvars
+                        (filter (fn [[name var]] (not= (walk s var) var)))   
+                        (map (fn [[name var]] [name (-reify s var)]))
+                        (into {})))))]
+       (reduce -unifier* ts))))
 
 (defn unify
-  "Unify the terms u and w. Will prep the terms."
-  ([u w]
-     {:pre [(not (lcons? u))
-            (not (lcons? w))]}
-     (let [up (vary-meta (prep u) merge (meta u))
-           wp (prep w)]
-       (unify* up wp)))
-  ([u w & ts]
-     (if (some #{:when} ts)
-       (let [terms (take-while #(not= % :when) ts)
-             constraints (last ts)]
-         (reduce #(unify %1 %2)
-           (unify (vary-meta u assoc ::when constraints) w)
-           terms))
-       (apply unify (unify u w) ts))))
+  "Unify the terms ts returning a the value that represents their
+   unificaiton. Will prep the terms."
+  ([ts] (unify {} ts))
+  ([opts ts]
+     (unify* opts (map prep ts))))
 
 (defn unifier
-  "Return the binding map that unifies terms u and w.
-  Will prep the terms."
-  ([u w]
-     {:pre [(not (lcons? u))
-            (not (lcons? w))]}
-     (let [up (prep u)
-           wp (prep w)]
-       (unifier* up wp)))
-  ([u w & ts]
-     (apply unifier (unifier u w) ts)))
+  "Return the unifier for terms ts. Will prep the terms."
+  ([ts] (unifier {} ts))
+  ([opts ts] (unifier* opts (map prep ts))))
