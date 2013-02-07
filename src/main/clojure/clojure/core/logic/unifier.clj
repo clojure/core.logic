@@ -64,7 +64,7 @@
                   (prep* expr lvars true)
 
                   :else (doall (walk-term expr (replace-lvar lvars))))]
-    (with-meta prepped {:lvars @lvars})))
+    (with-meta prepped {::lvars @lvars})))
 
 (defn queue-constraint [s c vs]
   (cond
@@ -121,8 +121,8 @@
   ([opts ts]
      (letfn [(-unifier* [s u w]
                (let [lvars (merge
-                             (-> u meta :lvars)
-                             (-> w meta :lvars))
+                             (-> u meta ::lvars)
+                             (-> w meta ::lvars))
                      s (l/unify (with-meta s {:reify-vars false}) u w)]
                  (when s
                    (->> lvars
