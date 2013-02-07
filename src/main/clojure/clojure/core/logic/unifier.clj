@@ -62,25 +62,41 @@
                   (doall (walk-term expr (replace-lvar lvars))))]
     (with-meta prepped {:lvars @lvars})))
 
+(defn queue-constraints [s [vs cs]]
+  (cond
+    (vector? vs)
+    (queue s (unwrap (apply cs (map #(lvar % false) vs))))
+
+    (set? vs)
+    (queue s (unwrap (apply cs (map #(lvar % false) vs))))
+
+    (symbol? vs)
+    (queue s (unwrap (apply cs (map #(lvar % false) (list vs)))))
+
+    :else
+    (throw
+     (Exception.
+      (str "Only symbol, set of symbols, or vector of symbols allowed "
+           "on left hand side")))))
+
+(defn -unify* [init-s u w]
+  (first
+    (take*
+      (fn []
+        ((fresh [q]
+           (== u w) (== q u)
+           (fn [a]
+             (fix-constraints a))
+           (reifyg q))
+         init-s)))))
+
 (defn unify*
   "Unify the terms ts."
   ([ts] (unify* {} ts))
   ([opts ts]
-     (let [c-s (reduce
-                    (fn [s [vs cs]]
-                      (let [vs (if (seq? vs) vs (list vs))]
-                        (queue s (unwrap (apply cs (map #(lvar % false) vs))))))
-                    (with-meta empty-s {:reify-vars (fn [v rs] rs)}) (:when opts))
-           -unify* (fn [init-s u w]
-                     (first
-                       (take*
-                         (fn []
-                           ((fresh [q]
-                              (== u w) (== q u)
-                              (fn [a]
-                                (fix-constraints a))
-                              (reifyg q))
-                            init-s)))))]
+     (let [c-s (reduce queue-constraints
+                 (with-meta empty-s {:reify-vars (fn [v rs] rs)})
+                 (:when opts))]
        (-unify*
          (vary-meta c-s assoc :reify-vars false)
          (reduce #(-unify* c-s %1 %2) (butlast ts))
