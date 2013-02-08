@@ -120,12 +120,9 @@
   ([ts] (unifier* {} ts))
   ([opts ts]
      (letfn [(-unifier* [s u w]
-               (let [lvars (merge
-                             (-> u meta ::lvars)
-                             (-> w meta ::lvars))
-                     s (fix-constraints (l/unify (with-meta s {:reify-vars false}) u w))]
+               (let [s (fix-constraints (l/unify (with-meta s {:reify-vars false}) u w))]
                  (when s
-                   (->> lvars
+                   (->> (:lvars opts)
                      (filter (fn [[name var]] (not= (walk s var) var)))   
                      (map (fn [[name var]] [name (-reify s var)]))
                      (into {})))))]
@@ -154,5 +151,9 @@
                     (->> (:as opts)
                       (map (fn [[k v]] [(lvar k false) (prep v)]))
                       (into {})))
-                  opts)]
-       (unifier* opts (map prep ts)))))
+                  opts)
+           ts' (map prep ts)
+           lvars (->> (concat ts' (map val (:as opts)))
+                   (map #(-> % meta ::lvars))
+                   (reduce merge))]
+       (unifier* (assoc opts :lvars lvars) (map prep ts)))))

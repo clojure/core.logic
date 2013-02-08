@@ -1303,6 +1303,10 @@
   (is (= (u/unifier {:when {'#{?x ?y} [evenc div3c]}} ['(?x ?y) '(14 12)])
          nil)))
 
+(deftest test-binding-map-as-1
+  (is (= (u/unifier {:as {'?x '(?y ?z)}} '[(?x) ((1 2))])
+         '{?x (1 2) ?y 1 ?z 2})))
+
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
 
