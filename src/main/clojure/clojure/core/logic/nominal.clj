@@ -7,8 +7,6 @@
            [clojure.core.logic LVar LCons]
            [clojure.core.logic.protocols IBindable ITreeTerm]))
 
-(def ^{:dynamic true} *reify-noms* true)
-
 ;; =============================================================================
 ;; Nominal unification with fresh, hash and tie.
 ;;
@@ -107,7 +105,7 @@
 
   IReifyTerm
   (reify-term [v s]
-    (ext s v (symbol (str (if *reify-noms* "a" (:oname v)) "_" (count s)))))
+    (ext s v (symbol (str (if (-> s meta (:reify-noms true)) "a" (:oname v)) "_" (count s)))))
 
   INomSwap
   (swap-noms [t swap s]
