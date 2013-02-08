@@ -13,7 +13,7 @@
   (let [v (if-let [u (@store lvar-expr)]
             u
             (lvar lvar-expr false))]
-    (swap! store conj [lvar-expr v])
+    (swap! store conj lvar-expr)
     v))
 
 (defn- lcons-expr? [expr]
@@ -56,7 +56,7 @@
   "Prep a quoted expression. All symbols preceded by ? will
   be replaced with logic vars."
   [expr]
-  (let [lvars (atom {})
+  (let [lvars (atom #{})
         prepped (cond
                   (lvarq-sym? expr) (lvar expr false)
 
@@ -123,8 +123,9 @@
                (let [s (fix-constraints (l/unify (with-meta s {:reify-vars false}) u w))]
                  (when s
                    (->> (:lvars opts)
-                     (filter (fn [[name var]] (not= (walk s var) var)))   
-                     (map (fn [[name var]] [name (-reify s var)]))
+                     (map (fn [sym] [sym (lvar sym false)]))
+                     (filter (fn [[sym var]] (not= (walk s var) var)))   
+                     (map (fn [[sym var]] [sym (-reify s var)]))
                      (into {})))))]
        (let [init-s (init-s opts empty-s)]
          (reduce #(-unifier* init-s %1 %2) ts)))))
@@ -155,5 +156,5 @@
            ts' (map prep ts)
            lvars (->> (concat ts' (map val (:as opts)))
                    (map #(-> % meta ::lvars))
-                   (reduce merge))]
+                   (reduce into))]
        (unifier* (assoc opts :lvars lvars) (map prep ts)))))
