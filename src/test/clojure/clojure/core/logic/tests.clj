@@ -1291,6 +1291,18 @@
   (is (= (u/unifier ['(?x 2 . ?y) '(1 9 3 4 5)])
          nil)))
 
+(deftest test-binding-map-constraints-1
+  (is (= (u/unifier {:when {'?x evenc '?y div3c}} ['(?x ?y) '(2 6)])
+         '{?x 2 ?y 6}))
+  (is (= (u/unifier {:when {'?x div3c '? evenc}} ['(?x ?y) '(2 6)])
+         nil))
+  (is (= (u/unifier {:when {'[?x ?y] complexc}} ['(?x ?y) '(2 6)])
+         '{?x 2 ?y 6}))
+  (is (= (u/unifier {:when {'#{?x ?y} [evenc div3c]}} ['(?x ?y) '(6 12)])
+         '{?x 6 ?y 12}))
+  (is (= (u/unifier {:when {'#{?x ?y} [evenc div3c]}} ['(?x ?y) '(14 12)])
+         nil)))
+
 ;; -----------------------------------------------------------------------------
 ;; Occurs Check
 

@@ -123,7 +123,7 @@
                (let [lvars (merge
                              (-> u meta ::lvars)
                              (-> w meta ::lvars))
-                     s (l/unify (with-meta s {:reify-vars false}) u w)]
+                     s (fix-constraints (l/unify (with-meta s {:reify-vars false}) u w))]
                  (when s
                    (->> lvars
                      (filter (fn [[name var]] (not= (walk s var) var)))   
