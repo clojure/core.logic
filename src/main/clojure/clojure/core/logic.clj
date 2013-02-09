@@ -2128,10 +2128,10 @@
     (fn [a]
       (let [xcs (constraints-for cs a (first xs) ws)]
         (if (seq xcs)
-          (bind* a
+          ((composeg*
             (run-constraints xcs)
-            (run-constraints* (next xs) cs ws))
-          (bind a (run-constraints* (next xs) cs ws)))))))
+            (run-constraints* (next xs) cs ws)) a)
+          ((run-constraints* (next xs) cs ws) a))))))
 
 ;; TODO: we've hard coded finite domains here
 
@@ -2403,7 +2403,9 @@
         (if p
           (when-not (empty? p)
             #_((normalize-store (with-prefix this p)) a)
-            (bind* a (remcg this) (cgoal (!=c p))))
+            ((composeg*
+              (remcg this)
+              (cgoal (!=c p))) a))
           ((remcg this) a))))
     IPrefix
     (prefix [_] p)
