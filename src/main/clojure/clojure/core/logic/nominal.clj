@@ -45,7 +45,7 @@
               s (if (subst-val? rt) (ext-no-check s v rt) s)
               s (update-dom s v ::nom (fnil (fn [d] (conj d t)) #{}))
               s (update-dom s t ::nom (fnil (fn [d] (conj d v)) #{}))
-              s (bind s (suspc v t swap))]
+              s ((suspc v t swap) s)]
           [v s])
         (swap-noms t swap s))))
 
@@ -155,23 +155,23 @@
           (when (and
                   (not (and (lvar? x) (= x a)))
                   (tree-term? x) (not (tie? x)))
-            (bind* s
-                   (remcg c)
-                   (constrain-tree x
-                                   (fn [t s] (bind s (hash a t))))))
+            ((composeg*
+              (remcg c)
+              (constrain-tree x
+                (fn [t s] ((hash a t) s)))) s))
           (when (nom? a)
             (cond
               (and (tie? x)  (= (:binding-nom x) a))
-              (bind s (remcg c))
+              ((remcg c) s)
               (tree-term? x)
-              (bind* s
-                     (remcg c)
-                     (constrain-tree x
-                                     (fn [t s] (bind s (hash a t)))))
+              ((composeg* 
+                (remcg c)
+                (constrain-tree x
+                  (fn [t s] ((hash a t) s)))) s)
               (= x a)
               nil
               :else
-              (bind s (remcg c)))))))
+              ((remcg c) s))))))
     IConstraintOp
     (rator [_] `hash)
     (rands [_] [a x])
@@ -217,7 +217,7 @@
                     seen (clojure.set/union vs seen)]
                 (recur vs2 seen)))))
     (let [[t1 a] (swap-noms t1 swap a)]
-      (bind a (== t1 t2)))))
+      ((== t1 t2) a))))
 
 (defn -suspc
   [v1 v2 swap]
@@ -227,28 +227,28 @@
       (str "suspc" v1 v2 swap))
     clojure.lang.IFn
     (invoke [c a]
-      (bind* a
-             (remcg c)
-             (fn [a]
-               (let [t1 (walk a v1)
-                     t2 (walk a v2)]
-                 (cond
-                   (not (lvar? t1))
-                   (-do-suspc t1 t2 swap a)
-                   (not (lvar? t2))
-                   (-do-suspc t2 t1 swap a)
-                   (= t1 t2)
-                   (loop [a* swap
-                          a a]
-                     (if (empty? a*) a
-                         (recur (rest a*) (bind a (hash (first a*) t2)))))
-                   :else
-                   (let [d1 (get-dom-fd a t1)
-                         d2 (get-dom-fd a t2)]
-                     (bind* a
-                            (if (nil? d2) identity (fd/dom t1 d2))
-                            (if (nil? d1) identity (fd/dom t2 d1))
-                            (addcg c))))))))
+      ((composeg*
+        (remcg c)
+        (fn [a]
+          (let [t1 (walk a v1)
+                t2 (walk a v2)]
+            (cond
+              (not (lvar? t1))
+              (-do-suspc t1 t2 swap a)
+              (not (lvar? t2))
+              (-do-suspc t2 t1 swap a)
+              (= t1 t2)
+              (loop [a* swap
+                     a a]
+                (if (empty? a*) a
+                    (recur (rest a*) ((hash (first a*) t2) a))))
+              :else
+              (let [d1 (get-dom-fd a t1)
+                    d2 (get-dom-fd a t2)]
+                ((composeg*
+                  (if (nil? d2) identity (fd/dom t1 d2))
+                  (if (nil? d1) identity (fd/dom t2 d1))
+                  (addcg c)) a)))))) a))
     IConstraintOp
     (rator [_] `suspc)
     (rands [_] [v1 v2])
@@ -314,9 +314,9 @@
       (if (= (:binding-nom v) (:binding-nom u))
         (unify s (:body v) (:body u))
         (let [[t s] (swap-noms (:body v) [(:binding-nom v) (:binding-nom u)] s)]
-          (bind* s
+          ((composeg* 
             (hash (:binding-nom u) (:body v))
-            (== t (:body u)))))
+            (== t (:body u))) s)))
       :else nil))
 
   IReifyTerm
