@@ -1538,6 +1538,14 @@
            (== q (RecordTest. 1 2)))
          (list #clojure.core.logic.tests.RecordTest{:a 1, :b 2}))))
 
+(deftest test-111-conda-regression
+  (is (= (run* [x]
+           (conda 
+             [succeed
+              (project [x] succeed)
+              (project [x] succeed)]))
+         '(_0))))
+
 ;; =============================================================================
 ;; cKanren
 

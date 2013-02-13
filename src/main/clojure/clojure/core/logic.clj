@@ -1236,20 +1236,16 @@
 (extend-protocol IIfA
   nil
   (ifa [b gs c]
-       (when c
-         (force c)))
+    (when c
+      (force c)))
 
   Substitutions
   (ifa [b gs c]
-       (loop [b b [g0 & gr] gs]
-         (if g0
-           (when-let [b (g0 b)]
-             (recur b gr))
-           b)))
+    (reduce bind b gs))
 
   clojure.lang.Fn
   (ifa [b gs c]
-       (-inc (ifa (b) gs c)))
+    (-inc (ifa (b) gs c)))
 
   Choice
   (ifa [b gs c]
@@ -1258,16 +1254,12 @@
 (extend-protocol IIfU
   nil
   (ifu [b gs c]
-       (when c
-         (force c)))
+    (when c
+      (force c)))
 
   Substitutions
   (ifu [b gs c]
-    (loop [b b [g0 & gr] gs]
-      (if g0
-        (when-let [b (g0 b)]
-          (recur b gr))
-        b)))
+    (reduce bind b gs))
 
   clojure.lang.Fn
   (ifu [b gs c]
