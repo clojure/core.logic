@@ -2921,16 +2921,16 @@
         y (lvar 'y)
         s (-> empty-s
              (entangle x y)
-             (add-dom x ::fd (fd/domain 1 2 3)))]
-    (is (= (get-dom s y ::fd) (fd/domain 1 2 3)))))
+             (add-dom x :l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s y :l/fd) (fd/domain 1 2 3)))))
 
 (deftest test-entanglement-add-dom-2
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
              (entangle x y)
-             (add-dom y ::fd (fd/domain 1 2 3)))]
-    (is (= (get-dom s x ::fd) (fd/domain 1 2 3)))))
+             (add-dom y :l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x :l/fd) (fd/domain 1 2 3)))))
 
 (deftest test-entanglement-add-dom-3
   (let [x (lvar 'x)
@@ -2939,8 +2939,8 @@
         s (-> empty-s
               (entangle x y)
               (entangle y z)
-              (add-dom x ::fd (fd/domain 1 2 3)))]
-    (is (= (get-dom s z ::fd) (fd/domain 1 2 3)))))
+              (add-dom x :l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s z :l/fd) (fd/domain 1 2 3)))))
 
 (deftest test-entanglement-add-dom-4
   (let [x (lvar 'x)
@@ -2949,8 +2949,52 @@
         s (-> empty-s
               (entangle x y)
               (entangle y z)
-              (add-dom z ::fd (fd/domain 1 2 3)))]
-    (is (= (get-dom s x ::fd) (fd/domain 1 2 3)))))
+              (add-dom z :l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x :l/fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-add-dom-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+             (entangle x y)
+             (add-dom x :l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s y :l/fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-update-dom-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+             (entangle x y)
+             (update-dom x :l/nom (fnil (fn [d] (conj d :foo)) #{})))]
+    (is (= (get-dom s y :l/nom) #{:foo}))))
+
+(deftest test-entanglement-update-dom-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+             (entangle x y)
+             (update-dom y :l/nom (fnil (fn [d] (conj d :foo)) #{})))]
+    (is (= (get-dom s x :l/nom) #{:foo}))))
+
+(deftest test-entanglement-update-dom-3
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+             (entangle x y)
+             (entangle y z)
+             (update-dom x :l/nom (fnil (fn [d] (conj d :foo)) #{})))]
+    (is (= (get-dom s z :l/nom) #{:foo}))))
+
+(deftest test-entanglement-update-dom-4
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (entangle x y)
+              (entangle y z)
+              (update-dom z :l/nom (fnil (fn [d] (conj d :foo)) #{})))]
+    (is (= (get-dom s x :l/nom) #{:foo}))))
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change

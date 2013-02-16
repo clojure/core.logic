@@ -467,11 +467,11 @@
                (subst-val ::unbound)
                v)
            doms (:doms v)
-           s (update-var s x (assoc-dom v dom (f (get doms dom)))) dom f]
+           s (update-var s x (assoc-dom v dom (f (get doms dom))))]
        (reduce
          (fn [s y]
            (if-not (contains? seenset y)
-             (update-dom s y f (conj (or seenset #{} x)))
+             (update-dom s y dom f (conj (or seenset #{}) x))
              s))
          s
          (:eset v)))))
@@ -491,7 +491,7 @@
        (reduce
          (fn [s y]
            (if-not (contains? seenset y)
-             (rem-dom s y dom (conj (or seenset #{} x)))
+             (rem-dom s y dom (conj (or seenset #{}) x))
              s))
          s
          (:eset v)))))
