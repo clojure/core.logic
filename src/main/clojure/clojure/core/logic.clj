@@ -189,9 +189,6 @@
   ([x doms] (SubstValue. x doms))
   ([x doms _meta] (with-meta (SubstValue. x doms) _meta)))
 
-(defmethod print-method SubstValue [x ^Writer writer]
-  (.write writer (str (:v x))))
-
 ;; =============================================================================
 ;; Substitutions
 
