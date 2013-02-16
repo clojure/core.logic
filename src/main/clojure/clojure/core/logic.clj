@@ -192,9 +192,6 @@
   ([x doms] (SubstValue. x doms nil))
   ([x doms _meta] (with-meta (SubstValue. x doms nil) _meta)))
 
-(defmethod print-method SubstValue [x ^Writer writer]
-  (.write writer (str (:v x))))
-
 ;; =============================================================================
 ;; Substitutions
 
@@ -850,6 +847,18 @@
     (lcons? v) (unify-terms v u s)
     :else nil))
 
+(defn unify-with-map* [u v s]
+  (when (= (count u) (count v))
+    (loop [ks (keys u) s s]
+      (if (seq ks)
+        (let [kf (first ks)
+              vf (get v kf ::not-found)]
+          (when-not (= vf ::not-found)
+            (if-let [s (unify s (get u kf) vf)]
+              (recur (next ks) s)
+              nil)))
+        s))))
+
 (extend-protocol IUnifyTerms
   nil
   (unify-terms [u v s]
@@ -872,16 +881,8 @@
       (unify-with-record v u s)
 
       (map? v)
-      (when (= (count u) (count v))
-        (loop [ks (keys u) s s]
-          (if (seq ks)
-            (let [kf (first ks)
-                  vf (get v kf ::not-found)]
-              (when-not (= vf ::not-found)
-                (if-let [s (unify s (get u kf) vf)]
-                  (recur (next ks) s)
-                  nil)))
-            s)))
+      (unify-with-map* u v s)
+      
       :else nil)))
 
 ;; =============================================================================
