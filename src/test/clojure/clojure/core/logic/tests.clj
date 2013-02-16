@@ -2966,7 +2966,7 @@
         s (-> empty-s
              (entangle x y)
              (update-dom x ::l/nom (fnil (fn [d] (conj d :foo)) #{})))]
-    (is (= (get-dom s y :l/nom) #{:foo}))))
+    (is (= (get-dom s y ::l/nom) #{:foo}))))
 
 (deftest test-entanglement-update-dom-2
   (let [x (lvar 'x)
