@@ -175,8 +175,11 @@
 
 ;; =============================================================================
 ;; SubstValue
+;; v - the actual ground value of the var
+;; doms - the constraint domains assigned to the var
+;; eset - set of other vars this var is entangled with
 
-(defrecord SubstValue [v doms]
+(defrecord SubstValue [v doms eset]
   Object
   (toString [_]
     (str v)))
@@ -185,9 +188,9 @@
   (instance? SubstValue x))
 
 (defn subst-val
-  ([x] (SubstValue. x nil))
-  ([x doms] (SubstValue. x doms))
-  ([x doms _meta] (with-meta (SubstValue. x doms) _meta)))
+  ([x] (SubstValue. x nil nil))
+  ([x doms] (SubstValue. x doms nil))
+  ([x doms _meta] (with-meta (SubstValue. x doms nil) _meta)))
 
 (defmethod print-method SubstValue [x ^Writer writer]
   (.write writer (str (:v x))))
@@ -436,32 +439,62 @@
     (if (subst-val? v)
       (-> v meta attr))))
 
-(defn add-dom [s x dom domv]
-  (let [x (root-var s x)
-        v (root-val s x)]
-    (if (subst-val? v)
-      (update-var s x (assoc-dom v dom domv))
-      (let [v (if (lvar? v) ::unbound v)]
-        (ext-no-check s x (subst-val v {dom domv}))))))
+(defn add-dom
+  ([s x dom domv]
+     (let [x (root-var s x)]
+       (add-dom s x dom domv nil)))
+  ([s x dom domv seenset]
+     (let [v (root-val s x)
+           s (if (subst-val? v)
+               (update-var s x (assoc-dom v dom domv))
+               (let [v (if (lvar? v) ::unbound v)]
+                 (ext-no-check s x (subst-val v {dom domv}))))]
+       (reduce
+         (fn [s y]
+           (if-not (contains? seenset y)
+             (add-dom s y dom domv (conj (or seenset #{}) x))
+             s))
+         s
+         (:eset v)))))
 
-(defn update-dom [s x dom f]
-  (let [x (root-var s x)
-        v (root-val s x)
-        v (if (lvar? v)
-            (subst-val ::unbound)
-            v)
-        doms (:doms v)]
-    (update-var s x (assoc-dom v dom (f (get doms dom))))))
+(defn update-dom
+  ([s x dom f]
+     (let [x (root-var s x)]
+       (update-dom s x dom f nil)))
+  ([s x dom f seenset]
+     (let [v (root-val s x)
+           v (if (lvar? v)
+               (subst-val ::unbound)
+               v)
+           doms (:doms v)
+           s (update-var s x (assoc-dom v dom (f (get doms dom)))) dom f]
+       (reduce
+         (fn [s y]
+           (if-not (contains? seenset y)
+             (update-dom s y f (conj (or seenset #{} x)))
+             s))
+         s
+         (:eset v)))))
 
-(defn rem-dom [s x dom]
-  (let [x (root-var s x)
-        v (root-val s x)]
-    (if (subst-val? v)
-      (let [new-doms (dissoc (:doms v) dom)]
-        (if (and (zero? (count new-doms)) (not= (:v v) ::unbound))
-          (update-var s x (:v v))
-          (update-var s x (assoc v :doms new-doms))))
-      s)))
+(defn rem-dom
+  ([s x dom]
+     (let [x (root-var s x)]
+       (rem-dom s x dom nil)))
+  ([s x dom seenset]
+     (let [v (root-val s x)
+           s (if (subst-val? v)
+               (let [new-doms (dissoc (:doms v) dom)]
+                 (if (and (zero? (count new-doms)) (not= (:v v) ::unbound))
+                   (update-var s x (:v v))
+                   (update-var s x (assoc v :doms new-doms))))
+               s)]
+       (reduce
+         (fn [s y]
+           (if-not (contains? seenset y)
+             (rem-dom s y dom (conj (or seenset #{} x)))
+             s))
+         s
+         (:eset v)))))
 
 (defn get-dom [s x dom]
   (let [v (root-val s x)]
@@ -509,6 +542,23 @@
     (when doms
       (subst-val (:v root) doms
         (merge (meta x) (meta root))))))
+
+;; =============================================================================
+;; Entanglement
+
+(defn to-subst-val [v]
+  (if (subst-val? v)
+    v
+    (subst-val v)))
+
+(defn entangle [s x y]
+  (let [x  (root-var s x)
+        y  (root-var s y)
+        xv (to-subst-val (root-val s x))
+        yv (to-subst-val (root-val s y))]
+    (-> s
+      (update-var x (assoc xv :eset (conj (or (:eset xv) #{}) y)))
+      (update-var y (assoc yv :eset (conj (or (:eset yv) #{}) x))))))
 
 ;; =============================================================================
 ;; Logic Variables
