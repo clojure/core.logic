@@ -2914,6 +2914,45 @@
          '((_0 :- (hashc _0 _1))))))
 
 ;; =============================================================================
+;; Entanglement
+
+(deftest test-entanglement-add-dom-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+             (entangle x y)
+             (add-dom x ::fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s y ::fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-add-dom-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        s (-> empty-s
+             (entangle x y)
+             (add-dom y ::fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x ::fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-add-dom-3
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (entangle x y)
+              (entangle y z)
+              (add-dom x ::fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s z ::fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-add-dom-4
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (entangle x y)
+              (entangle y z)
+              (add-dom z ::fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x ::fd) (fd/domain 1 2 3)))))
+
+;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
 (deftest test-attrs-1 []
