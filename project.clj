@@ -20,7 +20,7 @@
                  [org.clojure/google-closure-library "0.0-2029"]
                  [org.clojure/google-closure-library-third-party "0.0-2029"] 
                  [org.clojure/tools.macro "0.1.1"]
-                 [org.clojure/tools.nrepl "0.2.0-RC1"]
+                 [org.clojure/tools.nrepl "0.2.1"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
   :plugins [[lein-cljsbuild "0.2.9"]]
 
