@@ -2952,14 +2952,6 @@
               (add-dom z ::l/fd (fd/domain 1 2 3)))]
     (is (= (get-dom s x ::l/fd) (fd/domain 1 2 3)))))
 
-(deftest test-entanglement-add-dom-1
-  (let [x (lvar 'x)
-        y (lvar 'y)
-        s (-> empty-s
-             (entangle x y)
-             (add-dom x ::l/fd (fd/domain 1 2 3)))]
-    (is (= (get-dom s y ::l/fd) (fd/domain 1 2 3)))))
-
 (deftest test-entanglement-update-dom-1
   (let [x (lvar 'x)
         y (lvar 'y)
