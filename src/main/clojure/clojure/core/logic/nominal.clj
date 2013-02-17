@@ -280,32 +280,8 @@
 
 (declare tie)
 
-(deftype Tie [binding-nom body _meta]
+(defrecord Tie [binding-nom body]
   ITreeTerm
-
-  Object
-  (toString [_]
-    (str "<tie:" binding-nom "." body ">"))
-  (hashCode [_]
-    (.hashCode body))
-  (equals [this o]
-    (and (.. this getClass (isInstance o))
-         (and (= binding-nom (:binding-nom o)) (= body (:body o)))))
-
-  clojure.lang.IObj
-  (withMeta [this new-meta]
-    (Tie. binding-nom body _meta))
-  (meta [this]
-    _meta)
-
-  clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [_ k not-found]
-    (case k
-      :binding-nom binding-nom
-      :body body
-      not-found))
 
   IUnifyTerms
   (unify-terms [v u s]
@@ -351,7 +327,7 @@
         s])))
 
 (defn tie [binding-nom body]
-  (Tie. binding-nom body nil))
+  (Tie. binding-nom body))
 
 (defn tie? [x]
   (instance? clojure.core.logic.nominal.Tie x))
