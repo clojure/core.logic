@@ -2952,6 +2952,26 @@
               (add-dom z ::l/fd (fd/domain 1 2 3)))]
     (is (= (get-dom s x ::l/fd) (fd/domain 1 2 3)))))
 
+(deftest test-entanglement-add-dom-root-var-1
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (unify x y)
+              (entangle x z)
+              (add-dom z ::l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x ::l/fd) (fd/domain 1 2 3)))))
+
+(deftest test-entanglement-add-dom-root-var-2
+  (let [x (lvar 'x)
+        y (lvar 'y)
+        z (lvar 'z)
+        s (-> empty-s
+              (unify y x)
+              (entangle x z)
+              (add-dom z ::l/fd (fd/domain 1 2 3)))]
+    (is (= (get-dom s x ::l/fd) (fd/domain 1 2 3)))))
+
 (deftest test-entanglement-update-dom-1
   (let [x (lvar 'x)
         y (lvar 'y)
