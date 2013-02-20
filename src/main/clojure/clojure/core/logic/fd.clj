@@ -657,7 +657,8 @@
   (fn [a]
     ((composeg
       (process-dom x dom)
-      (if (nil? (get-dom a x))
+      (if (and (nil? (get-dom a x))
+               (not (singleton-dom? dom)))
         (domc x)
         identity)) a)))
 

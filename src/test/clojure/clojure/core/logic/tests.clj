@@ -1546,6 +1546,11 @@
               (project [x] succeed)]))
          '(_0))))
 
+(deftest test-115-singleton-doms
+  (is (= (run* [q]
+           (fd/in q (fd/interval 3 3)))
+         '(3))))
+
 ;; =============================================================================
 ;; cKanren
 
