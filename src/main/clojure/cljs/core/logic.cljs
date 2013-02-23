@@ -100,12 +100,7 @@
   (-reify* [this v])
   (-reify [this v]))
 
-(declare empty-s)
-(declare choice)
-(declare lvar)
-(declare lvar?)
-(declare pair)
-(declare lcons)
+(declare empty-s choice lvar lvar? lcons)
 
 (def not-found (js-obj))
 
