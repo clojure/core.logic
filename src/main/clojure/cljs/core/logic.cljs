@@ -106,12 +106,11 @@
 
 (defn assq
   "Similar to Scheme assq, xs must be a List of Pairs"
-  [k ^cljs.core/List xs]
-  (loop [xs (-seq xs)]
+  [k ^not-native xs]
+  (loop [^not-native xs (-seq xs)]
     (if (nil? xs)
       not-found
-      (let [^cljs.core/List xs xs
-            x (-first xs)
+      (let [x (-first xs)
             lhs (.-lhs x)]
         (if (identical? k lhs)
           (.-rhs x)
@@ -260,9 +259,7 @@
 (defn lvar
   ([] (lvar 'gen))
   ([name]
-     (let [name (js* "~{} + '_' + ~{}"
-                     (.substring name 2 (.-length name))
-                     (swap! lvar-sym-counter inc))]
+     (let [name (str name "_" (swap! lvar-sym-counter inc))]
        (LVar. name nil))))
 
 (defn ^boolean lvar? [x]
@@ -461,16 +458,16 @@
   (-unify-with-seq [v u s] false)
 
   default
-  (-unify-with-seq [v u s]
+  (-unify-with-seq [^not-native v ^not-native u ^not-native s]
     (if (sequential? v)
-      (loop [u u v v s s]
-        (if (seq u)
-          (if (seq v)
-            (if-let [s (-unify s (first u) (first v))]
-              (recur (next u) (next v) s)
+      (loop [^not-native u (-seq u) ^not-native v (-seq v) s s]
+        (if-not (nil? u)
+          (if-not (nil? v)
+            (if-let [s (-unify s (-first u) (-first v))]
+              (recur (-next u) (-next v) s)
               false)
             false)
-          (if (seq v) false s)))
+          (if-not (nil? v) false s)))
       false)))
 
 ;; -----------------------------------------------------------------------------

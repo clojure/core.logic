@@ -992,8 +992,9 @@
 (println (pr-str (run 1 [q] (zebrao q))))
 
 (binding [*occurs-check* false]
-  (dotimes [_ 5]
-    (time (run 1 [q] (zebrao q)))))
+  (time
+    (dotimes [_ 1000]
+      (run 1 [q] (zebrao q)))))
 
 (println (pr-str
           (run 10 [q]
