@@ -320,7 +320,7 @@
   IUnifyWithObject
   (-unify-with-object [v u s] false)
   IUnifyWithLSeq
-  (-unify-with-lseq [v u s]
+  (-unify-with-lseq [^not-native v ^not-native u ^not-native s]
     (loop [u u v v s s]
       (if (lvar? u)
         (-unify s u v)
@@ -436,13 +436,13 @@
   (-unify-with-lseq [v u s] false)
 
   default
-  (-unify-with-lseq [v u s]
-    (if (sequential? v)
-      (loop [u u v v s s]
-        (if (seq v)
+  (-unify-with-lseq [v ^not-native u ^not-native s]
+    (if (and (sequential? v) (not (nil? v)))
+      (loop [u u ^not-native v (-seq v) s s]
+        (if-not (nil? v)
           (if (lcons? u)
-            (if-let [s (-unify s (-lfirst u) (first v))]
-              (recur (-lnext u) (next v) s)
+            (if-let [s (-unify s (-lfirst u) (-first v))]
+              (recur (-lnext u) (-next v) s)
               false)
             (-unify s u v))
           (if (lvar? u)
@@ -459,13 +459,14 @@
 
   default
   (-unify-with-seq [^not-native v ^not-native u ^not-native s]
-    (if (sequential? v)
+    (if (and (sequential? v) (not (nil? v)))
       (loop [^not-native u (-seq u) ^not-native v (-seq v) s s]
         (if-not (nil? u)
           (if-not (nil? v)
-            (if-let [s (-unify s (-first u) (-first v))]
-              (recur (-next u) (-next v) s)
-              false)
+            (let [s (-unify s (-first u) (-first v))]
+              (if-not (false? s)
+                (recur (-next u) (-next v) s)
+                false))
             false)
           (if-not (nil? v) false s)))
       false)))
