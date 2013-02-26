@@ -10,7 +10,7 @@
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
            -reify-lvar-name empty-s to-s succeed fail s# u# conso
            nilo firsto resto emptyo appendo membero *occurs-check*
-           unifier, binding-map, partial-map]]))
+           unifier binding-map partial-map failed?]]))
 
 (defn js-print [& args]
   (if (js* "typeof console != 'undefined'")
@@ -33,7 +33,7 @@
 (let [x (lvar 'x)]
   (assert (false? (= (pair x nil) (pair nil x)))))
 
-(assert (= (-unify empty-s nil 1) false))
+(assert (failed? (-unify empty-s nil 1)))
 
 (let [x (lvar 'x)
       a (-ext-no-check empty-s x nil)
@@ -41,41 +41,41 @@
   (assert (= a b)))
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s nil (lcons 1 x)) false)))
+  (assert (failed? (-unify empty-s nil (lcons 1 x)))))
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s nil {}) false)))
+  (assert (failed? (-unify empty-s nil {}))))
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s nil #{}) false)))
+  (assert (failed? (-unify empty-s nil #{}))))
 
 ;; -----------------------------------------------------------------------------
 ;; unify with object
 
 (println "unify with object")
 
-(assert (= (-unify empty-s 1 nil) false))
+(assert (failed? (-unify empty-s 1 nil)))
 (assert (= (-unify empty-s 1 1) empty-s))
 (assert (= (-unify empty-s :foo :foo) empty-s))
 (assert (= (-unify empty-s 'foo 'foo) empty-s))
 (assert (= (-unify empty-s "foo" "foo") empty-s))
-(assert (= (-unify empty-s 1 2) false))
-(assert (= (-unify empty-s 2 1) false))
-(assert (= (-unify empty-s :foo :bar) false))
-(assert (= (-unify empty-s 'foo 'bar) false))
-(assert (= (-unify empty-s "foo" "bar") false))
+(assert (failed? (-unify empty-s 1 2)))
+(assert (failed? (-unify empty-s 2 1)))
+(assert (failed? (-unify empty-s :foo :bar)))
+(assert (failed? (-unify empty-s 'foo 'bar)))
+(assert (failed? (-unify empty-s "foo" "bar")))
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x 1)]
   (assert (= (-unify empty-s 1 x) os)))
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s 1 (lcons 1 'x)) false)))
+  (assert (failed? (-unify empty-s 1 (lcons 1 'x)))))
 
-(assert (= (-unify empty-s 1 '()) false))
-(assert (= (-unify empty-s 1 '[]) false))
-(assert (= (-unify empty-s 1 {}) false))
-(assert (= (-unify empty-s 1 #{}) false))
+(assert (failed? (-unify empty-s 1 '())))
+(assert (failed? (-unify empty-s 1 '[])))
+(assert (failed? (-unify empty-s 1 {})))
+(assert (failed? (-unify empty-s 1 #{})))
 
 ;; -----------------------------------------------------------------------------
 ;; unify with lvar
@@ -135,7 +135,7 @@
 (println "unify with lcons")
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s (lcons 1 x) 1) false)))
+  (assert (failed? (-unify empty-s (lcons 1 x) 1))))
 
 (let [x (lvar 'x)
       y (lvar 'y)
@@ -176,13 +176,13 @@
       y (lvar 'y)
       lc1 (lcons 1 (lcons 2 x))
       lc2 (lcons 1 (lcons 3 (lcons 4 y)))]
-  (assert (= (-unify empty-s lc1 lc2) false)))
+  (assert (failed? (-unify empty-s lc1 lc2))))
 
 (let [x (lvar 'x)
       y (lvar 'y)
       lc2 (lcons 1 (lcons 2 x))
       lc1 (lcons 1 (lcons 3 (lcons 4 y)))]
-  (assert (= (-unify empty-s lc1 lc2) false)))
+  (assert (failed? (-unify empty-s lc1 lc2))))
 
 (let [x (lvar 'x)
       y (lvar 'y)
@@ -215,23 +215,23 @@
 (let [x (lvar 'x)
       lc1 (lcons 1 (lcons 3 x))
       l1 '(1 2 3 4)]
-  (assert (= (-unify empty-s lc1 l1) false)))
+  (assert (failed? (-unify empty-s lc1 l1))))
 
 (let [x (lvar 'x)
       lc1 (lcons 1 (lcons 2 x))
       l1 '(1 3 4 5)]
-  (assert (= (-unify empty-s lc1 l1) false)))
+  (assert (failed? (-unify empty-s lc1 l1))))
 
-(assert (= (-unify empty-s (lcons 1 (lvar 'x)) {}) false))
-(assert (= (-unify empty-s (lcons 1 (lvar 'x)) #{}) false))
+(assert (failed? (-unify empty-s (lcons 1 (lvar 'x)) {})))
+(assert (failed? (-unify empty-s (lcons 1 (lvar 'x)) #{})))
 
 ;; -----------------------------------------------------------------------------
 ;; unify with sequential
 
 (println "unify with sequential")
 
-(assert (= (-unify empty-s '() 1) false))
-(assert (= (-unify empty-s [] 1) false))
+(assert (failed? (-unify empty-s '() 1)))
+(assert (failed? (-unify empty-s [] 1)))
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x [])]
@@ -255,18 +255,18 @@
       os (-ext-no-check empty-s x 2)]
   (assert (= (-unify empty-s `(1 ~x 3) `(1 2 3)) os)))
 
-(assert (= (-unify empty-s [1 2] [1 2 3]) false))
-(assert (= (-unify empty-s '(1 2) [1 2 3]) false))
-(assert (= (-unify empty-s [1 2 3] [3 2 1]) false))
+(assert (failed? (-unify empty-s [1 2] [1 2 3])))
+(assert (failed? (-unify empty-s '(1 2) [1 2 3])))
+(assert (failed? (-unify empty-s [1 2 3] [3 2 1])))
 (assert (= (-unify empty-s '() '()) empty-s))
-(assert (= (-unify empty-s '() '(1)) false))
-(assert (= (-unify empty-s '(1) '()) false))
+(assert (failed? (-unify empty-s '() '(1))))
+(assert (failed? (-unify empty-s '(1) '())))
 (assert (= (-unify empty-s [[1 2]] [[1 2]]) empty-s))
-(assert (= (-unify empty-s [[1 2]] [[2 1]]) false))
+(assert (failed? (-unify empty-s [[1 2]] [[2 1]])))
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x 1)]
-  (assert (= (-unify empty-s [[x 2]] [[1 2]]) os))) ;; false
+  (assert (= (-unify empty-s [[x 2]] [[1 2]]) os)))
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x [1 2])]
@@ -279,29 +279,29 @@
              (-ext-no-check x 'b))]
   (assert (= (-unify empty-s ['a x] [y 'b]) os)))
 
-(assert (= (-unify empty-s [] {}) false))
-(assert (= (-unify empty-s '() {}) false))
-(assert (= (-unify empty-s [] #{}) false))
-(assert (= (-unify empty-s '() #{}) false))
+(assert (failed? (-unify empty-s [] {})))
+(assert (failed? (-unify empty-s '() {})))
+(assert (failed? (-unify empty-s [] #{})))
+(assert (failed? (-unify empty-s '() #{})))
 
 ;; -----------------------------------------------------------------------------
 ;; unify with map
 
 (println "unify with map")
 
-(assert (= (-unify empty-s {} 1) false))
+(assert (failed? (-unify empty-s {} 1)))
 
 (let [x (lvar 'x)
       os (-ext-no-check empty-s x {})]
   (assert (= (-unify empty-s {} x) os)))
 
 (let [x (lvar 'x)]
-  (assert (= (-unify empty-s {} (lcons 1 x)) false)))
+  (assert (failed? (-unify empty-s {} (lcons 1 x)))))
 
-(assert (= (-unify empty-s {} '()) false))
+(assert (failed? (-unify empty-s {} '())))
 (assert (= (-unify empty-s {} {}) empty-s))
 (assert (= (-unify empty-s {1 2 3 4} {1 2 3 4}) empty-s))
-(assert (= (-unify empty-s {1 2} {1 2 3 4}) false))
+(assert (failed? (-unify empty-s {1 2} {1 2 3 4})))
 
 (let [x (lvar 'x)
       m1 {1 2 3 4}
@@ -312,9 +312,9 @@
 (let [x (lvar 'x)
       m1 {1 2 3 4}
       m2 {1 4 3 x}]
-  (assert (= (-unify empty-s m1 m2) false)))
+  (assert (failed? (-unify empty-s m1 m2))))
 
-(assert (= (-unify empty-s {} #{}) false))
+(assert (failed? (-unify empty-s {} #{})))
 
 ;; =============================================================================
 ;; walk
