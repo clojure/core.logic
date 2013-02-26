@@ -29,9 +29,6 @@
 (defprotocol IUnifyWithMap
   (-unify-with-map [v u s]))
 
-(defprotocol IUnifyWithSet
-  (-unify-with-set [v u s]))
-
 (defprotocol IReifyTerm
   (-reify-term [v s]))
 
@@ -242,9 +239,6 @@
   IUnifyWithMap
   (-unify-with-map [v u s]
     (-ext s v u))
-  IUnifyWithSet
-  (-unify-with-set [v u s]
-    (-ext s v u))
   IReifyTerm
   (-reify-term [v s]
     (-ext s v (-reify-lvar-name s)))
@@ -336,8 +330,6 @@
     (-unify-with-lseq u v s))
   IUnifyWithMap
   (-unify-with-map [v u s] false)
-  IUnifyWithSet
-  (-unify-with-set [v u s] false)
   IReifyTerm
   (-reify-term [v s]
     (loop [v v s s]
@@ -390,11 +382,7 @@
 
   PersistentHashMap
   (-unify-terms [u v s]
-    (-unify-with-map v u s))
-  
-  PersistentHashSet
-  (-unify-terms [u v s]
-    (-unify-with-set v u s)))
+    (-unify-with-map v u s)))
 
 ;; -----------------------------------------------------------------------------
 ;; Unify nil with X
@@ -509,41 +497,6 @@
   (-unify-with-map [v u s]
     (unify-with-map* v u s)))
 
-;; -----------------------------------------------------------------------------
-;; Unify IPersistentSet with X
-
-(extend-protocol IUnifyWithSet
-  nil
-  (-unify-with-set [v u s] false)
-
-  default
-  (-unify-with-set [v u s] false)
-
-  PersistentHashSet
-  (-unify-with-set [v u s]
-    (loop [u u v v ulvars [] umissing []]
-      (if (seq u)
-        (if (seq v)
-          (let [uf (first u)]
-            (if (lvar? uf)
-              (recur (disj u uf) v (conj ulvars uf) umissing)
-              (if (contains? v uf)
-                (recur (disj u uf) (disj v uf) ulvars umissing)
-                (recur (disj u uf) v ulvars (conj umissing uf)))))
-          false)
-        (if (seq v)
-          (if (seq ulvars)
-            (loop [v v vlvars [] vmissing []]
-              (if (seq v)
-                (let [vf (first v)]
-                  (if (lvar? vf)
-                    (recur (disj v vf) (conj vlvars vf) vmissing)
-                    (recur (disj v vf) vlvars (conj vmissing vf))))
-                (-unify s (concat ulvars umissing)
-                        (concat vmissing vlvars))))
-            false)
-          s)))))
-
 ;; =============================================================================
 ;; Reification
 
@@ -591,14 +544,7 @@
   (-walk-term [v s] (walk-term-map* v s))
 
   PersistentHashMap
-  (-walk-term [v s] (walk-term-map* v s))
-
-  PersistentHashSet
-  (-walk-term [v s]
-    (loop [v v r {}]
-      (if (seq v)
-        (recur (next v) (conj r (-walk* s (first v))))
-        r))))
+  (-walk-term [v s] (walk-term-map* v s)))
 
 ;; =============================================================================
 ;; Occurs Check Term
