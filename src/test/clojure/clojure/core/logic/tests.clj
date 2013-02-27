@@ -2861,50 +2861,55 @@
 ;; =============================================================================
 ;; Deep Constraints
 
+(defn is-number? [x]
+  (if-not (tree-term? x)
+    (number? x)
+    true))
+
 (deftest test-treec-1
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [x y]
              (== q [x [2 3 y]])
              (== x 1)))
-         '(([1 [2 3 _0]] :- (clojure.core.logic/fixc _0 clojure.core/number?)))))
+         '(([1 [2 3 _0]] :- (clojure.core.logic/fixc _0 is-number?)))))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [x y]
              (== q [x [2 3 y]])
              (== x 1)
              (== y 'foo)))
          ()))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [z]
              (== q {:x {:y z}})))
-         '(({:x {:y _0}} :- (clojure.core.logic/fixc _0 clojure.core/number?)))))
+         '(({:x {:y _0}} :- (clojure.core.logic/fixc _0 is-number?)))))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [z]
              (== q {:x {:y z}})
              (== z 1)))
          '({:x {:y 1}})))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [z]
              (== q {:x {:y z}})
              (== z 'foo)))
          ()))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [x]
              (== q (llist 1 2 x))))
-         [[(llist 1 2 '_0) ':- '(clojure.core.logic/fixc _0 clojure.core/number?)]]))
+         [[(llist 1 2 '_0) ':- '(clojure.core.logic/fixc _0 is-number?)]]))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [x]
              (== q (llist 1 2 x))
              (== x '(3))))
          '((1 2 3))))
   (is (= (run* [q]
-           (treec q #(predc % number?) `number?)
+           (treec q #(predc % is-number?) 'is-number?)
            (fresh [x]
              (== q (llist 1 2 x))
              (== x '(foo))))
@@ -2913,7 +2918,7 @@
 (deftest test-treec-custom-reify-1
   (is (= (run* [q]
            (fresh [x]
-             (treec q #(predc % number?)
+             (treec q #(predc % is-number?)
                (fn [c _ v r a]
                  `(~'hashc ~v ~(-reify a x r))))))
          '((_0 :- (hashc _0 _1))))))

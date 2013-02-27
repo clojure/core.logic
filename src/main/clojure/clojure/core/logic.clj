@@ -2727,8 +2727,10 @@
   (fixc x
     (fn loop [t a reifier]
       (if (tree-term? t)
-        (constrain-tree t
-          (fn [t a] ((fixc t loop reifier) a)))
+        (composeg*
+          (fc t)
+          (constrain-tree t
+            (fn [t a] ((fixc t loop reifier) a))))
         (fc t)))
     reifier))
 
