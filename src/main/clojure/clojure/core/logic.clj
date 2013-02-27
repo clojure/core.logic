@@ -2703,7 +2703,7 @@
            ((composeg (f x a reifier) (remcg this)) a)))
        IConstraintOp
        (rator [_] `fixc)
-       (rands [_] [x])
+       (rands [_] (if (vector? x) x [x]))
        IReifiableConstraint
        (reifyc [c v r a]
          (if (fn? reifier)
