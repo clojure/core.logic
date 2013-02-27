@@ -2718,8 +2718,10 @@
        IConstraintWatchedStores
        (watched-stores [this] #{::subst}))))
 
-(defn fixc [x f reifier]
-  (cgoal (-fixc x f reifier)))
+(defn fixc
+  ([x f reifier] (fixc x f nil reifier))
+  ([x f runnable reifier]
+     (cgoal (-fixc x f runnable reifier))))
 
 (defn treec [x fc reifier]
   (fixc x
