@@ -533,19 +533,19 @@
   (let [xv    (root-val s x)
         rootv (root-val s root)
         eset  (set/union (:eset rootv) (:eset xv))
-        doms  (loop [xd (seq (:doms xv)) rd (:doms rootv) r {}]
-                (if xd
-                  (let [[xk xv] (first xd)]
-                    (if-let [[_ rv] (find rd xk)]
-                      (let [nd (-merge-doms xv rv)]
-                        (when nd
-                          (recur (next xd) (dissoc rd xk)
-                            (assoc r xk nd))))
-                      (recur (next xd) rd (assoc r xk xv))))
-                  (merge r rd)))
-        nv    (when doms
-                (subst-val (:v rootv) doms eset
-                  (merge (meta xv) (meta rootv))))]
+        [doms s] (loop [xd (seq (:doms xv)) rd (:doms rootv) r {} s s]
+                   (if xd
+                     (let [[xk xv] (first xd)]
+                       (if-let [[_ rv] (find rd xk)]
+                         (let [nd (-merge-doms xv rv)]
+                           (when nd
+                             (recur (next xd) (dissoc rd xk)
+                               (assoc r xk nd) s)))
+                         (recur (next xd) rd (assoc r xk xv) s)))
+                     [(merge r rd) s]))
+        nv (when doms
+             (subst-val (:v rootv) doms eset
+               (merge (meta xv) (meta rootv))))]
     (when nv
       (ext-no-check s root nv))))
 
