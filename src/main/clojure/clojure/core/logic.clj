@@ -190,7 +190,8 @@
 (defn subst-val
   ([x] (SubstValue. x nil nil))
   ([x doms] (SubstValue. x doms nil))
-  ([x doms _meta] (with-meta (SubstValue. x doms nil) _meta)))
+  ([x doms _meta] (with-meta (SubstValue. x doms nil) _meta))
+  ([x doms eset _meta] (with-meta (SubstValue. x doms eset) _meta)))
 
 ;; =============================================================================
 ;; Substitutions
