@@ -449,9 +449,10 @@
                  (ext-no-check s x (subst-val v {dom domv}))))]
        (reduce
          (fn [s y]
-           (if-not (contains? seenset y)
-             (add-dom s y dom domv (conj (or seenset #{}) x))
-             s))
+           (let [y (root-var s y)]
+             (if-not (contains? seenset y)
+               (add-dom s y dom domv (conj (or seenset #{}) x))
+               s)))
          s
          (:eset v)))))
 
@@ -468,9 +469,10 @@
            s (update-var s x (assoc-dom v dom (f (get doms dom))))]
        (reduce
          (fn [s y]
-           (if-not (contains? seenset y)
-             (update-dom s y dom f (conj (or seenset #{}) x))
-             s))
+           (let [y (root-var s y)]
+             (if-not (contains? seenset y)
+               (update-dom s y dom f (conj (or seenset #{}) x))
+               s)))
          s
          (:eset v)))))
 
@@ -488,9 +490,10 @@
                s)]
        (reduce
          (fn [s y]
-           (if-not (contains? seenset y)
-             (rem-dom s y dom (conj (or seenset #{}) x))
-             s))
+           (let [y (root-var s y)]
+             (if-not (contains? seenset y)
+               (rem-dom s y dom (conj (or seenset #{}) x))
+               s)))
          s
          (:eset v)))))
 
