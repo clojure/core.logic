@@ -529,25 +529,52 @@
   (fn [a]
     (vary-meta a assoc k v)))
 
+;; NOTE: this may result in some redundant computations
+;; in particular complex nominal logic programs that involve
+;; FD and other similar constraint domains - David
+
+(defn merge-doms [s x doms]
+  (let [xdoms (:doms (root-val s x))]
+    (loop [doms (seq doms) s s]
+      (if doms
+        (let [[dom domv] (first doms)]
+          (let [xdomv (get xdoms dom ::not-found)
+                ndomv (if (= xdomv ::not-found)
+                        domv
+                        (-merge-doms domv xdomv))]
+            (when ndomv
+              (recur (next doms)
+                (add-dom s x dom ndomv #{})))))
+        s))))
+
+(defn update-eset [s doms eset]
+  (loop [eset (seq eset) s s]
+    (if eset
+      (when-let [s (merge-doms s (root-var s (first eset)) doms)]
+        (recur (next eset) s))
+      s)))
+
 (defn merge-with-root [s x root]
   (let [xv    (root-val s x)
         rootv (root-val s root)
         eset  (set/union (:eset rootv) (:eset xv))
-        [doms s] (loop [xd (seq (:doms xv)) rd (:doms rootv) r {} s s]
-                   (if xd
-                     (let [[xk xv] (first xd)]
-                       (if-let [[_ rv] (find rd xk)]
-                         (let [nd (-merge-doms xv rv)]
-                           (when nd
-                             (recur (next xd) (dissoc rd xk)
-                               (assoc r xk nd) s)))
-                         (recur (next xd) rd (assoc r xk xv) s)))
-                     [(merge r rd) s]))
+        doms (loop [xd (seq (:doms xv)) rd (:doms rootv) r {}]
+               (if xd
+                 (let [[xk xv] (first xd)]
+                   (if-let [[_ rv] (find rd xk)]
+                     (let [nd (-merge-doms xv rv)]
+                       (when nd
+                         (recur (next xd)
+                           (dissoc rd xk) (assoc r xk nd))))
+                     (recur (next xd) rd (assoc r xk xv))))
+                 (merge r rd)))
         nv (when doms
              (subst-val (:v rootv) doms eset
                (merge (meta xv) (meta rootv))))]
     (when nv
-      (ext-no-check s root nv))))
+      (-> s
+        (ext-no-check root nv)
+        (update-eset doms eset)))))
 
 ;; =============================================================================
 ;; Entanglement
