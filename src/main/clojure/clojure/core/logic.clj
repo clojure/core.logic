@@ -526,20 +526,25 @@
   (fn [a]
     (vary-meta a assoc k v)))
 
-(defn merge-subst-vals [x root]
-  (let [doms (loop [xd (seq (:doms x)) rd (:doms root) r {}]
-               (if xd
-                 (let [[xk xv] (first xd)]
-                   (if-let [[_ rv] (find rd xk)]
-                     (let [nd (-merge-doms xv rv)]
-                       (when nd
-                         (recur (next xd) (dissoc rd xk)
-                           (assoc r xk nd))))
-                     (recur (next xd) rd (assoc r xk xv))))
-                 (merge r rd)))]
-    (when doms
-      (subst-val (:v root) doms
-        (merge (meta x) (meta root))))))
+(defn merge-with-root [s x root]
+  (let [xv    (root-val s x)
+        rootv (root-val s root)
+        eset  (set/union (:eset rootv) (:eset xv))
+        doms  (loop [xd (seq (:doms xv)) rd (:doms rootv) r {}]
+                (if xd
+                  (let [[xk xv] (first xd)]
+                    (if-let [[_ rv] (find rd xk)]
+                      (let [nd (-merge-doms xv rv)]
+                        (when nd
+                          (recur (next xd) (dissoc rd xk)
+                            (assoc r xk nd))))
+                      (recur (next xd) rd (assoc r xk xv))))
+                  (merge r rd)))
+        nv    (when doms
+                (subst-val (:v rootv) doms eset
+                  (merge (meta xv) (meta rootv))))]
+    (when nv
+      (ext-no-check s root nv))))
 
 ;; =============================================================================
 ;; Entanglement
@@ -599,10 +604,7 @@
           (let [[root other] repoint
                 s (assoc s :cs (migrate (:cs s) other root))
                 s (if (-> other clojure.core/meta ::unbound)
-                    (when-let [nsv (merge-subst-vals
-                                    (root-val s other)
-                                    (root-val s root))]
-                      (ext-no-check s root nsv))
+                    (merge-with-root s other root)
                     s)]
             (when s
               (ext-no-check s other root)))
