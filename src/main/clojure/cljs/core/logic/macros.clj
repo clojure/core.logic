@@ -42,7 +42,7 @@
   [u v]
   `(fn [a#]
      (if-let [b# (cljs.core.logic/-unify a# ~u ~v)]
-       b# nil)))
+       b# (cljs.core.logic/fail a#))))
 
 (defmacro conde
   "Logical disjunction of the clauses. The first goal in

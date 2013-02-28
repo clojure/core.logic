@@ -2744,36 +2744,43 @@
     (-constrain-tree t fc a)))
 
 (defn -fixc
-  [x f reifier]
-  (reify
-    clojure.lang.IFn
-    (invoke [this a]
-      (let [x (walk a x)]
-        ((composeg (f x a reifier) (remcg this)) a)))
-    IConstraintOp
-    (rator [_] `fixc)
-    (rands [_] [x])
-    IReifiableConstraint
-    (reifyc [c v r a]
-      (if (fn? reifier)
-        (reifier c x v r a)
-        (let [x (walk* r x)]
-          `(fixc ~x ~reifier))))
-    IRunnable
-    (runnable? [_ a]
-      (not (lvar? (walk a x))))
-    IConstraintWatchedStores
-    (watched-stores [this] #{::subst})))
+  ([x f reifier] (-fixc x f nil reifier))
+  ([x f runnable reifier]
+     (reify
+       clojure.lang.IFn
+       (invoke [this a]
+         (let [x (walk a x)]
+           ((composeg (f x a reifier) (remcg this)) a)))
+       IConstraintOp
+       (rator [_] `fixc)
+       (rands [_] (if (vector? x) x [x]))
+       IReifiableConstraint
+       (reifyc [c v r a]
+         (if (fn? reifier)
+           (reifier c x v r a)
+           (let [x (walk* r x)]
+             `(fixc ~x ~reifier))))
+       IRunnable
+       (runnable? [_ a]
+         (if (fn? runnable)
+           (runnable x a)
+           (not (lvar? (walk a x)))))
+       IConstraintWatchedStores
+       (watched-stores [this] #{::subst}))))
 
-(defn fixc [x f reifier]
-  (cgoal (-fixc x f reifier)))
+(defn fixc
+  ([x f reifier] (fixc x f nil reifier))
+  ([x f runnable reifier]
+     (cgoal (-fixc x f runnable reifier))))
 
 (defn treec [x fc reifier]
   (fixc x
     (fn loop [t a reifier]
       (if (tree-term? t)
-        (constrain-tree t
-          (fn [t a] ((fixc t loop reifier) a)))
+        (composeg*
+          (fc t)
+          (constrain-tree t
+            (fn [t a] ((fixc t loop reifier) a))))
         (fc t)))
     reifier))
 
