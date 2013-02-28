@@ -546,7 +546,7 @@
 (defn to-subst-val [v]
   (if (subst-val? v)
     v
-    (subst-val v)))
+    (subst-val ::unbound)))
 
 (defn entangle [s x y]
   (let [x  (root-var s x)
