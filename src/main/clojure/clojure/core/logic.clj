@@ -467,14 +467,16 @@
                v)
            doms (:doms v)
            s (update-var s x (assoc-dom v dom (f (get doms dom))))]
-       (reduce
-         (fn [s y]
-           (let [y (root-var s y)]
-             (if-not (contains? seenset y)
-               (update-dom s y dom f (conj (or seenset #{}) x))
-               s)))
-         s
-         (:eset v)))))
+       (if (not= seenset ::no-prop)
+         (reduce
+           (fn [s y]
+             (let [y (root-var s y)]
+               (if-not (contains? seenset y)
+                 (update-dom s y dom f (conj (or seenset #{}) x))
+                 s)))
+           s
+           (:eset v))
+         s))))
 
 (defn rem-dom
   ([s x dom]

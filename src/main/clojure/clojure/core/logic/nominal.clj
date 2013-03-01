@@ -43,8 +43,10 @@
               rt (root-val s t)
               s (-> (if (subst-val? rt) (ext-no-check s v rt) s)
                   (entangle t v)  
-                  (update-dom v ::nom (fnil (fn [d] (conj d t)) #{}))
-                  (update-dom t ::nom (fnil (fn [d] (conj d v)) #{}))
+                  (update-dom v ::nom
+                    (fnil (fn [d] (conj d t)) #{}) ::l/no-prop)
+                  (update-dom t ::nom
+                    (fnil (fn [d] (conj d v)) #{}) ::l/no-prop)
                   ((suspc v t swap)))]
           [v s])
         (swap-noms t swap s))))
