@@ -533,7 +533,10 @@
 
 ;; NOTE: this may result in some redundant computations
 ;; in particular complex nominal logic programs that involve
-;; FD and other similar constraint domains - David
+;; FD and other similar constraint domains.
+;; In nominal programs like quine generation we actually see
+;; exponential behavior, so we'll probably want to revisit
+;; this code at some point - David
 
 (defn merge-doms [s x doms]
   (let [xdoms (:doms (root-val s x))]
