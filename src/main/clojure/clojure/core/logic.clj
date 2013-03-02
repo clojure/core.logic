@@ -437,6 +437,18 @@
     (if (subst-val? v)
       (-> v meta attr))))
 
+(defn sync-eset [s v seenset f]
+  (if (not= seenset ::no-prop)
+    (reduce
+      (fn [s y]
+        (let [y (root-var s y)]
+          (if-not (contains? seenset y)
+            (f s y)
+            s)))
+      s
+      (:eset v))
+    s))
+
 (defn add-dom
   ([s x dom domv]
      (let [x (root-var s x)]
@@ -447,14 +459,8 @@
                (update-var s x (assoc-dom v dom domv))
                (let [v (if (lvar? v) ::unbound v)]
                  (ext-no-check s x (subst-val v {dom domv}))))]
-       (reduce
-         (fn [s y]
-           (let [y (root-var s y)]
-             (if-not (contains? seenset y)
-               (add-dom s y dom domv (conj (or seenset #{}) x))
-               s)))
-         s
-         (:eset v)))))
+       (sync-eset s v seenset
+         (fn [s y] (add-dom s y dom domv (conj (or seenset #{}) x)))))))
 
 (defn update-dom
   ([s x dom f]
@@ -467,16 +473,8 @@
                v)
            doms (:doms v)
            s (update-var s x (assoc-dom v dom (f (get doms dom))))]
-       (if (not= seenset ::no-prop)
-         (reduce
-           (fn [s y]
-             (let [y (root-var s y)]
-               (if-not (contains? seenset y)
-                 (update-dom s y dom f (conj (or seenset #{}) x))
-                 s)))
-           s
-           (:eset v))
-         s))))
+       (sync-eset s v seenset
+         (fn [s y] (update-dom s y dom f (conj (or seenset #{}) x)))))))
 
 (defn rem-dom
   ([s x dom]
@@ -490,14 +488,8 @@
                    (update-var s x (:v v))
                    (update-var s x (assoc v :doms new-doms))))
                s)]
-       (reduce
-         (fn [s y]
-           (let [y (root-var s y)]
-             (if-not (contains? seenset y)
-               (rem-dom s y dom (conj (or seenset #{}) x))
-               s)))
-         s
-         (:eset v)))))
+       (sync-eset s v seenset
+         (fn [s y] (rem-dom s y dom (conj (or seenset #{}) x)))))))
 
 (defn get-dom [s x dom]
   (let [v (root-val s x)]
