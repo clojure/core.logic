@@ -1076,16 +1076,12 @@
 ;; -----------------------------------------------------------------------------
 ;; MZero
 
-(extend-protocol IBind
-  nil
-  (bind [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (mplus [_ f] (f)))
-
-(extend-protocol ITake
-  nil
+(extend-type nil
+  IBind
+  (bind [_ g] nil)
+  IMPlus
+  (mplus [_ f] (f))
+  ITake
   (take* [_] '()))
 
 ;; -----------------------------------------------------------------------------
