@@ -63,11 +63,6 @@
           s])
       [t s])))
 
-(extend-protocol IMergeDomains
-  clojure.lang.IPersistentSet
-  (-merge-doms [a b]
-    (clojure.set/union a b)))
-
 ;; =============================================================================
 ;; Nom
 
