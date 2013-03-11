@@ -59,8 +59,7 @@
     (if (seq t)
       (let [[tfirst s] (swap-noms (first t) swap s)
             [tnext s] (swap-noms (next t) swap s)]
-        [(with-meta (cons tfirst tnext) (meta t))
-          s])
+        [(with-meta (cons tfirst tnext) (meta t)) s])
       [t s])))
 
 ;; =============================================================================
@@ -225,7 +224,7 @@
               (-do-suspc t2 t1 swap a)
               :else ;; (= t1 t2)
               (loop [a* swap
-                      a a]
+                     a a]
                 (if (empty? a*) a
                   (recur (rest a*) ((hash (first a*) t2) a)))))))) a))
     IConstraintOp
@@ -301,8 +300,7 @@
   INomSwap
   (swap-noms [t swap s]
     (let [[tbody s] (swap-noms (:body t) swap s)]
-      [(with-meta (tie (nom-swap (:binding-nom t) swap) tbody) (meta t))
-        s])))
+      [(with-meta (tie (nom-swap (:binding-nom t) swap) tbody) (meta t)) s])))
 
 (defn tie [binding-nom body]
   (Tie. binding-nom body))
