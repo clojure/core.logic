@@ -139,7 +139,7 @@
                (== [a b x y] q))))
         '([a_0 a_1 a_0 a_1]
           ([a_0 a_1 _2 _3] :- (swap [a_0 a_1] _2 _3))
-          ([a_0 a_1 _2 _3] :- a_0#_3 (swap [a_1 a_0] _2 _3)))))
+          ([a_0 a_1 _2 _3] :- (swap [a_1 a_0] _2 _3) a_0#_3))))
   (is (= (run* [q]
            (fresh [bx by]
              (nom/fresh [x y]
@@ -486,3 +486,19 @@
                (== x y)
                (== z x))))
         '(_0))))
+
+(deftest test-no-dup-reified-freshness-constraints
+  (is (= (run* [q]
+           (fresh [x y]
+             (nom/fresh [a b]
+               (== (nom/tie a x) (nom/tie b y))
+               (== [a b x y] q)
+               (== x y))))
+        '(([a_0 a_1 _2 _2] :- a_1#_2 a_0#_2))))
+  (is (= (run* [q]
+           (fresh [x]
+             (nom/fresh [a]
+               (nom/hash a x)
+               (nom/hash a x)
+               (== q [x a]))))
+        '(([_0 a_1] :- a_1#_0)))))
