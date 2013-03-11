@@ -150,29 +150,26 @@
       (str a "#" x))
     clojure.lang.IFn
     (invoke [c s]
-      (let [a (walk s a)
-            x (walk s x)]
-        (if (lvar? a)
-          (when (and
-                  (not (and (lvar? x) (= x a)))
-                  (tree-term? x) (not (tie? x)))
-            ((composeg*
-              (remcg c)
-              (constrain-tree x
-                (fn [t s] ((hash a t) s)))) s))
-          (when (nom? a)
-            (cond
-              (and (tie? x)  (= (:binding-nom x) a))
-              ((remcg c) s)
-              (tree-term? x)
-              ((composeg* 
-                (remcg c)
-                (constrain-tree x
-                  (fn [t s] ((hash a t) s)))) s)
-              (= x a)
-              nil
-              :else
-              ((remcg c) s))))))
+      ((composeg
+         (fn [s]
+           (let [a (walk s a)
+                 x (walk s x)]
+             (cond
+               (and (lvar? a) (lvar? x) (= x a))
+               nil
+               (and (nom? a) (nom? x) (= x a))
+               nil
+               (and (not (lvar? a)) (not (nom? a)))
+               nil
+               (and (nom? a) (tie? x) (= (:binding-nom x) a))
+               s
+               (and (tree-term? x) (or (not (tie? x)) (nom? a)))
+               ((constrain-tree x
+                  (fn [t s] ((hash a t) s))) s)
+               :else
+               s)))
+         (remcg c))
+        s))
     IConstraintOp
     (rator [_] `hash)
     (rands [_] [a x])
