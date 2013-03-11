@@ -43,10 +43,6 @@
               rt (root-val s t)
               s (-> (if (subst-val? rt) (ext-no-check s v rt) s)
                   (entangle t v)  
-                  (update-dom v ::nom
-                    (fnil (fn [d] (conj d t)) #{}) ::l/no-prop)
-                  (update-dom t ::nom
-                    (fnil (fn [d] (conj d v)) #{}) ::l/no-prop)
                   ((suspc v t swap)))]
           [v s])
         (swap-noms t swap s))))
@@ -211,7 +207,7 @@
               :else
               (let [vs2 (apply clojure.set/union
                           (map (fn [x] (if (nil? x) #{} x))
-                            (map #(get-dom a % ::nom) vs)))
+                            (map #(:eset (root-val a %)) vs)))
                     seen (clojure.set/union vs seen)]
                 (recur vs2 seen)))))
     (let [[t1 a] (swap-noms t1 swap a)]
