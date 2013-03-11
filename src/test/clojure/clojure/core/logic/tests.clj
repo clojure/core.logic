@@ -800,6 +800,38 @@
          (into #{} '(tea cup)))))
 
 ;; -----------------------------------------------------------------------------
+;; copy-term
+
+(deftest test-copy-term-1
+  (is (= (run* [q]
+           (fresh [a b]
+             (copy-term a b)
+             (== q [a b])))
+        '([_0 _1])))
+  (is (= (run* [q]
+           (fresh [a b]
+             (copy-term `(~a) `(~b))
+             (== q [a b])))
+        '([_0 _1])))
+  (is (= (run* [q]
+           (fresh [a b]
+             (copy-term [a] [b])
+             (== q [a b])))
+        '([_0 _1])))
+  (is (= (run* [q]
+           (fresh [a b c]
+             (copy-term [a] c)
+             (== [b] c)
+             (== q [a b])))
+        '([_0 _1])))
+  (is (= (run* [q]
+           (fresh [a b c d]
+             (== c 1)
+             (copy-term [a c] [b d])
+             (== q [a b d])))
+        '([_0 _1 1]))))
+
+;; -----------------------------------------------------------------------------
 ;; disequality
 
 (deftest test-disequality-1

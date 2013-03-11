@@ -667,14 +667,11 @@
   IBuildTerm
   (build-term [u s]
     (let [m (:s s)
-          l (:l s)
           cs (:cs s)
           lv (lvar 'ignore) ]
       (if (contains? m u)
         s
-        (make-s (assoc m u lv)
-                (cons (Pair. u lv) l)
-                cs)))))
+        (make-s (assoc m u lv) cs)))))
 
 (defn lvar
   ([]
@@ -1012,7 +1009,7 @@
   Object
   (build-term [u s] s)
 
-  clojure.lang.ISeq
+  clojure.lang.IPersistentCollection
   (build-term [u s]
     (reduce build s u)))
 
