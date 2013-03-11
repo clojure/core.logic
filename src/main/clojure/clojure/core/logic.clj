@@ -1978,7 +1978,7 @@
   (-reify-tabled [this v]
     (let [v (walk this v)]
       (cond
-       (lvar? v) (ext-no-check this v (lvar (count (.s this))))
+       (lvar? v) (ext-no-check this v (lvar (count (:s this))))
        (coll? v) (-reify-tabled
                    (-reify-tabled this (first v))
                    (next v))
