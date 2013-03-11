@@ -111,8 +111,7 @@
 
   INomSwap
   (swap-noms [t swap s]
-    [(with-meta (nom-swap t swap) (meta t))
-      s]))
+    [(nom-swap t swap) s]))
 
 (defn nom [lvar]
   (Nom. lvar))
