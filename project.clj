@@ -15,7 +15,7 @@
                  ;"clojurescript/src/cljs"
                  ]
   :test-paths ["src/test/clojure"]
-  :dependencies [[org.clojure/clojure "1.5.0-RC1"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/clojurescript "0.0-1586"]
                  [org.clojure/tools.macro "0.1.1"]
                  [org.clojure/tools.nrepl "0.2.1"]
