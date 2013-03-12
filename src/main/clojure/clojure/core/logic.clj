@@ -1914,7 +1914,68 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Data Structures
-;; (atom #{}) is cache, waiting streams are PersistentVectors
+;; waiting streams are PersistentVectors
+
+;; Cache
+;; ansl - ans list, for calculating the fixpoint
+;; anss - cached answer set, for quickly checking whether an answer term
+;;        is already in the cache
+
+(deftype Cache [ansl anss _meta]
+  Object
+  (equals [this other]
+    (and (instance? Cache other)
+      (let [^Cache other other]
+        (identical? ansl (.ansl other)))))
+  (toString [_]
+    (str "<cache:" (pr-str ansl) ">"))
+
+  clojure.lang.IObj
+  (meta [_] _meta)
+  (withMeta [_ new-meta]
+    (Cache. ansl anss new-meta))
+
+  clojure.lang.IPersistentSet
+  (disjoin [_ k]
+    (Cache. (filter #(= % k)) (disj anss k) _meta))
+  (contains [_ k]
+    (let [^clojure.lang.IPersistentSet anss anss]
+      (.contains anss k)))
+  (get [_ k]
+    (let [^clojure.lang.IPersistentSet anss anss]
+      (if (.contains anss)
+        k)))
+
+  clojure.lang.Seqable
+  (seq [_]
+    ansl)
+  
+  clojure.lang.ISeq
+  (first [_]
+    (first ansl))
+  (more [_]
+    (let [f (first ansl)]
+      (Cache. (rest ansl) (disj anss f) _meta)))
+  (next [_]
+    (let [ansl (next ansl)]
+      (if ansl
+        (let [f (first ansl)]
+          (Cache. ansl (disj anss f) _meta)))))
+
+  clojure.lang.IPersistentCollection
+  (cons [_ x]
+    (Cache. (cons x ansl) (conj anss x) _meta))
+  (empty [_]
+    (Cache. nil nil nil))
+  (equiv [this other]
+    (.equals this other))
+  (count [_]
+    (clojure.core/count ansl)))
+
+(defn cache [] (Cache. () #{} nil))
+
+(defmethod print-method Cache [x ^Writer writer]
+  (.write writer (str x)))
 
 (deftype SuspendedStream [cache ansv* f]
   clojure.lang.ILookup
@@ -2003,7 +2064,7 @@
                   [(make-suspended-stream cache start
                      (fn [] (reuse this argv cache @cache (count start))))]
                   ;; we have answer terms to reuse in the cache
-                  (let [ans (first ansv*)]
+                  (let [ans (first ansv*)] ;; FIXME: sets are unordered! - David
                     (Choice. (subunify this argv (reify-tabled this ans))
                       (fn [] (reuse-loop (disj ansv* ans)))))))]
         (reuse-loop start))))
