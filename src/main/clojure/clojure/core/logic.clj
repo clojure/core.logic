@@ -2408,7 +2408,7 @@
 
   clojure.lang.IPersistentMap
   (disunify-terms [u v s cs]
-    (if (= (count u) (count v))
+    (if (and (map? v) (= (count u) (count v)))
       (loop [ks (seq (keys u)) cs cs]
         (if ks
           (let [kf (first ks)
