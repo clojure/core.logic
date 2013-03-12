@@ -2241,7 +2241,8 @@
         rcs (->> (vals (:cm cs))
                  (filter reifiable?)
                  (map #(reifyc % v r a))
-                 (filter #(not (nil? %))))]
+                 (filter #(not (nil? %)))
+                 (into #{}))]
     (if (empty? rcs)
       (choice (list v) empty-f)
       (choice (list `(~v :- ~@rcs)) empty-f))))

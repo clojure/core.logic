@@ -43,10 +43,6 @@
               rt (root-val s t)
               s (-> (if (subst-val? rt) (ext-no-check s v rt) s)
                   (entangle t v)  
-                  (update-dom v ::nom
-                    (fnil (fn [d] (conj d t)) #{}) ::l/no-prop)
-                  (update-dom t ::nom
-                    (fnil (fn [d] (conj d v)) #{}) ::l/no-prop)
                   ((suspc v t swap)))]
           [v s])
         (swap-noms t swap s))))
@@ -63,14 +59,8 @@
     (if (seq t)
       (let [[tfirst s] (swap-noms (first t) swap s)
             [tnext s] (swap-noms (next t) swap s)]
-        [(with-meta (cons tfirst tnext) (meta t))
-          s])
+        [(with-meta (cons tfirst tnext) (meta t)) s])
       [t s])))
-
-(extend-protocol IMergeDomains
-  clojure.lang.IPersistentSet
-  (-merge-doms [a b]
-    (clojure.set/union a b)))
 
 ;; =============================================================================
 ;; Nom
@@ -111,8 +101,7 @@
 
   INomSwap
   (swap-noms [t swap s]
-    [(with-meta (nom-swap t swap) (meta t))
-      s]))
+    [(nom-swap t swap) s]))
 
 (defn nom [lvar]
   (Nom. lvar))
@@ -151,29 +140,25 @@
       (str a "#" x))
     clojure.lang.IFn
     (invoke [c s]
-      (let [a (walk s a)
-            x (walk s x)]
-        (if (lvar? a)
-          (when (and
-                  (not (and (lvar? x) (= x a)))
-                  (tree-term? x) (not (tie? x)))
-            ((composeg*
-              (remcg c)
-              (constrain-tree x
-                (fn [t s] ((hash a t) s)))) s))
-          (when (nom? a)
-            (cond
-              (and (tie? x)  (= (:binding-nom x) a))
-              ((remcg c) s)
-              (tree-term? x)
-              ((composeg* 
-                (remcg c)
-                (constrain-tree x
-                  (fn [t s] ((hash a t) s)))) s)
-              (= x a)
-              nil
-              :else
-              ((remcg c) s))))))
+      ((composeg*
+         (remcg c)
+         (fn [s]
+           (let [a (walk s a)
+                 x (walk s x)]
+             (cond
+               (and (lvar? a) (lvar? x) (= x a))
+               nil
+               (and (nom? a) (nom? x) (= x a))
+               nil
+               (and (not (lvar? a)) (not (nom? a)))
+               nil
+               (and (nom? a) (tie? x) (= (:binding-nom x) a))
+               s
+               (and (tree-term? x) (or (not (tie? x)) (nom? a)))
+               ((constrain-tree x
+                  (fn [t s] ((hash a t) s))) s)
+               :else
+               s)))) s))
     IConstraintOp
     (rator [_] `hash)
     (rands [_] [a x])
@@ -213,11 +198,9 @@
               (some #(occurs-check a % t1) vs)
               false
               :else
-              (let [vs2 (apply clojure.set/union
-                          (map (fn [x] (if (nil? x) #{} x))
-                            (map #(get-dom a % ::nom) vs)))
-                    seen (clojure.set/union vs seen)]
-                (recur vs2 seen)))))
+              (recur
+                (reduce (fn [s0 s1] (clojure.set/union s0 (:eset (root-val a s1)))) #{} vs)
+                (clojure.set/union vs seen)))))
     (let [[t1 a] (swap-noms t1 swap a)]
       ((== t1 t2) a))))
 
@@ -239,12 +222,11 @@
               (-do-suspc t1 t2 swap a)
               (not (lvar? t2))
               (-do-suspc t2 t1 swap a)
-              (= t1 t2)
+              :else ;; (= t1 t2)
               (loop [a* swap
                      a a]
                 (if (empty? a*) a
-                    (recur (rest a*) ((hash (first a*) t2) a))))
-              :else ((addcg c) a))))) a))
+                  (recur (rest a*) ((hash (first a*) t2) a)))))))) a))
     IConstraintOp
     (rator [_] `suspc)
     (rands [_] [v1 v2])
@@ -318,8 +300,7 @@
   INomSwap
   (swap-noms [t swap s]
     (let [[tbody s] (swap-noms (:body t) swap s)]
-      [(with-meta (tie (nom-swap (:binding-nom t) swap) tbody) (meta t))
-        s])))
+      [(with-meta (tie (nom-swap (:binding-nom t) swap) tbody) (meta t)) s])))
 
 (defn tie [binding-nom body]
   (Tie. binding-nom body))
