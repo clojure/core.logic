@@ -1955,7 +1955,7 @@
 (defrecord SuspendedStream [cache ansv* f]
   ISuspendedStream
   (ready? [this]
-    (not= (:ansl @cache) ansv*)))
+    (not (identical? (:ansl @cache) ansv*))))
 
 (defn make-suspended-stream [cache ansv* f]
   (SuspendedStream. cache ansv* f))
