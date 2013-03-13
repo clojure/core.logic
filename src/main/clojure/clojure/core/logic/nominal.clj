@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [== hash])
   (:use [clojure.core.logic.protocols]
         [clojure.core.logic :exclude [fresh] :as l])
+  (:require [clojure.pprint :as pp])
   (:import [java.io Writer]
            [clojure.core.logic LVar LCons]
            [clojure.core.logic.protocols IBindable ITreeTerm]))
@@ -309,5 +310,16 @@
   (instance? clojure.core.logic.nominal.Tie x))
 
 (defmethod print-method Tie [x ^Writer writer]
-  (.write writer (str " [" (:binding-nom x) "] "))
+  (.write writer "[")
+  (print-method (:binding-nom x) writer)
+  (.write writer "] ")
   (print-method (:body x) writer))
+
+(defn- pprint-tie [x]
+  (pp/pprint-logical-block
+    (.write ^Writer *out* "[")
+    (pp/write-out (:binding-nom x))
+    (.write ^Writer *out* "] ")
+    (pp/write-out (:body x))))
+
+(. pp/simple-dispatch addMethod Tie pprint-tie)

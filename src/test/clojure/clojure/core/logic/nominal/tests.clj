@@ -502,3 +502,22 @@
                (nom/hash a x)
                (== q [x a]))))
         '(([_0 a_1] :- a_1#_0)))))
+
+(deftest test-logic-119-tie-disequality-1
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (!= (nom/tie a a) 'foo)))
+        '(_0)))
+  (is (= (run* [q]
+           (nom/fresh [a]
+             (!= (nom/tie a a) (nom/tie a a))))
+        '()))
+  (is (= (run* [q]
+           (nom/fresh [a b]
+             (!= (nom/tie a a) (nom/tie a b))))
+        '(_0)))
+  (comment ;; this one will be tricky to get right.
+    (is (= (run* [q]
+             (nom/fresh [a b]
+               (!= (nom/tie a a) (nom/tie b b))))
+          '()))))
