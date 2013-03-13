@@ -1588,6 +1588,68 @@
            (fd/in q (fd/interval 3 3)))
          '(3))))
 
+(def patho-112
+  (tabled
+    [graph start end]
+    (conde
+      [(== start end)]
+      [(fresh [?via ?vias]
+         (project [start graph]
+           (== ?vias  ((:successors graph) start)))
+         (membero ?via ?vias)
+         (patho-112 graph ?via end))])))
+
+(defn solve-goals [graph curr end goals]
+  (all
+    (project [goals]
+      ;;when there are no more goals we are done
+      (conde [(== true
+                (empty? goals)) 
+               (== curr end)]
+        ;;there are still goals left
+        ;;solve the first and recursive call
+        [(== false (empty? goals))
+          (fresh [goal tail via]
+            (== goal (first goals))
+            (== tail (rest goals))
+            (project [goal]
+              (goal graph curr via)
+              (solve-goals graph via end tail)))]))))
+
+(def foo :foo)
+(def bar :bar)
+(def baz :baz)
+(def quux :quux)
+
+(defn to-node [node]
+  (cond
+    (= node foo)
+    (seq (list bar))
+    (= node bar)
+    (seq (list baz))
+    (= node baz)
+    (seq (list quux))))
+
+(def graph { :successors to-node })
+
+(defn test-1 []
+  (run* [?result]
+    (fresh [?start ?end]
+      (== ?start foo)
+      (== ?end quux)
+      (solve-goals graph ?start ?end
+        (seq (list patho-112
+               (fn [graph current next]
+                 (all
+                   (== ?result current)
+                   ;;(trace-lvars "current" current)
+                   (== current next)))
+               patho-112))))))
+
+(deftest test-112-tabling
+  (is (= (test-1)
+         '(:foo :bar :baz :quux))))
+
 ;; =============================================================================
 ;; cKanren
 
