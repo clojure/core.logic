@@ -1916,80 +1916,46 @@
 ;; Data Structures
 ;; waiting streams are PersistentVectors
 
-;; Cache
+;; AnswerCache
 ;; ansl - ans list, for calculating the fixpoint
 ;; anss - cached answer set, for quickly checking whether an answer term
 ;;        is already in the cache
 
-(deftype Cache [ansl anss _meta]
+(deftype AnswerCache [ansl anss _meta]
   Object
-  (equals [this other]
-    (and (instance? Cache other)
-      (let [^Cache other other]
-        (identical? ansl (.ansl other)))))
-  (toString [_]
-    (str "<cache:" (pr-str ansl) ">"))
+  (toString [this]
+    (str "<answer-cache:" (pr-str ansl) ">"))
 
   clojure.lang.IObj
   (meta [_] _meta)
   (withMeta [_ new-meta]
-    (Cache. ansl anss new-meta))
+    (AnswerCache. ansl anss new-meta))
 
-  clojure.lang.IPersistentSet
-  (disjoin [_ k]
-    (Cache. (filter #(= % k)) (disj anss k) _meta))
-  (contains [_ k]
-    (let [^clojure.lang.IPersistentSet anss anss]
-      (.contains anss k)))
-  (get [_ k]
-    (let [^clojure.lang.IPersistentSet anss anss]
-      (if (.contains anss)
-        k)))
-
-  clojure.lang.Seqable
-  (seq [_]
-    ansl)
-  
-  clojure.lang.ISeq
-  (first [_]
-    (first ansl))
-  (more [_]
-    (let [f (first ansl)]
-      (Cache. (rest ansl) (disj anss f) _meta)))
-  (next [_]
-    (let [ansl (next ansl)]
-      (if ansl
-        (let [f (first ansl)]
-          (Cache. ansl (disj anss f) _meta)))))
-
-  clojure.lang.IPersistentCollection
-  (cons [_ x]
-    (Cache. (cons x ansl) (conj anss x) _meta))
-  (empty [_]
-    (Cache. nil nil nil))
-  (equiv [this other]
-    (.equals this other))
-  (count [_]
-    (clojure.core/count ansl)))
-
-(defn cache [] (Cache. () #{} nil))
-
-(defmethod print-method Cache [x ^Writer writer]
-  (.write writer (str x)))
-
-(deftype SuspendedStream [cache ansv* f]
   clojure.lang.ILookup
   (valAt [this k]
     (.valAt this k nil))
   (valAt [this k not-found]
     (case k
-      :cache cache
-      :ansv* ansv*
-      :f f
+      :ansl ansl
+      :anss anss
       not-found))
+
+  IAnswerCache
+  (-add [this x]
+    (AnswerCache. (conj ansl x) (conj anss x) _meta))
+  (-cached? [_ x]
+    (let [^clojure.lang.IPersistentSet anss anss]
+      (.contains anss x))))
+
+(defn answer-cache [] (AnswerCache. () #{} nil))
+
+(defmethod print-method AnswerCache [x ^Writer writer]
+  (.write writer (str x)))
+
+(defrecord SuspendedStream [cache ansv* f]
   ISuspendedStream
   (ready? [this]
-    (not= @cache ansv*)))
+    (not= (:ansl @cache) ansv*)))
 
 (defn make-suspended-stream [cache ansv* f]
   (SuspendedStream. cache ansv* f))
@@ -2053,20 +2019,20 @@
 
   ;; argv are the actual parameters passed to a goal. cache
   ;; is the cache from the table for reified argv. on initial
-  ;; call start is nil and end nil - so internally they will be
-  ;; initialized to the contents of the cache & 0
+  ;; call start and end are nil - so internally they will be
+  ;; initialized to the contents of the cache & 0 respectively
   (reuse [this argv cache start end]
-    (let [start (or start @cache)
+    (let [start (or start (:ansl @cache))
           end   (or end 0)]
       (letfn [(reuse-loop [ansv*]
                 (if (= (count ansv*) end)
                   ;; we've run out of answers terms to reuse in the cache
                   [(make-suspended-stream cache start
-                     (fn [] (reuse this argv cache @cache (count start))))]
+                     (fn [] (reuse this argv cache (:ansl @cache) (count start))))]
                   ;; we have answer terms to reuse in the cache
                   (let [ans (first ansv*)] ;; FIXME: sets are unordered! - David
                     (Choice. (subunify this argv (reify-tabled this ans))
-                      (fn [] (reuse-loop (disj ansv* ans)))))))]
+                      (fn [] (reuse-loop (rest ansv*)))))))]
         (reuse-loop start))))
 
   ;; unify an argument with an answer from a cache
@@ -2121,12 +2087,12 @@
   [argv cache]
   (fn [a]
     (let [rargv (-reify a argv)]
-      (when-not (contains? @cache rargv)
+      (when-not (-cached? @cache rargv)
         (swap! cache
           (fn [cache]
-            (if (contains? cache rargv)
+            (if (-cached? cache rargv)
               cache
-              (conj cache (reify-tabled a argv)))))
+              (-add cache (reify-tabled a argv)))))
         a))))
 
 ;; -----------------------------------------------------------------------------
@@ -2157,7 +2123,7 @@
                               (fn [table#]
                                 (if (contains? table# key#)
                                   table#
-                                  (assoc table# key# (atom #{})))))
+                                  (assoc table# key# (atom (answer-cache))))))
                      cache# (get table# key#)]
                  ((fresh []
                     ~@grest

@@ -102,6 +102,10 @@
 (defprotocol ISuspendedStream
   (ready? [this]))
 
+(defprotocol IAnswerCache
+  (-add [this x])
+  (-cached? [this x]))
+
 ;; =============================================================================
 ;; cKanren protocols
 
