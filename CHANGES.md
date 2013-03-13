@@ -1,3 +1,20 @@
+From 0.8.0-rc2 to 0.8.0-rc3
+====
+
+Bug Fixes
+----
+* LOGIC-119: fix disunify for maps
+* LOGIC-112: fix tabling
+* LOGIC-115: fix fd/in on singleton domains
+* LOGIC-111: fix conda regression
+* LOGIC-109: fix namespaced keyword issue in defc macro
+* copy-term fixed
+
+Enhancements
+----
+* nominal no longer depends on fd
+* ClojureScript version performance enhancements
+
 From 0.8.0-rc1 to 0.8.0-rc2
 ====
 

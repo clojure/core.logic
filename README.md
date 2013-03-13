@@ -30,7 +30,7 @@ YourKit is kindly supporting open source projects with its full-featured Java Pr
 Releases and dependency information
 ----
 
-Latest beta: 0.8.0-rc2
+Latest release candidate: 0.8.0-rc3
 
 Latest stable release: 0.7.5
 
