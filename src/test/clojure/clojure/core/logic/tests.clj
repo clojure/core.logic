@@ -1236,6 +1236,9 @@
   (is (= (u/unify ['{:a [?b (?c [?d {:e ?e}])]} {:a [:b '(:c [:d {:e :e}])]}])
          {:a [:b '(:c [:d {:e :e}])]})))
 
+(deftest test-unifier-12
+  (is (= (u/unify '[?x 1]) 1)))
+
 ;; -----------------------------------------------------------------------------
 ;; custom var reification
 
@@ -1295,7 +1298,9 @@
 
 (deftest test-unifier-as-1
   (is (= (u/unify {:as '{?x (?y ?z)}} ['?x '(1 2)])))
-  (is (= (u/unify {:as '{?x (?y ?z)}} ['(?x) '((1 2))]))))
+  (is (= (u/unify {:as '{?x (?y ?z)}} ['(?x) '((1 2))])))
+  (is (= (u/unify {:as '{?x (?y ?y)}} '[[?y ?x] [1 (1 1)]]) 
+         '[1 (1 1)])))
 
 ;;Anonymous constraints
 (deftest test-unifier-anon-constraints-3 ;;One var
@@ -1327,6 +1332,10 @@
 (deftest test-binding-map-6
   (is (= (u/unifier ['(?x 2 . ?y) '(1 9 3 4 5)])
          nil)))
+
+(deftest test-binding-map-7
+  (is (= (u/unifier '[((?x ?y)) ((1 2))])
+         '{?x 1 ?y 2})))
 
 (deftest test-binding-map-constraints-1
   (is (= (u/unifier {:when {'?x evenc '?y div3c}} ['(?x ?y) '(2 6)])

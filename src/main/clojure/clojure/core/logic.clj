@@ -950,10 +950,10 @@
   (walk-term [v f] (f v))
 
   clojure.lang.ISeq
-  (walk-term [v f]
-    (with-meta
-      (map #(walk-term (f %) f) v)
-      (meta v)))
+   (walk-term [v f]
+     (with-meta
+       (doall (map #(walk-term (f %) f) v))
+       (meta v)))
 
   clojure.lang.IPersistentVector
   (walk-term [v f]

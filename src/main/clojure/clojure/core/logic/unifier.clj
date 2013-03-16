@@ -13,7 +13,7 @@
   (let [v (if-let [u (@store lvar-expr)]
             u
             (lvar lvar-expr false))]
-    (swap! store conj lvar-expr)
+    (swap! store assoc lvar-expr v)
     v))
 
 (defn- lcons-expr? [expr]
@@ -48,7 +48,7 @@
              (if skip
                tail
                (lcons (prep* f store) tail)))
-           (doall (walk-term expr (replace-lvar store))))
+           (walk-term expr (replace-lvar store)))
          
         :else expr))))
 
@@ -56,15 +56,17 @@
   "Prep a quoted expression. All symbols preceded by ? will
   be replaced with logic vars."
   [expr]
-  (let [lvars (atom #{})
+  (let [lvars (atom {})
         prepped (cond
-                  (lvarq-sym? expr) (lvar expr false)
+                  (lvarq-sym? expr) (proc-lvar expr lvars)
 
                   (lcons-expr? expr)
                   (prep* expr lvars true)
 
-                  :else (doall (walk-term expr (replace-lvar lvars))))]
-    (with-meta prepped {::lvars @lvars})))
+                  :else (walk-term expr (replace-lvar lvars)))]
+    (if (instance? clojure.lang.IMeta prepped)
+      (with-meta prepped {::lvars (keys @lvars)})
+      prepped)))
 
 (defn queue-constraint [s c vs]
   (cond
