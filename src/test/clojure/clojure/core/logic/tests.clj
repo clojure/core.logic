@@ -1727,6 +1727,10 @@
           [_1 :time :mascarpone 5]
           [_2 :vogue :mascarpone 8.5]))))
 
+(deftest test-71-simple-unifier-reify-vars
+  (is (= (u/unify {} '[(?x) (?x) (1)])
+         '(1))))
+
 ;; =============================================================================
 ;; cKanren
 
