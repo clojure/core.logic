@@ -1728,8 +1728,12 @@
           [_2 :vogue :mascarpone 8.5]))))
 
 (deftest test-71-simple-unifier-reify-vars
-  (is (= (u/unify {} '[(?x) (?x) (1)])
+  (is (= (u/unify '[(?x) (?x) (1)])
          '(1))))
+
+(deftest test-36-unifier-behavior
+  (is (= (u/unifier ['(?x ?y) '(?y ?x)])
+         '{?x ?y})))
 
 ;; =============================================================================
 ;; cKanren
