@@ -1,3 +1,8 @@
+From 0.8.0-rc3 to 0.8.0
+====
+
+No changes
+
 From 0.8.0-rc2 to 0.8.0-rc3
 ====
 
