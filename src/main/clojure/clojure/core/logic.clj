@@ -152,7 +152,7 @@
 
   (migrate [this x root]
     (let [xcs    (km x)
-          rootcs (km root)
+          rootcs (km root #{})
           nkm    (assoc (dissoc km x) root (into rootcs xcs))]
       (ConstraintStore. nkm cm cid running)))
 

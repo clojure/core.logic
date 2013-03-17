@@ -1659,6 +1659,74 @@
   (is (= (test-1)
          '(:foo :bar :baz :quux))))
 
+(defne lefto
+  "x appears to the left of y in collection l."
+  [x y l]
+  ([_ _ [x . tail]] (membero y tail))
+  ([_ _ [_ . tail]] (lefto x y tail)))
+
+(defn rule-1 [answers]
+  (fresh [c1 r1 c2 r2]
+    (membero [:landon (lvar) c1 r1] answers)
+    (membero [:jason (lvar) c2 r2] answers)
+    (conde
+      [(== r1 7.5)
+        (== c2 :mozzarella)]
+      [(== r2 7.5)
+        (== c1 :mozzarella)])))
+
+(defn rule-2 [answers]
+  (membero [(lvar) :fortune :blue-cheese (lvar)] answers))
+
+(defn rule-3 [answers]
+  (fresh [s1 s2]
+    (== [(lvar) :vogue (lvar) (lvar)] s1)
+    (== [(lvar) (lvar) :muenster (lvar)] s2)
+    (membero s1 answers)
+    (membero s2 answers)
+    (!= s1 s2)))
+
+(defn rule-4 [answers]
+  (permuteo [[(lvar) :fortune (lvar) (lvar)]
+              [:landon (lvar) (lvar) (lvar)]
+              [(lvar) (lvar) (lvar) 5]
+              [(lvar) (lvar) :mascarpone (lvar)]
+              [(lvar) :vogue (lvar) (lvar)]]
+    answers))
+
+(defn rule-6 [answers]
+  (fresh [r1 r2]
+    (membero [(lvar) :cosmopolitan (lvar) r1] answers)
+    (membero [(lvar) (lvar) :mascarpone r2] answers)
+    (lefto r1 r2 [5 6 7 7.5 8.5])))
+
+(defn rule-9 [answers]
+  (fresh [r1 r2]
+    (membero [(lvar) :time (lvar) r1] answers)
+    (membero [:landon (lvar) (lvar) r2] answers)
+    (lefto r1 r2 [5 6 7 7.5 8.5])))
+
+(defn rule-0 [answers]
+  (fresh [s]
+    (== [:amaya (lvar) (lvar) (lvar)] s)
+    (membero s answers)))
+
+(deftest test-116-constraint-store-migrate
+  (is (= (first
+           (run 1 [answers]
+             (rule-0 answers)
+             (rule-1 answers)
+             (rule-2 answers)
+             (rule-3 answers)
+             (rule-4 answers)
+             (rule-6 answers)
+             (rule-9 answers)))
+        '([:amaya :fortune :blue-cheese _0]
+          [:landon :cosmopolitan :muenster 7.5]
+          [:jason :vogue :mozzarella 5]
+          [_1 :time :mascarpone 5]
+          [_2 :vogue :mascarpone 8.5]))))
+
 ;; =============================================================================
 ;; cKanren
 
