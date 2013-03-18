@@ -1,3 +1,15 @@
+From 0.8.0 to 0.8.1
+====
+
+Enhancements
+----
+* LOGIC-108: recursive featurec now supported
+
+Bug Fixes
+----
+* LOGIC-83: old typo in test
+* LOGIC-116: fix bug in ConstraintStore migrate
+
 From 0.8.0-rc3 to 0.8.0
 ====
 
