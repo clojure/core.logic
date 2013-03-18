@@ -1141,20 +1141,21 @@
          '(1))))
 
 (defrel rel2 ^:index e ^:index a ^:index v)
+
 (facts rel2 [[:e1 :a1 :v1]
              [:e1 :a2 :v2]])
+
 (retractions rel2 [[:e1 :a1 :v1]
                    [:e1 :a1 :v1]
                    [:e1 :a2 :v2]])
 
 (deftest rel2-dup-retractions
   (is (= (run* [out]
-               (fresh [e a v]
-                      (rel2 e :a1 :v1)
-                      (rel2 e a v)
-                      (== [e a v] out))))
-      '()))
-
+           (fresh [e a v]
+             (rel2 e :a1 :v1)
+             (rel2 e a v)
+             (== [e a v] out)))
+        '())))
 
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
