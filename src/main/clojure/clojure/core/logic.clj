@@ -2629,6 +2629,10 @@
 (defn partial-map? [x]
   (instance? PMap x))
 
+(extend-type clojure.lang.IPersistentMap
+  IFeature
+  (-feature [x] (partial-map x)))
+
 (defn -featurec
   [x fs]
   (reify
@@ -2651,13 +2655,21 @@
     IConstraintWatchedStores
     (watched-stores [this] #{::subst})))
 
+(defn ->feature [x]
+  (-feature
+    (walk-term x
+      (fn [y]
+        (if (tree-term? y)
+          (->feature y)
+          y)))))
+
 (defn featurec
   "Ensure that a map contains at least the key-value pairs
   in the map fs. fs must be partially instantiated - that is, 
   it may contain values which are logic variables to support 
   feature extraction."
   [x fs]
-  (cgoal (-featurec x (partial-map fs))))
+  (cgoal (-featurec x (->feature fs))))
 
 ;; =============================================================================
 ;; defnc

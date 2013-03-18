@@ -213,3 +213,9 @@
 
 (defprotocol IConstrainTree
   (-constrain-tree [t fc s]))
+
+;; -----------------------------------------------------------------------------
+;; Features
+
+(defprotocol IFeature
+  (-feature [x]))

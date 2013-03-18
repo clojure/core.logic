@@ -1736,6 +1736,20 @@
   (is (= (u/unifier ['(?x ?y) '(?y ?x)])
          '{?x ?y})))
 
+(deftest test-108-recursive-features
+  (is (= (run* [x y]
+           (featurec x {:foo {:bar y}})
+           (== x {:foo {:bar 1}}))
+        '([{:foo {:bar 1}} 1])))
+  (is (= (run* [x y]
+           (featurec x {:foo {:bar y}})
+           (== x {:foo {:bar 1 :woz 2}}))
+        '([{:foo {:bar 1 :woz 2}} 1])))
+  (is (= (run* [x y]
+           (featurec x {:foo {:bar y}})
+           (== x {:foo {:baz 1}}))
+        '())))
+
 ;; =============================================================================
 ;; cKanren
 
