@@ -9,6 +9,7 @@ Bug Fixes
 ----
 * LOGIC-83: old typo in test
 * LOGIC-116: fix bug in ConstraintStore migrate
+* LOGIC-120/121/122: bugs around the simple unifier
 
 From 0.8.0-rc3 to 0.8.0
 ====
