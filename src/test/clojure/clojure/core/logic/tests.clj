@@ -3318,3 +3318,40 @@
   (let [x (lvar 'x)
         s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
     (is (= (get-dom s x ::nom) '[(swap x y)]))))
+
+(deftest test-arch-friends-problem
+  (let [expected [{:wedges 2,
+                    :flats 4,
+                    :pumps 1,
+                    :sandals 3,
+                    :foot-farm 2,
+                    :heels-in-a-hand-cart 4,
+                    :shoe-palace 1,
+                    :tootsies 3}]]
+    (is (= expected
+           (run* [q]
+             (fresh [wedges flats pumps sandals
+                     ff hh sp tt pumps+1]
+               (fd/in wedges flats pumps sandals
+                      ff hh sp tt pumps+1 (fd/interval 1 4))
+               (fd/distinct [wedges flats pumps sandals])
+               (fd/distinct [ff hh sp tt])
+               (fd/== flats hh)
+               (fd/+ pumps 1 pumps+1)
+
+               ;;Flipping the order of pumps+1 and tt causes this
+               ;;test to pass.  Moving the fd/!= call after the
+               ;;(fd/== ff 2) or (fd/+ sp 2 sandals) call also
+               ;;causes it to pass (fd/!= argument order doesn't matter)
+               (fd/!= pumps+1 tt)
+               
+               (fd/== ff 2)
+               (fd/+ sp 2 sandals)
+               (== q {:wedges wedges
+                      :flats flats
+                      :pumps pumps
+                      :sandals sandals
+                      :foot-farm ff
+                      :heels-in-a-hand-cart hh
+                      :shoe-palace sp
+                      :tootsies tt})))))))
