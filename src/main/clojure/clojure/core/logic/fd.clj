@@ -466,18 +466,19 @@
 (defn disjoint?* [is js]
   (if (disjoint? (interval (lb is) (ub is))
                  (interval (lb js) (ub js)))
-      true
-      (let [d0 (intervals is)
-            d1 (intervals js)]
-        (loop [d0 d0 d1 d1]
-          (if (nil? d0)
-            true
-            (let [i (first d0)
-                  j (first d1)]
-              (cond
-               (or (interval-< i j) (disjoint? i j)) (recur (next d0) d1)
-               (interval-> i j) (recur d0 (next d1))
-               :else false)))))))
+    true
+    (let [d0 (intervals is)
+          d1 (intervals js)]
+      (loop [d0 d0 d1 d1]
+        (if (or (nil? d0) (nil? d1))
+          true
+          (let [i (first d0)
+                j (first d1)]
+            (cond
+              (interval-< i j) (recur (next d0) d1)
+              (interval-> i j) (recur d0 (next d1))
+              (disjoint? i j)  (recur (next d0) d1)
+              :else false)))))))
 
 (declare normalize-intervals singleton-dom? multi-interval)
 
