@@ -682,7 +682,7 @@
   ([name gensym]
      (let [oname name
            name (if gensym
-                  (str name (. clojure.lang.RT (nextID)))
+                  (str name "__" (. clojure.lang.RT (nextID)))
                   (str name))]
        (LVar. name oname (.hashCode name) nil))))
 
