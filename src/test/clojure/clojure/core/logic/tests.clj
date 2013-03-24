@@ -1758,7 +1758,7 @@
                (fd/multi-interval 1 (fd/interval 3 4))
                (fd/interval 2 4)))))
 
-(deftest test-arch-friends-problem
+(deftest test-arch-friends-problem-logic-124
   (let [expected [{:wedges 2,
                     :flats 4,
                     :pumps 1,
@@ -1777,13 +1777,7 @@
                (fd/distinct [ff hh sp tt])
                (fd/== flats hh)
                (fd/+ pumps 1 pumps+1)
-
-               ;;Flipping the order of pumps+1 and tt causes this
-               ;;test to pass.  Moving the fd/!= call after the
-               ;;(fd/== ff 2) or (fd/+ sp 2 sandals) call also
-               ;;causes it to pass (fd/!= argument order doesn't matter)
                (fd/!= pumps+1 tt)
-               
                (fd/== ff 2)
                (fd/+ sp 2 sandals)
                (== q {:wedges wedges
