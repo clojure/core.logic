@@ -1,3 +1,10 @@
+From 0.8.1 to 0.8.2
+====
+
+Bug Fixes
+----
+* LOGIC-124: fix disjoint?* bug
+
 From 0.8.0 to 0.8.1
 ====
 
