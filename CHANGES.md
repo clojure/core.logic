@@ -1,3 +1,10 @@
+From 0.8.2 to 0.8.3
+====
+
+Bug Fixes
+----
+* LOGIC-126: bad fd/+ fd/* interaction from StackOverflow
+
 From 0.8.1 to 0.8.2
 ====
 
