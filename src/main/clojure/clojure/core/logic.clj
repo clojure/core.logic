@@ -491,6 +491,12 @@
        (sync-eset s v seenset
          (fn [s y] (rem-dom s y dom (conj (or seenset #{}) x)))))))
 
+;; NOTE: I don't think we need to bother returning ::not-dom or some other
+;; not found value. Assume the case where the var is bound to nil in 
+;; the substitution where the var has a domain. That the var is member
+;; will be verified by domc or something similar. The case where the var
+;; is nil and has no domain is trivial.
+
 (defn get-dom [s x dom]
   (let [v (root-val s x)]
     (cond
@@ -498,9 +504,7 @@
                        (if (not= v' ::unbound)
                          v'
                          (-> v :doms dom)))
-      (not (lvar? v)) v
-      ;; :else ::no-dom ;; NOTE: this doesn't work, some assumptions about nil - David
-      )))
+      (not (lvar? v)) v)))
 
 (defn- make-s
   ([] (make-s {}))
