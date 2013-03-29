@@ -1789,6 +1789,16 @@
                       :shoe-palace sp
                       :tootsies tt})))))))
 
+(deftest test-126-times-plus
+  (is (= (set
+           (run* [q]
+             (fresh [x y p]
+               (fd/in x y (fd/interval 1 38))
+               (fd/* x y p)
+               (fd/+ p 2 40)
+               (== q [x y]))))
+        #{[1 38] [38 1] [2 19] [19 2]})))
+
 ;; =============================================================================
 ;; cKanren
 

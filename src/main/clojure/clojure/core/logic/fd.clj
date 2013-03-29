@@ -627,7 +627,10 @@
 (defn resolve-storable-dom
   [a x dom]
   (if (singleton-dom? dom)
-    (ext-run-cs (rem-dom a x ::l/fd) x dom)
+    (let [xv (walk a x)]
+      (if (lvar? xv)
+        (ext-run-cs (rem-dom a x ::l/fd) x dom)
+        a))
     (ext-dom-fd a x dom)))
 
 (defn update-var-dom
@@ -712,14 +715,16 @@
     IEnforceableConstraint
     clojure.lang.IFn
     (invoke [this s]
-      (when (member? (get-dom s x) (walk s x))
-        (rem-dom s x ::l/fd)))
+      (let [dom (-> (root-val s x) :doms ::l/fd)]
+        (when (member? dom (walk s x))
+          (rem-dom s x ::l/fd))))
     IConstraintOp
     (rator [_] `domc)
     (rands [_] [x])
     IRelevant
     (-relevant? [this s]
-      (not (nil? (get-dom s x))))
+      (let [dom (-> (root-val s x) :doms ::l/fd)]
+        (not (nil? dom))))
     IRunnable
     (runnable? [this s]
       (not (lvar? (walk s x))))
@@ -1026,6 +1031,8 @@
           (loop [y* (seq y*) s s]
             (if y*
               (let [y (first y*)
+                    ;; NOTE: we can't just get-dom because get-dom
+                    ;; return nil, walk returns the var - David
                     v (or (get-dom s y) (walk s y))
                     s (if-not (lvar? v)
                         (cond

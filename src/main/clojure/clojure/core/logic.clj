@@ -493,8 +493,14 @@
 
 (defn get-dom [s x dom]
   (let [v (root-val s x)]
-    (if (subst-val? v)
-      (-> v :doms dom))))
+    (cond
+      (subst-val? v) (let [v' (:v v)]
+                       (if (not= v' ::unbound)
+                         v'
+                         (-> v :doms dom)))
+      (not (lvar? v)) v
+      ;; :else ::no-dom ;; NOTE: this doesn't work, some assumptions about nil - David
+      )))
 
 (defn- make-s
   ([] (make-s {}))
@@ -2310,10 +2316,7 @@
 (defmacro let-dom
   [a vars & body]
   (let [get-var-dom (fn [a [v b]]
-                      `(~b (let [v# (walk ~a ~v)]
-                             (if (lvar? v#)
-                               (get-dom-fd ~a v#)
-                               v#))))]
+                      `(~b (get-dom-fd ~a ~v)))]
    `(let [~@(mapcat (partial get-var-dom a) (partition 2 vars))]
       ~@body)))
 
