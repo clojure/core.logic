@@ -898,6 +898,6 @@
 
   (dotimes [_ 5]
     (time
-      (dotimes [_ 10]
-        (doall (take 1 (magic 3))))))
+      (dotimes [_ 1]
+        (doall (take 1 (magic 4))))))
   )
