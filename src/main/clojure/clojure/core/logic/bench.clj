@@ -846,3 +846,58 @@
       (dotimes [_ 100] 
         (doall (safefd)))))
   )
+
+;; Magic Squares
+
+(defn magic-grid [n]
+  (repeatedly (* n n) lvar))
+
+(defn magic-cols [n grid]
+  (apply map list (partition n grid)))
+
+(defn magic-diag [n rows]
+  (first
+    (reduce
+      (fn [[r n] xs]
+        [(conj r (nth xs n)) (inc n)])
+      [[] 0]
+      rows)))
+
+(defn magic-sum [ls res]
+  (conde
+    [(== ls []) (== res 0)]
+    [(== ls [res])]
+    [(fresh [h t inter]
+       (conso h t ls)
+       (fd/+ h inter res)
+       (magic-sum t inter))]))
+
+(defn magic [n]
+  (let [g     (magic-grid n)
+        nums  (range 1 (inc (* n n)))
+        ndom  (fd/interval 1 (* n n))
+        lsum  (/ (apply + nums) n)
+        rows  (partition n g)
+        lines (concat
+                [(magic-diag n rows)
+                 (magic-diag n (map reverse rows))]
+                rows
+                (magic-cols n g))]
+    (run* [q]
+      (== q g)
+      (everyg #(fd/in % ndom) q)
+      (distribute q ::l/ff)
+      (fd/distinct q)
+      (everyg #(magic-sum % lsum) lines))))
+
+(comment
+  (dotimes [_ 5]
+    (time
+      (dotimes [_ 10]
+        (doall (take 1 (magic 3))))))
+
+  (dotimes [_ 5]
+    (time
+      (dotimes [_ 10]
+        (doall (take 1 (magic 3))))))
+  )
