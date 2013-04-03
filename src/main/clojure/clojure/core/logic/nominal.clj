@@ -61,7 +61,17 @@
       (let [[tfirst s] (swap-noms (first t) swap s)
             [tnext s] (swap-noms (next t) swap s)]
         [(with-meta (cons tfirst tnext) (meta t)) s])
-      [t s])))
+      [t s]))
+
+  clojure.lang.IPersistentVector
+  (swap-noms [t swap s]
+    (let [[ts s] (swap-noms (seq t) swap s)]
+      [(vec ts) s]))
+
+  clojure.lang.IPersistentMap
+  (swap-noms [t swap s]
+    (let [[tkvs s] (swap-noms (seq t) swap s)]
+      [(into {} tkvs) s])))
 
 ;; =============================================================================
 ;; Nom

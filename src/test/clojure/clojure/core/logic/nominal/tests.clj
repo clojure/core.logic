@@ -521,3 +521,11 @@
              (nom/fresh [a b]
                (!= (nom/tie a a) (nom/tie b b))))
           '()))))
+
+(deftest test-logic-127-nomswap-maps
+  (is (= (run* [q]
+           (fresh [body]
+             (nom/fresh [a b]
+               (== (nom/tie a {:k a}) (nom/tie b body))
+               (== {:k q} body))))
+        '(a_0))))
