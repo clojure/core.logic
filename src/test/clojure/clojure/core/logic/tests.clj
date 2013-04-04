@@ -2198,8 +2198,8 @@
            [u w]))
     (is (= (rator c)
            'clojure.core.logic.fd/==))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+    (is (not (runnable? c empty-s)))
+    (is (relevant? c empty-s))))
 
 (deftest test-make-fdc-prim-2
   (let [u (lvar 'u)
@@ -2210,8 +2210,8 @@
            [u w]))
     (is (= (rator c)
            'clojure.core.logic.fd/+))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+    (is (not (runnable? c empty-s)))
+    (is (relevant? c empty-s))))
 
 (deftest test-make-fdc-1
   (let [u (lvar 'u)
@@ -2222,8 +2222,8 @@
            [u w]))
     (is (= (rator c)
            `fd/+))
-    (is (false? (runnable? c empty-s)))
-    (is (true? (relevant? c empty-s)))))
+    (is (not (runnable? c empty-s)))
+    (is (relevant? c empty-s))))
 
 (deftest test-addc-1
   (let [u (lvar 'u)

@@ -20,16 +20,6 @@
 (defprotocol IIntervals
   (intervals [this]))
 
-(defprotocol IFiniteDomain
-  (domain? [this]))
-
-(extend-protocol IFiniteDomain
-  nil
-  (domain? [x] false)
-
-  Object
-  (domain? [x] false))
-
 (defprotocol ISortedDomain
   (drop-one [this])
   (drop-before [this n])
@@ -111,9 +101,6 @@
 
   (keep-before [this n]
     (apply domain (take-while #(core/< % n) s)))
-
-  IFiniteDomain
-  (domain? [_] true)
 
   ISet
   (member? [this n]
@@ -198,9 +185,6 @@
        (when (clojure.core/< this# n#)
          this#))
 
-     IFiniteDomain
-     (~'domain? [this#] true)
-
      ISet
      (~'member? [this# that#]
        (if (integer? that#)
@@ -280,9 +264,6 @@
      (core/<= n _lb) nil
      (core/> n _ub) this
      :else (interval _lb (dec n))))
-
-  IFiniteDomain
-  (domain? [_] true)
 
   ISet
   (member? [this n]
@@ -553,9 +534,6 @@
           (when (pos? (count r))
             (apply multi-interval r))))))
 
-  IFiniteDomain
-  (domain? [_] true)
-
   ISet
   (member? [this n]
     (if (some #(member? % n) is)
@@ -757,7 +735,7 @@
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
-        (and (domain? du) (domain? dv))))
+        (and du dv)))
     IConstraintWatchedStores
     (watched-stores [this]
       #{::l/subst ::l/fd})))
@@ -790,13 +768,13 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv]
-        (not (and (domain? du) (domain? dv) (disjoint? du dv)))))
+        (not (and du dv (disjoint? du dv)))))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
         ;; we are runnable if du and dv both have domains
         ;; and at least du or dv has a singleton domain
-        (and (domain? du) (domain? dv)
+        (and du dv
              (or (singleton-dom? du)
                  (singleton-dom? dv)))))
     IConstraintWatchedStores
@@ -826,13 +804,13 @@
     IRelevant
     (-relevant? [this s]
       (let-dom s [u du v dv]
-       (if (and (domain? du) (domain dv))
+        (if (and du dv)
          (not (interval-<= du dv))
          true)))
     IRunnable
     (runnable? [this s]
       (let-dom s [u du v dv]
-        (and (domain? du) (domain? dv))))
+        (and du dv)))
     IConstraintWatchedStores
     (watched-stores [this]
       #{::l/subst ::l/fd})))
@@ -881,13 +859,13 @@
     clojure.lang.IFn
     (invoke [this s]
       (let-dom s [u du v dv w dw]
-        (let [[wmin wmax] (if (domain? dw)
+        (let [[wmin wmax] (if dw
                             (bounds dw)
                             [(core/+ (lb du) (lb dv)) (core/+ (ub du) (ub dv))])
-              [umin umax] (if (domain? du)
+               [umin umax] (if du
                             (bounds du)
                             [(core/- (lb dw) (ub dv)) (core/- (ub dw) (lb dv))])
-              [vmin vmax] (if (domain? dv)
+               [vmin vmax] (if dv
                             (bounds dv)
                             [(core/- (lb dw) (ub du)) (core/- (ub dw) (lb du))])]
           ((composeg*
@@ -913,9 +891,9 @@
       ;; this is to support eqfd
       (let-dom s [u du v dv w dw]
         (cond
-          (domain? du) (or (domain? dv) (domain? dw))
-          (domain? dv) (or (domain? du) (domain? dw))
-          (domain? dw) (or (domain? du) (domain? dv))
+          du (or dv dw)
+          dv (or du dw)
+          dw (or du dv)
           :else false)))
     IConstraintWatchedStores
     (watched-stores [this]
@@ -957,14 +935,14 @@
      clojure.lang.IFn
      (invoke [this s]
        (let-dom s [u du v dv w dw]
-         (let [[wmin wmax] (if (domain? dw)
+         (let [[wmin wmax] (if dw
                              (bounds dw)
                              [(core/* (lb du) (lb dv)) (core/* (ub du) (ub dv))])
-               [umin umax] (if (domain? du)
+                [umin umax] (if du
                              (bounds du)
                              [(safe-div (ub dv) (lb dw) (lb dw) :lower)
                               (safe-div (lb dv) (lb dw) (ub dw) :upper)])
-               [vmin vmax] (if (domain? dv)
+                [vmin vmax] (if dv
                              (bounds dv)
                              [(safe-div (ub du) (lb dw) (lb dw) :lower)
                               (safe-div (lb du) (lb dw) (ub dw) :upper)])
@@ -995,9 +973,9 @@
        ;; this is to support eqfd
        (let-dom s [u du v dv w dw]
          (cond
-          (domain? du) (or (domain? dv) (domain? dw))
-          (domain? dv) (or (domain? du) (domain? dw))
-          (domain? dw) (or (domain? du) (domain? dv))
+           du (or dv dw)
+           dv (or du dw)
+           dw (or du dv)
           :else false)))
      IConstraintWatchedStores
      (watched-stores [this]
