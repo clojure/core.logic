@@ -693,8 +693,10 @@
     clojure.lang.IFn
     (invoke [this s]
       (let [dom (-> (root-val s x) :doms ::l/fd)]
-        (when (-member? dom (walk s x))
-          (rem-dom s x ::l/fd))))
+        (if dom
+          (when (-member? dom (walk s x))
+            (rem-dom s x ::l/fd))
+          s)))
     IConstraintOp
     (rator [_] `domc)
     (rands [_] [x])
