@@ -65,7 +65,7 @@
   Object
   (equals [this that]
     (if (finite-domain? that)
-      (if (= (member-count this) (member-count that))
+      (if (= (-member-count this) (-member-count that))
         (= s (:s that))
         false)
       false))
@@ -81,7 +81,7 @@
       not-found))
 
   IMemberCount
-  (member-count [this] (count s))
+  (-member-count [this] (count s))
 
   IInterval
   (-lb [_] min)
@@ -168,7 +168,7 @@
 (defmacro extend-to-fd [t]
   `(extend-type ~t
      IMemberCount
-     (~'member-count [this#] 1)
+     (~'-member-count [this#] 1)
 
      IInterval
      (~'-lb [this#] this#)
@@ -239,7 +239,7 @@
     (pr-str this))
 
   IMemberCount
-  (member-count [this] (inc (core/- ub lb)))
+  (-member-count [this] (inc (core/- ub lb)))
 
   IInterval
   (-lb [_] lb)
@@ -495,8 +495,9 @@
       false))
 
   IMemberCount
-  (member-count [this]
-    (reduce core/+ 0 (map member-count is)))
+  (-member-count [this]
+    ;; NOTE: ugly hack around http://dev.clojure.org/jira/browse/CLJ-1202 - David
+    (reduce core/+ 0 (map #(-member-count %) is)))
 
   IInterval
   (-lb [_] min)
@@ -690,25 +691,28 @@
 (defn -domc [x]
   (reify
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
-      (let [dom (-> (root-val s x) :doms ::l/fd)]
-        (if dom
-          (when (-member? dom (walk s x))
-            (rem-dom s x ::l/fd))
-          s)))
+    IConstraintStep
+    (-step [this s]
+      (let [xv (walk s x)
+            xd (-> (root-val s x) :doms ::l/fd)]
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (if xd
+              (when (-member? xd xv)
+                (rem-dom s x ::l/fd))
+              s))
+          IEntailed
+          (-entailed? [_]
+            (nil? xd))
+          IRunnable
+          (-runnable? [_]
+            (not (lvar? xv))))))
     IConstraintOp
-    (rator [_] `domc)
-    (rands [_] [x])
-    IRelevant
-    (-relevant? [this s]
-      (let [dom (-> (root-val s x) :doms ::l/fd)]
-        (not (nil? dom))))
-    IRunnable
-    (runnable? [this s]
-      (not (lvar? (walk s x))))
+    (-rator [_] `domc)
+    (-rands [_] [x])
     IConstraintWatchedStores
-    (watched-stores [this] #{::l/subst})))
+    (-watched-stores [this] #{::l/subst})))
 
 (defn domc [x]
   (cgoal (-domc x)))
@@ -716,29 +720,29 @@
 (defn ==c [u v]
   (reify
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
+    IConstraintStep
+    (-step [this s]
       (let-dom s [u du v dv]
-        (let [i (-intersection du dv)]
-          ((composeg
-            (process-dom u i)
-            (process-dom v i)) s))))
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (let [i (-intersection du dv)]
+              ((composeg
+                 (process-dom u i)
+                 (process-dom v i)) s)))
+          IEntailed
+          (-entailed? [_]
+            (and (singleton-dom? du)
+                 (singleton-dom? dv)
+                 (= du dv)))
+          IRunnable
+          (-runnable? [_]
+            (and du dv)))))
     IConstraintOp
-    (rator [_] `==)
-    (rands [_] [u v])
-    IRelevant
-    (-relevant? [this s]
-      (let-dom s [u du v dv]
-        (cond
-         (not (singleton-dom? du)) true
-         (not (singleton-dom? dv)) true
-         :else (not= du dv))))
-    IRunnable
-    (runnable? [this s]
-      (let-dom s [u du v dv]
-        (and du dv)))
+    (-rator [_] `==)
+    (-rands [_] [u v])
     IConstraintWatchedStores
-    (watched-stores [this]
+    (-watched-stores [this]
       #{::l/subst ::l/fd})))
 
 (defn ==
@@ -750,36 +754,32 @@
 (defn !=c [u v]
   (reify 
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
+    IConstraintStep
+    (-step [this s]
       (let-dom s [u du v dv]
-        (cond
-         (and (singleton-dom? du)
-              (singleton-dom? dv)
-              (= du dv)) nil
-         (-disjoint? du dv) s
-         (singleton-dom? du)
-         (when-let [vdiff (-difference dv du)]
-           ((process-dom v vdiff) s))
-         :else (when-let [udiff (-difference du dv)]
-                 ((process-dom u udiff) s)))))
+        (let [su? (singleton-dom? du)
+              sv? (singleton-dom? dv)]
+          (reify
+            clojure.lang.IFn
+            (invoke [_ s]
+              (cond
+                (and su? sv? (= du dv)) nil
+                (-disjoint? du dv) s
+                su? (when-let [vdiff (-difference dv du)]
+                      ((process-dom v vdiff) s))
+                :else (when-let [udiff (-difference du dv)]
+                        ((process-dom u udiff) s))))
+            IEntailed
+            (-entailed? [_]
+              (and du dv (-disjoint? du dv)))
+            IRunnable
+            (-runnable? [_]
+              (and du dv (or su? sv?)))))))
     IConstraintOp
-    (rator [_] `!=)
-    (rands [_] [u v])
-    IRelevant
-    (-relevant? [this s]
-      (let-dom s [u du v dv]
-        (not (and du dv (-disjoint? du dv)))))
-    IRunnable
-    (runnable? [this s]
-      (let-dom s [u du v dv]
-        ;; we are runnable if du and dv both have domains
-        ;; and at least du or dv has a singleton domain
-        (and du dv
-             (or (singleton-dom? du)
-                 (singleton-dom? dv)))))
+    (-rator [_] `!=)
+    (-rands [_] [u v])
     IConstraintWatchedStores
-    (watched-stores [this]
+    (-watched-stores [this]
       #{::l/subst ::l/fd}))) 
 
 (defn !=
@@ -791,29 +791,28 @@
 (defn <=c [u v]
   (reify 
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
+    IConstraintStep
+    (-step [this s]
       (let-dom s [u du v dv]
-        (let [umin (-lb du)
-              vmax (-ub dv)]
-         ((composeg*
-           (process-dom u (-keep-before du (inc vmax)))
-           (process-dom v (-drop-before dv umin))) s))))
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (let [umin (-lb du)
+                  vmax (-ub dv)]
+              ((composeg*
+                 (process-dom u (-keep-before du (inc vmax)))
+                 (process-dom v (-drop-before dv umin))) s)))
+          IEntailed
+          (-entailed? [_]
+            (and du dv (interval-<= du dv)))
+          IRunnable
+          (-runnable? [_]
+            (and du dv)))))
     IConstraintOp
-    (rator [_] `<=)
-    (rands [_] [u v])
-    IRelevant
-    (-relevant? [this s]
-      (let-dom s [u du v dv]
-        (if (and du dv)
-         (not (interval-<= du dv))
-         true)))
-    IRunnable
-    (runnable? [this s]
-      (let-dom s [u du v dv]
-        (and du dv)))
+    (-rator [_] `<=)
+    (-rands [_] [u v])
     IConstraintWatchedStores
-    (watched-stores [this]
+    (-watched-stores [this]
       #{::l/subst ::l/fd})))
 
 (defn <=
@@ -857,47 +856,45 @@
 (defn +c [u v w]
   (reify 
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
+    IConstraintStep
+    (-step [this s]
       (let-dom s [u du v dv w dw]
-        (let [[wmin wmax] (if dw
-                            (bounds dw)
-                            [(core/+ (-lb du) (-lb dv)) (core/+ (-ub du) (-ub dv))])
-               [umin umax] (if du
-                            (bounds du)
-                            [(core/- (-lb dw) (-ub dv)) (core/- (-ub dw) (-lb dv))])
-               [vmin vmax] (if dv
-                            (bounds dv)
-                            [(core/- (-lb dw) (-ub du)) (core/- (-ub dw) (-lb du))])]
-          ((composeg*
-            (process-dom w (interval (core/+ umin vmin) (core/+ umax vmax)))
-            (process-dom u (interval (core/- wmin vmax) (core/- wmax vmin)))
-            (process-dom v (interval (core/- wmin umax) (core/- wmax umin)))
-            (+c-guard u v w))
-           s))))
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (let [[wmin wmax] (if dw
+                                (bounds dw)
+                                [(core/+ (-lb du) (-lb dv)) (core/+ (-ub du) (-ub dv))])
+                  [umin umax] (if du
+                                (bounds du)
+                                [(core/- (-lb dw) (-ub dv)) (core/- (-ub dw) (-lb dv))])
+                  [vmin vmax] (if dv
+                                (bounds dv)
+                                [(core/- (-lb dw) (-ub du)) (core/- (-ub dw) (-lb du))])]
+              ((composeg*
+                 (process-dom w (interval (core/+ umin vmin) (core/+ umax vmax)))
+                 (process-dom u (interval (core/- wmin vmax) (core/- wmax vmin)))
+                 (process-dom v (interval (core/- wmin umax) (core/- wmax umin)))
+                 (+c-guard u v w))
+                s)))
+          IEntailed
+          (-entailed? [_]
+            (and (singleton-dom? du)
+                 (singleton-dom? dv)
+                 (singleton-dom? dw)
+                 (= (core/+ du dv) dw)))
+          IRunnable
+          (-runnable? [_]
+            (cond
+              du (or dv dw)
+              dv (or du dw)
+              dw (or du dv)
+              :else false)))))
     IConstraintOp
-    (rator [_] `+)
-    (rands [_] [u v w])
-    IRelevant
-    (-relevant? [this s]
-      (let-dom s [u du v dv w dw]
-        (cond
-         (not (singleton-dom? du)) true
-         (not (singleton-dom? dv)) true
-         (not (singleton-dom? dw)) true
-         :else (not= (core/+ du dv) dw))))
-    IRunnable
-    (runnable? [this s]
-      ;; we want to run even if w doesn't have a domain
-      ;; this is to support eqfd
-      (let-dom s [u du v dv w dw]
-        (cond
-          du (or dv dw)
-          dv (or du dw)
-          dw (or du dv)
-          :else false)))
+    (-rator [_] `+)
+    (-rands [_] [u v w])
     IConstraintWatchedStores
-    (watched-stores [this]
+    (-watched-stores [this]
       #{::l/subst ::l/fd})))
 
 (defn +
@@ -933,53 +930,51 @@
                   :upper q))))]
    (reify
      IEnforceableConstraint
-     clojure.lang.IFn
-     (invoke [this s]
+     IConstraintStep
+     (-step [this s]
        (let-dom s [u du v dv w dw]
-         (let [[wmin wmax] (if dw
-                             (bounds dw)
-                             [(core/* (-lb du) (-lb dv)) (core/* (-ub du) (-ub dv))])
-                [umin umax] (if du
-                             (bounds du)
-                             [(safe-div (-ub dv) (-lb dw) (-lb dw) :lower)
-                              (safe-div (-lb dv) (-lb dw) (-ub dw) :upper)])
-                [vmin vmax] (if dv
-                             (bounds dv)
-                             [(safe-div (-ub du) (-lb dw) (-lb dw) :lower)
-                              (safe-div (-lb du) (-lb dw) (-ub dw) :upper)])
-               wi (interval (core/* umin vmin) (core/* umax vmax))
-               ui (interval (safe-div vmax umin wmin :lower)
-                            (safe-div vmin umax wmax :upper))
-               vi (interval (safe-div umax vmin wmin :lower)
-                            (safe-div umin vmax wmax :upper))]
-           ((composeg*
-             (process-dom w wi)
-             (process-dom u ui)
-             (process-dom v vi)
-             (*c-guard u v w)) s))))
+         (reify
+           clojure.lang.IFn
+           (invoke [_ s]
+             (let [[wmin wmax] (if dw
+                                 (bounds dw)
+                                 [(core/* (-lb du) (-lb dv)) (core/* (-ub du) (-ub dv))])
+                   [umin umax] (if du
+                                 (bounds du)
+                                 [(safe-div (-ub dv) (-lb dw) (-lb dw) :lower)
+                                  (safe-div (-lb dv) (-lb dw) (-ub dw) :upper)])
+                   [vmin vmax] (if dv
+                                 (bounds dv)
+                                 [(safe-div (-ub du) (-lb dw) (-lb dw) :lower)
+                                  (safe-div (-lb du) (-lb dw) (-ub dw) :upper)])
+                    wi (interval (core/* umin vmin) (core/* umax vmax))
+                    ui (interval (safe-div vmax umin wmin :lower)
+                         (safe-div vmin umax wmax :upper))
+                    vi (interval (safe-div umax vmin wmin :lower)
+                         (safe-div umin vmax wmax :upper))]
+               ((composeg*
+                  (process-dom w wi)
+                  (process-dom u ui)
+                  (process-dom v vi)
+                  (*c-guard u v w)) s)))
+           IEntailed
+           (-entailed? [_]
+             (and (singleton-dom? du)
+                  (singleton-dom? dv)
+                  (singleton-dom? dw)
+                  (= (core/* du dv) dw)))
+           IRunnable
+           (-runnable? [_]
+             (cond
+               du (or dv dw)
+               dv (or du dw)
+               dw (or du dv)
+               :else false)))))
      IConstraintOp
-     (rator [_] `*)
-     (rands [_] [u v w])
-     IRelevant
-     (-relevant? [this s]
-       (let-dom s [u du v dv w dw]
-         (cond
-          (not (singleton-dom? du)) true
-          (not (singleton-dom? dv)) true
-          (not (singleton-dom? dw)) true
-          :else (not= (core/* du dv) dw))))
-     IRunnable
-     (runnable? [this s]
-       ;; we want to run even if w doesn't have a domain
-       ;; this is to support eqfd
-       (let-dom s [u du v dv w dw]
-         (cond
-           du (or dv dw)
-           dv (or du dw)
-           dw (or du dv)
-          :else false)))
+     (-rator [_] `*)
+     (-rands [_] [u v w])
      IConstraintWatchedStores
-     (watched-stores [this]
+     (-watched-stores [this]
        #{::l/subst ::l/fd}))))
 
 (defn *
@@ -1003,35 +998,36 @@
   [x y* n*]
   (reify
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
+    IConstraintStep
+    (-step [this s]
       (let [x (walk s x)]
-        (when-not (n* x)
-          (loop [y* (seq y*) s s]
-            (if y*
-              (let [y (first y*)
-                    ;; NOTE: we can't just get-dom because get-dom
-                    ;; return nil, walk returns the var - David
-                    v (or (get-dom s y) (walk s y))
-                    s (if-not (lvar? v)
-                        (cond
-                          (= x v) nil
-                          (-member? v x) ((process-dom y (-difference v x)) s)
-                          :else s)
-                        s)]
-                (when s
-                  (recur (next y*) s)))
-              ((remcg this) s))))))
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (when-not (n* x)
+              (loop [y* (seq y*) s s]
+                (if y*
+                  (let [y (first y*)
+                        ;; NOTE: we can't just get-dom because get-dom
+                        ;; return nil, walk returns the var - David
+                        v (or (get-dom s y) (walk s y))
+                        s (if-not (lvar? v)
+                            (cond
+                              (= x v) nil
+                              (-member? v x) ((process-dom y (-difference v x)) s)
+                              :else s)
+                            s)]
+                    (when s
+                      (recur (next y*) s)))
+                  ((remcg this) s)))))
+          IRunnable
+          (-runnable? [_]
+            (singleton-dom? x)))))
     IConstraintOp
-    (rator [_] `-distinct)
-    (rands [_] [x])
-    IRunnable
-    (runnable? [this s]
-      ;; we can only run if x is is bound to
-      ;; a single value
-      (singleton-dom? (walk s x)))
+    (-rator [_] `-distinct)
+    (-rands [_] [x])
     IConstraintWatchedStores
-    (watched-stores [this] #{::l/subst})))
+    (-watched-stores [this] #{::l/subst})))
 
 (defn -distinct [x y* n*]
   (cgoal (-distinctc x y* n*)))
@@ -1056,29 +1052,31 @@
   [v*]
   (reify
     IEnforceableConstraint
-    clojure.lang.IFn
-    (invoke [this s]
-      (let [v* (walk s v*)
-            {x* true n* false} (group-by lvar? v*)
-            n* (sort core/< n*)]
-        (when (list-sorted? core/< n*)
-          (let [x* (into #{} x*)
-                n* (into (sorted-set) n*)]
-            (loop [xs (seq x*) s s]
-              (if xs
-                (let [x (first xs)]
-                  (when-let [s ((-distinct x (disj x* x) n*) s)]
-                    (recur (next xs) s)))
-                ((remcg this) s)))))))
-    IConstraintOp
-    (rator [_] `distinct)
-    (rands [_] [v*])
-    IRunnable
-    (runnable? [this s]
+    IConstraintStep
+    (-step [this s]
       (let [v* (walk s v*)]
-        (not (lvar? v*))))
+        (reify
+          clojure.lang.IFn
+          (invoke [_ s]
+            (let [{x* true n* false} (group-by lvar? v*)
+                  n* (sort core/< n*)]
+              (when (list-sorted? core/< n*)
+                (let [x* (into #{} x*)
+                       n* (into (sorted-set) n*)]
+                  (loop [xs (seq x*) s s]
+                    (if xs
+                      (let [x (first xs)]
+                        (when-let [s ((-distinct x (disj x* x) n*) s)]
+                          (recur (next xs) s)))
+                      ((remcg this) s)))))))
+          IRunnable
+          (-runnable? [_]
+            (not (lvar? v*))))))
+    IConstraintOp
+    (-rator [_] `distinct)
+    (-rands [_] [v*])
     IConstraintWatchedStores
-    (watched-stores [this] #{::l/subst})))
+    (-watched-stores [this] #{::l/subst})))
 
 (defn distinct
   "A finite domain constraint that will guarantee that 

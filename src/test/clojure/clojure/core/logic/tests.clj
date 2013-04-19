@@ -2204,37 +2204,45 @@
 (deftest test-make-fdc-prim-1
   (let [u (lvar 'u)
         w (lvar 'w)
-        c (fd/==c u w)]
+        c (fd/==c u w)
+        c' (-step c empty-s)]
     (is (= (var-rands empty-s c)
            [u w]))
-    (is (= (rator c)
+    (is (= (-rator c)
            'clojure.core.logic.fd/==))
-    (is (not (runnable? c empty-s)))
-    (is (relevant? c empty-s))))
+    (is (not (-runnable? c')))
+    (is (not (-entailed? c')))))
 
 (deftest test-make-fdc-prim-2
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fd/+c u v w)]
+        c (fd/+c u v w)
+        c' (-step c empty-s)]
     (is (= (var-rands empty-s c)
            [u w]))
-    (is (= (rator c)
+    (is (= (-rator c)
            'clojure.core.logic.fd/+))
-    (is (not (runnable? c empty-s)))
-    (is (relevant? c empty-s))))
+    (is (not (-runnable? c')))
+    (is (not (-entailed? c')))))
+
+(deftest test-entailed-1
+  (let [c (fd/+c 1 2 3)
+        c' (-step c empty-s)]
+    (is (true? (-entailed? c')))))
 
 (deftest test-make-fdc-1
   (let [u (lvar 'u)
         v 1
         w (lvar 'w)
-        c (fd/+c u v w)]
+        c (fd/+c u v w)
+        c' (-step c empty-s)]
     (is (= (var-rands empty-s c)
            [u w]))
-    (is (= (rator c)
+    (is (= (-rator c)
            `fd/+))
-    (is (not (runnable? c empty-s)))
-    (is (relevant? c empty-s))))
+    (is (not (-runnable? c')))
+    (is (not (-entailed? c')))))
 
 (deftest test-addc-1
   (let [u (lvar 'u)
@@ -2716,15 +2724,15 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
-        c (with-prefix c (list (pair x 1)))]
-    (is (= (prefix c)
+        c (-with-prefix c (list (pair x 1)))]
+    (is (= (-prefix c)
            (list (pair x 1))))))
 
 (deftest test-!=-1 []
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) {x y}))))
+    (is (= (-prefix ((:cm (:cs s)) 0)) {x y}))))
 
 (deftest test-!=-2 []
   (let [x (lvar 'x)
@@ -2768,7 +2776,7 @@
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x 1) empty-s)]
-    (is (= (prefix ((:cm (:cs s)) 0)) {x 1}))))
+    (is (= (-prefix ((:cm (:cs s)) 0)) {x 1}))))
 
 #_(deftest test-normalize-store []
   (let [x (lvar 'x)

@@ -130,14 +130,29 @@
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
 
+;; Step, update the constraint with latest domain information
+
+(defprotocol IConstraintStep
+  (-step [c s]))
+
+;; the following assume implementation of -step
+
 (defprotocol IRunnable
-  (runnable? [c s]))
+  (-runnable? [c]))
+
+(defprotocol IEntailed
+  (-entailed? [c]))
+
+(defprotocol IEntailedVar
+  (-entailed-var? [c x]))
+
+;; Contraint reflection protocols
 
 (defprotocol IWithConstraintId
-  (-with-id [this id]))
+  (-with-id [c id]))
 
 (defprotocol IConstraintId
-  (-id [this]))
+  (-id [c]))
 
 (defn id [c]
   (if (instance? clojure.core.logic.protocols.IConstraintId c)
@@ -150,20 +165,14 @@
     (vary-meta c assoc ::id id)))
 
 (defprotocol IConstraintWatchedStores
-  (watched-stores [this]))
+  (-watched-stores [c]))
 
 (defprotocol IConstraintOp
-  (rator [this])
-  (rands [this]))
-
-(defprotocol IRelevant
-  (-relevant? [this s]))
-
-(defprotocol IRelevantVar
-  (-relevant-var? [this x]))
+  (-rator [c])
+  (-rands [c]))
 
 (defprotocol IReifiableConstraint
-  (reifyc [this v r a]))
+  (-reifyc [c v r a]))
 
 (defn reifiable? [x]
   (instance? clojure.core.logic.protocols.IReifiableConstraint x))
@@ -173,14 +182,18 @@
 (defn enforceable? [x]
   (instance? clojure.core.logic.protocols.IEnforceableConstraint x))
 
+;; cgoal
+
 (defprotocol IUnwrapConstraint
-  (unwrap [c]))
+  (-unwrap [c]))
+
+;; generic domain related protocols
 
 (defprotocol IMergeDomains
   (-merge-doms [a b]))
 
 (defprotocol IMemberCount
-  (member-count [this]))
+  (-member-count [dom]))
 
 (defprotocol IForceAnswerTerm
   (-force-ans [v x]))
@@ -189,7 +202,7 @@
 ;; Tree Constraints
 
 (defprotocol IDisunifyTerms
-  (disunify-terms [u v s cs]))
+  (-disunify-terms [u v s cs]))
 
 (definterface ITreeConstraint)
 
@@ -197,10 +210,10 @@
   (instance? clojure.core.logic.protocols.ITreeConstraint x))
 
 (defprotocol IPrefix
-  (prefix [this]))
+  (-prefix [c]))
 
 (defprotocol IWithPrefix
-  (with-prefix [this p]))
+  (-with-prefix [c p]))
 
 ;; -----------------------------------------------------------------------------
 ;; Partial Maps
