@@ -2180,12 +2180,12 @@
 
 (deftest test-process-dom-1
   (let [x (lvar 'x)
-        s ((fd/process-dom x 1) empty-s)]
+        s ((fd/process-dom x 1 1) empty-s)]
     (is (= (walk s x) 1))))
 
 (deftest test-process-dom-2
   (let [x (lvar 'x)
-        s ((fd/process-dom x (fd/interval 1 10)) empty-s)]
+        s ((fd/process-dom x (fd/interval 1 10) (fd/interval 1 10)) empty-s)]
     (is (= (fd/get-dom s x) (fd/interval 1 10)))))
 
 (deftest test-dom-1

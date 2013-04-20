@@ -592,9 +592,8 @@
     x))
 
 (defn ext-dom-fd
-  [a x dom]
-  (let [domp (get-dom a x)
-        a    (add-dom a x ::l/fd dom)]
+  [a x dom domp]
+  (let [a (add-dom a x ::l/fd dom)]
     (if (not= domp dom)
       ((run-constraints* [x] (:cs a) ::l/fd) a)
       a)))
@@ -603,31 +602,24 @@
   (integer? x))
 
 (defn resolve-storable-dom
-  [a x dom]
+  [a x dom domp]
   (if (singleton-dom? dom)
     (let [xv (walk a x)]
       (if (lvar? xv)
         (ext-run-cs (rem-dom a x ::l/fd) x dom)
         a))
-    (ext-dom-fd a x dom)))
-
-(defn update-var-dom
-  [a x dom]
-  (let [domp (get-dom a x)]
-    (if domp
-      (let [i (-intersection dom domp)]
-        (when i
-          (resolve-storable-dom a x i)))
-      (resolve-storable-dom a x dom))))
+    (ext-dom-fd a x dom domp)))
 
 (defn process-dom
   "If x is a var we update its domain. If it's an integer
-   we check that it's a member of the given domain."
-  [x dom]
+   we check that it's a member of the given domain. dom is
+   then new domain, it should have already been calculated from
+   domp which was the previous domain."
+  [x dom domp]
   (fn [a]
     (when dom
       (cond
-       (lvar? x) (update-var-dom a x dom)
+       (lvar? x) (resolve-storable-dom a x dom domp)
        (-member? dom x) a
        :else nil))))
 
@@ -637,12 +629,16 @@
   "Assign a var x a domain."
   [x dom]
   (fn [a]
-    ((composeg
-      (process-dom x dom)
-      (if (and (nil? (get-dom a x))
-               (not (singleton-dom? dom)))
-        (domc x)
-        identity)) a)))
+    (let [domp (get-dom a x)
+          dom  (if domp
+                 (-intersection dom domp)
+                 dom)]
+      ((composeg
+         (process-dom x dom domp)
+         (if (and (nil? domp)
+                  (not (singleton-dom? dom)))
+           (domc x)
+           identity)) a))))
 
 (defmacro in
   "Assign vars to domain. The domain must come last."
@@ -728,8 +724,8 @@
           (invoke [_ s]
             (let [i (-intersection du dv)]
               ((composeg
-                 (process-dom u i)
-                 (process-dom v i)) s)))
+                 (process-dom u i du)
+                 (process-dom v i dv)) s)))
           IEntailed
           (-entailed? [_]
             (and (singleton-dom? du)
@@ -766,9 +762,9 @@
                 (and su? sv? (= du dv)) nil
                 (-disjoint? du dv) s
                 su? (when-let [vdiff (-difference dv du)]
-                      ((process-dom v vdiff) s))
+                      ((process-dom v vdiff dv) s))
                 :else (when-let [udiff (-difference du dv)]
-                        ((process-dom u udiff) s))))
+                        ((process-dom u udiff du) s))))
             IEntailed
             (-entailed? [_]
               (and du dv (-disjoint? du dv)))
@@ -800,8 +796,8 @@
             (let [umin (-lb du)
                   vmax (-ub dv)]
               ((composeg*
-                 (process-dom u (-keep-before du (inc vmax)))
-                 (process-dom v (-drop-before dv umin))) s)))
+                 (process-dom u (-keep-before du (inc vmax)) du)
+                 (process-dom v (-drop-before dv umin) dv)) s)))
           IEntailed
           (-entailed? [_]
             (and du dv (interval-<= du dv)))
@@ -845,14 +841,6 @@
 ;; the constraint in the body again which were trying to get
 ;; away from
 
-(defn +c-guard [u v w]
-  (fn [s]
-    (let-dom s [u du v dv w dw]
-      (if (every? singleton-dom? [du dv dw])
-        (when (= (core/+ du dv) dw)
-          s)
-        s))))
-
 (defn +c [u v w]
   (reify 
     IEnforceableConstraint
@@ -870,13 +858,20 @@
                                 [(core/- (-lb dw) (-ub dv)) (core/- (-ub dw) (-lb dv))])
                   [vmin vmax] (if dv
                                 (bounds dv)
-                                [(core/- (-lb dw) (-ub du)) (core/- (-ub dw) (-lb du))])]
-              ((composeg*
-                 (process-dom w (interval (core/+ umin vmin) (core/+ umax vmax)))
-                 (process-dom u (interval (core/- wmin vmax) (core/- wmax vmin)))
-                 (process-dom v (interval (core/- wmin umax) (core/- wmax umin)))
-                 (+c-guard u v w))
-                s)))
+                                [(core/- (-lb dw) (-ub du)) (core/- (-ub dw) (-lb du))])
+                  wi (interval (core/+ umin vmin) (core/+ umax vmax))
+                  ui (interval (core/- wmin vmax) (core/- wmax vmin))
+                  vi (interval (core/- wmin umax) (core/- wmax umin))]
+              (when-let [wi (if (and wi dw) (-intersection wi dw) wi)]
+                (when-let [ui (if (and ui du) (-intersection ui du) ui)]
+                  (when-let [vi (if (and vi dv) (-intersection vi dv) vi)]
+                    (when (or (not (every? singleton-dom? [wi ui vi]))
+                              (core/= (core/+ ui vi) wi))
+                      ((composeg*
+                         (process-dom w wi dw)
+                         (process-dom u ui du)
+                         (process-dom v vi dv))
+                        s)))))))
           IEntailed
           (-entailed? [_]
             (and (singleton-dom? du)
@@ -910,14 +905,6 @@
 ;; TODO NOW: we run into trouble with division this is why
 ;; simplefd in bench.clj needs map-sum when it should not
 
-(defn *c-guard [u v w]
-  (fn [s]
-    (let-dom s [u du v dv w dw]
-      (if (every? singleton-dom? [du dv dw])
-        (when (= (core/* du dv) dw)
-          s)
-        s))))
-
 (defn *c [u v w]
   (letfn [(safe-div [n c a t]
             (if (zero? n)
@@ -947,16 +934,20 @@
                                  (bounds dv)
                                  [(safe-div (-ub du) (-lb dw) (-lb dw) :lower)
                                   (safe-div (-lb du) (-lb dw) (-ub dw) :upper)])
-                    wi (interval (core/* umin vmin) (core/* umax vmax))
-                    ui (interval (safe-div vmax umin wmin :lower)
-                         (safe-div vmin umax wmax :upper))
-                    vi (interval (safe-div umax vmin wmin :lower)
-                         (safe-div umin vmax wmax :upper))]
-               ((composeg*
-                  (process-dom w wi)
-                  (process-dom u ui)
-                  (process-dom v vi)
-                  (*c-guard u v w)) s)))
+                   wi (interval (core/* umin vmin) (core/* umax vmax))
+                   ui (interval (safe-div vmax umin wmin :lower)
+                                (safe-div vmin umax wmax :upper))
+                   vi (interval (safe-div umax vmin wmin :lower)
+                                (safe-div umin vmax wmax :upper))]
+               (when-let [wi (if (and wi dw) (-intersection wi dw) wi)]
+                 (when-let [ui (if (and ui du) (-intersection ui du) ui)]
+                   (when-let [vi (if (and vi dv) (-intersection vi dv) vi)]
+                     (when (or (not (every? singleton-dom? [wi ui vi]))
+                               (core/= (core/* ui vi) wi))
+                       ((composeg*
+                          (process-dom w wi dw)
+                          (process-dom u ui du)
+                          (process-dom v vi dv)) s)))))))
            IEntailed
            (-entailed? [_]
              (and (singleton-dom? du)
@@ -1014,7 +1005,7 @@
                         s (if-not (lvar? v)
                             (cond
                               (= x v) nil
-                              (-member? v x) ((process-dom y (-difference v x)) s)
+                              (-member? v x) ((process-dom y (-difference v x) v) s)
                               :else s)
                             s)]
                     (when s
