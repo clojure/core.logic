@@ -808,7 +808,27 @@
   (dotimes [_ 5]
     (time
       (dotimes [_ 100]
-        (doall (sudokufd ciao))))))
+        (doall (sudokufd ciao)))))
+
+  (def jacop
+    [0 1 0  4 2 0  0 0 5 
+     0 0 2  0 7 1  0 3 9  
+     0 0 0  0 0 0  0 4 0 
+          
+     2 0 7  1 0 0  0 0 6  
+     0 0 0  0 4 0  0 0 0 
+     6 0 0  0 0 7  4 0 3  
+          
+     0 7 0  0 0 0  0 0 0 
+     1 2 0  7 3 0  5 0 0  
+     3 0 0  0 8 2  0 7 0])
+
+  ;; 400ms
+  (dotimes [_ 5]
+    (time
+      (dotimes [_ 10]
+        (doall (sudokufd jacop)))))
+  )
 
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
 
