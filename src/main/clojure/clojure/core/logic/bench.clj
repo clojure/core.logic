@@ -343,7 +343,7 @@
 
   (time (cryptarithfd-1))
 
-  ;; ~1200ms, a little bit slower w/ distribute step
+  ;; ~1050ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
      (dotimes [_ 100] 
@@ -356,7 +356,7 @@
        (doall (cryptarithfd-1)))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
-  ;; 1.9s now
+  ;; ~1.3s now
   (dotimes [_ 5]
     (time (doall (cryptarithfd-2))))
   )
@@ -430,7 +430,7 @@
 (comment
   (time (doall (dinesmanfd)))
   ;; close to 2X faster than Petite Chez
-  ;; ~2800ms
+  ;; ~1942ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -539,7 +539,7 @@
 (comment
   (time (doall (matches 40)))
 
-  ;; ~7500-8000ms
+  ;; ~6.3s
   (dotimes [_ 5]
     (time
      (dotimes [_ 1000]
@@ -585,7 +585,7 @@
             sq1 sq2 sq3 sq4])))))
 
 (comment
-  ;; 2100ms
+  ;; 1.9s
   (dotimes [_ 10]
     (time
      (dotimes [_ 1e3] 
@@ -630,7 +630,7 @@
         sqs  (->squares rows)]
     (run-nc 1 [q]
       (== q vars)
-      (distribute q ::l/ff)
+      ;;(distribute q ::l/ff)
       (everyg #(fd/in % (fd/domain 1 2 3 4 5 6 7 8 9)) vars)
       (init vars hints)
       (everyg fd/distinct rows)
@@ -704,13 +704,13 @@
 
   (-> (sudokufd easy0) first verify)
 
-  ;; ~1600ms
+  ;; ~900ms w/o distribute
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
        (doall (sudokufd easy0)))))
 
-  ;; ~2800ms
+  ;; ~1000ms w/o distribute
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
@@ -730,10 +730,8 @@
      0 0 0  0 0 0  0 0 0
      0 0 0  0 0 0  0 0 0])
 
-  ;; ~14.2s
-  ;; this one behaves very badly w/ distribute
-  ;; it would be very interesting to determine why
-  (time (sudokufd hard0))
+  ;; ~5.2s w/o distribute
+  (time (doall (sudokufd hard0)))
 
   (-> (sudokufd hard0) first verify)
 
@@ -757,12 +755,12 @@
      0 5 0  1 0 0  0 0 0])
 
   ;; ~50ms
-  (time (sudokufd hard1))
+  (time (doall (sudokufd hard1)))
 
   (-> (sudokufd hard1) first verify)
 
-  ;; 3-3.4s seconds w/o distribute
-  ;; < 400ms w/ distribute, 10X faster
+  ;; ~2.5 seconds w/o distribute
+  ;; < 260ms w/ distribute, nearly 10X faster
   (dotimes [_ 5]
     (time
      (dotimes [_ 10]
@@ -782,7 +780,7 @@
      0 0 7  0 0 0  0 0 5
      0 0 0  0 0 0  0 9 8])
 
-  ;; 1.2s w/ distribute
+  ;; ~.9s w/ distribute
   (time (doall (sudokufd hard2)))
 
   (-> (sudokufd hard2) first print-solution)
@@ -804,7 +802,8 @@
      0 0 0  0 0 0  0 0 5
      0 3 4  0 9 0  7 1 0])
 
-  ;; ~2700ms
+  ;; ~13ms w/o distribute
+  ;; ~18ms w/ distribute
   (dotimes [_ 5]
     (time
       (dotimes [_ 100]
@@ -828,6 +827,7 @@
     (time
       (dotimes [_ 10]
         (doall (sudokufd jacop)))))
+
   )
 
 ;; From "Finite Domain Constraint Programming in Oz. A Tutorial" pg 22
@@ -860,7 +860,7 @@
         (< c9 c8)))
     (safefd))
 
-  ;; 2300ms
+  ;; ~2300ms
   (dotimes [_ 5]
     (time
       (dotimes [_ 100] 
@@ -911,11 +911,13 @@
       (everyg #(magic-sum % lsum) lines))))
 
 (comment
+  ;; ~420ms
   (dotimes [_ 5]
     (time
       (dotimes [_ 10]
         (doall (take 1 (magic 3))))))
 
+  ;; ~670ms
   (dotimes [_ 5]
     (time
       (dotimes [_ 1]
