@@ -362,15 +362,32 @@
 (defn env-locals [& syms]
   (disj (set (apply concat syms)) '_))
 
+(defmacro -fnm [fn-gen t as & cs]
+  (binding [*locals* (env-locals as (keys &env))]
+     `(~fn-gen [~@as] ~(handle-clauses t as cs))))
+
+(defmacro fnm
+   {:arglists '([t as tabled? & cs])}
+   [t as & cs]
+  (if-let [cs (and (= (first cs) :tabled) (rest cs))]
+    `(-fnm tabled ~t ~as ~@cs)
+    `(-fnm fn ~t ~as ~@cs)))
+
 (defmacro defnm [t n & rest]
-  (let [[n [as & cs]] (name-with-attributes n rest)]
-    (binding [*locals* (env-locals as (-> &env :locals keys))]
-     (if-let [tabled? (-> n meta :tabled)]
-       `(def ~n (tabled [~@as] ~(handle-clauses t as cs)))
-       `(defn ~n [~@as] ~(handle-clauses t as cs))))))
+  (let [[n [as & cs]] (name-with-attributes n rest)
+        e (if (-> n meta :tabled)
+            `(fnm ~t ~as :tabled ~@cs)
+            `(fnm ~t ~as ~@cs))]
+    `(def ~n ~e)))
 
 ;; =============================================================================
 ;; Goal sugar syntax
+
+(defmacro fne
+  "Define an anonymous goal fn. Supports pattern matching. All
+   patterns will be tried. See conde."
+  [& rest]
+  `(fnm conde ~@rest))
 
 (defmacro defne
   "Define a goal fn. Supports pattern matching. All
@@ -386,10 +403,20 @@
     (handle-clauses `conde xs cs)))
 
 ;; -----------------------------------------------------------------------------
-;; defnu, defna, matcha, matchu
+;; fnu, fna, defnu, defna, matcha, matchu
 
-;; TODO: we need to rethink defna and defnu, the unification comes first
+;; TODO: we need to rethink (de)fna and (de)fnu, the unification comes first
 ;; the *question* should come first
+
+(defmacro fna
+  "Define an anonymous soft cut goal. See conda."
+  [& rest]
+  `(fnm conda ~@rest))
+
+(defmacro fnu
+  "Define an anonymous committed choice goal. See condu."
+  [& rest]
+  `(fnm condu ~@rest))
 
 (defmacro defna
   "Define a soft cut goal. See conda."

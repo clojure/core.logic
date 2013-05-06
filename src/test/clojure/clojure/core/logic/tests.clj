@@ -1395,10 +1395,26 @@
 (defne pm4 [x y]
   ([[h . t] t]))
 
+(defn -test-pm [test-msg rel1 rel2 rel3]
+  (testing test-msg
+    (is (= (run* [q] (fresh [x y] (== q [x y]) (rel1 x y))) '([:foo :bar])))
+    (is (= (run* [q] (fresh [x y] (rel2 x y) (== x y))) '(_0)))
+    (is (= (run* [q] (rel3 '(1 2) q)) '((2))))))
+
 (deftest test-pm []
-  (is (= (run* [q] (fresh [x y] (== q [x y]) (pm1 x y))) '([:foo :bar])))
-  (is (= (run* [q] (fresh [x y] (pm2 x y) (== x y))) '(_0)))
-  (is (= (run* [q] (pm4 '(1 2) q)) '((2)))))
+  (-test-pm "pattern matching with defne relations" pm1 pm2 pm4))
+
+(deftest test-pm-anonymous []
+  (-test-pm "pattern matching with anonymous fne relations"
+    (fne [x y] ([:foo :bar]))
+    (fne [x y] ([_ x]))
+    (fne [x y] ([[h . t] t]))))
+
+(deftest test-pm-anonymous-tabled []
+  (-test-pm "pattern matching with tabled anonymous fne relations"
+    (fne [x y] :tabled ([:foo :bar]))
+    (fne [x y] :tabled ([_ x]))
+    (fne [x y] :tabled ([[h . t] t]))))
 
 (defne form->ast1 [form ast]
   (['(fn ~args . ~body) {:op :fn :args args :body body}]))
