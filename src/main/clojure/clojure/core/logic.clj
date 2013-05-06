@@ -2577,14 +2577,10 @@
   (loop [ks (keys u) s s]
     (if (seq ks)
       (let [kf (first ks)
-            vf (get v kf ::not-found)
-            uf (get u kf)]
+            vf (get v kf ::not-found)]
         (if (= vf ::not-found)
-          (if (= uf ::not-found)
-            (recur (next ks) s)
-            nil)
-          (if (= uf ::not-found)
-            nil
+          nil
+          (let [uf (get u kf)]
             (if-let [s (unify s uf vf)]
               (recur (next ks) s)
               nil))))
