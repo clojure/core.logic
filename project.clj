@@ -18,7 +18,7 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/clojurescript "0.0-1586"]
                  [org.clojure/tools.macro "0.1.1"]
-                 [org.clojure/tools.nrepl "0.2.1"]
+                 [org.clojure/tools.nrepl "0.2.2"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
 
   :plugins [[lein-cljsbuild "0.3.0"]]
