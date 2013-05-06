@@ -1742,9 +1742,21 @@
            (== x {:foo {:bar 1}}))
         '([{:foo {:bar 1}} 1])))
   (is (= (run* [x y]
+           (== x {:foo {:bar 1}})
+           (featurec x {:foo {:bar y}}))
+        '([{:foo {:bar 1}} 1])))
+  (is (= (run* [x y]
            (featurec x {:foo {:bar y}})
            (== x {:foo {:bar 1 :woz 2}}))
         '([{:foo {:bar 1 :woz 2}} 1])))
+  (is (= (run* [x y]
+           (== x {:foo {:bar 1 :woz 2}})
+           (featurec x {:foo {:bar y}}))
+        '([{:foo {:bar 1 :woz 2}} 1])))
+  (is (= (run* [x y]
+           (== x {:foo {:baz 1}})
+           (featurec x {:foo {:bar y}}))
+        '()))
   (is (= (run* [x y]
            (featurec x {:foo {:bar y}})
            (== x {:foo {:baz 1}}))
@@ -1809,6 +1821,23 @@
              (fd/+ p0 p1 24)
              (fd/in x y z (fd/interval 0 9))))
          '([6 3]))))
+
+(deftest test-logic-132-recursive-featurec
+  (is (= (run* [x y]
+           (featurec x {:a {:b 1}})
+           (== y {:b 1})
+           (== x {:a y}))
+        '([{:a {:b 1}} {:b 1}])))
+  (is (= (run* [x y]
+           (featurec x {:a {:b 1}})
+           (== x {:a y})
+           (== y {:b 1}))
+        '([{:a {:b 1}} {:b 1}])))
+  (is (= (run* [x y]
+           (== x {:a y})
+           (== y {:b 1})
+           (featurec x {:a {:b 1}}))
+        '([{:a {:b 1}} {:b 1}]))))
 
 ;; =============================================================================
 ;; cKanren

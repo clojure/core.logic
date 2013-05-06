@@ -2573,6 +2573,8 @@
 ;; =============================================================================
 ;; Partial Maps
 
+(declare featurec partial-map)
+
 (defn unify-with-pmap* [u v s]
   (loop [ks (keys u) s s]
     (if (seq ks)
@@ -2581,9 +2583,14 @@
         (if (= vf ::not-found)
           nil
           (let [uf (get u kf)]
-            (if-let [s (unify s uf vf)]
-              (recur (next ks) s)
-              nil))))
+            (if (lvar? vf)
+              (recur (next ks) ((featurec vf uf) s))
+              (if (map? uf)
+                (if-let [s (unify s (partial-map uf) vf)]
+                  (recur (next ks) s))
+                (if-let [s (unify s uf vf)]
+                  (recur (next ks) s)
+                  nil))))))
       s)))
 
 (declare partial-map?)
@@ -2644,21 +2651,13 @@
     IConstraintWatchedStores
     (-watched-stores [this] #{::subst})))
 
-(defn ->feature [x]
-  (-feature
-    (walk-term x
-      (fn [y]
-        (if (tree-term? y)
-          (->feature y)
-          y)))))
-
 (defn featurec
   "Ensure that a map contains at least the key-value pairs
   in the map fs. fs must be partially instantiated - that is, 
   it may contain values which are logic variables to support 
   feature extraction."
   [x fs]
-  (cgoal (-featurec x (->feature fs))))
+  (cgoal (-featurec x (partial-map fs))))
 
 ;; =============================================================================
 ;; defnc
