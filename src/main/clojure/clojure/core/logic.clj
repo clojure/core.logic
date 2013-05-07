@@ -1390,14 +1390,16 @@
 ;; lvar nonlvar
 
 (defmacro lvaro
-  "Goal to test whether a logic var is ground. Non-relational."
+  "A goal that succeeds if the argument is fresh. v must be a logic
+  variable. Non-relational."
   [v]
   `(fn [a#]
      (if (lvar? (walk a# ~v))
        a# nil)))
 
 (defmacro nonlvaro
-  "Goal to test whether a logic var is ground. Non-relational."
+  "A goal that succeeds if the argument is not fresh. v must be a
+  logic variable. Non-relational."
   [v]
   `(fn [a#]
      (if (not (lvar? (walk a# ~v)))
