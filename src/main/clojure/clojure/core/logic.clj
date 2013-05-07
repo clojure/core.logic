@@ -1665,11 +1665,14 @@
 ;; =============================================================================
 ;; More convenient goals
 
-(defne membero 
+(declare !=)
+
+(defne membero
   "A relation where l is a collection, such that l contains x"
   [x l]
   ([_ [x . tail]])
   ([_ [head . tail]]
+     (!= x head)
      (membero x tail)))
 
 (defne appendo 
