@@ -1057,8 +1057,6 @@
   ITake
   (take* [this] this))
 
-;; TODO: Choice always holds a as a list, can we just remove that?
-
 (deftype Choice [a f]
   clojure.lang.ILookup
   (valAt [this k]
@@ -1075,7 +1073,7 @@
     (Choice. a (fn [] (mplus (fp) f))))
   ITake
   (take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (take* f))))))
+    (lazy-seq (cons a (lazy-seq (take* f))))))
 
 (defn choice [a f]
   (Choice. a f))
@@ -1349,7 +1347,6 @@
   (ifu [b gs c]
     (-inc (ifu (b) gs c)))
 
-  ;; TODO: Choice always holds a as a list, can we just remove that?
   Choice
   (ifu [b gs c]
     (reduce bind (:a b) gs)))
@@ -2288,8 +2285,8 @@
                  (filter #(not (nil? %)))
                  (into #{}))]
     (if (empty? rcs)
-      (choice (list v) empty-f)
-      (choice (list `(~v :- ~@rcs)) empty-f))))
+      (choice v empty-f)
+      (choice `(~v :- ~@rcs) empty-f))))
 
 (defn reifyg [x]
   (all
@@ -2298,7 +2295,7 @@
      (let [v (walk* a x)
            r (-reify* (with-meta empty-s (meta a)) v)]
        (if (zero? (count r))
-         (choice (list v) empty-f)
+         (choice v empty-f)
          (let [v (walk* r v)]
            (reify-constraints v r a)))))))
 
