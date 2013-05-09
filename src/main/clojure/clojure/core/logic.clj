@@ -1667,12 +1667,21 @@
 (declare !=)
 
 (defne membero
-  "A relation where l is a collection, such that l contains x"
+  "A relation where l is a collection, such that l contains x."
   [x l]
   ([_ [x . tail]])
   ([_ [head . tail]]
-     (!= x head)
-     (membero x tail)))
+    (membero x tail)))
+
+(defne member1o
+  "Like membero but uses to disequality further constraining
+   the results. For example, if x and l are ground and x occurs 
+   multiple times in l, member1o will succeed only once."
+  [x l]
+  ([_ [x . tail]])
+  ([_ [head . tail]]
+    (!= x head)
+    (member1o x tail)))
 
 (defne appendo 
   "A relation where x, y, and z are proper collections, 

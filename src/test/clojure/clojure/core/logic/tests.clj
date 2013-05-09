@@ -622,7 +622,7 @@
   ;; old membero, defined without disequality constraints, would have
   ;; returned (1 1 1 1 1).
   (is (= (run* [q]
-           (membero q [1 1 1 1 1]))
+           (member1o q [1 1 1 1 1]))
          '(1))))
 
 ;; -----------------------------------------------------------------------------
