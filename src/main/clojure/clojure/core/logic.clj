@@ -1588,7 +1588,7 @@
 
 (defn conso
   "A relation where l is a collection, such that a is the first of l 
-  and d is the rest of l"
+  and d is the rest of l. If ground d must be bound to a proper tail."
   [a d l]
   (== (lcons a d) l))
 
