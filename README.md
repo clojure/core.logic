@@ -72,6 +72,6 @@ Developer information
 Copyright and license
 ----
 
-Copyright © 2010-2012 David Nolen, Rich Hickey & contributors.
+Copyright © 2010-2013 David Nolen, Rich Hickey & contributors.
 
 Licensed under the EPL (see the file epl.html).
