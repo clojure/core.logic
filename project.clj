@@ -2,23 +2,15 @@
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
 
-  ;; lein 1
-  :source-path "src/main/clojure"
-  :test-path "src/test/clojure"
-  :dev-dependencies [[lein-cljsbuild "0.2.9"]]
-  ; :extra-classpath-dirs ["checkouts/clojurescript/src/clj"
-  ;                        "checkouts/clojurescript/src/cljs"]
-
-  ;; lein 2
   :source-paths ["src/main/clojure"
                  ;"clojurescript/src/clj"
                  ;"clojurescript/src/cljs"
                  ]
   :test-paths ["src/test/clojure"]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1586"]
+                 [org.clojure/clojurescript "0.0-1806"]
                  [org.clojure/tools.macro "0.1.1"]
-                 [org.clojure/tools.nrepl "0.2.2"]
+                 [org.clojure/tools.nrepl "0.2.3"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
 
   :plugins [[lein-cljsbuild "0.3.0"]]
