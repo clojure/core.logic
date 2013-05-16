@@ -3169,12 +3169,12 @@
            (run* [q]
              (membero q '(a b c))
              (nafc == q 'b)))
-          (into #{} '(a c))))
+        '#{a c}))
   (is (= (into #{}
            (run* [q]
              (nafc == q 'b)
              (membero q '(a b c))))
-         (into #{} '(a c)))))
+        '#{a c})))
 
 (deftest test-naf-2
   (is (= (into #{}
@@ -3206,7 +3206,7 @@
              (fresh [x]
                (membero q [:a x :c])
                (nafc == q :b))))
-        (into #{} [:a ['_0 :- ['clojure.core.logic/nafc == '_0 :b]] :c]))))
+        #{:a :c ['_0 :- ['clojure.core.logic/nafc == '_0 :b]]})))
 
 (deftest test-naf-4
   (is (= (run* [q]
