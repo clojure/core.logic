@@ -3162,6 +3162,65 @@
          '(1))))
 
 ;; =============================================================================
+;; Negation as failure
+
+(deftest test-naf-1
+  (is (= (into #{}
+           (run* [q]
+             (membero q '(a b c))
+             (nafc == q 'b)))
+          (into #{} '(a c))))
+  (is (= (into #{}
+           (run* [q]
+             (nafc == q 'b)
+             (membero q '(a b c))))
+         (into #{} '(a c)))))
+
+(deftest test-naf-2
+  (is (= (into #{}
+           (run* [x y]
+             (fd/in x y (fd/interval 1 5))
+             (fd/< x y)
+             (nafc fd/+ x y 5)))
+         (into #{}
+           (for [x (range 1 6)
+                 y (range 1 6)
+                 :when (and (< x y)
+                            (not (= (+ x y) 5)))]
+             [x y]))))
+  (is (= (into #{}
+           (run* [x y]
+             (nafc fd/+ x y 5)
+             (fd/< x y)
+             (fd/in x y (fd/interval 1 5))))
+         (into #{}
+           (for [x (range 1 6)
+                 y (range 1 6)
+                 :when (and (< x y)
+                            (not (= (+ x y) 5)))]
+             [x y])))))
+
+(deftest test-naf-3
+  (is (= (into #{}
+           (run* [q]
+             (fresh [x]
+               (membero q [:a x :c])
+               (nafc == q :b))))
+        (into #{} [:a ['_0 :- ['clojure.core.logic/nafc == '_0 :b]] :c]))))
+
+(deftest test-naf-4
+  (is (= (run* [q]
+           (fresh [x]
+             (== x {:bar 1})
+             (nafc featurec x {:foo 1})))
+        '(_0)))
+  (is (= (run* [q]
+           (fresh [x]
+             (== x {:foo 1})
+             (nafc featurec x {:foo 1})))
+        '())))
+
+;; =============================================================================
 ;; Deep Constraints
 
 (defn is-number? [x]

@@ -2776,6 +2776,36 @@
      (cgoal (-predc x p pform))))
 
 ;; =============================================================================
+;; Negation as failure
+
+(defn -nafc
+  ([c args]
+    (reify
+      IConstraintStep
+      (-step [this s]
+        (reify
+           clojure.lang.IFn
+           (invoke [_ s]
+             (when-not ((apply c args) s)
+               ((remcg this) s)))
+           IRunnable
+           (-runnable? [_]
+             (every? #(ground-term? % s) args))))
+      IConstraintOp
+      (-rator [_]
+        `nafc)
+      (-rands [_]
+        (vec (concat [c] args)))
+      IReifiableConstraint
+      (-reifyc [_ v r s]
+        `(nafc ~c ~@(-reify s args r)))
+      IConstraintWatchedStores
+      (-watched-stores [this] #{::subst}))))
+
+(defn nafc [c & args]
+  (cgoal (-nafc c args)))
+
+;; =============================================================================
 ;; Deep Constraint
 
 (declare treec)
