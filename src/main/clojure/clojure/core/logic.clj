@@ -2778,6 +2778,12 @@
 ;; =============================================================================
 ;; Negation as failure
 
+(defn tramp [f]
+  (loop [f f]
+    (if (fn? f)
+      (recur (f))
+      f)))
+
 (defn -nafc
   ([c args]
     (reify
@@ -2786,7 +2792,7 @@
         (reify
            clojure.lang.IFn
            (invoke [_ s]
-             (when-not ((apply c args) s)
+             (when-not (tramp ((apply c args) s))
                ((remcg this) s)))
            IRunnable
            (-runnable? [_]

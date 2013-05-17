@@ -3220,6 +3220,16 @@
              (nafc featurec x {:foo 1})))
         '())))
 
+(deftest test-naf-5
+  (is (= (run* [q]
+           (membero q '(:a :b :c :d))
+           (nafc membero q '(:a :b :c)))
+         '(:d)))
+  (is (= (run* [q]
+           (nafc membero q '(:a :b :c))
+           (membero q '(:a :b :c :d)))
+         '(:d))))
+
 ;; =============================================================================
 ;; Deep Constraints
 
