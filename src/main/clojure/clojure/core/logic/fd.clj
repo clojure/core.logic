@@ -656,9 +656,11 @@
   (fn loop [ls]
     (if (empty? ls)
       (fn [a] nil)
-      (conde
-        [(f (first ls))]
-        [(loop (rest ls))]))))
+      (fn [a]
+        (mplus
+         ((f (first ls)) a)
+         (fn []
+           ((loop (rest ls)) a)))))))
 
 (defn to-vals [dom]
   (letfn [(to-vals* [is]
