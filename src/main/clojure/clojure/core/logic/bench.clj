@@ -737,7 +737,7 @@
 
   (dotimes [_ 5]
     (time
-     (dotimes [_ 1]
+     (dotimes [_ 100]
        (doall (sudokufd hard0)))))
 
   ;; from GeCode test suite
