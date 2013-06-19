@@ -2,6 +2,8 @@
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
 
+  :jvm-opts ^:replace ["-Xmx512m" "-server"]
+
   :source-paths ["src/main/clojure"
                  ;"clojurescript/src/clj"
                  ;"clojurescript/src/cljs"
