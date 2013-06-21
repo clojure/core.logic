@@ -15,7 +15,7 @@
                  [org.clojure/tools.nrepl "0.2.3"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "0.3.0"]]
+  :plugins [[lein-cljsbuild "0.3.2"]]
 
   :cljsbuild
   {:builds
