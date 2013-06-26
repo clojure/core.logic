@@ -1160,6 +1160,13 @@
              (== [e a v] out)))
         '())))
 
+(deftest test-to-stream
+  ;; LOGIC-139
+  (let [answers
+        (run* [q] (fresh [x] (!= x 'Bob) (man x)))]
+    (is (= 2 (count answers)))
+    (is (every? symbol? answers))))
+
 ;; -----------------------------------------------------------------------------
 ;; nil in collection
 

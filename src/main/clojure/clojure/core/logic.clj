@@ -1879,7 +1879,7 @@
                      (to-stream
                       (->> set#
                            (map (fn [cand#]
-                                  (when-let [~'a (clojure.core.logic/unify ~'a [~@as] cand#)]
+                                  (when-let [~'a ((== [~@as] cand#) ~'a)]
                                     ~'a)))))))))))))
 
 ;; TODO: Should probably happen in a transaction
