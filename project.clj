@@ -10,7 +10,7 @@
                  ]
   :test-paths ["src/test/clojure"]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1806"]
+                 [org.clojure/clojurescript "0.0-1835"]
                  [org.clojure/tools.macro "0.1.1"]
                  [org.clojure/tools.nrepl "0.2.3"]
                  [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
