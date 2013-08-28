@@ -1,3 +1,24 @@
+From 0.8.3 to 0.8.4
+====
+
+Fixes
+----
+* Allow fd/in to appear in any position
+* LOGIC-127: nom-swapping now preserves vectors and maps
+* LOGIC-132: proper recursive featurec
+* LOGIC-139: fix unification on relations
+
+Changes
+----
+* membero now uses disequality constraint
+* docstring enhancements
+
+Enhancments
+----
+* Add experimental negation as failure constraint, nafc
+* Fix potential OOM when search over finite domains
+* Add anonymous goal constructors, fne, fna, fnu
+
 From 0.8.2 to 0.8.3
 ====
 
