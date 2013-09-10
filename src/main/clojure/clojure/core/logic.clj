@@ -2835,7 +2835,11 @@
       IConstraintWatchedStores
       (-watched-stores [this] #{::subst}))))
 
-(defn nafc [c & args]
+(defn nafc
+  "EXPERIMENTAL: negation as failure constraint. All arguments to the goal c
+   must be ground. If some argument is not ground the execution of this constraint
+   will be delayed."
+  [c & args]
   (cgoal (-nafc c args)))
 
 ;; =============================================================================
