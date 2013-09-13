@@ -1,0 +1,1889 @@
+<html>
+  <head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <title>clojure.core.logic - A logic programming library based on miniKanren 0.8.5 API documentation</title>
+    <link href="static/favicon.png" rel="icon" />
+    <link href="static/favicon.png" rel="shortcut icon" />
+    <link media="all" type="text/css" href="static/clojure.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/wiki.css" rel="stylesheet" />
+    <link media="all" type="text/css" href="static/internal.css" rel="stylesheet" />
+    <style>.menuWrapper{height: 36px;}</style>
+  </head>
+<!--
+This document was auto-generated from the source by the clojure autodoc system.
+To report errors or ask questions about the overall documentation structure, formatting,
+etc., contact Tom Faulhaber (google mail name: tomfaulhaber).
+For errors in the documentation of a particular namespace, contact the author of that
+namespace.
+-->
+  <body>
+    <div id="AllContentContainer">
+      <div id="Header">
+	<a id="Logo" href="index.html"><img alt="Clojure" height="100" width="100" src="static/clojure-icon.gif" /></a>
+	<h1><a title="page header title" id="page-header" href="index.html">core.logic API Reference</a></h1>
+      </div>
+      <div id="leftcolumn"><div style="text-align: center;"></div>
+<div class="menu">
+  <div class="WikiCustomNav WikiElement wiki">
+    <span class="toc-header"><span id="project-name">A logic programming library based on miniKanren</span> <span id="version">0.8.5</span> API</span><br />
+    <ul>
+      <li><a class="wiki_link" href="index.html">Overview</a></li>
+      <li><a class="wiki_link" href="api-index.html">API Index</a></li>
+    </ul>
+    
+    
+    <a href="http://clojure.org" class="wiki_link">Clojure Home</a>
+  </div>
+</div>
+</div>
+      <div id="rightcolumn">
+	<div id="Content">
+	  <div class="contentBox"><div class="innerContentBox">
+              <div id="content_view" class="wiki wikiPage">
+                <div id="right-sidebar"><div id="toc">
+  <h1 class="nopad">Table of Contents</h1>
+  <div style="margin-left: 1em;" class="toc-section">
+    <a href="#toc0" style="margin-top: 3px;">Overview</a>
+    
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#" style="margin-top: 3px;"></a>
+    
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#type-section" style="margin-top: 3px;">Types</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/AnswerCache">AnswerCache</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/Choice">Choice</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/ConstraintStore">ConstraintStore</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/LCons">LCons</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/LVar">LVar</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/PMap">PMap</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/Pair">Pair</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/Rel">Rel</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/SubstValue">SubstValue</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/Substitutions">Substitutions</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/SuspendedStream">SuspendedStream</a>
+      
+    </div>
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#var-section" style="margin-top: 3px;">Vars and Functions</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/!=">!=</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;AnswerCache">-&gt;AnswerCache</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;Choice">-&gt;Choice</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;ConstraintStore">-&gt;ConstraintStore</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;LCons">-&gt;LCons</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;LVar">-&gt;LVar</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;PMap">-&gt;PMap</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;Pair">-&gt;Pair</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;Rel">-&gt;Rel</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;SubstValue">-&gt;SubstValue</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;Substitutions">-&gt;Substitutions</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/-&gt;SuspendedStream">-&gt;SuspendedStream</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/==">==</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/all">all</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/appendo">appendo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/conda">conda</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/conde">conde</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/condu">condu</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/conso">conso</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/copy-term">copy-term</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/defna">defna</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/defne">defne</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/defnu">defnu</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/defrel">defrel</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/difference-with">difference-with</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/distincto">distincto</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/emptyo">emptyo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/everyg">everyg</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fact">fact</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/facts">facts</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fail">fail</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/featurec">featurec</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/firsto">firsto</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fix-constraints">fix-constraints</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fna">fna</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fnc">fnc</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fne">fne</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fnu">fnu</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/fresh">fresh</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/is">is</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/lcons">lcons</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/llist">llist</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/lvaro">lvaro</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/map-&gt;PMap">map-&gt;PMap</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/map-&gt;SubstValue">map-&gt;SubstValue</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/map-&gt;SuspendedStream">map-&gt;SuspendedStream</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/master">master</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/matcha">matcha</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/matche">matche</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/matchu">matchu</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/member1o">member1o</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/membero">membero</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/nafc">nafc</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/nilo">nilo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/nonlvaro">nonlvaro</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/partial-map">partial-map</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/permuteo">permuteo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/pred">pred</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/project">project</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/rembero">rembero</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/resto">resto</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/retraction">retraction</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/retractions">retractions</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run">run</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run*">run*</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run-nc">run-nc</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run-nc*">run-nc*</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/succeed">succeed</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/tabled">tabled</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/trace-lvars">trace-lvars</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/waiting-stream-check">waiting-stream-check</a>
+      
+    </div>
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#clojure.core.logic.bench" style="margin-top: 3px;">clojure.core.logic.bench</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.bench/all-connected-to-allo">all-connected-to-allo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.bench/connected-to-allo">connected-to-allo</a>
+      
+    </div>
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#clojure.core.logic.fd" style="margin-top: 3px;">clojure.core.logic.fd</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/FiniteDomain">FiniteDomain</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/IntervalFD">IntervalFD</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/MultiIntervalFD">MultiIntervalFD</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/!=">!=</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/*">*</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/+">+</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/-&gt;FiniteDomain">-&gt;FiniteDomain</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/-&gt;IntervalFD">-&gt;IntervalFD</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/-&gt;MultiIntervalFD">-&gt;MultiIntervalFD</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/-distinctc">-distinctc</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/&lt;">&lt;</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/&lt;=">&lt;=</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/==">==</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/&gt;">&gt;</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/&gt;=">&gt;=</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/bounded-listo">bounded-listo</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/distinct">distinct</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/distinctc">distinctc</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/dom">dom</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/domain">domain</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/in">in</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/interval">interval</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.fd/process-dom">process-dom</a>
+      
+    </div>
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#clojure.core.logic.nominal" style="margin-top: 3px;">clojure.core.logic.nominal</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/Nom">Nom</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/Tie">Tie</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/-&gt;Nom">-&gt;Nom</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/-&gt;Tie">-&gt;Tie</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/fresh">fresh</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.nominal/map-&gt;Tie">map-&gt;Tie</a>
+      
+    </div>
+  </div><div style="margin-left: 1em;" class="toc-section">
+    <a href="#clojure.core.logic.unifier" style="margin-top: 3px;">clojure.core.logic.unifier</a>
+    <div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.unifier/prep">prep</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.unifier/unifier">unifier</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.unifier/unifier*">unifier*</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.unifier/unify">unify</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic.unifier/unify*">unify*</a>
+      
+    </div>
+  </div>
+</div>
+</div>
+                <div id="content-tag"><h1 id="overview">API for <span id="clojure.core.logic">clojure.core.logic</span>
+  - <span id="header-project">A logic programming library based on miniKanren</span> <span id="header-version">0.8.5</span><span id="header-status-block"> (<span id="header-status">in development</span>)</span>
+  </h1>
+
+<br />Full namespace name: <span id="long-name">clojure.core.logic</span>
+<p></p>
+<h2>Overview</h2>
+<div id="home-page">Project home page is <a href="http://github.com/clojure/core.logic/">http://github.com/clojure/core.logic/</a></div>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+
+
+<div id="type-section">
+  <p></p>
+  <h2>Types</h2>
+  <div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/AnswerCache">AnswerCache</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[ansl anss _meta]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IAnswerCache</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.ILookup, clojure.lang.IObj</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/Choice">Choice</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[a f]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IBind, clojure.core.logic.protocols/IMPlus, clojure.core.logic.protocols/ITake</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.ILookup</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/ConstraintStore">ConstraintStore</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[km cm cid running]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IConstraintStore</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.Counted, clojure.lang.ILookup</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/LCons">LCons</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[a d cache meta]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IBuildTerm, clojure.core.logic.protocols/IOccursCheckTerm, clojure.core.logic.protocols/IReifyTerm, clojure.core.logic.protocols/IUnifyTerms, clojure.core.logic.protocols/IWalkTerm, clojure.core.logic.protocols/LConsPrint, clojure.core.logic.protocols/LConsSeq</span><br />
+    Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.ITreeTerm, clojure.lang.IObj</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/LVar">LVar</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[name oname hash meta]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IBuildTerm, clojure.core.logic.protocols/IOccursCheckTerm, clojure.core.logic.protocols/IReifyTerm, clojure.core.logic.protocols/IUnifyTerms, clojure.core.logic.protocols/IWalkTerm</span><br />
+    Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.IVar, clojure.lang.ILookup, clojure.lang.IObj</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/PMap">PMap</h2>
+    <span id="type-type">record</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IUnifyTerms, clojure.core.logic.protocols/IUnifyWithRecord, clojure.core.logic.protocols/IUninitialized</span><br />
+    Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.INonStorable, clojure.lang.IHashEq, clojure.lang.IKeywordLookup, clojure.lang.ILookup, clojure.lang.IObj, clojure.lang.IPersistentMap, java.io.Serializable, java.util.Map</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/Pair">Pair</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[lhs rhs]</span><br />
+    Protocols: <span id="type-protocols"></span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.Counted, clojure.lang.ILookup, clojure.lang.Indexed, java.util.Map$Entry</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/Rel">Rel</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[name indexes meta f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17 &amp; overage]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IRel</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.IFn, clojure.lang.IObj</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/SubstValue">SubstValue</h2>
+    <span id="type-type">record</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[v doms eset]</span><br />
+    Protocols: <span id="type-protocols"></span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.IHashEq, clojure.lang.IKeywordLookup, clojure.lang.ILookup, clojure.lang.IObj, clojure.lang.IPersistentMap, java.io.Serializable, java.util.Map</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/Substitutions">Substitutions</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[s vs ts cs cq cqs oc _meta]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/IBind, clojure.core.logic.protocols/IMPlus, clojure.core.logic.protocols/ISubstitutions, clojure.core.logic.protocols/ISubstitutionsCLP, clojure.core.logic.protocols/ITake</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.Associative, clojure.lang.Counted, clojure.lang.ILookup, clojure.lang.IObj, clojure.lang.IPersistentCollection</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/SuspendedStream">SuspendedStream</h2>
+    <span id="type-type">record</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[cache ansv* f]</span><br />
+    Protocols: <span id="type-protocols">clojure.core.logic.protocols/ISuspendedStream</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.IHashEq, clojure.lang.IKeywordLookup, clojure.lang.ILookup, clojure.lang.IObj, clojure.lang.IPersistentMap, java.io.Serializable, java.util.Map</span><br />
+  </div>
+</div>
+<div id="var-section">
+  <p></p>
+  <h2>Public Variables and Functions</h2>
+  <div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/!=">!=</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (!= u v)
+</pre>
+    <pre id="var-docstr">Disequality constraint. Ensures that u and v will never
+unify. u and v can be complex terms.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2577" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;AnswerCache">-&gt;AnswerCache</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;AnswerCache ansl anss _meta)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.AnswerCache.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1972" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;Choice">-&gt;Choice</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Choice a f)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.Choice.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1060" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;ConstraintStore">-&gt;ConstraintStore</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;ConstraintStore km cm cid running)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.ConstraintStore.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L102" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;LCons">-&gt;LCons</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;LCons a d cache meta)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.LCons.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L731" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;LVar">-&gt;LVar</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;LVar name oname hash meta)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.LVar.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L606" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;PMap">-&gt;PMap</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;PMap)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.PMap.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2636" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;Pair">-&gt;Pair</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Pair lhs rhs)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.Pair.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L36" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;Rel">-&gt;Rel</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Rel name indexes meta f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17 &amp; overage)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.Rel.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1840" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;SubstValue">-&gt;SubstValue</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;SubstValue v doms eset)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.SubstValue.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;Substitutions">-&gt;Substitutions</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Substitutions s vs ts cs cq cqs oc _meta)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.Substitutions.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L272" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/-&gt;SuspendedStream">-&gt;SuspendedStream</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;SuspendedStream cache ansv* f)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.SuspendedStream.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2003" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/==">==</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (== u v)
+</pre>
+    <pre id="var-docstr">A goal that attempts to unify terms u and v.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1132" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/all">all</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (all)
+       (all &amp; goals)
+</pre>
+    <pre id="var-docstr">Like fresh but does does not create logic variables.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1217" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/appendo">appendo</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">A relation where x, y, and z are proper collections, 
+such that z is x appended to y</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1713" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/conda">conda</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (conda &amp; clauses)
+</pre>
+    <pre id="var-docstr">Soft cut. Once the head of a clause has succeeded
+all other clauses will be ignored. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1358" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/conde">conde</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (conde &amp; clauses)
+</pre>
+    <pre id="var-docstr">Logical disjunction of the clauses. The first goal in
+a clause is considered the head of that clause. Interleaves the
+execution of the clauses.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1151" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/condu">condu</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (condu &amp; clauses)
+</pre>
+    <pre id="var-docstr">Committed choice. Once the head (first goal) of a clause 
+has succeeded, remaining goals of the clause will only
+be run once. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1366" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/conso">conso</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (conso a d l)
+</pre>
+    <pre id="var-docstr">A relation where l is a collection, such that a is the first of l 
+and d is the rest of l. If ground d must be bound to a proper tail.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1600" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/copy-term">copy-term</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (copy-term u v)
+</pre>
+    <pre id="var-docstr">Copies a term u into v. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1380" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/defna">defna</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (defna &amp; rest)
+</pre>
+    <pre id="var-docstr">Define a soft cut goal. See conda.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1669" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/defne">defne</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (defne &amp; rest)
+</pre>
+    <pre id="var-docstr">Define a goal fn. Supports pattern matching. All
+patterns will be tried. See conde.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1640" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/defnu">defnu</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (defnu &amp; rest)
+</pre>
+    <pre id="var-docstr">Define a committed choice goal. See condu.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1674" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/defrel">defrel</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (defrel name &amp; rest)
+</pre>
+    <pre id="var-docstr">Define a relation for adding facts. Takes a name and some fields.
+Use fact/facts to add facts and invoke the relation to query it.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1840" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/difference-with">difference-with</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (difference-with f &amp; maps)
+</pre>
+    <pre id="var-docstr">Returns a map that consists of the first map with the rest of the maps
+removed from it. When a key is found in the first map and a later map,
+the value from the later map will be combined with the value in the first
+map by calling (f val-in-first val-in-later). If this function returns nil
+then the key will be removed completely.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1911" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/distincto">distincto</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">A relation which guarantees no element of l will unify
+with another element of l.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2591" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/emptyo">emptyo</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (emptyo a)
+</pre>
+    <pre id="var-docstr">A relation where a is the empty list</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1595" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/everyg">everyg</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (everyg g coll)
+</pre>
+    <pre id="var-docstr">A pseudo-relation that takes a coll and ensures that the goal g
+succeeds on every element of the collection.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1618" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fact">fact</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (fact rel &amp; tuple)
+</pre>
+    <pre id="var-docstr">Add a fact to a relation defined with defrel.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1906" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/facts">facts</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (facts rel [f :as tuples])
+       (facts rel arity tuples)
+</pre>
+    <pre id="var-docstr">Define a series of facts. Takes a vector of vectors where each vector
+represents a fact tuple, all with the same number of elements.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1887" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fail">fail</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (fail a)
+</pre>
+    <pre id="var-docstr">A goal that always fails.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1120" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/featurec">featurec</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (featurec x fs)
+</pre>
+    <pre id="var-docstr">Ensure that a map contains at least the key-value pairs
+in the map fs. fs must be partially instantiated - that is, 
+it may contain values which are logic variables to support 
+feature extraction.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2692" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/firsto">firsto</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (firsto l a)
+</pre>
+    <pre id="var-docstr">A relation where l is a collection, such that a is the first of l</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1606" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fix-constraints">fix-constraints</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (fix-constraints a)
+</pre>
+    <pre id="var-docstr">A goal to run the constraints in cq until it is empty. Of
+course running a constraint may grow cq so this function
+finds the fixpoint.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2240" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fna">fna</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fna &amp; rest)
+</pre>
+    <pre id="var-docstr">Define an anonymous soft cut goal. See conda.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1659" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fnc">fnc</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fnc args &amp; body)
+</pre>
+    <pre id="var-docstr">Define an anonymous constraint that can be used with the unifier:
+
+   (let [oddc (fnc [x] (odd? x))]
+
+     (unifier {:a '?a} {:a 1} :when {'?a oddc})
+       ;;=&gt; {:a 1}
+
+     (unifier {:a '?a} {:a 2} :when {'?a oddc})
+       ;;=&gt; nil
+   )
+
+Note, the constraint will not run until all arguments are fully ground.
+
+Use defnc to define a constraint and assign a toplevel var.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2724" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fne">fne</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fne &amp; rest)
+</pre>
+    <pre id="var-docstr">Define an anonymous goal fn. Supports pattern matching. All
+patterns will be tried. See conde.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1634" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fnu">fnu</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fnu &amp; rest)
+</pre>
+    <pre id="var-docstr">Define an anonymous committed choice goal. See condu.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1664" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/fresh">fresh</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fresh [&amp; lvars] &amp; goals)
+</pre>
+    <pre id="var-docstr">Creates fresh variables. Goals occuring within form a logical 
+conjunction.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1168" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/is">is</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (is u v op)
+</pre>
+    <pre id="var-docstr">Set the value of a var to value of another var with the operation
+applied. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1285" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/lcons">lcons</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (lcons a d)
+</pre>
+    <pre id="var-docstr">Constructs a sequence a with an improper tail d if d is a logic variable.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L844" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/llist">llist</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (llist f s)
+       (llist f s &amp; rest)
+</pre>
+    <pre id="var-docstr">Constructs a sequence from 2 or more arguments, with the last argument as the
+tail. The tail is improper if the last argument is a logic variable.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L854" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/lvaro">lvaro</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (lvaro v)
+</pre>
+    <pre id="var-docstr">A goal that succeeds if the argument is fresh. v must be a logic
+variable. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1389" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/map-&gt;PMap">map-&gt;PMap</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (map-&gt;PMap m#)
+</pre>
+    <pre id="var-docstr">Factory function for class clojure.core.logic.PMap, taking a map of keywords to field values.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2636" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/map-&gt;SubstValue">map-&gt;SubstValue</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (map-&gt;SubstValue m#)
+</pre>
+    <pre id="var-docstr">Factory function for class clojure.core.logic.SubstValue, taking a map of keywords to field values.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/map-&gt;SuspendedStream">map-&gt;SuspendedStream</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (map-&gt;SuspendedStream m#)
+</pre>
+    <pre id="var-docstr">Factory function for class clojure.core.logic.SuspendedStream, taking a map of keywords to field values.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2003" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/master">master</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (master argv cache)
+</pre>
+    <pre id="var-docstr">Take the argument to the goal and check that we don't
+have an alpha equivalent cached answer term in the cache.
+If it doesn't already exist in the cache add the new
+answer term.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2130" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/matcha">matcha</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (matcha xs &amp; cs)
+</pre>
+    <pre id="var-docstr">Define a soft cut pattern match. See conda.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1679" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/matche">matche</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (matche xs &amp; cs)
+</pre>
+    <pre id="var-docstr">Pattern matching macro. All patterns will be tried.
+See conde.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1646" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/matchu">matchu</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (matchu xs &amp; cs)
+</pre>
+    <pre id="var-docstr">Define a committed choice goal. See condu.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1685" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/member1o">member1o</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">Like membero but uses to disequality further constraining
+the results. For example, if x and l are ground and x occurs 
+multiple times in l, member1o will succeed only once.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1703" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/membero">membero</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">A relation where l is a collection, such that l contains x.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1696" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/nafc">nafc</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (nafc c &amp; args)
+</pre>
+    <pre id="var-docstr">EXPERIMENTAL: negation as failure constraint. All arguments to the goal c
+must be ground. If some argument is not ground the execution of this constraint
+will be delayed.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2838" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/nilo">nilo</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (nilo a)
+</pre>
+    <pre id="var-docstr">A relation where a is nil</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1590" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/nonlvaro">nonlvaro</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (nonlvaro v)
+</pre>
+    <pre id="var-docstr">A goal that succeeds if the argument is not fresh. v must be a
+logic variable. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1397" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/partial-map">partial-map</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (partial-map m)
+</pre>
+    <pre id="var-docstr">Given map m, returns partial map that unifies with maps even if it
+doesn't share all of the keys of that map.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2654" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/permuteo">permuteo</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">A relation that will permute xl into the yl. May not
+terminate if xl is not ground.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1722" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/pred">pred</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (pred v f)
+</pre>
+    <pre id="var-docstr">Check a predicate against the value logic var. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1277" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/project">project</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (project [&amp; vars] &amp; goals)
+</pre>
+    <pre id="var-docstr">Extract the values bound to the specified logic vars. Non-relational.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1268" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/rembero">rembero</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">A relation between l and o where is removed from
+l exactly one time.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2602" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/resto">resto</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (resto l d)
+</pre>
+    <pre id="var-docstr">A relation where l is a collection, such that d is the rest of l</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1612" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/retraction">retraction</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (retraction rel &amp; tuple)
+</pre>
+    <pre id="var-docstr">Remove a fact from a relation defined with defrel.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1950" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/retractions">retractions</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (retractions rel [f :as tuples])
+       (retractions rel arity tuples)
+</pre>
+    <pre id="var-docstr">Retract a series of facts. Takes a vector of vectors where each vector
+represents a fact tuple, all with the same number of elements. It is not
+an error to retract a fact that isn't true.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1929" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run">run</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run n bindings &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until a maximum of n results are found.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1196" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run*">run*</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run* bindings &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until results are exhausted.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1201" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run-nc">run-nc</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run-nc n bindings &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until a maximum of n results are found. Does not 
+occurs-check.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1206" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run-nc*">run-nc*</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run-nc* &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until results are exhausted. Does not occurs-check.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1212" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/succeed">succeed</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (succeed a)
+</pre>
+    <pre id="var-docstr">A goal that always succeeds.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1116" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/tabled">tabled</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (tabled args &amp; grest)
+</pre>
+    <pre id="var-docstr">Macro for defining a tabled goal. Prefer ^:tabled with the 
+defne/a/u forms over using this directly.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2151" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/trace-lvars">trace-lvars</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (trace-lvars title &amp; lvars)
+</pre>
+    <pre id="var-docstr">Goal for tracing the values of logic variables.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1246" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/waiting-stream-check">waiting-stream-check</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (waiting-stream-check w success-cont failure-cont)
+</pre>
+    <pre id="var-docstr">Take a waiting stream, a success continuation, and a failure continuation.
+If we don't find any ready suspended streams, invoke the failure continuation. 
+If we find a ready suspended stream calculate the remainder of the waiting
+stream. If we've reached the fixpoint just call the thunk of the suspended
+stream, otherwise call mplus on the result of the thunk and the remainder
+of the waiting stream. Pass this result to the success contination.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2017" id="var-source">Source</a>
+  </div>
+</div>
+<br />
+<h2 id="clojure.core.logic.bench">clojure.core.logic.bench</h2>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+
+
+<div id="var-section">
+  <p></p>
+  <h2>Public Variables and Functions</h2>
+  <div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.bench/all-connected-to-allo">all-connected-to-allo</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">Collect all cliques in l. l must be bounded to ensure
+termination.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/0d1d545f0a81c585c7449aecb5d661120f3da568/src/main/clojure/clojure/core/logic/bench.clj#L131" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.bench/connected-to-allo">connected-to-allo</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">Ensure that vertex v is connected to all vertices
+vs.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/0d1d545f0a81c585c7449aecb5d661120f3da568/src/main/clojure/clojure/core/logic/bench.clj#L122" id="var-source">Source</a>
+  </div>
+</div>
+<br />
+<h2 id="clojure.core.logic.fd">clojure.core.logic.fd</h2>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+
+<div id="type-section">
+  <p></p>
+  <h2>Types</h2>
+  <div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/FiniteDomain">FiniteDomain</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[s min max]</span><br />
+    Protocols: <span id="type-protocols"><a href="#clojure.core.logic.fd/IInterval">IInterval</a>, <a href="#clojure.core.logic.fd/IIntervals">IIntervals</a>, <a href="#clojure.core.logic.fd/ISet">ISet</a>, <a href="#clojure.core.logic.fd/ISortedDomain">ISortedDomain</a>, clojure.core.logic.protocols/IMemberCount, clojure.core.logic.protocols/IMergeDomains</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.ILookup</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/IntervalFD">IntervalFD</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[lb ub]</span><br />
+    Protocols: <span id="type-protocols"><a href="#clojure.core.logic.fd/IInterval">IInterval</a>, <a href="#clojure.core.logic.fd/IIntervals">IIntervals</a>, <a href="#clojure.core.logic.fd/ISet">ISet</a>, <a href="#clojure.core.logic.fd/ISortedDomain">ISortedDomain</a>, clojure.core.logic.protocols/IMemberCount, clojure.core.logic.protocols/IMergeDomains</span><br />
+    Interfaces: <span id="type-interfaces"></span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/MultiIntervalFD">MultiIntervalFD</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[min max is]</span><br />
+    Protocols: <span id="type-protocols"><a href="#clojure.core.logic.fd/IInterval">IInterval</a>, <a href="#clojure.core.logic.fd/IIntervals">IIntervals</a>, <a href="#clojure.core.logic.fd/ISet">ISet</a>, <a href="#clojure.core.logic.fd/ISortedDomain">ISortedDomain</a>, clojure.core.logic.protocols/IMemberCount, clojure.core.logic.protocols/IMergeDomains</span><br />
+    Interfaces: <span id="type-interfaces">clojure.lang.ILookup</span><br />
+  </div>
+</div>
+<div id="var-section">
+  <p></p>
+  <h2>Public Variables and Functions</h2>
+  <div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/!=">!=</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (!= u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u and v must not be equal. u and v
+must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L783" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/*">*</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (* u v w)
+</pre>
+    <pre id="var-docstr">A finite domain constraint for multiplication and
+thus division. u, v &amp; w must be eventually be given 
+domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L973" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/+">+</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (+ u v w)
+</pre>
+    <pre id="var-docstr">A finite domain constraint for addition and subtraction.
+u, v &amp; w must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L897" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/-&gt;FiniteDomain">-&gt;FiniteDomain</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;FiniteDomain s min max)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.fd.FiniteDomain.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L64" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/-&gt;IntervalFD">-&gt;IntervalFD</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;IntervalFD lb ub)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.fd.IntervalFD.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L230" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/-&gt;MultiIntervalFD">-&gt;MultiIntervalFD</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;MultiIntervalFD min max is)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.fd.MultiIntervalFD.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L474" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/-distinctc">-distinctc</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-distinctc x y* n*)
+</pre>
+    <pre id="var-docstr">The real *individual* distinct constraint. x is a var that now is bound to
+a single value. y* were the non-singleton bound vars that existed at the
+construction of the constraint. n* is the set of singleton domain values 
+that existed at the construction of the constraint. We use categorize to 
+determine the current non-singleton bound vars and singleton vlaues. if x
+is in n* or the new singletons we have failed. If not we simply remove 
+the value of x from the remaining non-singleton domains bound to vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L983" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/&lt;">&lt;</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (&lt; u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u must be less than v. u and v
+must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L822" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/&lt;=">&lt;=</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (&lt;= u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u must be less than or equal to v.
+u and v must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L816" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/==">==</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (== u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u and v must be equal. u and v must
+eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L746" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/&gt;">&gt;</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (&gt; u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u must be greater than v. u and v
+must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L830" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/&gt;=">&gt;=</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (&gt;= u v)
+</pre>
+    <pre id="var-docstr">A finite domain constraint. u must be greater than or equal to v.
+u and v must eventually be given domains if vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L836" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/bounded-listo">bounded-listo</h2>
+    <span id="var-type">var</span><br />
+    <pre id="var-usage"></pre>
+    <pre id="var-docstr">Ensure that the list l never grows beyond bound n.
+n must have been assigned a domain.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1082" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/distinct">distinct</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (distinct v*)
+</pre>
+    <pre id="var-docstr">A finite domain constraint that will guarantee that 
+all vars that occur in v* will be unified with unique 
+values. v* need not be ground. Any vars in v* should
+eventually be given a domain.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1074" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/distinctc">distinctc</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (distinctc v*)
+</pre>
+    <pre id="var-docstr">The real distinct constraint. v* can be seq of logic vars and
+values or it can be a logic var itself. This constraint does not 
+run until v* has become ground. When it has become ground we group
+v* into a set of logic vars and a sorted set of known singleton 
+values. We then construct the individual constraint for each var.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1039" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/dom">dom</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (dom x dom)
+</pre>
+    <pre id="var-docstr">Assign a var x a domain.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L628" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/domain">domain</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (domain &amp; args)
+</pre>
+    <pre id="var-docstr">Construct a domain for assignment to a var. Arguments should 
+be integers given in sorted order. domains may be more efficient 
+than intervals when only a few values are possible.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L155" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/in">in</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (in &amp; xs-and-dom)
+</pre>
+    <pre id="var-docstr">Assign vars to domain. The domain must come last.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L643" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/interval">interval</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (interval ub)
+       (interval lb ub)
+</pre>
+    <pre id="var-docstr">Construct an interval for an assignment to a var. intervals may
+be more efficient that the domain type when the range of possiblities
+is large.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L356" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.fd/process-dom">process-dom</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (process-dom x dom domp)
+</pre>
+    <pre id="var-docstr">If x is a var we update its domain. If it's an integer
+we check that it's a member of the given domain. dom is
+then new domain, it should have already been calculated from
+domp which was the previous domain.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L613" id="var-source">Source</a>
+  </div>
+</div>
+<br />
+<h2 id="clojure.core.logic.nominal">clojure.core.logic.nominal</h2>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+
+<div id="type-section">
+  <p></p>
+  <h2>Types</h2>
+  <div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/Nom">Nom</h2>
+    <span id="type-type">type</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[lvar]</span><br />
+    Protocols: <span id="type-protocols"><a href="#clojure.core.logic.nominal/INomSwap">INomSwap</a>, clojure.core.logic.protocols/IReifyTerm</span><br />
+    Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.IBindable, clojure.lang.ILookup, clojure.lang.IObj</span><br />
+  </div><div id="type-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/Tie">Tie</h2>
+    <span id="type-type">record</span><br />
+    <pre id="type-docstr"></pre>
+    Fields: <span id="type-fields">[binding-nom body]</span><br />
+    Protocols: <span id="type-protocols"><a href="#clojure.core.logic.nominal/INomSwap">INomSwap</a>, clojure.core.logic.protocols/IConstrainTree, clojure.core.logic.protocols/IForceAnswerTerm, clojure.core.logic.protocols/IOccursCheckTerm, clojure.core.logic.protocols/IReifyTerm, clojure.core.logic.protocols/IUnifyTerms, clojure.core.logic.protocols/IWalkTerm</span><br />
+    Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.ITreeTerm, clojure.lang.IHashEq, clojure.lang.IKeywordLookup, clojure.lang.ILookup, clojure.lang.IObj, clojure.lang.IPersistentMap, java.io.Serializable, java.util.Map</span><br />
+  </div>
+</div>
+<div id="var-section">
+  <p></p>
+  <h2>Public Variables and Functions</h2>
+  <div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/-&gt;Nom">-&gt;Nom</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Nom lvar)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.nominal.Nom.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj#L81" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/-&gt;Tie">-&gt;Tie</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (-&gt;Tie binding-nom body)
+</pre>
+    <pre id="var-docstr">Positional factory function for class clojure.core.logic.nominal.Tie.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj#L264" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/fresh">fresh</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (fresh [&amp; noms] &amp; goals)
+</pre>
+    <pre id="var-docstr">Creates fresh noms. Goals occuring within form a logical conjunction.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj#L130" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.nominal/map-&gt;Tie">map-&gt;Tie</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (map-&gt;Tie m#)
+</pre>
+    <pre id="var-docstr">Factory function for class clojure.core.logic.nominal.Tie, taking a map of keywords to field values.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj#L264" id="var-source">Source</a>
+  </div>
+</div>
+<br />
+<h2 id="clojure.core.logic.unifier">clojure.core.logic.unifier</h2>
+<pre id="namespace-docstr"></pre>
+
+
+<br />
+
+
+<div id="var-section">
+  <p></p>
+  <h2>Public Variables and Functions</h2>
+  <div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.unifier/prep">prep</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (prep expr)
+</pre>
+    <pre id="var-docstr">Prep a quoted expression. All symbols preceded by ? will
+be replaced with logic vars.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L55" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.unifier/unifier">unifier</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (unifier ts)
+       (unifier opts ts)
+</pre>
+    <pre id="var-docstr">Return the unifier for terms ts. Will prep the terms.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L148" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.unifier/unifier*">unifier*</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (unifier* ts)
+       (unifier* opts ts)
+</pre>
+    <pre id="var-docstr">Return the unifier that unifies terms ts.
+All terms in ts should prepped terms.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L119" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.unifier/unify">unify</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (unify ts)
+       (unify opts ts)
+</pre>
+    <pre id="var-docstr">Unify the terms ts returning a the value that represents their
+unificaiton. Will prep the terms.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L135" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic.unifier/unify*">unify*</h2>
+    <span id="var-type">function</span><br />
+    <pre id="var-usage">Usage: (unify* ts)
+       (unify* opts ts)
+</pre>
+    <pre id="var-docstr">Unify the terms ts.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L109" id="var-source">Source</a>
+  </div>
+</div>
+
+
+</div>
+              </div>
+            </div>
+          </div>
+	</div>
+	<div id="foot">
+	  <div style="text-align: center;" id="copyright">Copyright 2007-2013 by Rich Hickey and the various contributors</div>
+	</div>
+      </div>
+      <div id="DesignedBy">Logo &amp; site design by <a title="Visit Tom Hickey's website." href="http://www.tomhickey.com">Tom Hickey</a>.<br />
+      Clojure auto-documentation system by Tom Faulhaber.</div>
+    </div>
+    <!-- /AllContentContainer -->
+  </body>
+
+</html>
