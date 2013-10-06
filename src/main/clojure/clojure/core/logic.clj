@@ -1201,21 +1201,33 @@
          (take n# xs#)
          xs#))))
 
+(def ^:dynamic *logic-dbs* [])
+
 (defmacro run
   "Executes goals until a maximum of n results are found."
   [n bindings & goals]
-  `(-run {:occurs-check true :n ~n} ~bindings ~@goals))
+  `(-run {:occurs-check true :n ~n :db *logic-dbs*} ~bindings ~@goals))
 
 (defmacro run*
   "Executes goals until results are exhausted."
   [bindings & goals]
-  `(-run {:occurs-check true :n false} ~bindings ~@goals))
+  `(-run {:occurs-check true :n false :db *logic-dbs*} ~bindings ~@goals))
+
+(defmacro run-db
+  "Executes goals until a maximum of n results are found. Uses a specified logic database."
+  [n db bindings & goals]
+  `(-run {:occurs-check true :n ~n :db (flatten [~db])} ~bindings ~@goals))
+
+(defmacro run-db*
+  "Executes goals until results are exhausted. Uses a specified logic database."
+  [db bindings & goals]
+  `(-run {:occurs-check true :n false :db (flatten [~db])} ~bindings ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not 
+  "Executes goals until a maximum of n results are found. Does not
    occurs-check."
   [n bindings & goals]
-  `(-run {:occurs-check false :n ~n} ~bindings ~@goals))
+  `(-run {:occurs-check false :n ~n :db *logic-dbs*} ~bindings ~@goals))
 
 (defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
