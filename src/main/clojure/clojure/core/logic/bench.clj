@@ -3,6 +3,7 @@
   (:use [clojure.core.logic :as l])
   (:require [clojure.core.logic.arithmetic :as a]
             [clojure.core.logic.fd :as fd]
+            [clojure.core.logic.pldb :as pldb]
             [clojure.repl :as r]
             [clojure.pprint :as pp]
             [clojure.set :as set]))
@@ -93,7 +94,7 @@
 
 (comment
   (run 1 [q] (zebrao q))
-  
+
   ;; SWI-Prolog 6-8.5s
   ;; now 2.5-2.6s, old days <2.4s
   (dotimes [_ 5]
@@ -111,13 +112,16 @@
 ;; =============================================================================
 ;; cliques
 
-(defrel connected ^:index x ^:index y)
-(facts connected [[1 2] [1 5]])
-(facts connected [[2 1] [2 3] [2 5]])
-(facts connected [[3 2] [3 4]])
-(facts connected [[4 3] [4 5] [4 6]])
-(facts connected [[5 1] [5 2] [5 4]])
-(facts connected [[6 4]])
+(pldb/db-rel connected ^:index x ^:index y)
+
+(def connected-db
+  (pldb/db
+   [connected [[1 2] [1 5]]]
+   [connected [[2 1] [2 3] [2 5]]]
+   [connected [[3 2] [3 4]]]
+   [connected [[4 3] [4 5] [4 6]]]
+   [connected [[5 1] [5 2] [5 4]]]
+   [connected [[6 4]]]))
 
 (defne connected-to-allo
   "Ensure that vertex v is connected to all vertices
@@ -141,19 +145,20 @@
   (run-nc* [q]
     (fresh [a b d]
       (== q (llist a b d))
-      (bounded-listo q 6)
+      (fd/bounded-listo q 6)
       (all-connected-to-allo q)))
-  
+
   ;; 350-400ms
   (dotimes [_ 5]
     (time
      (dotimes [_ 100]
       (doall
-       (run-nc 20 [q]
-         (fresh [a b d]
-           (== q (llist a b d))
-           (bounded-listo q 6)
-           (all-connected-to-allo q)))))))
+       (pldb/with-db connected-db
+         (run-nc 20 [q]
+                (fresh [a b d]
+                       (== q (llist a b d))
+                       (fd/bounded-listo q 6)
+                       (all-connected-to-allo q))))))))
 )
 
 ;; =============================================================================
@@ -224,7 +229,7 @@
   ;; direct translation does not work
   ;; because of the subtraction constraints
   ;; also, some domain inference would be nice
-  
+
   (defne noattackfd [y ys d]
     ([_ () _])
     ([y1 [y2 . yr] d]
@@ -346,13 +351,13 @@
   ;; ~1050ms, a little bit slower w/ distribute step
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100] 
+     (dotimes [_ 100]
        (doall (cryptarithfd-1)))))
 
   ;; 3X slower still
   (dotimes [_ 5]
     (time
-     (dotimes [_ 10] 
+     (dotimes [_ 10]
        (doall (cryptarithfd-1)))))
 
   ;; WORKS: takes a long time ([5 2 6 4 8 1 9 7 3 0])
@@ -415,7 +420,7 @@
     (everyg #(fd/in % (fd/interval 1 5)) vs)
     (fd/!= baker 5) (fd/!= cooper 1)
     (fd/!= fletcher 5) (fd/!= fletcher 1)
-    (fd/< cooper miller) 
+    (fd/< cooper miller)
     (not-adjacento smith fletcher)
     (not-adjacento fletcher cooper)))
 
@@ -470,9 +475,9 @@
   ;; 620ms
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e3] 
+     (dotimes [_ 1e3]
        (doall (simple-fd-eq)))))
-  
+
   (run* [q]
     (fresh [a b]
       (fd/* a 3 34)
@@ -529,7 +534,7 @@
 
 (defn matches [n]
   (run 1 [a b c d]
-    (fd/in a b c d (fd/interval 1 n)) 
+    (fd/in a b c d (fd/interval 1 n))
     (fd/distinct [a b c d])
     (== a 1)
     (fd/<= a b) (fd/<= b c) (fd/<= c d)
@@ -588,7 +593,7 @@
   ;; 1.9s
   (dotimes [_ 10]
     (time
-     (dotimes [_ 1e3] 
+     (dotimes [_ 1e3]
        (doall (small-sudokufd)))))
 
   (small-sudokufd)
@@ -624,7 +629,7 @@
     (get-square rows x y)))
 
 (defn sudokufd [hints]
-  (let [vars (repeatedly 81 lvar) 
+  (let [vars (repeatedly 81 lvar)
         rows (->rows vars)
         cols (->cols rows)
         sqs  (->squares rows)]
@@ -693,10 +698,10 @@
      3 0 1  0 0 7  0 4 0
      7 2 0  0 4 0  0 6 0
      0 0 4  0 1 0  0 0 3])
-  
+
   (sudokufd easy0)
   (time (doall (sudokufd easy0)))
-  
+
   (sudokufd easy1)
   (time (sudokufd easy1))
 
@@ -749,7 +754,7 @@
      0 0 0  0 9 0  2 0 0
      0 0 8  0 7 0  4 0 0
      0 0 3  0 6 0  0 0 0
-     
+
      0 1 0  0 0 2  8 9 0
      0 4 0  0 0 0  0 0 0
      0 5 0  1 0 0  0 0 0])
@@ -797,7 +802,7 @@
      9 0 0  0 0 4  0 7 0
      0 0 0  6 0 8  0 0 0
      0 1 0  2 0 0  0 0 3
-     
+
      8 2 0  5 0 0  0 0 0
      0 0 0  0 0 0  0 0 5
      0 3 4  0 9 0  7 1 0])
@@ -810,16 +815,16 @@
         (doall (sudokufd ciao)))))
 
   (def jacop
-    [0 1 0  4 2 0  0 0 5 
-     0 0 2  0 7 1  0 3 9  
-     0 0 0  0 0 0  0 4 0 
-          
-     2 0 7  1 0 0  0 0 6  
-     0 0 0  0 4 0  0 0 0 
-     6 0 0  0 0 7  4 0 3  
-          
-     0 7 0  0 0 0  0 0 0 
-     1 2 0  7 3 0  5 0 0  
+    [0 1 0  4 2 0  0 0 5
+     0 0 2  0 7 1  0 3 9
+     0 0 0  0 0 0  0 4 0
+
+     2 0 7  1 0 0  0 0 6
+     0 0 0  0 4 0  0 0 0
+     6 0 0  0 0 7  4 0 3
+
+     0 7 0  0 0 0  0 0 0
+     1 2 0  7 3 0  5 0 0
      3 0 0  0 8 2  0 7 0])
 
   ;; 400ms
@@ -863,7 +868,7 @@
   ;; ~2300ms
   (dotimes [_ 5]
     (time
-      (dotimes [_ 100] 
+      (dotimes [_ 100]
         (doall (safefd)))))
   )
 

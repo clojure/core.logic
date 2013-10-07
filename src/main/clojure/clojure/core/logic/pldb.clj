@@ -31,8 +31,12 @@
 (defn indexed? [v]
   (true? (:index (meta v))))
 
+
+(defn contains-lvar? [x]
+  (some l/lvar? (tree-seq coll? seq x)))
+
 (defn ground? [s term]
-  (not (l/contains-lvar? (l/walk* s term))))
+  (not (contains-lvar? (l/walk* s term))))
 
 (defn index-for-query [s q indexes]
   (let [indexable (map #(ground? s %)  q)

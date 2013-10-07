@@ -709,7 +709,7 @@
   (fresh []
     (conde
       [f2 (conde
-            [f2] 
+            [f2]
             [(== false false)])]
       [(== false false)])))
 
@@ -1094,80 +1094,6 @@
              (= r #{2 3 4 5})))))
 
 ;; -----------------------------------------------------------------------------
-;; rel
-
-(defrel man p)
-
-(fact man 'Bob)
-(fact man 'John)
-(fact man 'Ricky)
-
-(defrel woman p)
-(fact woman 'Mary)
-(fact woman 'Martha)
-(fact woman 'Lucy)
-
-(defrel likes p1 p2)
-(fact likes 'Bob 'Mary)
-(fact likes 'John 'Martha)
-(fact likes 'Ricky 'Lucy)
-
-(defrel fun p)
-(fact fun 'Lucy)
-
-(deftest test-rel-1
-  (is (= (run* [q]
-           (fresh [x y]
-             (likes x y)
-             (fun y)
-             (== q [x y])))
-         '([Ricky Lucy]))))
-
-(retraction likes 'Bob 'Mary)
-
-(deftest test-rel-retract
-  (is (= (into #{}
-           (run* [q]
-             (fresh [x y]
-               (likes x y)
-               (== q [x y]))))
-         (into #{} '([John Martha] [Ricky Lucy])))))
-
-(defrel rel1 ^:index a)
-(fact rel1 [1 2])
-
-(deftest test-rel-logic-29
-  (is (= (run* [q]
-           (fresh [a]
-             (rel1 [q a])
-             (== a 2)))
-         '(1))))
-
-(defrel rel2 ^:index e ^:index a ^:index v)
-
-(facts rel2 [[:e1 :a1 :v1]
-             [:e1 :a2 :v2]])
-
-(retractions rel2 [[:e1 :a1 :v1]
-                   [:e1 :a1 :v1]
-                   [:e1 :a2 :v2]])
-
-(deftest rel2-dup-retractions
-  (is (= (run* [out]
-           (fresh [e a v]
-             (rel2 e :a1 :v1)
-             (rel2 e a v)
-             (== [e a v] out)))
-        '())))
-
-(deftest test-to-stream
-  ;; LOGIC-139
-  (let [answers
-        (run* [q] (fresh [x] (!= x 'Bob) (man x)))]
-    (is (= 2 (count answers)))
-    (is (every? symbol? answers))))
-
-;; -----------------------------------------------------------------------------
 ;; nil in collection
 
 (deftest test-nil-in-coll-1
@@ -1310,7 +1236,7 @@
 (deftest test-unifier-as-1
   (is (= (u/unify {:as '{?x (?y ?z)}} ['?x '(1 2)])))
   (is (= (u/unify {:as '{?x (?y ?z)}} ['(?x) '((1 2))])))
-  (is (= (u/unify {:as '{?x (?y ?y)}} '[[?y ?x] [1 (1 1)]]) 
+  (is (= (u/unify {:as '{?x (?y ?y)}} '[[?y ?x] [1 (1 1)]])
          '[1 (1 1)])))
 
 ;;Anonymous constraints
@@ -1440,7 +1366,7 @@
 ;; -----------------------------------------------------------------------------
 ;; Pattern matching functions preserve metadata
 
-(defne ^:tabled dummy 
+(defne ^:tabled dummy
   "Docstring"
   [x l]
   ([_ [x . tail]])
@@ -1613,7 +1539,7 @@
 
 (deftest test-111-conda-regression
   (is (= (run* [x]
-           (conda 
+           (conda
              [succeed
               (project [x] succeed)
               (project [x] succeed)]))
@@ -1640,7 +1566,7 @@
     (project [goals]
       ;;when there are no more goals we are done
       (conde [(== true
-                (empty? goals)) 
+                (empty? goals))
                (== curr end)]
         ;;there are still goals left
         ;;solve the first and recursive call
@@ -2104,7 +2030,7 @@
     (is (= (fd/-intersection mi0 7) 7))
     (is (= (fd/-intersection 7 mi0) 7))))
 
-;; |-----| 
+;; |-----|
 ;;   |-----|
 (deftest test-intersection-mimi-3
   (let [mi0 (fd/multi-interval (fd/interval 1 4) (fd/interval 7 10))]
@@ -2162,7 +2088,7 @@
            (fd/multi-interval (fd/interval 1 4) (fd/interval 6 8))))))
 
 ;; |---|  |---|
-;;         N      
+;;         N
 (deftest test-difference-mis-1
   (let [mi0 (fd/multi-interval (fd/interval 1 4) (fd/interval 7 10))]
     (is (= (fd/-difference mi0 8)
@@ -3058,7 +2984,7 @@
     (everyg #(fd/in % (fd/interval 1 5)) vs)
     (fd/!= baker 5) (fd/!= cooper 1)
     (fd/!= fletcher 5) (fd/!= fletcher 1)
-    (fd/< cooper miller) 
+    (fd/< cooper miller)
     (not-adjacento smith fletcher)
     (not-adjacento fletcher cooper)))
 
@@ -3090,7 +3016,7 @@
 
 (defn matches [n]
   (run 1 [a b c d]
-    (fd/in a b c d (fd/interval 1 n)) 
+    (fd/in a b c d (fd/interval 1 n))
     (fd/distinct [a b c d])
     (== a 1)
     (fd/<= a b) (fd/<= b c) (fd/<= c d)
@@ -3127,7 +3053,7 @@
     (get-square rows x y)))
 
 (defn sudokufd [hints]
-  (let [vars (repeatedly 81 lvar) 
+  (let [vars (repeatedly 81 lvar)
         rows (->rows vars)
         cols (->cols rows)
         sqs  (->squares rows)]
