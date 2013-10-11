@@ -374,10 +374,6 @@
     (if (sequential? u)
       (-unify-with-seq v u s)
       (-unify-with-object v u s)))
-
-  ObjMap
-  (-unify-terms [u v s]
-    (-unify-with-map v u s))
   
   PersistentArrayMap
   (-unify-terms [u v s]
@@ -490,10 +486,6 @@
   default
   (-unify-with-map [v u s] (fail s))
 
-  ObjMap
-  (-unify-with-map [v u s]
-    (unify-with-map* v u s))
-
   PersistentArrayMap
   (-unify-with-map [v u s]
     (unify-with-map* v u s))
@@ -545,9 +537,6 @@
         (recur (next v) (conj r (-walk* s (first v))))
         r)))
 
-  ObjMap
-  (-walk-term [v s] (walk-term-map* v s))
-
   PersistentHashMap
   (-walk-term [v s] (walk-term-map* v s)))
 
@@ -592,21 +581,6 @@
 
 (defn choice [a f]
   (Choice. a f))
-
-;; -----------------------------------------------------------------------------
-;; MZero
-
-(extend-protocol IBind
-  nil
-  (-bind [_ g] nil))
-
-(extend-protocol IMPlus
-  nil
-  (-mplus [_ b] b))
-
-(extend-protocol ITake
-  nil
-  (-take* [_] '()))
 
 ;; -----------------------------------------------------------------------------
 ;; Unit
@@ -670,22 +644,12 @@
   (-ifu [b gs c]))
 
 (extend-protocol IIfA
-  nil
-  (-ifa [b gs c]
-       (when c
-         (force c)))
-
   Fail
   (-ifa [b gs c]
        (when c
          (force c))))
 
 (extend-protocol IIfU
-  nil
-  (-ifu [b gs c]
-       (when c
-         (force c)))
-
   Fail
   (-ifu [b gs c]
     (when c
@@ -823,16 +787,12 @@
   nil
   (unify-with-pmap [v u s] (fail s))
 
-  js/Object
+  default
   (unify-with-pmap [v u s] (fail s))
 
   cljs.core.logic.LVar
   (unify-with-pmap [v u s]
     (-ext s v u))
-
-  ObjMap
-  (unify-with-pmap [v u s]
-    (-unify-with-map u v s))
 
   PersistentArrayMap
   (unify-with-pmap [v u s]
