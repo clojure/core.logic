@@ -221,8 +221,8 @@
 (defn unify [s u v]
   (if (identical? u v)
     s
-    (let [u  (walk s u)
-          v  (walk s v)]
+    (let [u (walk s u)
+          v (walk s v)]
       ;; TODO: we can't use an identical? check here at the moment
       ;; because we add metadata on vars in walk - David
       (if (and (lvar? u) (= u v))
@@ -349,7 +349,7 @@
           (not (bindable? vp))
           (if (subst-val? vp)
             (let [sv (:v vp)]
-              (if (= sv ::unbound)
+              (if (identical? sv ::unbound)
                 (with-meta v (assoc (meta vp) ::unbound true))
                 sv))
             vp)
@@ -546,7 +546,7 @@
       (if doms
         (let [[dom domv] (first doms)]
           (let [xdomv (get xdoms dom ::not-found)
-                ndomv (if (= xdomv ::not-found)
+                ndomv (if (identical? xdomv ::not-found)
                         domv
                         (-merge-doms domv xdomv))]
             (when ndomv
@@ -603,7 +603,7 @@
 ;; =============================================================================
 ;; Logic Variables
 
-(deftype LVar [name oname hash meta]
+(deftype LVar [id unique name oname hash meta]
   IVar
   clojure.lang.ILookup
   (valAt [this k]
@@ -612,20 +612,24 @@
     (case k
       :name name
       :oname oname
+      :id id
       not-found))
 
   clojure.lang.IObj
   (meta [this]
     meta)
   (withMeta [this new-meta]
-    (LVar. name oname hash new-meta))
+    (LVar. id unique name oname hash new-meta))
 
   Object
   (toString [_] (str "<lvar:" name ">"))
 
   (equals [this o]
-    (and (instance? IVar o)
-      (identical? name (:name o))))
+    (if (instance? IVar o)
+      (if unique
+        (identical? id (:id o))
+        (identical? name (:name o)))
+      false))
 
   (hashCode [_] hash)
 
@@ -685,16 +689,20 @@
 
 (defn lvar
   ([]
-     (let [name (str (. clojure.lang.RT (nextID)))]
-       (LVar. name nil (.hashCode name) nil)))
+     (let [id (. clojure.lang.RT (nextID))
+           name (str id)]
+       (LVar. id true name nil (.hashCode name) nil)))
   ([name]
      (lvar name true))
-  ([name gensym]
+  ([name unique]
      (let [oname name
-           name (if gensym
-                  (str name "__" (. clojure.lang.RT (nextID)))
+           id   (if unique
+                  (. clojure.lang.RT (nextID))
+                  name)
+           name (if unique
+                  (str name "__" id)
                   (str name))]
-       (LVar. name oname (.hashCode name) nil))))
+       (LVar. id unique name oname (.hashCode name) nil))))
 
 (defmethod print-method LVar [x ^Writer writer]
   (.write writer (str "<lvar:" (:name x) ">")))
@@ -707,7 +715,7 @@
 
 (defn bindable? [x]
   (or (lvar? x)
-    (instance? IBindable x)))
+      (instance? IBindable x)))
 
 ;; =============================================================================
 ;; LCons
@@ -771,7 +779,7 @@
                 :else (= me you))))))
 
   (hashCode [this]
-    (if (= cache -1)
+    (if (clojure.core/== cache -1)
       (do
         (set! cache (uai (umi (int 31) (clojure.lang.Util/hash d))
                          (clojure.lang.Util/hash a)))
@@ -782,8 +790,8 @@
   (unify-terms [u v s]
     (cond
       (sequential? v)
-      (loop [u u v v s s]
-        (if (seq v)
+      (loop [u u v (seq v) s s]
+        (if-not (nil? v)
           (if (lcons? u)
             (if-let [s (unify s (lfirst u) (first v))]
               (recur (lnext u) (next v) s)
@@ -870,27 +878,27 @@
   (cond
     (sequential? v)
     (if (and (counted? u) (counted? v)
-          (not= (count u) (count v)))
+             (not (clojure.core/== (count u) (count v))))
       nil
-      (loop [u u v v s s]
-        (if (seq u)
-          (if (seq v)
+      (loop [u (seq u) v (seq v) s s]
+        (if-not (nil? u)
+          (if-not (nil? v)
             (if-let [s (unify s (first u) (first v))]
               (recur (next u) (next v) s)
               nil)
             nil)
-          (if (seq v) nil s))))
+          (if-not (nil? v) nil s))))
     
     (lcons? v) (unify-terms v u s)
     :else nil))
 
 (defn unify-with-map* [u v s]
-  (when (= (count u) (count v))
+  (when (clojure.core/== (count u) (count v))
     (loop [ks (keys u) s s]
       (if (seq ks)
         (let [kf (first ks)
               vf (get v kf ::not-found)]
-          (when-not (= vf ::not-found)
+          (when-not (identical? vf ::not-found)
             (if-let [s (unify s (get u kf) vf)]
               (recur (next ks) s)
               nil)))
