@@ -4,18 +4,16 @@
 
   :jvm-opts ^:replace ["-Xmx512m" "-server"]
 
-  :source-paths ["src/main/clojure"
-                 ;"clojurescript/src/clj"
-                 ;"clojurescript/src/cljs"
-                 ]
+  :source-paths ["src/main/clojure"]
+  
   :test-paths ["src/test/clojure"]
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1835"]
-                 [org.clojure/tools.macro "0.1.1"]
-                 [org.clojure/tools.nrepl "0.2.3"]
-                 [com.datomic/datomic-free "0.8.3551" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "0.3.2"]]
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/clojurescript "0.0-1934"]
+                 [org.clojure/tools.macro "0.1.2"]
+                 [com.datomic/datomic-free "0.8.4218" :scope "provided"]]
+
+  :plugins [[lein-cljsbuild "0.3.3"]]
 
   :cljsbuild
   {:builds

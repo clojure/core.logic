@@ -342,19 +342,19 @@
 
   (walk [this v]
     (if (bindable? v)
-      (loop [lv v [v vp :as me] (find s v)]
-        (cond
-          (nil? me) lv
-          
-          (not (bindable? vp))
-          (if (subst-val? vp)
-            (let [sv (:v vp)]
-              (if (identical? sv ::unbound)
-                (with-meta v (assoc (meta vp) ::unbound true))
-                sv))
-            vp)
-          
-          :else (recur vp (find s vp))))
+      (loop [lv v me (find s v)]
+        (if (nil? me)
+          lv
+          (let [v  (key me)
+                vp (val me)]
+            (if (not (bindable? vp))
+              (if (subst-val? vp)
+                (let [sv (:v vp)]
+                  (if (identical? sv ::unbound)
+                    (with-meta v (assoc (meta vp) ::unbound true))
+                    sv))
+                vp)
+              (recur vp (find s vp))))))
       v))
 
   ISubstitutionsCLP
