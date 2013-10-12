@@ -17,12 +17,13 @@
 
   :cljsbuild
   {:builds
-   [{:id "simple"
+   [{:id "ws"
      :source-paths ["src/test/cljs"]
-     :compiler {:optimizations :simple
-                :pretty-print true
+     :compiler {:optimizations :whitespace
                 :static-fns true
-                :output-to "tests.js"}}
+                :output-to "tests.js"
+                :output-dir "out"
+                :source-map "tests.js.map"}}
     {:id "adv"
      :source-paths ["src/test/cljs"]
      :compiler {:optimizations :advanced

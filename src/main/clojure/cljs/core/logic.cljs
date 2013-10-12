@@ -65,11 +65,11 @@
   ICounted
   (-count [_] 2)
   IIndexed
-  (-nth [_ i] (condp = i
+  (-nth [_ i] (condp cljs.core/== i
                    0 lhs
                    1 rhs
                    (throw (js/Error. "Index out of bounds"))))
-  (-nth [_ i not-found] (condp = i
+  (-nth [_ i not-found] (condp cljs.core/== i
                              0 lhs
                              1 rhs
                              not-found))
@@ -85,6 +85,11 @@
 
 ;; =============================================================================
 ;; Substitutions
+
+(declare LVar)
+
+(defn ^boolean lvar? [x]
+  (instance? LVar x))
 
 (defprotocol ISubstitutions
   (-occurs-check [this u v])
@@ -130,7 +135,8 @@
       (-occurs-check-term v u this)))
   
   (-ext [this u v]
-    (if (and *occurs-check* (-occurs-check this u v))
+    (if (and ^boolean *occurs-check*
+             ^boolean (-occurs-check this u v))
       (fail this)
       (-ext-no-check this u v)))
 
@@ -166,7 +172,7 @@
 
   (-reify [this v]
     (let [v (-walk* this v)]
-      (-walk* (-reify* empty-s v) v)))
+      (-walk* ^not-native (-reify* ^not-native empty-s v) v)))
 
   IBind
   (-bind [this g]
@@ -183,7 +189,7 @@
 (defn make-s [s]
   (Substitutions. s))
 
-(def empty-s (make-s '()))
+(def ^not-native empty-s (make-s '()))
 
 (defn ^boolean subst? [x]
   (instance? Substitutions x))
@@ -222,30 +228,30 @@
   (-unify-terms [u v s]
     (-unify-with-lvar v u s))
   IUnifyWithNil
-  (-unify-with-nil [v u s]
+  (-unify-with-nil [v u ^not-native s]
     (-ext-no-check s v u))
   IUnifyWithObject
-  (-unify-with-object [v u s]
+  (-unify-with-object [v u ^not-native s]
     (-ext s v u))
   IUnifyWithLVar
-  (-unify-with-lvar [v u s]
+  (-unify-with-lvar [v u ^not-native s]
     (-ext-no-check s u v))
   IUnifyWithLSeq
-  (-unify-with-lseq [v u s]
+  (-unify-with-lseq [v u ^not-native s]
     (-ext s v u))
   IUnifyWithSequential
-  (-unify-with-seq [v u s]
+  (-unify-with-seq [v u ^not-native s]
     (-ext s v u))
   IUnifyWithMap
-  (-unify-with-map [v u s]
+  (-unify-with-map [v u ^not-native s]
     (-ext s v u))
   IReifyTerm
-  (-reify-term [v s]
+  (-reify-term [v ^not-native s]
     (-ext s v (-reify-lvar-name s)))
   IWalkTerm
   (-walk-term [v s] v)
   IOccursCheckTerm
-  (-occurs-check-term [v x s]
+  (-occurs-check-term [v x ^not-native s]
     (= (-walk s v) x)))
 
 (def lvar-sym-counter (atom 0))
@@ -256,9 +262,6 @@
      (let [name (str name "_" (swap! lvar-sym-counter inc))]
        (LVar. name nil))))
 
-(defn ^boolean lvar? [x]
-  (instance? LVar x))
-
 ;; =============================================================================
 ;; LCons
 
@@ -266,7 +269,10 @@
   (-lfirst [this])
   (-lnext [this]))
 
-(declare lcons? failed?)
+(declare LCons failed?)
+
+(defn ^boolean lcons? [x]
+  (instance? LCons x))
 
 (defn lcons-pr-seq [x]
   (cond
@@ -340,11 +346,11 @@
         (recur (-lnext v) (-reify* s (-lfirst v)))
         (-reify* s v))))
   IWalkTerm
-  (-walk-term [v s]
+  (-walk-term [v ^not-native s]
     (lcons (-walk* s (-lfirst v))
            (-walk* s (-lnext v))))
   IOccursCheckTerm
-  (-occurs-check-term [v x s]
+  (-occurs-check-term [v x ^not-native s]
     (loop [v v x x s s]
       (if (lcons? v)
         (or (-occurs-check s x (-lfirst v))
@@ -357,9 +363,6 @@
   (if (or (coll? d) (nil? d))
     (cons a (seq d))
     (LCons. a d nil)))
-
-(defn ^boolean lcons? [x]
-  (instance? LCons x))
 
 ;; =============================================================================
 ;; Unification
@@ -409,10 +412,10 @@
 
 (extend-protocol IUnifyWithLVar
   nil
-  (-unify-with-lvar [v u s] (-ext-no-check s u v))
+  (-unify-with-lvar [v u ^not-native s] (-ext-no-check s u v))
 
   default
-  (-unify-with-lvar [v u s]
+  (-unify-with-lvar [v u ^not-native s]
     (-ext s u v)))
 
 ;; -----------------------------------------------------------------------------
@@ -502,7 +505,7 @@
   (-reify-term [v s] s)
 
   default
-  (-reify-term [v s]
+  (-reify-term [v ^not-native s]
     (if (sequential? v)
       (loop [v v s s]
         (if (seq v)
@@ -513,29 +516,29 @@
 ;; =============================================================================
 ;; Walk Term
 
-(defn walk-term-map* [v s]
-  (loop [v v r {}]
-    (if (seq v)
-      (let [[vfk vfv] (first v)]
-        (recur (next v) (assoc r vfk (-walk* s vfv))))
-      r)))
+(defn walk-term-map* [^not-native v ^not-native s]
+  (loop [^not-native v (-seq v) ^not-native r (transient {})]
+    (if-not (nil? v)
+      (let [[vfk vfv] (-first v)]
+        (recur (-next v) (-assoc! r vfk (-walk* s vfv))))
+      (persistent! r))))
 
 (extend-protocol IWalkTerm
   nil
   (-walk-term [v s] nil)
 
   default
-  (-walk-term [v s]
+  (-walk-term [v ^not-native s]
     (if (sequential? v)
       (map #(-walk* s %) v)
       v))
 
   PersistentVector
-  (-walk-term [v s]
-    (loop [v v r []]
-      (if (seq v)
-        (recur (next v) (conj r (-walk* s (first v))))
-        r)))
+  (-walk-term [^not-native v ^not-native s]
+    (loop [^not-native v (-seq v) ^not-native r (transient [])]
+      (if-not (nil? v)
+        (recur (-next v) (-conj! r (-walk* s (first v))))
+        (persistent! r))))
 
   PersistentHashMap
   (-walk-term [v s] (walk-term-map* v s)))
@@ -548,47 +551,45 @@
   (-occurs-check-term [v x s] false)
 
   default
-  (-occurs-check-term [v x s]
+  (-occurs-check-term [v x ^not-native s]
     (if (sequential? v)
-      (loop [v v x x s s]
-        (if (seq v)
-          (or (-occurs-check s x (first v))
-              (recur (next v) x s))
+      (loop [^not-native v (seq v) x x s s]
+        (if-not (nil? v)
+          (or (-occurs-check s x (-first v))
+              (recur (-next v) x s))
           false))
       false)))
 
 ;; =============================================================================
 ;; Goals and Goal Constructors
 
-(extend-type default
-  ITake
-  (-take* [this] this))
+(declare Choice)
 
-;; TODO: Choice always holds a as a list, can we just remove that?
+(defn mplus [a f]
+  (if (satisfies? IMPlus a false)
+    (-mplus ^not-native a f)
+    (Choice. a f)))
+
+(defn take* [x]
+  (if (satisfies? ITake x false)
+    (-take* ^not-native x)
+    (list x)))
 
 (declare Inc)
 
 (deftype Choice [a f]
   IBind
   (-bind [this g]
-    (-mplus (g a) (-inc (-bind f g))))
+    (mplus (g a) (-inc (-bind ^not-native f g))))
   IMPlus
   (-mplus [this fp]
-    (Choice. a (-inc (-mplus (fp) f))))
+    (Choice. a (-inc (mplus (fp) f))))
   ITake
   (-take* [this]
-    (lazy-seq (cons (first a) (lazy-seq (-take* f))))))
+    (lazy-seq (cons a (lazy-seq (take* f))))))
 
 (defn choice [a f]
   (Choice. a f))
-
-;; -----------------------------------------------------------------------------
-;; Unit
-
-(extend-type default
-  IMPlus
-  (-mplus [this f]
-    (Choice. this f)))
 
 ;; -----------------------------------------------------------------------------
 ;; Inc
@@ -598,12 +599,14 @@
   (-invoke [_] (f))
   IBind
   (-bind [this g]
-    (-inc (-bind (f) g)))
+    (-inc
+      (let [^not-native a (f)]
+        (-bind a g))))
   IMPlus
   (-mplus [this fp]
-    (-inc (-mplus (fp) this)))
+    (-inc (mplus (fp) this)))
   ITake
-  (-take* [this] (lazy-seq (-take* (f)))))
+  (-take* [this] (lazy-seq (take* (f)))))
 
 ;; -----------------------------------------------------------------------------
 ;; Fail

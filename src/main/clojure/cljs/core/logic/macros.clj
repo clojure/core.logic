@@ -25,14 +25,14 @@
   (mapcat lvar-bind syms))
 
 (defmacro bind*
-  ([a g] `(cljs.core.logic/-bind ~a ~g))
+  ([a g] `(cljs.core.logic/-bind ~(vary-meta a {:tag 'not-native}) ~g))
   ([a g & g-rest]
-     `(bind* (cljs.core.logic/-bind ~a ~g) ~@g-rest)))
+     `(bind* (cljs.core.logic/-bind ~(vary-meta a {:tag 'not-native}) ~g) ~@g-rest)))
 
 (defmacro mplus*
   ([e] e)
   ([e & e-rest]
-     `(cljs.core.logic/-mplus ~e (-inc (mplus* ~@e-rest)))))
+     `(cljs.core.logic/mplus ~e (-inc (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
   `(cljs.core.logic/Inc. (fn [] ~@rest)))
@@ -67,7 +67,7 @@
   `(let [xs# (cljs.core.logic/-take* (-inc
                       ((fresh [~x] ~@goals
                          (fn [a#]
-                           (cons (cljs.core.logic/-reify a# ~x) '()))) ;; TODO: do we need this?
+                           (cljs.core.logic/-reify a# ~x))) ;; TODO: do we need this?
                        cljs.core.logic/empty-s)))]
      (if ~n
        (take ~n xs#)
