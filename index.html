@@ -282,6 +282,12 @@ namespace.
       <a class="toc-entry-anchor" href="#clojure.core.logic/run*">run*</a>
       
     </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run-db">run-db</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
+      <a class="toc-entry-anchor" href="#clojure.core.logic/run-db*">run-db*</a>
+      
+    </div><div style="margin-left: 1em;" class="toc-entry">
       <a class="toc-entry-anchor" href="#clojure.core.logic/run-nc">run-nc</a>
       
     </div><div style="margin-left: 1em;" class="toc-entry">
@@ -482,7 +488,7 @@ namespace.
     <h2 id="clojure.core.logic/LVar">LVar</h2>
     <span id="type-type">type</span><br />
     <pre id="type-docstr"></pre>
-    Fields: <span id="type-fields">[name oname hash meta]</span><br />
+    Fields: <span id="type-fields">[id unique name oname hash meta]</span><br />
     Protocols: <span id="type-protocols">clojure.core.logic.protocols/IBuildTerm, clojure.core.logic.protocols/IOccursCheckTerm, clojure.core.logic.protocols/IReifyTerm, clojure.core.logic.protocols/IUnifyTerms, clojure.core.logic.protocols/IWalkTerm</span><br />
     Interfaces: <span id="type-interfaces">clojure.core.logic.protocols.IVar, clojure.lang.ILookup, clojure.lang.IObj</span><br />
   </div><div id="type-entry">
@@ -555,7 +561,7 @@ namespace.
 unify. u and v can be complex terms.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2577" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2597" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -566,7 +572,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.AnswerCache.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1972" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1992" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -577,7 +583,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.Choice.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1060" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1068" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -588,7 +594,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.ConstraintStore.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L102" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L102" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -599,18 +605,18 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.LCons.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L731" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L739" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
     <h2 id="clojure.core.logic/-&gt;LVar">-&gt;LVar</h2>
     <span id="var-type">function</span><br />
-    <pre id="var-usage">Usage: (-&gt;LVar name oname hash meta)
+    <pre id="var-usage">Usage: (-&gt;LVar id unique name oname hash meta)
 </pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.LVar.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L606" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L606" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -621,7 +627,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.PMap.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2636" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2656" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -632,7 +638,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.Pair.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L36" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L36" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -643,7 +649,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.Rel.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1840" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1860" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -654,7 +660,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.SubstValue.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -665,7 +671,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.Substitutions.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L272" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L272" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -676,7 +682,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Positional factory function for class clojure.core.logic.SuspendedStream.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2003" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2023" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -687,7 +693,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">A goal that attempts to unify terms u and v.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1132" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1140" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -699,7 +705,7 @@ unify. u and v can be complex terms.</pre>
     <pre id="var-docstr">Like fresh but does does not create logic variables.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1217" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1237" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -710,7 +716,7 @@ unify. u and v can be complex terms.</pre>
 such that z is x appended to y</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1713" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1733" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -722,7 +728,7 @@ such that z is x appended to y</pre>
 all other clauses will be ignored. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1358" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1378" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -735,7 +741,7 @@ a clause is considered the head of that clause. Interleaves the
 execution of the clauses.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1151" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1159" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -748,7 +754,7 @@ has succeeded, remaining goals of the clause will only
 be run once. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1366" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1386" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -760,7 +766,7 @@ be run once. Non-relational.</pre>
 and d is the rest of l. If ground d must be bound to a proper tail.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1600" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1620" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -771,7 +777,7 @@ and d is the rest of l. If ground d must be bound to a proper tail.</pre>
     <pre id="var-docstr">Copies a term u into v. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1380" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1400" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -782,7 +788,7 @@ and d is the rest of l. If ground d must be bound to a proper tail.</pre>
     <pre id="var-docstr">Define a soft cut goal. See conda.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1669" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1689" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -794,7 +800,7 @@ and d is the rest of l. If ground d must be bound to a proper tail.</pre>
 patterns will be tried. See conde.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1640" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1660" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -805,7 +811,7 @@ patterns will be tried. See conde.</pre>
     <pre id="var-docstr">Define a committed choice goal. See condu.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1674" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1694" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -817,7 +823,7 @@ patterns will be tried. See conde.</pre>
 Use fact/facts to add facts and invoke the relation to query it.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1840" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1860" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -832,7 +838,7 @@ map by calling (f val-in-first val-in-later). If this function returns nil
 then the key will be removed completely.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1911" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1931" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -843,7 +849,7 @@ then the key will be removed completely.</pre>
 with another element of l.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2591" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2611" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -854,7 +860,7 @@ with another element of l.</pre>
     <pre id="var-docstr">A relation where a is the empty list</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1595" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1615" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -866,7 +872,7 @@ with another element of l.</pre>
 succeeds on every element of the collection.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1618" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1638" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -877,7 +883,7 @@ succeeds on every element of the collection.</pre>
     <pre id="var-docstr">Add a fact to a relation defined with defrel.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1906" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1926" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -890,7 +896,7 @@ succeeds on every element of the collection.</pre>
 represents a fact tuple, all with the same number of elements.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1887" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1907" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -901,7 +907,7 @@ represents a fact tuple, all with the same number of elements.</pre>
     <pre id="var-docstr">A goal that always fails.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1120" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1128" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -915,7 +921,7 @@ it may contain values which are logic variables to support
 feature extraction.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2692" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2712" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -926,7 +932,7 @@ feature extraction.</pre>
     <pre id="var-docstr">A relation where l is a collection, such that a is the first of l</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1606" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1626" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -939,7 +945,7 @@ course running a constraint may grow cq so this function
 finds the fixpoint.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2240" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2260" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -950,7 +956,7 @@ finds the fixpoint.</pre>
     <pre id="var-docstr">Define an anonymous soft cut goal. See conda.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1659" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1679" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -974,7 +980,7 @@ Note, the constraint will not run until all arguments are fully ground.
 Use defnc to define a constraint and assign a toplevel var.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2724" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2744" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -986,7 +992,7 @@ Use defnc to define a constraint and assign a toplevel var.</pre>
 patterns will be tried. See conde.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1634" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1654" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -997,7 +1003,7 @@ patterns will be tried. See conde.</pre>
     <pre id="var-docstr">Define an anonymous committed choice goal. See condu.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1664" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1684" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1009,7 +1015,7 @@ patterns will be tried. See conde.</pre>
 conjunction.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1168" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1176" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1021,7 +1027,7 @@ conjunction.</pre>
 applied. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1285" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1305" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1032,7 +1038,7 @@ applied. Non-relational.</pre>
     <pre id="var-docstr">Constructs a sequence a with an improper tail d if d is a logic variable.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L844" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L852" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1045,7 +1051,7 @@ applied. Non-relational.</pre>
 tail. The tail is improper if the last argument is a logic variable.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L854" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L862" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1057,7 +1063,7 @@ tail. The tail is improper if the last argument is a logic variable.</pre>
 variable. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1389" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1409" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1068,7 +1074,7 @@ variable. Non-relational.</pre>
     <pre id="var-docstr">Factory function for class clojure.core.logic.PMap, taking a map of keywords to field values.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2636" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2656" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1079,7 +1085,7 @@ variable. Non-relational.</pre>
     <pre id="var-docstr">Factory function for class clojure.core.logic.SubstValue, taking a map of keywords to field values.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L182" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1090,7 +1096,7 @@ variable. Non-relational.</pre>
     <pre id="var-docstr">Factory function for class clojure.core.logic.SuspendedStream, taking a map of keywords to field values.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2003" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2023" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1104,7 +1110,7 @@ If it doesn't already exist in the cache add the new
 answer term.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2130" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2150" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1115,7 +1121,7 @@ answer term.</pre>
     <pre id="var-docstr">Define a soft cut pattern match. See conda.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1679" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1699" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1127,7 +1133,7 @@ answer term.</pre>
 See conde.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1646" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1666" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1138,7 +1144,7 @@ See conde.</pre>
     <pre id="var-docstr">Define a committed choice goal. See condu.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1685" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1705" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1150,7 +1156,7 @@ the results. For example, if x and l are ground and x occurs
 multiple times in l, member1o will succeed only once.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1703" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1723" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1160,7 +1166,7 @@ multiple times in l, member1o will succeed only once.</pre>
     <pre id="var-docstr">A relation where l is a collection, such that l contains x.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1696" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1716" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1173,7 +1179,7 @@ must be ground. If some argument is not ground the execution of this constraint
 will be delayed.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2838" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2858" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1184,7 +1190,7 @@ will be delayed.</pre>
     <pre id="var-docstr">A relation where a is nil</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1590" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1610" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1196,7 +1202,7 @@ will be delayed.</pre>
 logic variable. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1397" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1417" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1208,7 +1214,7 @@ logic variable. Non-relational.</pre>
 doesn't share all of the keys of that map.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2654" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2674" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1219,7 +1225,7 @@ doesn't share all of the keys of that map.</pre>
 terminate if xl is not ground.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1722" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1742" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1230,7 +1236,7 @@ terminate if xl is not ground.</pre>
     <pre id="var-docstr">Check a predicate against the value logic var. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1277" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1297" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1241,7 +1247,7 @@ terminate if xl is not ground.</pre>
     <pre id="var-docstr">Extract the values bound to the specified logic vars. Non-relational.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1268" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1288" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1252,7 +1258,7 @@ terminate if xl is not ground.</pre>
 l exactly one time.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2602" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2622" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1263,7 +1269,7 @@ l exactly one time.</pre>
     <pre id="var-docstr">A relation where l is a collection, such that d is the rest of l</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1612" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1632" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1274,7 +1280,7 @@ l exactly one time.</pre>
     <pre id="var-docstr">Remove a fact from a relation defined with defrel.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1950" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1970" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1288,7 +1294,7 @@ represents a fact tuple, all with the same number of elements. It is not
 an error to retract a fact that isn't true.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1929" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1949" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1299,7 +1305,7 @@ an error to retract a fact that isn't true.</pre>
     <pre id="var-docstr">Executes goals until a maximum of n results are found.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1196" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1206" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1310,7 +1316,29 @@ an error to retract a fact that isn't true.</pre>
     <pre id="var-docstr">Executes goals until results are exhausted.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1201" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1211" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run-db">run-db</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run-db n db bindings &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until a maximum of n results are found. Uses a specified logic database.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1216" id="var-source">Source</a>
+  </div><div id="var-entry">
+    <br />
+    <hr />
+    <h2 id="clojure.core.logic/run-db*">run-db*</h2>
+    <span id="var-type">macro</span><br />
+    <pre id="var-usage">Usage: (run-db* db bindings &amp; goals)
+</pre>
+    <pre id="var-docstr">Executes goals until results are exhausted. Uses a specified logic database.</pre>
+    
+    
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1221" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1318,11 +1346,11 @@ an error to retract a fact that isn't true.</pre>
     <span id="var-type">macro</span><br />
     <pre id="var-usage">Usage: (run-nc n bindings &amp; goals)
 </pre>
-    <pre id="var-docstr">Executes goals until a maximum of n results are found. Does not 
+    <pre id="var-docstr">Executes goals until a maximum of n results are found. Does not
 occurs-check.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1206" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1226" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1333,7 +1361,7 @@ occurs-check.</pre>
     <pre id="var-docstr">Executes goals until results are exhausted. Does not occurs-check.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1212" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1232" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1344,7 +1372,7 @@ occurs-check.</pre>
     <pre id="var-docstr">A goal that always succeeds.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1116" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1124" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1356,7 +1384,7 @@ occurs-check.</pre>
 defne/a/u forms over using this directly.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2151" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2171" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1367,7 +1395,7 @@ defne/a/u forms over using this directly.</pre>
     <pre id="var-docstr">Goal for tracing the values of logic variables.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L1246" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L1266" id="var-source">Source</a>
   </div><div id="var-entry">
     <br />
     <hr />
@@ -1383,7 +1411,7 @@ stream, otherwise call mplus on the result of the thunk and the remainder
 of the waiting stream. Pass this result to the success contination.</pre>
     
     
-    <a href="https://github.com/clojure/core.logic/blob/cef96134f0e2309a331cce0743447176bf49821f/src/main/clojure/clojure/core/logic.clj#L2017" id="var-source">Source</a>
+    <a href="https://github.com/clojure/core.logic/blob/1375f34ef42ee6b288ccb110b5c8c4aeb87a39a9/src/main/clojure/clojure/core/logic.clj#L2037" id="var-source">Source</a>
   </div>
 </div>
 <br />
