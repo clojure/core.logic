@@ -5,15 +5,15 @@
   :jvm-opts ^:replace ["-Xmx512m" "-server"]
 
   :source-paths ["src/main/clojure"]
-  
+
   :test-paths ["src/test/clojure"]
 
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1934"]
+                 [org.clojure/clojurescript "0.0-2080"]
                  [org.clojure/tools.macro "0.1.2"]
-                 [com.datomic/datomic-free "0.8.4218" :scope "provided"]]
+                 [com.datomic/datomic-free "0.8.4270" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "0.3.3"]]
+  :plugins [[lein-cljsbuild "1.0.0"]]
 
   :cljsbuild
   {:builds
@@ -27,5 +27,5 @@
     {:id "adv"
      :source-paths ["src/test/cljs"]
      :compiler {:optimizations :advanced
-                :pretty-print true
+                :pretty-print false
                 :output-to "tests.js"}}]})

@@ -566,12 +566,12 @@
 (declare Choice)
 
 (defn mplus [a f]
-  (if (satisfies? IMPlus a false)
+  (if (implements? IMPlus a)
     (-mplus ^not-native a f)
     (Choice. a f)))
 
 (defn take* [x]
-  (if (satisfies? ITake x false)
+  (if (implements? ITake x)
     (-take* ^not-native x)
     (list x)))
 
