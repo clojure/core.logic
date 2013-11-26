@@ -2427,7 +2427,8 @@
             vf (get v kf ::not-found)]
         (if (= vf ::not-found)
           nil
-          (let [uf (get u kf)]
+          (let [uf (get u kf) 
+                vf (walk s vf)]
             (if (lvar? vf)
               (recur (next ks) ((featurec vf uf) s))
               (if (map? uf)

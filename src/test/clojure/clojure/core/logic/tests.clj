@@ -1820,7 +1820,7 @@
   (is (= (run* [x y]
            (== y {:baz "woz"})
            (== (partial-map {:foo x}) {:foo y}))
-        '(([_0 {:baz "woz"}] :- (clojure.core.logic/featurec {:baz "woz"} _0))))))
+        '([{:baz "woz"} {:baz "woz"}]))))
 
 ;; =============================================================================
 ;; cKanren
