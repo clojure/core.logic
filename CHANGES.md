@@ -1,3 +1,11 @@
+From 0.8.4 to 0.8.5
+====
+
+Changes
+----
+* old defrel functionality now replaced by pldb
+* small perf enhancements to CLJ & CLJS implementations
+
 From 0.8.3 to 0.8.4
 ====
 
