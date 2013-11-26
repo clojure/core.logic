@@ -1816,6 +1816,12 @@
                  (fd/interval 1 2)))))
           (take 20 (repeat 1)))))
 
+(deftest test-145-partial-map
+  (is (= (run* [x y]
+           (== y {:baz "woz"})
+           (== (partial-map {:foo x}) {:foo y}))
+        '(([_0 {:baz "woz"}] :- (clojure.core.logic/featurec {:baz "woz"} _0))))))
+
 ;; =============================================================================
 ;; cKanren
 
@@ -3461,3 +3467,4 @@
   (let [x (lvar 'x)
         s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
     (is (= (get-dom s x ::nom) '[(swap x y)]))))
+

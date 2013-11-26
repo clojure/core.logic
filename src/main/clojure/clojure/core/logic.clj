@@ -2479,20 +2479,25 @@
       (reify
         clojure.lang.IFn
         (invoke [_ s]
-          ((composeg
-             (== fs x)
-             (remcg this)) s))
+          (let [fs (walk s fs)]
+            ((composeg
+               (== (partial-map fs) x)
+               (remcg this)) s)))
         IRunnable
         (-runnable? [_]
-          (not (lvar? (walk s x))))))
+          (and (not (lvar? (walk s x)))
+               (not (lvar? (walk s fs)))))))
     IConstraintOp
     (-rator [_] `featurec)
     (-rands [_] [x])
     IReifiableConstraint
     (-reifyc [_ v r a]
-      (let [fs (into {} fs)
-            r  (-reify* r (walk* a fs))]
-        `(featurec ~(walk* r x) ~(walk* r fs))))
+      (if-not (lvar? fs)
+        (let [fs (into {} fs)
+              r (-reify* r (walk* a fs))]
+          `(featurec ~(walk* r x) ~(walk* r fs)))
+        (let [[x fs] (-reify a [x fs] r)]
+          `(featurec ~x ~fs))))
     IConstraintWatchedStores
     (-watched-stores [this] #{::subst})))
 
@@ -2502,7 +2507,7 @@
   it may contain values which are logic variables to support
   feature extraction."
   [x fs]
-  (cgoal (-featurec x (partial-map fs))))
+  (cgoal (-featurec x fs)))
 
 ;; =============================================================================
 ;; defnc
