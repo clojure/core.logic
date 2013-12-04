@@ -2658,38 +2658,78 @@
 ;; =============================================================================
 ;; conjo
 
+(extend-protocol IJonc
+  clojure.lang.IPersistentMap
+  (-joncf [f]
+    (fn [coll & args]
+      (reduce
+        (fn [m [k v]]
+          (if (= (get m k) v)
+            (dissoc m k v)
+            (reduced ::failed)))
+        coll args)))
+
+  clojure.lang.IPersistentVector
+  (-joncf [f]
+    (fn [coll & args]
+      (let [args (reverse args)]
+        (reduce
+          (fn [v x]
+            (if (= (peek v) x)
+              (pop v)
+              (reduced ::failed)))
+          coll args))))
+
+  clojure.lang.IPersistentList
+  (-joncf [f]
+    (fn [coll & args]
+      (let [args (reverse args)]
+        (reduce
+          (fn [v x]
+            (if (= (peek v) x)
+              (pop v)
+              (reduced ::failed)))
+          coll args)))))
+
 (defn -conjo
-  ([coll args]
+  ([coll args out]
     (reify
       IConstraintStep
       (-step [this s]
         (reify
-           clojure.lang.IFn
-           (invoke [_ s]
-             (let [coll (walk s coll)
-                   args (walk s args)]
-               ((composeg
-                  (== (apply conj coll (butlast args)) (last args))
-                  (remcg this)) s)))
-           IRunnable
-           (-runnable? [_]
-             (and (ground-term? coll s)
-                  (every? #(ground-term? % s) (butlast args))))))
+          clojure.lang.IFn
+          (invoke [_ s]
+            (let [coll (walk s coll)
+                  args (walk s args)]
+              (if-not (lvar? coll)
+                ((composeg
+                   (== (apply conj coll args) out)
+                   (remcg this)) s)
+                (let [outv (apply (-joncf out) out args)]
+                  (if-not (= outv ::failed)
+                    ((composeg
+                       (== outv coll)
+                       (remcg this)) s))))))
+          IRunnable
+          (-runnable? [_]
+            (and (every? #(ground-term? % s) args)
+                 (or (ground-term? coll s)
+                     (ground-term? out s))))))
       IConstraintOp
       (-rator [_]
         `conjo)
       (-rands [_]
-        (vec (concat [coll] args)))
+        (vec (concat [coll] args [out])))
       IReifiableConstraint
       (-reifyc [_ v r s]
-        `(conjo ~coll ~@(-reify s args r)))
+        `(conjo ~coll ~@(-reify s (concat args [out]) r)))
       IConstraintWatchedStores
       (-watched-stores [this] #{::subst}))))
 
 (defn conjo
   "A constraint version of conj"
   [coll & args]
-  (cgoal (-conjo coll args)))
+  (cgoal (-conjo coll (butlast args) (last args))))
 
 ;; =============================================================================
 ;; Deep Constraint

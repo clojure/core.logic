@@ -232,3 +232,9 @@
 
 (defprotocol IFeature
   (-feature [x]))
+
+;; -----------------------------------------------------------------------------
+;; Jonc
+
+(defprotocol IJonc
+  (-joncf [this]))
