@@ -2656,6 +2656,42 @@
   (cgoal (-nafc c args)))
 
 ;; =============================================================================
+;; conjo
+
+(defn -conjo
+  ([coll args]
+    (reify
+      IConstraintStep
+      (-step [this s]
+        (reify
+           clojure.lang.IFn
+           (invoke [_ s]
+             (let [coll (walk s coll)
+                   args (walk s args)]
+               ((composeg
+                  (== (apply conj coll (butlast args)) (last args))
+                  (remcg this)) s)))
+           IRunnable
+           (-runnable? [_]
+             (and (ground-term? coll s)
+                  (every? #(ground-term? % s) (butlast args))))))
+      IConstraintOp
+      (-rator [_]
+        `conjo)
+      (-rands [_]
+        (vec (concat [coll] args)))
+      IReifiableConstraint
+      (-reifyc [_ v r s]
+        `(conjo ~coll ~@(-reify s args r)))
+      IConstraintWatchedStores
+      (-watched-stores [this] #{::subst}))))
+
+(defn conjo
+  "A constraint version of conj"
+  [coll & args]
+  (cgoal (-conjo coll args)))
+
+;; =============================================================================
 ;; Deep Constraint
 
 (declare treec)
