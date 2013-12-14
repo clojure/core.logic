@@ -12,7 +12,7 @@
    :name "clojure.core.logic.bench",
    :doc nil}
   {:source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic.fd-api.html",
    :name "clojure.core.logic.fd",
@@ -1053,9 +1053,9 @@
    :name "!=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L783",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L783",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/!=",
    :doc
@@ -1063,31 +1063,31 @@
    :var-type "function",
    :line 783,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
-  {:arglists ([u v w]),
+  {:arglists ([x y product]),
    :name "*",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L973",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L973",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/*",
    :doc
-   "A finite domain constraint for multiplication and\nthus division. u, v & w must be eventually be given \ndomains if vars.",
+   "A finite domain constraint for multiplication and\nthus division. x, y & product must be eventually be given \ndomains if vars.",
    :var-type "function",
    :line 973,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
-  {:arglists ([u v w]),
+  {:arglists ([x y sum]),
    :name "+",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L897",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L897",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/+",
    :doc
-   "A finite domain constraint for addition and subtraction.\nu, v & w must eventually be given domains if vars.",
+   "A finite domain constraint for addition and subtraction.\nx, y & sum must eventually be given domains if vars.",
    :var-type "function",
    :line 897,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
@@ -1095,9 +1095,9 @@
    :name "->FiniteDomain",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L64",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L64",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->FiniteDomain",
    :doc
@@ -1109,9 +1109,9 @@
    :name "->IntervalFD",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L230",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L230",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->IntervalFD",
    :doc
@@ -1123,9 +1123,9 @@
    :name "->MultiIntervalFD",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L474",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L474",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->MultiIntervalFD",
    :doc
@@ -1137,9 +1137,9 @@
    :name "-distinctc",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L983",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L983",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/-distinctc",
    :doc
@@ -1151,9 +1151,9 @@
    :name "<",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L822",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L822",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/<",
    :doc
@@ -1165,9 +1165,9 @@
    :name "<=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L816",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L816",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/<=",
    :doc
@@ -1179,9 +1179,9 @@
    :name "==",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L746",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L746",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/==",
    :doc
@@ -1193,9 +1193,9 @@
    :name ">",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L830",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L830",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/>",
    :doc
@@ -1207,9 +1207,9 @@
    :name ">=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L836",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L836",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/>=",
    :doc
@@ -1219,9 +1219,9 @@
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:file "src/main/clojure/clojure/core/logic/fd.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1082",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1082",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/bounded-listo",
    :namespace "clojure.core.logic.fd",
@@ -1234,9 +1234,9 @@
    :name "distinct",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1074",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1074",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/distinct",
    :doc
@@ -1248,9 +1248,9 @@
    :name "distinctc",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L1039",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1039",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/distinctc",
    :doc
@@ -1262,9 +1262,9 @@
    :name "dom",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L628",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L628",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/dom",
    :doc "Assign a var x a domain.",
@@ -1275,9 +1275,9 @@
    :name "domain",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L155",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L155",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/domain",
    :doc
@@ -1289,9 +1289,9 @@
    :name "in",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L643",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L643",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/in",
    :doc "Assign vars to domain. The domain must come last.",
@@ -1302,9 +1302,9 @@
    :name "interval",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L356",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L356",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/interval",
    :doc
@@ -1316,9 +1316,9 @@
    :name "process-dom",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj#L613",
+   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L613",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/5afeace2761eeb6731cf558bed354607e5401631/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/process-dom",
    :doc
