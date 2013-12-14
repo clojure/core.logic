@@ -896,9 +896,9 @@
 
 (defn +
   "A finite domain constraint for addition and subtraction.
-   u, v & w must eventually be given domains if vars."
-  [u v w]
-  (cgoal (+c u v w)))
+   x, y & sum must eventually be given domains if vars."
+  [x y sum]
+  (cgoal (+c x y sum)))
 
 (defn -
   [u v w]
@@ -972,10 +972,10 @@
 
 (defn *
   "A finite domain constraint for multiplication and
-   thus division. u, v & w must be eventually be given 
+   thus division. x, y & product must be eventually be given 
    domains if vars."
-  [u v w]
-  (cgoal (*c u v w)))
+  [x y product]
+  (cgoal (*c x y product)))
 
 (defn quot [u v w]
   (* v w u))
