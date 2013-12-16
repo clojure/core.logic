@@ -1248,14 +1248,16 @@
 ;; =============================================================================
 ;; Debugging
 
-(defmacro log [& s]
+(defmacro log
   "Goal for println"
+  [& s]
   `(fn [a#]
      (println ~@s)
      a#))
 
-(defmacro trace-s []
+(defmacro trace-s
   "Goal that prints the current substitution"
+  []
   `(fn [a#]
      (println (str a#))
      a#))

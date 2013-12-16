@@ -2200,7 +2200,7 @@
         s ((fd/process-dom x (fd/interval 1 10) (fd/interval 1 10)) empty-s)]
     (is (= (fd/get-dom s x) (fd/interval 1 10)))))
 
-(deftest test-dom-1
+(deftest test-process-dom-3
   (let [x (lvar 'x)
         s ((fd/dom x (fd/interval 1 10)) empty-s)]
     (is (= (fd/get-dom s x) (fd/interval 1 10)))))
@@ -2446,7 +2446,7 @@
   (is (fd/-difference (fd/interval 1 10) 1)
       (fd/interval 2 10)))
 
-(deftest test-boundary-interval-1
+(deftest test-boundary-interval-2
   (is (fd/-difference (fd/interval 1 10) 10)
       (fd/interval 1 9)))
 
@@ -2584,7 +2584,7 @@
                (== q [x y z]))))
          (into #{} '([1 2 3] [1 3 2] [2 1 3] [2 3 1] [3 1 2] [3 2 1])))))
 
-(deftest test-=fd-1
+(deftest test-=fd-2
   (is (= (into #{}
            (run* [q]
              (fresh [a b]
@@ -3422,7 +3422,7 @@
     (is (= (get-attr s x :foo) 'bar))
     (is (= (get-attr s x :baz) 'woz))))
 
-(deftest test-attrs-2 []
+(deftest test-attrs-3 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x 1)
         s (add-attr s x :foo 'bar)
@@ -3433,8 +3433,8 @@
 (deftest test-root-1 []
   (let [x (lvar 'x)
         s (ext-no-check empty-s x 1)]
-    (= (root-var s x) x)
-    (= (root-val s x) 1)))
+    (is (= (root-var s x) x))
+    (is (= (root-val s x) 1))))
 
 (deftest test-root-2 []
   (let [x (lvar 'x)
