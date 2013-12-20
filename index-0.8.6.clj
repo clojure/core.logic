@@ -6,7 +6,7 @@
    :name "clojure.core.logic",
    :doc nil}
   {:source-url
-   "https://github.com/clojure/core.logic/blob/1cdb5393aa9b5cac53de76e66d09b2555a1cd002/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic.bench-api.html",
    :name "clojure.core.logic.bench",
@@ -1026,9 +1026,9 @@
    :name "SuspendedStream"}
   {:file "src/main/clojure/clojure/core/logic/bench.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/1cdb5393aa9b5cac53de76e66d09b2555a1cd002/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/raw/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/1cdb5393aa9b5cac53de76e66d09b2555a1cd002/src/main/clojure/clojure/core/logic/bench.clj#L135",
+   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj#L135",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.bench/all-connected-to-allo",
    :namespace "clojure.core.logic.bench",
@@ -1039,9 +1039,9 @@
    :name "all-connected-to-allo"}
   {:file "src/main/clojure/clojure/core/logic/bench.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/1cdb5393aa9b5cac53de76e66d09b2555a1cd002/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/raw/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/1cdb5393aa9b5cac53de76e66d09b2555a1cd002/src/main/clojure/clojure/core/logic/bench.clj#L126",
+   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj#L126",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.bench/connected-to-allo",
    :namespace "clojure.core.logic.bench",
