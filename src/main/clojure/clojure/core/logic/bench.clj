@@ -401,8 +401,8 @@
      (conda
        ((project [x b]
           (== (<= x b) true))
-        (partition l b l1 d))
-       (partition l b c d))))
+        (partitiono l b l1 d))
+       (partitiono l b c d))))
 
 ;; =============================================================================
 ;; Dinesman Dwelling Problem with CLP(FD)
