@@ -1180,10 +1180,10 @@
 ;; custom var reification
 
 (deftest test-reify-vars-false
-  (is (-run {:reify-vars false} [q]
-        (fresh [x]
-          (== q x)))
-      '(x)))
+  (is (= (-run {:reify-vars false} [q]
+               (fresh [x]
+                      (== q x)))
+         '(x))))
 
 (deftest test-custom-var-reifier-1
   (let [x (lvar 'x)]
@@ -1334,16 +1334,16 @@
     (is (= (run* [q] (fresh [x y] (rel2 x y) (== x y))) '(_0)))
     (is (= (run* [q] (rel3 '(1 2) q)) '((2))))))
 
-(deftest test-pm []
+(deftest test-pm
   (-test-pm "pattern matching with defne relations" pm1 pm2 pm4))
 
-(deftest test-pm-anonymous []
+(deftest test-pm-anonymous
   (-test-pm "pattern matching with anonymous fne relations"
     (fne [x y] ([:foo :bar]))
     (fne [x y] ([_ x]))
     (fne [x y] ([[h . t] t]))))
 
-(deftest test-pm-anonymous-tabled []
+(deftest test-pm-anonymous-tabled
   (-test-pm "pattern matching with tabled anonymous fne relations"
     (fne [x y] :tabled ([:foo :bar]))
     (fne [x y] :tabled ([_ x]))
@@ -1825,28 +1825,28 @@
 ;; =============================================================================
 ;; cKanren
 
-(deftest test-pair []
+(deftest test-pair
   (is (= (pair 1 2)
          (pair 1 2))))
 
-(deftest test-dom-1 []
+(deftest test-dom-1
   (let [x (lvar 'x)
         s ((fd/dom x 1) empty-s)]
     (is (= (:s s) {x 1}))))
 
-#_(deftest test-dom-2 []
+#_(deftest test-dom-2
   (let [x (lvar 'x)
         s ((fd/dom x (fd/interval 1 10)) empty-s)]
     (is (= (:ws s) {x (fd/interval 1 10)}))))
 
-#_(deftest test-dom-3 []
+#_(deftest test-dom-3
   (let [x (lvar 'x)
         s ((composeg
             (fd/dom x (fd/interval 1 10))
             (fd/dom x (fd/interval 3 6))) empty-s)]
     (is (= (:ws s) {x (fd/interval 3 6)}))))
 
-#_(deftest test-dom-4 []
+#_(deftest test-dom-4
   (let [x (lvar 'x)
         s ((composeg
             (fd/dom x (fd/interval 1 5))
@@ -1854,7 +1854,7 @@
     (is (= (:s s) {x 5}))
     (is (= (:ws s) {}))))
 
-(deftest test-keep-before-1 []
+(deftest test-keep-before-1
   (is (= (fd/-keep-before (fd/interval 1 10) 5)
          (fd/interval 1 4)))
   (is (= (fd/-keep-before (fd/interval 5 10) 5)
@@ -1864,7 +1864,7 @@
   (is (= (fd/-keep-before (fd/interval 5 10) 10)
          (fd/interval 5 9))))
 
-(deftest test-drop-before-1 []
+(deftest test-drop-before-1
   (is (= (fd/-drop-before (fd/interval 5 10) 4)
          (fd/interval 5 10)))
   (is (= (fd/-drop-before (fd/interval 1 10) 5)
@@ -1878,7 +1878,7 @@
   (is (= (fd/-drop-before (fd/interval 5 10) 11)
          nil)))
 
-(deftest test-keep-before-2 []
+(deftest test-keep-before-2
   (is (= (fd/-keep-before 1 3)
          1))
   (is (= (fd/-keep-before 1 2)
@@ -1886,7 +1886,7 @@
   (is (= (fd/-keep-before 1 1)
          nil)))
 
-(deftest test-drop-before-2 []
+(deftest test-drop-before-2
   (is (= (fd/-drop-before 1 3)
          nil))
   (is (= (fd/-drop-before 1 2)
@@ -1896,11 +1896,11 @@
   (is (= (fd/-drop-before 1 0)
          1)))
 
-(deftest test-drop-before-mi-1 []
+(deftest test-drop-before-mi-1
   (is (= (fd/-drop-before (fd/multi-interval 2 4) (fd/-lb 3))
          4)))
 
-(deftest test-keep-before-mi-2 []
+(deftest test-keep-before-mi-2
   (is (= (fd/-keep-before (fd/multi-interval 2 4) (fd/-lb 3))
          2)))
 
@@ -2443,12 +2443,12 @@
            (fd/interval 2 10)))))
 
 (deftest test-boundary-interval-1
-  (is (fd/-difference (fd/interval 1 10) 1)
-      (fd/interval 2 10)))
+  (is (= (fd/-difference (fd/interval 1 10) 1)
+         (fd/interval 2 10))))
 
 (deftest test-boundary-interval-2
-  (is (fd/-difference (fd/interval 1 10) 10)
-      (fd/interval 1 9)))
+  (is (= (fd/-difference (fd/interval 1 10) 10)
+         (fd/interval 1 9))))
 
 (deftest test-process-imi-1
   (let [x (lvar 'x)
@@ -2672,7 +2672,7 @@
 ;; -----------------------------------------------------------------------------
 ;; CLP(Tree)
 
-#_(deftest test-recover-vars []
+#_(deftest test-recover-vars
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
@@ -2681,7 +2681,7 @@
     (is (= (recover-vars (:l s))
            #{x y}))))
 
-#_(deftest test-prefix-s []
+#_(deftest test-prefix-s
   (let [x (lvar 'x)
         y (lvar 'y)
         s empty-s
@@ -2693,7 +2693,7 @@
            (list (pair y 2) (pair x 1))))
     (is (= (-> p meta :s) sp))))
 
-#_(deftest test-prefix-subsumes? []
+#_(deftest test-prefix-subsumes?
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
@@ -2706,7 +2706,7 @@
     (is (true? (prefix-subsumes? p (list (pair y 2)))))
     (is (false? (prefix-subsumes? p (list (pair z 3)))))))
 
-(deftest test-remc []
+(deftest test-remc
   (let [x (lvar 'x)
         y (lvar 'y)
         z (lvar 'z)
@@ -2717,13 +2717,13 @@
     (is (= (:km cs) {}))
     (is (= (:cm cs) {}))))
 
-(deftest test-treec-id-1 []
+(deftest test-treec-id-1
   (let [x (lvar 'x)
         y (lvar 'y)
         c (with-id (!= x y) 0)]
     (is (zero? (id c)))))
 
-(deftest test-tree-constraint? []
+(deftest test-tree-constraint?
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
@@ -2732,7 +2732,7 @@
     (is (= (into #{} (keys (:km cs)))
            #{x y}))))
 
-(deftest test-prefix-protocols []
+(deftest test-prefix-protocols
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1) (pair y 2)))
@@ -2740,13 +2740,13 @@
     (is (= (-prefix c)
            (list (pair x 1))))))
 
-(deftest test-!=-1 []
+(deftest test-!=-1
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)]
     (is (= (-prefix ((:cm (:cs s)) 0)) {x y}))))
 
-(deftest test-!=-2 []
+(deftest test-!=-2
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)
@@ -2757,7 +2757,7 @@
 ;; vars from the constraint store. This may return but as a finer grained
 ;; protocol IRelevantLVar or some such
 
-#_(deftest test-!=-3 []
+#_(deftest test-!=-3
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x y) empty-s)
@@ -2766,7 +2766,7 @@
     (is (empty? (:cm (:cs s))))
     (is (empty? (:km (:cs s))))))
 
-(deftest test-!=-4 []
+(deftest test-!=-4
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((== x 1) empty-s)
@@ -2775,7 +2775,7 @@
     (is (empty? (:cm (:cs s))))
     (is (empty? (:km (:cs s))))))
 
-(deftest test-!=-5 []
+(deftest test-!=-5
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((== x 1) empty-s)
@@ -2784,13 +2784,13 @@
     (is (empty? (:cm (:cs s))))
     (is (empty? (:km (:cs s))))))
 
-(deftest test-!=-6 []
+(deftest test-!=-6
   (let [x (lvar 'x)
         y (lvar 'y)
         s ((!= x 1) empty-s)]
     (is (= (-prefix ((:cm (:cs s)) 0)) {x 1}))))
 
-#_(deftest test-normalize-store []
+#_(deftest test-normalize-store
   (let [x (lvar 'x)
         y (lvar 'y)
         c (!=c (list (pair x 1)))
@@ -2798,7 +2798,7 @@
         cs (addc (make-cs) empty-s c)]
     ))
 
-(deftest test-multi-constraints-1 []
+(deftest test-multi-constraints-1
   (is (= (run* [q]
            (fresh [x y z]
              (fd/in x y z (fd/interval 1 3))
@@ -2807,7 +2807,7 @@
              (== q [x y z])))
          '([1 1 2]))))
 
-(deftest test--fd-1 []
+(deftest test--fd-1
   (is (= (run* [q]
            (fd/in q (fd/interval 1 10))
            (fd/- 4 q 1))
@@ -2817,7 +2817,7 @@
            (fd/- 4 2 q))
          '(2))))
 
-(deftest test-quot-1 []
+(deftest test-quot-1
   (is (= (run* [q]
            (fd/in q (fd/interval 1 10))
            (fd/quot 4 2 q))
@@ -2826,7 +2826,7 @@
 ;; =============================================================================
 ;; fd/eq
 
-(deftest test-fd-eq-1 []
+(deftest test-fd-eq-1
   (is (= (run* [q]
            (fresh [x y]
              (fd/in x y (fd/interval 0 9))
@@ -2836,7 +2836,7 @@
              (== q [x y])))
          '([6 3]))))
 
-(deftest test-fd-eq-2 []
+(deftest test-fd-eq-2
   (is (= (run* [q]
            (fresh [s e n d m o r y]
              (== q [s e n d m o r y])
@@ -2849,7 +2849,7 @@
                  (+ (* 10000 m) (* 1000 o) (* 100 n) (* 10 e) y)))))
          '([9 5 6 7 1 0 8 2]))))
 
-(deftest test-fd-eq-3 []
+(deftest test-fd-eq-3
   (is (= (run* [q]
            (fresh [x y]
              (fd/in x y (fd/interval 1 20))
@@ -2859,7 +2859,7 @@
              (== q [x y])))
          '([4 7]))))
 
-(deftest test-fd-distinct-1 []
+(deftest test-fd-distinct-1
   (is (= (run 1 [q]
            (fresh [x y]
              (fd/distinct q)
@@ -2868,7 +2868,7 @@
              (== y 1)))
          ())))
 
-(deftest test-logic-62-fd []
+(deftest test-logic-62-fd
   (is (= (run 1 [q]
            (fresh [x y a b]
              (fd/distinct [x y])
@@ -2886,7 +2886,7 @@
              (fd/distinct [x y])))
          ())))
 
-(deftest test-distincto-1 []
+(deftest test-distincto-1
   (is (= (run 1 [q]
            (fresh [x y a b]
              (distincto q)
@@ -2896,13 +2896,13 @@
              (== y 2)))
          '([1 2]))))
 
-(deftest test-eq-vars-1 []
+(deftest test-eq-vars-1
   (let [x0 (lvar 'x)
         x1 (with-meta x0 {:foo 'bar})
         s  (unify empty-s x0 x1)]
     (is (= s empty-s))))
 
-(deftest test-logic-81-fd []
+(deftest test-logic-81-fd
   (is (= (run* [q]
            (fresh [x y]
              (== q x)
@@ -2923,7 +2923,7 @@
 ;; =============================================================================
 ;; predc
 
-(deftest test-predc-1 []
+(deftest test-predc-1
   (is (= (run* [q]
            (predc q number? `number?))
          '((_0 :- clojure.core/number?))))
@@ -2994,7 +2994,7 @@
     (not-adjacento smith fletcher)
     (not-adjacento fletcher cooper)))
 
-(deftest test-dinesmandfd []
+(deftest test-dinesmandfd
   (is (= (dinesmanfd) '([3 2 4 5 1]))))
 
 (defne subchecko [w sl r o n]
@@ -3409,12 +3409,12 @@
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
-(deftest test-attrs-1 []
+(deftest test-attrs-1
   (let [x (lvar 'x)
         s (add-attr empty-s x :foo 'bar)]
     (is (= (get-attr s x :foo) 'bar))))
 
-(deftest test-attrs-2 []
+(deftest test-attrs-2
   (let [x (lvar 'x)
         s (ext-no-check empty-s x 1)
         s (add-attr s x :foo 'bar)
@@ -3422,7 +3422,7 @@
     (is (= (get-attr s x :foo) 'bar))
     (is (= (get-attr s x :baz) 'woz))))
 
-(deftest test-attrs-3 []
+(deftest test-attrs-3
   (let [x (lvar 'x)
         s (ext-no-check empty-s x 1)
         s (add-attr s x :foo 'bar)
@@ -3430,18 +3430,18 @@
         s (rem-attr s x :foo)]
     (is (= (get-attr s x :foo) nil))))
 
-(deftest test-root-1 []
+(deftest test-root-1
   (let [x (lvar 'x)
         s (ext-no-check empty-s x 1)]
     (is (= (root-var s x) x))
     (is (= (root-val s x) 1))))
 
-(deftest test-root-2 []
+(deftest test-root-2
   (let [x (lvar 'x)
         s (add-attr empty-s x :foo 'bar)]
     (is (subst-val? (root-val s x)))))
 
-(deftest test-root-3 []
+(deftest test-root-3
   (let [x (lvar 'x)
         y (lvar 'y)
         s (-> empty-s
@@ -3449,7 +3449,7 @@
            (ext-no-check y x))]
     (is (= (root-var s y) x))))
 
-(deftest test-ext-run-cs-1 []
+(deftest test-ext-run-cs-1
   (let [x (lvar 'x)
         s (ext-no-check empty-s x (subst-val ::l/unbound))
         s (add-attr s x ::l/fd (fd/domain 1 2 3))
@@ -3457,13 +3457,13 @@
     (is (= (root-val s x) 1))
     (is (= (walk s x) 1))))
 
-(deftest test-update-dom-1 []
+(deftest test-update-dom-1
   (let [x (lvar 'x)
         s (add-dom empty-s x ::nom '[(swap a b)])
         s (update-dom s x ::nom (fn [d] (conj d '(swap x y))))]
     (is (= (get-dom s x ::nom) '[(swap a b) (swap x y)]))))
 
-(deftest test-update-dom-2 []
+(deftest test-update-dom-2
   (let [x (lvar 'x)
         s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
     (is (= (get-dom s x ::nom) '[(swap x y)]))))

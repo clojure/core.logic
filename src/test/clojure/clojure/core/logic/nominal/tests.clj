@@ -54,7 +54,7 @@
   (is (= (run* [q] (nom/fresh [a b] (== q b) (nom/hash a q))) '(a_0)))
   (is (= (run* [q] (nom/fresh [a b] (nom/hash a q) (== q b))) '(a_0)))
   (is (= (run* [q] (nom/fresh [a b] (conde [(== q a) (nom/hash b q)] [(== q b)]))) '(a_0 a_0)))
-  (is (= (run* [q] (nom/fresh [a] (nom/hash a a)))) '())
+  (is (= (run* [q] (nom/fresh [a] (nom/hash a a))) '()))
   (is (= (run* [q] (nom/fresh [a] (== q a) (nom/hash a q))) '()))
   (is (= (run* [q] (nom/fresh [a] (nom/hash a q) (== q a))) '()))
   (is (= (run* [q] (nom/fresh [a] (nom/hash a `(~a)))) '()))
@@ -292,8 +292,8 @@
          '((-> _0 (-> _1 _0)))))
   (is (= (run* [q]
            (nom/fresh [c]
-             (typo [] ['lam (nom/tie c ['app ['var c] ['var c]])] q))))
-      '())
+             (typo [] ['lam (nom/tie c ['app ['var c] ['var c]])] q)))
+         '()))
   (is (= (run 2 [q] (typo [] q '(-> int int)))
          [['lam (nom/tie 'a_0 '(var a_0))]
           ['lam (nom/tie 'a_0 ['app ['lam (nom/tie 'a_1 '(var a_1))] '(var a_0)])]])))
