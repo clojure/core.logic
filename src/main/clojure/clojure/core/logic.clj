@@ -2409,7 +2409,7 @@
      (distincto (lcons h1 t))))
 
 (defne rembero
-  "A relation between l and o where is removed from
+  "A relation between l and o where x is removed from
    l exactly one time."
   [x l o]
   ([_ [x . xs] xs])
