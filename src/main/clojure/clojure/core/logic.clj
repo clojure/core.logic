@@ -2711,16 +2711,15 @@
                 ((composeg
                    (== (apply conj coll args) out)
                    (remcg this)) s)
-                (let [outv (apply (-joncf out) out args)]
+                (let [out  (walk s out)
+                      outv (apply (-joncf out) out args)]
                   (if-not (= outv ::failed)
                     ((composeg
                        (== outv coll)
                        (remcg this)) s))))))
           IRunnable
           (-runnable? [_]
-            (and (every? #(ground-term? % s) args)
-                 (or (ground-term? coll s)
-                     (ground-term? out s))))))
+            (= (count (filter #(ground-term? % s) [coll args out])) 2))))
       IConstraintOp
       (-rator [_]
         `conjo)
