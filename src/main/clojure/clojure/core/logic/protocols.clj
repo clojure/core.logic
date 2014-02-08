@@ -174,6 +174,9 @@
 (defprotocol IReifiableConstraint
   (-reifyc [c v r a]))
 
+(defprotocol IVerifyConstraint
+  (-verify [c a cs]))
+
 (defn reifiable? [x]
   (instance? clojure.core.logic.protocols.IReifiableConstraint x))
 

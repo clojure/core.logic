@@ -113,10 +113,12 @@
 
   IConstraintStore
   (addc [this a c]
-    (let [vars (var-rands a c)
-          c (with-id c cid)
-          cs (reduce (fn [cs v] (add-var cs v c)) this vars)]
-      (ConstraintStore. (:km cs) (:cm cs) (inc cid) running)))
+    (when (or (not (instance? clojure.core.logic.protocols.IVerifyConstraint c))
+              (-verify c a this))
+      (let [vars (var-rands a c)
+            c    (with-id c cid)
+            cs   (reduce (fn [cs v] (add-var cs v c)) this vars)]
+        (ConstraintStore. (:km cs) (:cm cs) (inc cid) running))))
 
   (updatec [this a c]
     (let [oc (cm (id c))
@@ -1998,10 +2000,12 @@
 
 (defn addcg [c]
   (fn [a]
-    (let [a (reduce (fn [a x]
-                      (ext-no-check a x (subst-val ::unbound)))
-              a (unbound-rands a c))]
-      (assoc a :cs (addc (:cs a) a c)))))
+    (let [a  (reduce
+               (fn [a x]
+                 (ext-no-check a x (subst-val ::unbound)))
+               a (unbound-rands a c))
+          cs (addc (:cs a) a c)]
+      (when cs (assoc a :cs cs)))))
 
 (defn updatecg [c]
   (fn [a]
