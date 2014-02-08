@@ -3407,6 +3407,51 @@
     (is (= (get-dom s x ::l/fd) (fd/domain 1 2 3)))))
 
 ;; =============================================================================
+;; conjo
+
+(deftest test-conjo-1
+  (is (= (run* [p q]
+           (conjo p 2 q)
+           (== p [1]))
+         '([[1] [1 2]])))
+  (is (= (run* [p q]
+           (== p [1])
+           (conjo p 2 q))
+         '([[1] [1 2]])))
+  (is (= (run* [p q]
+           (conjo p 2 q)
+           (== q [1 2]))
+         '([[1] [1 2]])))
+  (is (= (run* [p q]
+           (== q [1 2])
+           (conjo p 2 q))
+         '([[1] [1 2]])))
+  (is (= (run* [p q]
+           (== p {:foo :bar})
+           (conjo p [:baz :woz] q))
+         '([{:foo :bar} {:foo :bar :baz :woz}])))
+  (is (= (run* [p q]
+           (conjo p [:baz :woz] q)
+           (== p {:foo :bar}))
+         '([{:foo :bar} {:foo :bar :baz :woz}])))
+  (is (= (run* [p q]
+           (conjo p [:baz :woz] q)
+           (== q {:foo :bar :baz :woz}))
+         '([{:foo :bar} {:foo :bar :baz :woz}])))
+  (is (= (run* [p q]
+           (== q {:foo :bar :baz :woz})
+           (conjo p [:baz :woz] q))
+         '([{:foo :bar} {:foo :bar :baz :woz}])))
+  (is (= (run* [p q]
+           (conjo p [:baz :woz] q)
+           (== q {:foo :bar}))
+         '()))
+  (is (= (run* [p q]
+           (== q {:foo :bar})
+           (conjo p [:baz :woz] q))
+         '())))
+
+;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
 
 (deftest test-attrs-1
