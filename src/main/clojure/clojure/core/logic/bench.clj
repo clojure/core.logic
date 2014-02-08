@@ -116,12 +116,20 @@
 
 (def connected-db
   (pldb/db
-   [connected [[1 2] [1 5]]]
-   [connected [[2 1] [2 3] [2 5]]]
-   [connected [[3 2] [3 4]]]
-   [connected [[4 3] [4 5] [4 6]]]
-   [connected [[5 1] [5 2] [5 4]]]
-   [connected [[6 4]]]))
+    [connected 1 2]
+    [connected 1 5]
+    [connected 2 1]
+    [connected 2 3]
+    [connected 2 5]
+    [connected 3 2]
+    [connected 3 4]
+    [connected 4 3]
+    [connected 4 5]
+    [connected 4 6]
+    [connected 5 1]
+    [connected 5 2]
+    [connected 5 4]
+    [connected 6 4]))
 
 (defne connected-to-allo
   "Ensure that vertex v is connected to all vertices
@@ -142,23 +150,24 @@
      (all-connected-to-allo t)))
 
 (comment
-  (run-nc* [q]
-    (fresh [a b d]
-      (== q (llist a b d))
-      (fd/bounded-listo q 6)
-      (all-connected-to-allo q)))
+  (pldb/with-db connected-db
+    (run-nc* [q]
+      (fresh [a b d]
+        (== q (llist a b d))
+        (fd/bounded-listo q 6)
+        (all-connected-to-allo q))))
 
   ;; 350-400ms
   (dotimes [_ 5]
     (time
-     (dotimes [_ 100]
-      (doall
-       (pldb/with-db connected-db
-         (run-nc 20 [q]
-                (fresh [a b d]
-                       (== q (llist a b d))
-                       (fd/bounded-listo q 6)
-                       (all-connected-to-allo q))))))))
+      (dotimes [_ 100]
+        (doall
+          (pldb/with-db connected-db
+            (run-nc 20 [q]
+              (fresh [a b d]
+                (== q (llist a b d))
+                (fd/bounded-listo q 6)
+                (all-connected-to-allo q))))))))
 )
 
 ;; =============================================================================
