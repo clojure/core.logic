@@ -1,6 +1,6 @@
 {:namespaces
  ({:source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic-api.html",
    :name "clojure.core.logic",
@@ -40,9 +40,9 @@
    :name "!=",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2390",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2390",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/!=",
    :doc
@@ -54,9 +54,9 @@
    :name "->AnswerCache",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1783",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1783",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->AnswerCache",
    :doc
@@ -68,9 +68,9 @@
    :name "->Choice",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1070",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1070",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->Choice",
    :doc
@@ -82,9 +82,9 @@
    :name "->ConstraintStore",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L102",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L102",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->ConstraintStore",
    :doc
@@ -96,9 +96,9 @@
    :name "->LCons",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L741",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L741",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->LCons",
    :doc
@@ -110,9 +110,9 @@
    :name "->LVar",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L608",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L608",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->LVar",
    :doc
@@ -124,9 +124,9 @@
    :name "->PMap",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2450",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2450",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->PMap",
    :doc
@@ -138,9 +138,9 @@
    :name "->Pair",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L36",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L36",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->Pair",
    :doc
@@ -152,9 +152,9 @@
    :name "->SubstValue",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L184",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L184",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->SubstValue",
    :doc
@@ -166,9 +166,9 @@
    :name "->Substitutions",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L274",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L274",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->Substitutions",
    :doc
@@ -180,9 +180,9 @@
    :name "->SuspendedStream",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1814",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1814",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/->SuspendedStream",
    :doc
@@ -194,9 +194,9 @@
    :name "==",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1142",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1142",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/==",
    :doc "A goal that attempts to unify terms u and v.",
@@ -207,9 +207,9 @@
    :name "all",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1239",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1239",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/all",
    :doc "Like fresh but does does not create logic variables.",
@@ -218,9 +218,9 @@
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1737",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1737",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/appendo",
    :namespace "clojure.core.logic",
@@ -233,9 +233,9 @@
    :name "conda",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1382",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1382",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/conda",
    :doc
@@ -247,9 +247,9 @@
    :name "conde",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1161",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1161",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/conde",
    :doc
@@ -261,9 +261,9 @@
    :name "condu",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1390",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1390",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/condu",
    :doc
@@ -275,22 +275,22 @@
    :name "conjo",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2735",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2734",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/conjo",
    :doc "A constraint version of conj",
    :var-type "function",
-   :line 2735,
+   :line 2734,
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:arglists ([a d l]),
    :name "conso",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1624",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1624",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/conso",
    :doc
@@ -302,9 +302,9 @@
    :name "copy-term",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1404",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1404",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/copy-term",
    :doc "Copies a term u into v. Non-relational.",
@@ -315,9 +315,9 @@
    :name "defna",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1693",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1693",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/defna",
    :doc "Define a soft cut goal. See conda.",
@@ -328,9 +328,9 @@
    :name "defne",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1664",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1664",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/defne",
    :doc
@@ -342,9 +342,9 @@
    :name "defnu",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1698",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1698",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/defnu",
    :doc "Define a committed choice goal. See condu.",
@@ -353,9 +353,9 @@
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2404",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2404",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/distincto",
    :namespace "clojure.core.logic",
@@ -368,9 +368,9 @@
    :name "emptyo",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1619",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1619",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/emptyo",
    :doc "A relation where a is the empty list",
@@ -381,9 +381,9 @@
    :name "everyg",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1642",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1642",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/everyg",
    :doc
@@ -395,9 +395,9 @@
    :name "fail",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1130",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1130",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fail",
    :doc "A goal that always fails.",
@@ -408,9 +408,9 @@
    :name "featurec",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2511",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2511",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/featurec",
    :doc
@@ -422,9 +422,9 @@
    :name "firsto",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1630",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1630",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/firsto",
    :doc
@@ -436,9 +436,9 @@
    :name "fix-constraints",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2053",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2053",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fix-constraints",
    :doc
@@ -450,9 +450,9 @@
    :name "fna",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1683",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1683",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fna",
    :doc "Define an anonymous soft cut goal. See conda.",
@@ -463,9 +463,9 @@
    :name "fnc",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2543",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2543",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fnc",
    :doc
@@ -477,9 +477,9 @@
    :name "fne",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1658",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1658",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fne",
    :doc
@@ -491,9 +491,9 @@
    :name "fnu",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1688",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1688",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fnu",
    :doc "Define an anonymous committed choice goal. See condu.",
@@ -504,9 +504,9 @@
    :name "fresh",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1178",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1178",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/fresh",
    :doc
@@ -518,9 +518,9 @@
    :name "is",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1309",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1309",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/is",
    :doc
@@ -532,9 +532,9 @@
    :name "lcons",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L854",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L854",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/lcons",
    :doc
@@ -546,9 +546,9 @@
    :name "llist",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L864",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L864",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/llist",
    :doc
@@ -560,9 +560,9 @@
    :name "log",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1253",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1253",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/log",
    :doc "Goal for println",
@@ -573,9 +573,9 @@
    :name "lvaro",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1413",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1413",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/lvaro",
    :doc
@@ -587,9 +587,9 @@
    :name "map->PMap",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2450",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2450",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/map->PMap",
    :doc
@@ -601,9 +601,9 @@
    :name "map->SubstValue",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L184",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L184",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/map->SubstValue",
    :doc
@@ -615,9 +615,9 @@
    :name "map->SuspendedStream",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1814",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1814",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/map->SuspendedStream",
    :doc
@@ -629,9 +629,9 @@
    :name "master",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1941",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1941",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/master",
    :doc
@@ -643,9 +643,9 @@
    :name "matcha",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1703",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1703",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/matcha",
    :doc "Define a soft cut pattern match. See conda.",
@@ -656,9 +656,9 @@
    :name "matche",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1670",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1670",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/matche",
    :doc
@@ -670,9 +670,9 @@
    :name "matchu",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1709",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1709",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/matchu",
    :doc "Define a committed choice goal. See condu.",
@@ -681,9 +681,9 @@
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1727",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1727",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/member1o",
    :namespace "clojure.core.logic",
@@ -694,9 +694,9 @@
    :name "member1o"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1720",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1720",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/membero",
    :namespace "clojure.core.logic",
@@ -708,9 +708,9 @@
    :name "nafc",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2657",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2657",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/nafc",
    :doc
@@ -722,9 +722,9 @@
    :name "nilo",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1614",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1614",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/nilo",
    :doc "A relation where a is nil",
@@ -735,9 +735,9 @@
    :name "nonlvaro",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1421",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1421",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/nonlvaro",
    :doc
@@ -749,9 +749,9 @@
    :name "partial-map",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2468",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2468",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/partial-map",
    :doc
@@ -761,9 +761,9 @@
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1746",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1746",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/permuteo",
    :namespace "clojure.core.logic",
@@ -776,9 +776,9 @@
    :name "pred",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1301",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1301",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/pred",
    :doc
@@ -790,9 +790,9 @@
    :name "project",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1292",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1292",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/project",
    :doc
@@ -802,9 +802,9 @@
    :file "src/main/clojure/clojure/core/logic.clj"}
   {:file "src/main/clojure/clojure/core/logic.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L2415",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L2415",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/rembero",
    :namespace "clojure.core.logic",
@@ -817,9 +817,9 @@
    :name "resto",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1636",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1636",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/resto",
    :doc
@@ -831,9 +831,9 @@
    :name "run",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1208",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1208",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run",
    :doc "Executes goals until a maximum of n results are found.",
@@ -844,9 +844,9 @@
    :name "run*",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1213",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1213",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run*",
    :doc "Executes goals until results are exhausted.",
@@ -857,9 +857,9 @@
    :name "run-db",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1218",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1218",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run-db",
    :doc
@@ -871,9 +871,9 @@
    :name "run-db*",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1223",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1223",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run-db*",
    :doc
@@ -885,9 +885,9 @@
    :name "run-nc",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1228",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1228",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run-nc",
    :doc
@@ -899,9 +899,9 @@
    :name "run-nc*",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1234",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1234",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/run-nc*",
    :doc
@@ -913,9 +913,9 @@
    :name "succeed",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1126",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1126",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/succeed",
    :doc "A goal that always succeeds.",
@@ -926,9 +926,9 @@
    :name "tabled",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1962",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1962",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/tabled",
    :doc
@@ -940,9 +940,9 @@
    :name "trace-lvars",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1270",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1270",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/trace-lvars",
    :doc "Goal for tracing the values of logic variables.",
@@ -953,9 +953,9 @@
    :name "trace-s",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1260",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1260",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/trace-s",
    :doc "Goal that prints the current substitution",
@@ -966,9 +966,9 @@
    :name "waiting-stream-check",
    :namespace "clojure.core.logic",
    :source-url
-   "https://github.com/clojure/core.logic/blob/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj#L1828",
+   "https://github.com/clojure/core.logic/blob/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj#L1828",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/4b96296a9633015774bb44fa1a4b0dae40b4c3b3/src/main/clojure/clojure/core/logic.clj",
+   "https://github.com/clojure/core.logic/raw/f9402356262aba73eef5f1b9ecd012514255114e/src/main/clojure/clojure/core/logic.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/waiting-stream-check",
    :doc
