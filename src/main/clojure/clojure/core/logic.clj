@@ -1889,7 +1889,7 @@
                   [(make-suspended-stream cache start
                      (fn [] (reuse this argv cache (:ansl @cache) (count start))))]
                   ;; we have answer terms to reuse in the cache
-                  (let [ans (first ansv*)] ;; FIXME: sets are unordered! - David
+                  (let [ans (first ansv*)]
                     (Choice. (subunify this argv (reify-tabled this ans))
                       (fn [] (reuse-loop (rest ansv*)))))))]
         (reuse-loop start))))
