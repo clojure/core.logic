@@ -12,7 +12,7 @@
    :name "clojure.core.logic.arithmetic",
    :doc nil}
   {:source-url
-   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/blob/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic.bench-api.html",
    :name "clojure.core.logic.bench",
@@ -1126,26 +1126,26 @@
    :file "src/main/clojure/clojure/core/logic/arithmetic.clj"}
   {:file "src/main/clojure/clojure/core/logic/bench.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/raw/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj#L135",
+   "https://github.com/clojure/core.logic/blob/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj#L143",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.bench/all-connected-to-allo",
    :namespace "clojure.core.logic.bench",
-   :line 135,
+   :line 143,
    :var-type "var",
    :doc
    "Collect all cliques in l. l must be bounded to ensure\ntermination.",
    :name "all-connected-to-allo"}
   {:file "src/main/clojure/clojure/core/logic/bench.clj",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj",
+   "https://github.com/clojure/core.logic/raw/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj",
    :source-url
-   "https://github.com/clojure/core.logic/blob/dba36dd1219ee45812aaa3ffb558f176072e7d3a/src/main/clojure/clojure/core/logic/bench.clj#L126",
+   "https://github.com/clojure/core.logic/blob/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj#L134",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.bench/connected-to-allo",
    :namespace "clojure.core.logic.bench",
-   :line 126,
+   :line 134,
    :var-type "var",
    :doc "Ensure that vertex v is connected to all vertices\nvs.",
    :name "connected-to-allo"}
