@@ -3449,7 +3449,12 @@
   (is (= (run* [p q]
            (== q {:foo :bar})
            (conjo p [:baz :woz] q))
-         '())))
+         '()))
+  ;; (is (= (run* [q]
+  ;;          (conjo q [:baz :woz] {:foo :bar :baz :woz})
+  ;;          (== q {:foo :bar :baz :woz}))
+  ;;        '()))
+  )
 
 ;; =============================================================================
 ;; Implementation Specific Tests - Subject To Change
