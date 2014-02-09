@@ -152,11 +152,17 @@
     (when-let [ids (get km (root-var a x))]
       (filter #((-watched-stores %) ws) (map cm (remove running ids)))))
 
-  (migrate [this x root]
+  (migrate [this x root a]
     (let [xcs    (km x)
           rootcs (km root #{})
           nkm    (assoc (dissoc km x) root (into rootcs xcs))]
-      (ConstraintStore. nkm cm cid running)))
+      (when (every?
+              (fn [c]
+                (if (instance? clojure.core.logic.protocols.IVerifyConstraint c)
+                  (-verify c a this)
+                  true))
+              (map cm xcs))
+        (ConstraintStore. nkm cm cid running))))
 
   clojure.lang.Counted
   (count [this]
@@ -644,13 +650,14 @@
                       (-> v clojure.core/meta ::unbound) [v u]
                       :else nil)]
         (if repoint
-          (let [[root other] repoint
-                s (assoc s :cs (migrate (:cs s) other root))
-                s (if (-> other clojure.core/meta ::unbound)
-                    (merge-with-root s other root)
-                    s)]
-            (when s
-              (ext-no-check s other root)))
+          (let [[root other] repoint]
+            (when-let [s (if (-> other clojure.core/meta ::unbound)
+                           (merge-with-root s other root)
+                           s)]
+              (let [s  (ext-no-check s other root)
+                    cs (migrate (:cs s) other root s)]
+                (when cs
+                  (assoc s :cs cs)))))
           (ext-no-check s u v)))
 
       (non-storable? v)

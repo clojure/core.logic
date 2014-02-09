@@ -125,7 +125,7 @@
   (remc [this a c])
   (runc [this c state])
   (constraints-for [this a x ws])
-  (migrate [this x root]))
+  (migrate [this x root a]))
 
 ;; -----------------------------------------------------------------------------
 ;; Generic constraint protocols
