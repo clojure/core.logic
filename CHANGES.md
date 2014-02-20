@@ -1,3 +1,16 @@
+From 0.8.5 to 0.8.6
+====
+
+Changes
+----
+* Support detecting incompatible constraints, IVerifyConstraint
+  protocol
+* Hard dependency on Clojure 1.5.1, pldb uses reducers
+
+Fixes
+----
+* LOGIC-145: partial map bug
+
 From 0.8.4 to 0.8.5
 ====
 
