@@ -1,3 +1,10 @@
+From 0.8.6 to 0.8.7
+====
+
+Fixes
+----
+* Constraint verification did not properly handle aliases logic vars
+
 From 0.8.5 to 0.8.6
 ====
 
