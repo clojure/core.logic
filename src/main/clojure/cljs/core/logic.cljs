@@ -118,7 +118,7 @@
           (.-rhs x)
           (recur (-next xs)))))))
 
-(deftype Substitutions [s]
+(deftype Substitutions [s c]
   IEquiv
   (-equiv [this o]
     (or (identical? this o)
@@ -141,7 +141,7 @@
       (-ext-no-check this u v)))
 
   (-ext-no-check [this u v]
-    (Substitutions. (conj s (Pair. u v))))
+    (Substitutions. (conj s (Pair. u v)) c))
   
   (-walk [this v]
     (cond
@@ -186,10 +186,13 @@
   (-take* [this]
     this))
 
-(defn make-s [s]
-  (Substitutions. s))
+(defn make-s
+  ([s]
+     (Substitutions. s nil))
+  ([s c]
+     (Substitutions. s c)))
 
-(def ^not-native empty-s (make-s '()))
+(def ^not-native empty-s (make-s '() nil))
 
 (defn ^boolean subst? [x]
   (instance? Substitutions x))
@@ -269,7 +272,10 @@
   (-lfirst [this])
   (-lnext [this]))
 
-(declare LCons failed?)
+(declare LCons Fail)
+
+(defn ^boolean failed? [x]
+  (instance? Fail x))
 
 (defn ^boolean lcons? [x]
   (instance? LCons x))
@@ -618,9 +624,6 @@
   (-mplus [this fp] fp)
   ITake
   (-take* [this] ()))
-
-(defn failed? [x]
-  (instance? Fail x))
 
 ;; =============================================================================
 ;; Syntax
