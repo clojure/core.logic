@@ -25,7 +25,7 @@
                 :output-dir "out"
                 :source-map "tests.js.map"}}
     {:id "adv"
-     :source-paths ["src/test/cljs"]
+     :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced
                 :pretty-print false
                 :output-to "tests.js"}}]})
