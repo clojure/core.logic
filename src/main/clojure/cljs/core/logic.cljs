@@ -188,7 +188,7 @@
 
 (defn make-s
   ([s]
-     (Substitutions. s nil))
+     (Substitutions. s ()))
   ([s c]
      (Substitutions. s c)))
 
