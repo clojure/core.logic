@@ -1,4 +1,4 @@
-(defproject org.clojure/core.logic "0.8.7-SNAPSHOT" 
+(defproject org.clojure/core.logic "0.8.7-SNAPSHOT"
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
 
@@ -8,8 +8,8 @@
 
   :test-paths ["src/test/clojure"]
 
-  :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2173" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojurescript "0.0-2197" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  [com.datomic/datomic-free "0.8.4270" :scope "provided"]]
 
@@ -17,9 +17,9 @@
 
   :cljsbuild
   {:builds
-   [{:id "ws"
+   [{:id "dev"
      :source-paths ["src/test/cljs"]
-     :compiler {:optimizations :whitespace
+     :compiler {:optimizations :none
                 :static-fns true
                 :output-to "tests.js"
                 :output-dir "out"
