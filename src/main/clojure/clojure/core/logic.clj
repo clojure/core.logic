@@ -8,6 +8,12 @@
            [clojure.core.logic.protocols
             IBindable ITreeTerm IVar ITreeConstraint INonStorable]))
 
+(defmacro ^:private compile-when
+  ([exp then]
+     (if (try (eval exp)
+              (catch Throwable _ false))
+       `(do ~then))))
+
 (def ^{:dynamic true} *locals*)
 
 (def fk (Exception.))
@@ -27,8 +33,9 @@
 (defn dissoc-dom [x k]
   (assoc x :doms (dissoc (:doms x) k)))
 
-(defn record? [x]
-  (instance? clojure.lang.IRecord x))
+(compile-when (not (resolve clojure.core/record?))
+  (defn record? [x]
+    (instance? clojure.lang.IRecord x)))
 
 ;; =============================================================================
 ;; Pair
