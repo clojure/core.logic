@@ -33,7 +33,7 @@
 (defn dissoc-dom [x k]
   (assoc x :doms (dissoc (:doms x) k)))
 
-(compile-when (not (resolve clojure.core/record?))
+(compile-when (not (resolve 'clojure.core/record?))
   (defn record? [x]
     (instance? clojure.lang.IRecord x)))
 
