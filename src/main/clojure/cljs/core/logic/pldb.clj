@@ -32,7 +32,7 @@
                      (facts-using-index dbs#
                                         ~kname
                                         index#
-                                        (cljs.core.logic/walk* subs# (nth query# index#)))
+                                        (cljs.core.logic/-walk* subs# (nth query# index#)))
                      (facts-for dbs# ~kname))]
                (cljs.core.logic/to-stream (map (fn [potential#]
                                    ((cljs.core.logic/== query# potential#) subs#))

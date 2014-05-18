@@ -24,7 +24,7 @@
   (some l/lvar? (tree-seq coll? seq x)))
 
 (defn ground? [s term]
-  (not (contains-lvar? (l/walk* s term))))
+  (not (contains-lvar? (l/-walk* s term))))
 
 (defn index-for-query [s q indexes]
   (let [indexable (map #(ground? s %)  q)

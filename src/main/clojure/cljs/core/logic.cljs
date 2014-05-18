@@ -935,6 +935,7 @@
 
 (defn to-stream [aseq]
   (let [aseq (drop-while nil? aseq)]
-    (when (seq aseq)
+    (if (seq aseq)
       (choice (first aseq)
-              (fn [] (to-stream (next aseq)))))))
+        (fn [] (to-stream (next aseq))))
+      (fail empty-s))))
