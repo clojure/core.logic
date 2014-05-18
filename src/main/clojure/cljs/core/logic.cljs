@@ -6,7 +6,8 @@
   (:require [clojure.set :as set])
   (:use [clojure.walk :only [postwalk]]))
 
-(def ^{:dynamic true} *occurs-check* true)
+(def ^:dynamic *occurs-check* true)
+(def ^:dynamic *logic-dbs* [])
 
 (defprotocol IUnifyTerms
   (-unify-terms [u v s]))
@@ -932,4 +933,8 @@
   ([u w & ts]
      (apply binding-map (binding-map u w) ts)))
 
-
+(defn to-stream [aseq]
+  (let [aseq (drop-while nil? aseq)]
+    (when (seq aseq)
+      (choice (first aseq)
+              (fn [] (to-stream (next aseq)))))))

@@ -4,7 +4,9 @@
    [cljs.core.logic.macros
     :only [run run* == conde conda condu fresh defne matche all]])
   (:require-macros [cljs.core.logic.macros :as m]
-                   [clojure.tools.macro :as mu])
+                   [clojure.tools.macro :as mu]
+                   [cljs.core.logic.pldb :as pldb])
+  (:require [cljs.core.logic.pldb :as pldb])
   (:use
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
@@ -956,3 +958,50 @@
 (assert (= (run* [q] (map-geto (seq {:title "Blub"}) :title q)) '("Blub")))
 
 (println "ok")
+
+;; =============================================================================
+;; pldb
+
+(pldb/db-rel man p)
+(pldb/db-rel woman p)
+(pldb/db-rel likes p1 p2)
+(pldb/db-rel fun p)
+
+(def ^:dynamic facts0
+  (pldb/db
+    [man 'Bob]
+    [man 'John]
+    [man 'Ricky]
+
+    [woman 'Mary]
+    [woman 'Martha]
+    [woman 'Lucy]
+
+    [likes 'Bob 'Mary]
+    [likes 'John 'Martha]
+    [likes 'Ricky 'Lucy]))
+
+(def ^:dynamic facts1
+  (-> facts0
+    (pldb/db-fact fun 'Lucy)))
+
+(comment
+  (pldb/with-db facts0
+    (assert
+      (= (run* [q]
+           (fresh [x y]
+             (likes x y)
+             (fun y)
+             (== q [x y])))
+        '())))
+
+ (pldb/with-db facts1
+   (assert
+     (= (run* [q]
+          (fresh [x y]
+            (likes x y)
+            (fun y)
+            (== q [x y])))
+       '([Ricky Lucy]))))
+ )
+
