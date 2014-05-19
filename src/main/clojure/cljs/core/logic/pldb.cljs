@@ -29,26 +29,19 @@
 (defn index-for-query [s q indexes]
   (let [indexable (map #(ground? s %)  q)
         triples (map vector (range) indexable indexes)]
-    (first (for [[i indexable indexed] triples
-                 :when (and indexable indexed)]
-             i))))
+    (first
+      (for [[i indexable indexed] triples
+            :when (and indexable indexed)]
+        i))))
 
 ;; ----------------------------------------
 
 (defn db-fact [db rel & args]
-  (let [key
-        (rel-key rel)
-
-        add-to-set
-        (fn [current new]
-          (conj (or current #{}) new))
-
-        db-with-fact
-        (update-in db [key ::unindexed] #(add-to-set %1 args))
-
-        indexes-to-update ;; ugly - get the vector indexes of indexed attributes
-        (map vector (rel-indexes rel) (range) args)
-
+  (let [key               (rel-key rel)
+        add-to-set        (fn [current new] (conj (or current #{}) new))
+        db-with-fact      (update-in db [key ::unindexed] #(add-to-set %1 args))
+        ;; ugly - get the vector indexes of indexed attributes
+        indexes-to-update (map vector (rel-indexes rel) (range) args)
         update-index-fn
         (fn [db [is-indexed index-num val]]
           (if is-indexed
@@ -57,24 +50,16 @@
     (reduce update-index-fn db-with-fact indexes-to-update)))
 
 (defn db-retraction [db rel & args]
-  (let [key
-        (rel-key rel)
-
-        retract-args
-        #(disj %1 args)
-
-        db-without-fact
-        (update-in db [key ::unindexed] retract-args)
-
-        indexes-to-update ;; also a bit ugly
-        (map vector (rel-indexes rel) (range) args)
-
+  (let [key               (rel-key rel)
+        retract-args      #(disj %1 args)
+        db-without-fact   (update-in db [key ::unindexed] retract-args)
+        ;; also a bit ugly
+        indexes-to-update (map vector (rel-indexes rel) (range) args)
         remove-from-index-fn
         (fn [db [is-indexed index-num val]]
           (if is-indexed
             (update-in db [key index-num val] retract-args)
             db))]
-
     (reduce remove-from-index-fn db-without-fact indexes-to-update)))
 
 ;; ----------------------------------------
