@@ -63,46 +63,56 @@
       (let [~@(lvar-binds lvars)]
         (bind* a# ~@goals)))))
 
-(defmacro solve [& [n [x] & goals]]
-  `(let [xs# (cljs.core.logic/-take* (-inc
-                      ((fresh [~x] ~@goals
-                         (fn [a#]
-                           (cljs.core.logic/-reify a# ~x))) ;; TODO: do we need this?
-                       cljs.core.logic/empty-s)))]
-     (if ~n
-       (take ~n xs#)
-       xs#)))
+(defmacro -run [opts [x :as bindings] & goals]
+  (if (> (count bindings) 1)
+    (let [[rbindings as-key [as]] (partition-by #{:as} bindings)]
+      (if (seq as-key)
+        `(-run ~opts [~as] (fresh [~@rbindings] (== ~as [~@rbindings]) ~@goals))
+        `(-run ~opts [q#] (fresh ~bindings (== q# ~bindings) ~@goals))))
+    `(let [opts# ~opts
+           xs# (cljs.core.logic/-take*
+                 (-inc
+                   ((fresh [~x] ~@goals
+                      (fn [a#]
+                        (cljs.core.logic/-reify a# ~x))) ;; TODO: do we need this?
+                    (with-meta cljs.core.logic/empty-s
+                      (merge {:reify-vars true} opts#)))))]
+       (if-let [n# (:n opts#)]
+         (take n# xs#)
+         xs#))))
 
 (defmacro run
   "Executes goals until a maximum of n results are found."
-  [n & goals]
-  `(doall (solve ~n ~@goals)))
+  [n bindings & goals]
+  `(-run {:occurs-check true :n ~n :db cljs.core.logic/*logic-dbs*}
+     ~bindings ~@goals))
 
 (defmacro run*
   "Executes goals until results are exhausted."
-  [& goals]
-  `(run false ~@goals))
+  [bindings & goals]
+  `(-run {:occurs-check true :n false :db cljs.core.logic/*logic-dbs*}
+     ~bindings ~@goals))
+
+(defmacro run-db
+  "Executes goals until a maximum of n results are found. Uses a specified logic database."
+  [n db bindings & goals]
+  `(-run {:occurs-check true :n ~n :db (flatten [~db])} ~bindings ~@goals))
+
+(defmacro run-db*
+  "Executes goals until results are exhausted. Uses a specified logic database."
+  [db bindings & goals]
+  `(-run {:occurs-check true :n false :db (flatten [~db])} ~bindings ~@goals))
 
 (defmacro run-nc
-  "Executes goals until a maximum of n results are found. Does not occurs-check."
-  [& [n & goals]]
-  `(binding [*occurs-check* false]
-     (run ~n ~@goals)))
+  "Executes goals until a maximum of n results are found. Does not
+   occurs-check."
+  [n bindings & goals]
+  `(-run {:occurs-check false :n ~n :db *logic-dbs*} ~bindings ~@goals))
 
 (defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
   [& goals]
   `(run-nc false ~@goals))
-
-(defmacro lazy-run
-  "Lazily executes goals until a maximum of n results are found."
-  [& [n & goals]]
-  `(solve ~n ~@goals))
-
-(defmacro lazy-run*
-  "Lazily executes goals until results are exhausted."
-  [& goals]
-  `(solve false ~@goals))
 
 (defmacro all
   "Like fresh but does does not create logic variables."
