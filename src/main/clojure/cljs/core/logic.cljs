@@ -119,7 +119,14 @@
           (.-rhs x)
           (recur (-next xs)))))))
 
-(deftype Substitutions [s c]
+(deftype Substitutions [s c _meta]
+  IMeta
+  (-meta [_] _meta)
+
+  IWithMeta
+  (-with-meta [_ new-meta]
+    (Substitutions. s c new-meta))
+
   IEquiv
   (-equiv [this o]
     (or (identical? this o)
@@ -142,7 +149,7 @@
       (-ext-no-check this u v)))
 
   (-ext-no-check [this u v]
-    (Substitutions. (conj s (Pair. u v)) c))
+    (Substitutions. (conj s (Pair. u v)) c _meta))
   
   (-walk [this v]
     (cond
@@ -189,9 +196,9 @@
 
 (defn make-s
   ([s]
-     (Substitutions. s ()))
+     (Substitutions. s () nil))
   ([s c]
-     (Substitutions. s c)))
+     (Substitutions. s c nil)))
 
 (def ^not-native empty-s (make-s '() nil))
 
