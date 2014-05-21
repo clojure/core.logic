@@ -107,7 +107,7 @@
   "Executes goals until a maximum of n results are found. Does not
    occurs-check."
   [n bindings & goals]
-  `(-run {:occurs-check false :n ~n :db *logic-dbs*} ~bindings ~@goals))
+  `(-run {:occurs-check false :n ~n :db cljs.core.logic/*logic-dbs*} ~bindings ~@goals))
 
 (defmacro run-nc*
   "Executes goals until results are exhausted. Does not occurs-check."
