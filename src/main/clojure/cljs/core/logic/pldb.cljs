@@ -28,7 +28,7 @@
 
 (defn index-for-query [s q indexes]
   (let [indexable (map #(ground? s %)  q)
-        triples (map vector (range) indexable indexes)]
+        triples   (map vector (range) indexable indexes)]
     (first
       (for [[i indexable indexed] triples
             :when (and indexable indexed)]
@@ -71,6 +71,3 @@
 
 (defn db-retractions [base-db & retractions]
   (reduce #(apply db-retraction %1 %2) base-db retractions))
-
-
-
