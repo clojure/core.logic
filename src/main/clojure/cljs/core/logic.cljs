@@ -944,5 +944,5 @@
   (let [aseq (drop-while nil? aseq)]
     (if (seq aseq)
       (choice (first aseq)
-        (fn [] (to-stream (next aseq))))
+        (-inc (to-stream (next aseq))))
       (fail empty-s))))
