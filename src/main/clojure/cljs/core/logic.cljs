@@ -53,10 +53,6 @@
 ;; =============================================================================
 ;; Pair
 
-(defprotocol IPair
-  (-lhs [this])
-  (-rhs [this]))
-
 (deftype Pair [lhs rhs]
   IEquiv
   (-equiv [this other]
@@ -65,17 +61,16 @@
   ICounted
   (-count [_] 2)
   IIndexed
-  (-nth [_ i] (condp cljs.core/== i
-                   0 lhs
-                   1 rhs
-                   (throw (js/Error. "Index out of bounds"))))
-  (-nth [_ i not-found] (condp cljs.core/== i
-                             0 lhs
-                             1 rhs
-                             not-found))
-  IPair
-  (-lhs [_] lhs)
-  (-rhs [_] rhs)
+  (-nth [_ i]
+    (case i
+      0 lhs
+      1 rhs
+      (throw (js/Error. "Index out of bounds"))))
+  (-nth [_ i not-found]
+    (case i
+      0 lhs
+      1 rhs
+      not-found))
   IPrintWithWriter
   (-pr-writer [coll writer opts]
     (-write writer (str "(" lhs " . " rhs ")"))))
@@ -112,7 +107,7 @@
   (loop [^not-native xs (-seq xs)]
     (if (nil? xs)
       not-found
-      (let [x (-first xs)
+      (let [x   (-first xs)
             lhs (.-lhs x)]
         (if (identical? k lhs)
           (.-rhs x)
