@@ -9,7 +9,7 @@
   :test-paths ["src/test/clojure"]
 
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-2227" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2229" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  [com.datomic/datomic-free "0.8.4270" :scope "provided"]]
 
@@ -21,14 +21,14 @@
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :none
                 :pretty-print true
-                :output-to "tests.js"
-                :output-dir "out"
+                :output-to "resources/tests.js"
+                :output-dir "resources/out-dev"
                 :source-map true}}
     {:id "adv"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced
                 :pretty-print true
-                :output-to "tests.js"
                 :pseudo-names true
-                :output-dir "out-adv"
-                :source-map "tests.js.map"}}]})
+                :output-to "resources/tests.js"
+                :output-dir "resources/out-adv"
+                :source-map "resources/tests.js.map"}}]})

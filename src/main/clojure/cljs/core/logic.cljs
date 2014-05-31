@@ -6,7 +6,6 @@
   (:require [clojure.set :as set])
   (:use [clojure.walk :only [postwalk]]))
 
-(def ^:dynamic *occurs-check* true)
 (def ^:dynamic *logic-dbs* [])
 
 (defprotocol IUnifyTerms
@@ -143,7 +142,7 @@
       (-occurs-check-term v u this)))
   
   (-ext [this u v]
-    (if (and ^boolean *occurs-check*
+    (if (and ^boolean (:occurs-check _meta)
              ^boolean (-occurs-check this u v))
       (fail this)
       (-ext-no-check this u v)))

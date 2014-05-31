@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [==])
   (:use-macros
    [cljs.core.logic.macros
-    :only [run run* == conde conda condu fresh defne matche all]])
+    :only [run run* run-nc == conde conda condu fresh defne matche all]])
   (:require-macros [cljs.core.logic.macros :as m]
                    [clojure.tools.macro :as mu]
                    [cljs.core.logic.pldb :as pldb])
@@ -11,7 +11,7 @@
    [cljs.core.logic
     :only [pair lvar lcons -unify -ext-no-check -walk -walk*
            -reify-lvar-name empty-s to-s succeed fail s# u# conso
-           nilo firsto resto emptyo appendo membero *occurs-check*
+           nilo firsto resto emptyo appendo membero
            unifier binding-map partial-map failed?]]))
 
 (defn js-print [& args]
@@ -933,15 +933,13 @@
     (nexto (list _ _ _ 'fox _) (list _ 'chesterfields _ _ _) hs))))
 
 (defn ^:export run_zebra []
-  (binding [*occurs-check* false]
-    (doall (run 1 [q] (zebrao q)))))
+  (doall (run-nc 1 [q] (zebrao q))))
 
 (println (pr-str (run 1 [q] (zebrao q))))
 
-(binding [*occurs-check* false]
-  (time
-    (dotimes [_ 100]
-      (doall (run 1 [q] (zebrao q))))))
+(time
+  (dotimes [_ 100]
+    (doall (run-nc 1 [q] (zebrao q)))))
 
 (println (pr-str
           (run 10 [q]
