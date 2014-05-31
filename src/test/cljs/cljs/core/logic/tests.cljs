@@ -940,8 +940,8 @@
 
 (binding [*occurs-check* false]
   (time
-    (dotimes [_ 1000]
-      (run 1 [q] (zebrao q)))))
+    (dotimes [_ 100]
+      (doall (run 1 [q] (zebrao q))))))
 
 (println (pr-str
           (run 10 [q]
@@ -956,8 +956,6 @@
     ([[_ . tail]] (map-geto tail k v))))
 
 (assert (= (run* [q] (map-geto (seq {:title "Blub"}) :title q)) '("Blub")))
-
-(println "ok")
 
 ;; =============================================================================
 ;; pldb
@@ -985,23 +983,22 @@
   (-> facts0
     (pldb/db-fact fun 'Lucy)))
 
-(comment
-  (pldb/with-db facts0
-    (assert
-      (= (run* [q]
-           (fresh [x y]
-             (likes x y)
-             (fun y)
-             (== q [x y])))
-        '())))
+(pldb/with-db facts0
+  (assert
+    (= (run* [q]
+         (fresh [x y]
+           (likes x y)
+           (fun y)
+           (== q [x y])))
+      '())))
 
- (pldb/with-db facts1
-   (assert
-     (= (run* [q]
-          (fresh [x y]
-            (likes x y)
-            (fun y)
-            (== q [x y])))
-       '([Ricky Lucy]))))
- )
+(pldb/with-db facts1
+  (assert
+    (= (run* [q]
+         (fresh [x y]
+           (likes x y)
+           (fun y)
+           (== q [x y])))
+      '([Ricky Lucy]))))
 
+(println "ok")

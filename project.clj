@@ -8,24 +8,27 @@
 
   :test-paths ["src/test/clojure"]
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2197" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.5.1"]
+                 [org.clojure/clojurescript "0.0-2227" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  [com.datomic/datomic-free "0.8.4270" :scope "provided"]]
 
-  :plugins [[lein-cljsbuild "1.0.2"]]
+  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]]
 
   :cljsbuild
   {:builds
    [{:id "dev"
-     :source-paths ["src/test/cljs"]
+     :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :none
-                :static-fns true
+                :pretty-print true
                 :output-to "tests.js"
                 :output-dir "out"
-                :source-map "tests.js.map"}}
+                :source-map true}}
     {:id "adv"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced
-                :pretty-print false
-                :output-to "tests.js"}}]})
+                :pretty-print true
+                :output-to "tests.js"
+                :pseudo-names true
+                :output-dir "out-adv"
+                :source-map "tests.js.map"}}]})
