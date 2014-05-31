@@ -9,7 +9,6 @@
 
 (defmacro with-db [db & body]
   `(binding [cljs.core.logic/*logic-dbs* (conj cljs.core.logic/*logic-dbs* ~db)]
-
      ~@body))
 
 (defmacro db-rel [name & args]
@@ -28,7 +27,8 @@
                        (cljs.core.logic/-walk* subs# (nth query# index#)))
                      (cljs.core.logic.pldb/facts-for dbs# ~kname))]
                (cljs.core.logic/to-stream
-                 (map (fn [potential#]
-                        ((cljs.core.logic.macros/== query# potential#) subs#))
-                   facts#)))))
+                 (remove cljs.core.logic/failed?
+                   (map (fn [potential#]
+                          ((cljs.core.logic.macros/== query# potential#) subs#))
+                     facts#))))))
          {:rel-name ~kname :indexes ~indexes}))))
