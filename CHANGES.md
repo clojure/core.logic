@@ -1,3 +1,16 @@
+From 0.8.7 to 0.8.8
+====
+
+Changes
+----
+* pldb support in ClojureScript
+* run interface matches clojure.core.logic
+* Minimum dependency on Clojure 1.6.0 and ClojureScript 0.0-2261
+
+Fixes
+----
+* LOGIC-160: disequality on LCons not respected
+
 From 0.8.6 to 0.8.7
 ====
 
