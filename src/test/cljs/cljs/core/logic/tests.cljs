@@ -938,7 +938,7 @@
 (println (pr-str (run 1 [q] (zebrao q))))
 
 (time
-  (dotimes [_ 100]
+  (dotimes [_ 1000]
     (doall (run-nc 1 [q] (zebrao q)))))
 
 (println (pr-str
