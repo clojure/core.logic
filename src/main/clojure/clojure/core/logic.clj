@@ -2292,23 +2292,56 @@
   (-disunify-terms [u v s {pc :prefixc :as cs}]
     (assoc cs :prefixc (assoc pc u v)))
 
+  LCons
+  (-disunify-terms [u v s cs]
+    (cond
+      (sequential? v)
+      (loop [u u v (seq v) cs cs]
+        (if-not (nil? v)
+          (if (lcons? u)
+            (if-let [cs (disunify s (lfirst u) (first v) cs)]
+              (recur (lnext u) (next v) cs)
+              nil)
+            nil)
+          (if (lvar? u)
+            (disunify s u () cs)
+            nil)))
+      
+      (lcons? v)
+      (loop [u u v (seq v) cs cs]
+        (if (lvar? u)
+          (if (lvar? v)
+            (disunify s u v cs)
+            nil)
+          (cond
+            (lvar? v) nil
+            (and (lcons? u) (lcons? v))
+            (if-let [cs (disunify s (lfirst u) (lfirst v) cs)]
+              (recur (lnext u) (lnext v) cs)
+              nil)
+            :else nil)))
+      
+      :else nil))
+
   clojure.lang.Sequential
   (-disunify-terms [u v s cs]
-    (if (sequential? v)
-      (loop [u (seq u) v (seq v) cs cs]
-        (if u
-          (if v
-            (let [uv (first u)
-                  vv (first v)
-                  cs (disunify s uv vv cs)]
-              (if cs
-                (recur (next u) (next v) cs)
-                nil))
-            nil)
-          (if (nil? v)
-            cs
-            nil)))
-      nil))
+    (if (lcons? v)
+      (-disunify-terms v u s cs)
+      (if (sequential? v)
+        (loop [u (seq u) v (seq v) cs cs]
+          (if u
+            (if v
+              (let [uv (first u)
+                    vv (first v)
+                    cs (disunify s uv vv cs)]
+                (if cs
+                  (recur (next u) (next v) cs)
+                  nil))
+              nil)
+            (if (nil? v)
+              cs
+              nil)))
+        nil)))
 
   clojure.lang.IPersistentMap
   (-disunify-terms [u v s cs]
@@ -2839,4 +2872,3 @@
         :else fail))
     (fn [_ v _ r a]
       `(seqc ~(-reify a v r)))))
-
