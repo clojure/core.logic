@@ -77,7 +77,7 @@
            (= rhs (:rhs o)))
       false)))
 
-(defn- pair [lhs rhs]
+(defn pair [lhs rhs]
   (Pair. lhs rhs))
 
 (defmethod print-method Pair [x ^Writer writer]
