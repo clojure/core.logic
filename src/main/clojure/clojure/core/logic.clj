@@ -1620,7 +1620,7 @@
         e (if (-> n meta :tabled)
             `(fnm ~t ~as :tabled ~@cs)
             `(fnm ~t ~as ~@cs))]
-    `(def ~n ~e)))
+    `(def ~(vary-meta n #(merge {:arglists (list 'quote (list as))} %1)) ~e)))
 
 ;; =============================================================================
 ;; Useful goals
