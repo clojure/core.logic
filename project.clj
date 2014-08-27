@@ -1,4 +1,4 @@
-(defproject org.clojure/core.logic "0.8.7-SNAPSHOT"
+(defproject org.clojure/core.logic "0.8.9-SNAPSHOT"
   :description "A logic/relational programming library for Clojure"
   :parent [org.clojure/pom.contrib "0.0.25"]
 
@@ -9,7 +9,7 @@
   :test-paths ["src/test/clojure"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2261" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2311" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
