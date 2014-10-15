@@ -22,15 +22,11 @@
    [{:id "dev"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :none
-                :pretty-print true
                 :output-to "resources/tests.js"
                 :output-dir "resources/out-dev"
                 :source-map true}}
     {:id "adv"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced
-                :pretty-print true
-                :pseudo-names true
                 :output-to "resources/tests.js"
-                :output-dir "resources/out-adv"
-                :source-map "resources/tests.js.map"}}]})
+                :output-dir "resources/out-adv"}}]})
