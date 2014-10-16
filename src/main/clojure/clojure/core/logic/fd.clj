@@ -157,8 +157,9 @@
    be integers given in sorted order. domains may be more efficient 
    than intervals when only a few values are possible."
   [& args]
-  (when (seq args)
-    (sorted-set->domain (into (sorted-set) args))))
+  (let [args (remove neg? args)]
+    (when (seq args)
+      (sorted-set->domain (into (sorted-set) args)))))
 
 (defmethod print-method FiniteDomain [x ^Writer writer]
   (.write writer (str "<domain:" (string/join " " (seq (:s x))) ">")))
@@ -357,11 +358,13 @@
   "Construct an interval for an assignment to a var. intervals may
    be more efficient that the domain type when the range of possiblities
    is large."
-  ([ub] (IntervalFD. 0 ub))
+  ([ub] (interval 0 ub))
   ([lb ub]
-     (if (zero? (core/- ub lb))
-       ub
-       (IntervalFD. lb ub))))
+   (let [lb (if (neg? lb) 0 lb)
+         ub (if (neg? ub) 0 ub)]
+     (cond
+      (zero? (core/- ub lb)) ub
+      :else (IntervalFD. lb ub)))))
 
 (defn intersection* [is js]
   (loop [is (seq (-intervals is)) js (seq (-intervals js)) r []]
@@ -572,10 +575,10 @@
   ([i0] i0)
   ([i0 i1]
      (let [is [i0 i1]]
-       (MultiIntervalFD. (reduce min (map -lb is)) (reduce max (map -ub is)) is)))
+       (MultiIntervalFD. (max 0 (reduce min (map -lb is))) (max 0 (reduce max (map -ub is))) is)))
   ([i0 i1 & ir]
      (let [is (into [] (concat (list i0 i1) ir))]
-       (MultiIntervalFD. (reduce min (map -lb is)) (reduce max (map -ub is)) is))))
+       (MultiIntervalFD. (max 0 (reduce min (map -lb is))) (max 0 (reduce max (map -ub is))) is))))
 
 (defmethod print-method MultiIntervalFD [x ^Writer writer]
   (.write writer (str "<intervals:" (apply pr-str (:is x)) ">")))

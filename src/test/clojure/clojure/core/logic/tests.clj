@@ -3532,3 +3532,20 @@
         s (update-dom empty-s x ::nom (fnil (fn [d] (conj d '(swap x y))) []))]
     (is (= (get-dom s x ::nom) '[(swap x y)]))))
 
+;; LOGIC-161
+
+(deftest test-logic-161
+  (is
+    (= (into {}
+         (run* [q]
+           (fresh [a b]
+             (fd/in a b (fd/interval 0 10))
+             (fd/eq (= 4 (* (- a b) 2)))
+             (== q [a b]))))
+
+       (into {}
+         (run* [q]
+           (fresh [a b]
+             (fd/in a b (fd/interval 0 10))
+             (fd/eq (= 2 (- a b)))
+             (== q [a b])))))))
