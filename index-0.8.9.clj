@@ -18,7 +18,7 @@
    :name "clojure.core.logic.bench",
    :doc nil}
   {:source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic.fd-api.html",
    :name "clojure.core.logic.fd",
@@ -1161,51 +1161,51 @@
    :name "!=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L783",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L786",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/!=",
    :doc
    "A finite domain constraint. u and v must not be equal. u and v\nmust eventually be given domains if vars.",
    :var-type "function",
-   :line 783,
+   :line 786,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([x y product]),
    :name "*",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L973",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L976",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/*",
    :doc
    "A finite domain constraint for multiplication and\nthus division. x, y & product must be eventually be given \ndomains if vars.",
    :var-type "function",
-   :line 973,
+   :line 976,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([x y sum]),
    :name "+",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L897",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L900",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/+",
    :doc
    "A finite domain constraint for addition and subtraction.\nx, y & sum must eventually be given domains if vars.",
    :var-type "function",
-   :line 897,
+   :line 900,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([s min max]),
    :name "->FiniteDomain",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L64",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L64",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->FiniteDomain",
    :doc
@@ -1217,176 +1217,176 @@
    :name "->IntervalFD",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L230",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L231",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->IntervalFD",
    :doc
    "Positional factory function for class clojure.core.logic.fd.IntervalFD.",
    :var-type "function",
-   :line 230,
+   :line 231,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([min max is]),
    :name "->MultiIntervalFD",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L474",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L477",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/->MultiIntervalFD",
    :doc
    "Positional factory function for class clojure.core.logic.fd.MultiIntervalFD.",
    :var-type "function",
-   :line 474,
+   :line 477,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([x y* n*]),
    :name "-distinctc",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L983",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L986",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/-distinctc",
    :doc
    "The real *individual* distinct constraint. x is a var that now is bound to\na single value. y* were the non-singleton bound vars that existed at the\nconstruction of the constraint. n* is the set of singleton domain values \nthat existed at the construction of the constraint. We use categorize to \ndetermine the current non-singleton bound vars and singleton vlaues. if x\nis in n* or the new singletons we have failed. If not we simply remove \nthe value of x from the remaining non-singleton domains bound to vars.",
    :var-type "function",
-   :line 983,
+   :line 986,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([u v]),
    :name "<",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L822",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L825",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/<",
    :doc
    "A finite domain constraint. u must be less than v. u and v\nmust eventually be given domains if vars.",
    :var-type "function",
-   :line 822,
+   :line 825,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([u v]),
    :name "<=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L816",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L819",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/<=",
    :doc
    "A finite domain constraint. u must be less than or equal to v.\nu and v must eventually be given domains if vars.",
    :var-type "function",
-   :line 816,
+   :line 819,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([u v]),
    :name "==",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L746",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L749",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/==",
    :doc
    "A finite domain constraint. u and v must be equal. u and v must\neventually be given domains if vars.",
    :var-type "function",
-   :line 746,
+   :line 749,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([u v]),
    :name ">",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L830",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L833",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/>",
    :doc
    "A finite domain constraint. u must be greater than v. u and v\nmust eventually be given domains if vars.",
    :var-type "function",
-   :line 830,
+   :line 833,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([u v]),
    :name ">=",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L836",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L839",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/>=",
    :doc
    "A finite domain constraint. u must be greater than or equal to v.\nu and v must eventually be given domains if vars.",
    :var-type "function",
-   :line 836,
+   :line 839,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([l n]),
    :name "bounded-listo",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1082",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L1085",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/bounded-listo",
    :doc
    "Ensure that the list l never grows beyond bound n.\nn must have been assigned a domain.",
    :var-type "function",
-   :line 1082,
+   :line 1085,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([v*]),
    :name "distinct",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1074",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L1077",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/distinct",
    :doc
    "A finite domain constraint that will guarantee that \nall vars that occur in v* will be unified with unique \nvalues. v* need not be ground. Any vars in v* should\neventually be given a domain.",
    :var-type "function",
-   :line 1074,
+   :line 1077,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([v*]),
    :name "distinctc",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L1039",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L1042",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/distinctc",
    :doc
    "The real distinct constraint. v* can be seq of logic vars and\nvalues or it can be a logic var itself. This constraint does not \nrun until v* has become ground. When it has become ground we group\nv* into a set of logic vars and a sorted set of known singleton \nvalues. We then construct the individual constraint for each var.",
    :var-type "function",
-   :line 1039,
+   :line 1042,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([x dom]),
    :name "dom",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L628",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L631",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/dom",
    :doc "Assign a var x a domain.",
    :var-type "function",
-   :line 628,
+   :line 631,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([& args]),
    :name "domain",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L155",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L155",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/domain",
    :doc
@@ -1398,42 +1398,42 @@
    :name "in",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L643",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L646",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/in",
    :doc "Assign vars to domain. The domain must come last.",
    :var-type "macro",
-   :line 643,
+   :line 646,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([ub] [lb ub]),
    :name "interval",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L356",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L357",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/interval",
    :doc
    "Construct an interval for an assignment to a var. intervals may\nbe more efficient that the domain type when the range of possiblities\nis large.",
    :var-type "function",
-   :line 356,
+   :line 357,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:arglists ([x dom domp]),
    :name "process-dom",
    :namespace "clojure.core.logic.fd",
    :source-url
-   "https://github.com/clojure/core.logic/blob/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj#L613",
+   "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj#L616",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/9b9b3a8bb87ab5ccac2491fb5fdd80af18c47847/src/main/clojure/clojure/core/logic/fd.clj",
+   "https://github.com/clojure/core.logic/raw/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/process-dom",
    :doc
    "If x is a var we update its domain. If it's an integer\nwe check that it's a member of the given domain. dom is\nthen new domain, it should have already been calculated from\ndomp which was the previous domain.",
    :var-type "function",
-   :line 613,
+   :line 616,
    :file "src/main/clojure/clojure/core/logic/fd.clj"}
   {:file nil,
    :raw-source-url nil,
