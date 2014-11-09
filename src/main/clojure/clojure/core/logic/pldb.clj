@@ -50,7 +50,7 @@
         (count args)
 
         kname
-        (str name "_" arity)
+        (str (ns-name *ns*) name "_" arity)
 
         indexes
         (vec (map indexed? args))]
