@@ -13,7 +13,7 @@
 
 (defmacro db-rel [name & args]
   (let [arity   (count args)
-        kname   (str name "_" arity)
+        kname   (str (ns-name *ns*) "/" name "_" arity)
         indexes (vec (map indexed? args))]
     `(def ~name
        (with-meta
