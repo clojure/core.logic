@@ -30,7 +30,7 @@
    :name "clojure.core.logic.nominal",
    :doc nil}
   {:source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic/clojure.core.logic.unifier-api.html",
    :name "clojure.core.logic.unifier",
@@ -1535,67 +1535,67 @@
    :name "prep",
    :namespace "clojure.core.logic.unifier",
    :source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L55",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj#L54",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/raw/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.unifier/prep",
    :doc
    "Prep a quoted expression. All symbols preceded by ? will\nbe replaced with logic vars.",
    :var-type "function",
-   :line 55,
+   :line 54,
    :file "src/main/clojure/clojure/core/logic/unifier.clj"}
   {:arglists ([ts] [opts ts]),
    :name "unifier",
    :namespace "clojure.core.logic.unifier",
    :source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L148",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj#L147",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/raw/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.unifier/unifier",
    :doc "Return the unifier for terms ts. Will prep the terms.",
    :var-type "function",
-   :line 148,
+   :line 147,
    :file "src/main/clojure/clojure/core/logic/unifier.clj"}
   {:arglists ([ts] [opts ts]),
    :name "unifier*",
    :namespace "clojure.core.logic.unifier",
    :source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L119",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj#L118",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/raw/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.unifier/unifier*",
    :doc
    "Return the unifier that unifies terms ts.\nAll terms in ts should prepped terms.",
    :var-type "function",
-   :line 119,
+   :line 118,
    :file "src/main/clojure/clojure/core/logic/unifier.clj"}
   {:arglists ([ts] [opts ts]),
    :name "unify",
    :namespace "clojure.core.logic.unifier",
    :source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L135",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj#L134",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/raw/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.unifier/unify",
    :doc
    "Unify the terms ts returning a the value that represents their\nunificaiton. Will prep the terms.",
    :var-type "function",
-   :line 135,
+   :line 134,
    :file "src/main/clojure/clojure/core/logic/unifier.clj"}
   {:arglists ([ts] [opts ts]),
    :name "unify*",
    :namespace "clojure.core.logic.unifier",
    :source-url
-   "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj#L109",
+   "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj#L108",
    :raw-source-url
-   "https://github.com/clojure/core.logic/raw/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/unifier.clj",
+   "https://github.com/clojure/core.logic/raw/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj",
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.unifier/unify*",
    :doc "Unify the terms ts.",
    :var-type "function",
-   :line 109,
+   :line 108,
    :file "src/main/clojure/clojure/core/logic/unifier.clj"})}
