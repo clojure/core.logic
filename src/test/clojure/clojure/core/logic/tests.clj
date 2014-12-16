@@ -3549,3 +3549,14 @@
              (fd/in a b (fd/interval 0 10))
              (fd/eq (= 2 (- a b)))
              (== q [a b])))))))
+
+;; LOGIC-118
+
+(deftest test-logic-118-prep-lvar-no-tail
+  (let [[[xprepped]] (u/prep '([?x]))]
+    (is (lvar? xprepped))))
+
+(deftest test-logic-118-prep-lvar-with-tail
+  (let [result (u/prep '([?x] . ?foo))
+        [head] (lfirst result)]
+    (is (lvar? head))) )

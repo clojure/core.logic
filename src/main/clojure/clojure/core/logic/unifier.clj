@@ -40,7 +40,7 @@
          (lvarq-sym? expr)
          (proc-lvar expr store)
         
-         (seq? expr)
+         (coll? expr)
          (if (or lcons? (lcons-expr? expr))
            (let [[f & n] expr
                  skip (= f '.)
@@ -49,7 +49,6 @@
                tail
                (lcons (prep* f store) tail)))
            (walk-term expr (replace-lvar store)))
-         
         :else expr))))
 
 (defn prep
