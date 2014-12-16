@@ -1,10 +1,9 @@
 (ns cljs.core.logic
   (:refer-clojure :exclude [==])
-  (:use-macros [cljs.core.logic.macros :only
-                [defne defna defnu fresh == -inc]])
-  (:require-macros [cljs.core.logic.macros :as m])
-  (:require [clojure.set :as set])
-  (:use [clojure.walk :only [postwalk]]))
+  (:require-macros [cljs.core.logic :as m
+                    :refer [defne defna defnu fresh == -inc]])
+  (:require [clojure.set :as set]
+            [clojure.walk :refer [postwalk]]))
 
 (def ^:dynamic *logic-dbs* [])
 

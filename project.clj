@@ -9,13 +9,13 @@
   :test-paths ["src/test/clojure"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2371" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2411" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
 
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
-            [cider/cider-nrepl "0.7.0-SNAPSHOT"]]
+            [cider/cider-nrepl "0.8.1"]]
 
   :cljsbuild
   {:builds
@@ -25,6 +25,12 @@
                 :output-to "resources/tests.js"
                 :output-dir "resources/out-dev"
                 :source-map true}}
+    {:id "simp"
+     :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
+     :compiler {:optimizations :simple
+                :static-fns true
+                :output-to "resources/tests.js"
+                :output-dir "resources/out-simp"}}
     {:id "adv"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced

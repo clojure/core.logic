@@ -1,3 +1,5 @@
+*.iml
+.nrepl*
 .idea
 .lein*
 *.jar
@@ -8,3 +10,4 @@
 target/
 out/
 tests.js
+resources/

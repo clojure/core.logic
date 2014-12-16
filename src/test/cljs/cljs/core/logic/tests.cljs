@@ -1,21 +1,17 @@
 (ns cljs.core.logic.tests
   (:refer-clojure :exclude [==])
-  (:use-macros
-   [cljs.core.logic.macros
-    :only [run run* run-nc == conde conda condu fresh defne matche all]])
-  (:require-macros [cljs.core.logic.macros :as m]
-                   [clojure.tools.macro :as mu]
-                   [cljs.core.logic.pldb :as pldb])
-  (:require [cljs.core.logic.pldb :as pldb])
-  (:use
-   [cljs.core.logic
-    :only [pair lvar lcons -unify -ext-no-check -walk -walk*
-           -reify-lvar-name empty-s to-s succeed fail s# u# conso
-           nilo firsto resto emptyo appendo membero
-           unifier binding-map partial-map failed?]]))
+  (:require-macros [clojure.tools.macro :as mu])
+  (:require
+   [cljs.core.logic :as l
+    :refer [pair lvar lcons -unify -ext-no-check -walk -walk*
+            -reify-lvar-name empty-s to-s succeed fail s# u# conso
+            nilo firsto resto emptyo appendo membero
+            unifier binding-map partial-map failed?]
+    :refer-macros [run run* run-nc == conde conda condu fresh defne matche all]]
+   [cljs.core.logic.pldb :as pldb :include-macros true]))
 
 (defn js-print [& args]
-  (if (js* "typeof console != 'undefined'")
+  (if (exists? js/console)
     (.log js/console (apply str args))
     (js/print (apply str args))))
 
@@ -360,18 +356,18 @@
 (println "run and unify")
 
 (assert (= (run* [q]
-             (m/== true q))
+             (== true q))
            '(true)))
 
 (assert (= (run* [q]
              (fresh [x y]
-               (m/== [x y] [1 5])
-               (m/== [x y] q)))
+               (== [x y] [1 5])
+               (== [x y] q)))
            [[1 5]]))
 
 (assert (= (run* [q]
              (fresh [x y]
-               (m/== [x y] q)))
+               (== [x y] q)))
            '[[_.0 _.1]]))
 
 ;; =============================================================================
@@ -381,7 +377,7 @@
 
 (assert (= (run* [q]
              fail
-             (m/== true q))
+             (== true q))
            []))
 
 ;; =============================================================================
@@ -391,8 +387,8 @@
 
 (assert (= (run* [q]
              (all
-              (m/== 1 1)
-              (m/== q true)))
+              (== 1 1)
+              (== q true)))
            '(true)))
 
 ;; =============================================================================
@@ -402,7 +398,7 @@
 
 (defn pairo [p]
   (fresh [a d]
-    (m/== (lcons a d) p)))
+    (== (lcons a d) p)))
 
 (defn twino [p]
   (fresh [x]
@@ -418,7 +414,7 @@
 
 (defn flatteno [s out]
   (conde
-    [(emptyo s) (m/== '() out)]
+    [(emptyo s) (== '() out)]
     [(pairo s)
      (fresh [a d res-a res-d]
        (conso a d s)
@@ -429,11 +425,11 @@
 
 (defn rembero [x l out]
   (conde
-    [(m/== '() l) (m/== '() out)]
+    [(== '() l) (== '() out)]
     [(fresh [a d]
        (conso a d l)
-       (m/== x a)
-       (m/== d out))]
+       (== x a)
+       (== d out))]
     [(fresh [a d res]
        (conso a d l)
        (conso a res out)
@@ -446,30 +442,30 @@
 
 (assert (= (run* [x]
              (conde
-               [(m/== x 'olive) succeed]
+               [(== x 'olive) succeed]
                [succeed succeed]
-               [(m/== x 'oil) succeed]))
+               [(== x 'oil) succeed]))
            '[olive _.0 oil]))
 
 (assert (= (run* [r]
              (fresh [x y]
                (conde
-                 [(m/== 'split x) (m/== 'pea y)]
-                 [(m/== 'navy x) (m/== 'bean y)])
-               (m/== (cons x (cons y ())) r)))
+                 [(== 'split x) (== 'pea y)]
+                 [(== 'navy x) (== 'bean y)])
+               (== (cons x (cons y ())) r)))
            '[(split pea) (navy bean)]))
 
 (defn teacupo [x]
   (conde
-    [(m/== 'tea x) s#]
-    [(m/== 'cup x) s#]))
+    [(== 'tea x) s#]
+    [(== 'cup x) s#]))
 
 (assert (= (run* [r]
              (fresh [x y]
                (conde
-                 [(teacupo x) (m/== true y) s#]
-                 [(m/== false x) (m/== true y)])
-               (m/== (cons x (cons y ())) r)))
+                 [(teacupo x) (== true y) s#]
+                 [(== false x) (== true y)])
+               (== (cons x (cons y ())) r)))
            '((false true) (tea true) (cup true))))
 
 ;; =============================================================================
@@ -480,7 +476,7 @@
 (assert (= (run* [q]
              (fresh [a d]
                (conso a d ())
-               (m/== (cons a d) q)))
+               (== (cons a d) q)))
            []))
 
 (let [a (lvar 'a)
@@ -490,7 +486,7 @@
              [(lcons a d)])))
 
 (assert (= (run* [q]
-             (m/== [q] nil))
+             (== [q] nil))
            []))
 
 (assert (=
@@ -559,14 +555,14 @@
 
 (assert (= (run* [q]
              (all
-              (m/== q [(lvar)])
+              (== q [(lvar)])
               (membero ['foo (lvar)] q)
               (membero [(lvar) 'bar] q)))
            '([[foo bar]])))
 
 (assert (= (run* [q]
              (all
-              (m/== q [(lvar) (lvar)])
+              (== q [(lvar) (lvar)])
               (membero ['foo (lvar)] q)
               (membero [(lvar) 'bar] q)))
            '([[foo bar] _.0] [[foo _.0] [_.1 bar]]
@@ -588,27 +584,27 @@
 
 (defn digit-1 [x]
   (conde
-    [(m/== 0 x)]))
+    [(== 0 x)]))
 
 (defn digit-4 [x]
   (conde
-    [(m/== 0 x)]
-    [(m/== 1 x)]
-    [(m/== 2 x)]
-    [(m/== 3 x)]))
+    [(== 0 x)]
+    [(== 1 x)]
+    [(== 2 x)]
+    [(== 3 x)]))
 
 (assert (= (run* [q]
              (fresh [x y]
                (digit-1 x)
                (digit-1 y)
-               (m/== q [x y])))
+               (== q [x y])))
            '([0 0])))
 
 (assert (= (run* [q]
              (fresh [x y]
                (digit-4 x)
                (digit-4 y)
-               (m/== q [x y])))
+               (== q [x y])))
            '([0 0] [0 1] [0 2] [1 0] [0 3] [1 1] [1 2] [2 0]
                [1 3] [2 1] [3 0] [2 2] [3 1] [2 3] [3 2] [3 3])))
 
@@ -624,12 +620,12 @@
 
 (assert (= (run 1 [q]
              (anyo s#)
-             (m/== true q))
+             (== true q))
            (list true)))
 
 (assert (= (run 5 [q]
              (anyo s#)
-             (m/== true q))
+             (== true q))
            (list true true true true true)))
 
 ;; -----------------------------------------------------------------------------
@@ -642,13 +638,13 @@
 (assert (= (run 1 [q]
              (conde
                [f1]
-               [(m/== false false)]))
+               [(== false false)]))
            '(_.0)))
 
 (assert (= (run 1 [q]
              (conde
-               [f1 (m/== false false)]
-               [(m/== false false)]))
+               [f1 (== false false)]
+               [(== false false)]))
            '(_.0)))
 
 (def f2
@@ -656,8 +652,8 @@
     (conde
       [f2 (conde
             [f2]
-            [(m/== false false)])]
-      [(m/== false false)])))
+            [(== false false)])]
+      [(== false false)])))
 
 (assert (= (run 5 [q] f2)
            '(_.0 _.0 _.0 _.0 _.0)))
@@ -669,48 +665,48 @@
 
 (assert (= (run* [x]
              (conda
-               [(m/== 'olive x) s#]
-               [(m/== 'oil x) s#]
+               [(== 'olive x) s#]
+               [(== 'oil x) s#]
                [u#]))
            '(olive)))
 
 (assert (= (run* [x]
              (conda
-               [(m/== 'virgin x) u#]
-               [(m/== 'olive x) s#]
-               [(m/== 'oil x) s#]
+               [(== 'virgin x) u#]
+               [(== 'olive x) s#]
+               [(== 'oil x) s#]
                [u#]))
            '()))
 
 (assert (= (run* [x]
              (fresh (x y)
-               (m/== 'split x)
-               (m/== 'pea y)
+               (== 'split x)
+               (== 'pea y)
                (conda
-                 [(m/== 'split x) (m/== x y)]
+                 [(== 'split x) (== x y)]
                  [s#]))
-             (m/== true x))
+             (== true x))
            '()))
 
 (assert (= (run* [x]
              (fresh (x y)
-               (m/== 'split x)
-               (m/== 'pea y)
+               (== 'split x)
+               (== 'pea y)
                (conda
-                 [(m/== x y) (m/== 'split x)]
+                 [(== x y) (== 'split x)]
                  [s#]))
-             (m/== true x))
+             (== true x))
            '(true)))
 
 (defn not-pastao [x]
   (conda
-    [(m/== 'pasta x) u#]
+    [(== 'pasta x) u#]
     [s#]))
 
 (assert (= (run* [x]
              (conda
                [(not-pastao x)]
-               [(m/== 'spaghetti x)]))
+               [(== 'spaghetti x)]))
            '(spaghetti)))
 
 ;; -----------------------------------------------------------------------------
@@ -729,13 +725,13 @@
 (assert (= (run* [r]
              (conde
                [(teacupo r) s#]
-               [(m/== false r) s#]))
+               [(== false r) s#]))
            '(false tea cup)))
 
 (assert (= (run* [r]
              (conda
                [(teacupo r) s#]
-               [(m/== false r) s#]))
+               [(== false r) s#]))
            '(tea cup)))
 
 
@@ -745,27 +741,27 @@
 (println "nil in collection")
 
 (assert (= (run* [q]
-             (m/== q [nil]))
+             (== q [nil]))
            '([nil])))
 
 (assert (= (run* [q]
-             (m/== q [1 nil]))
+             (== q [1 nil]))
            '([1 nil])))
 
 (assert (= (run* [q]
-             (m/== q [nil 1]))
+             (== q [nil 1]))
            '([nil 1])))
 
 (assert (= (run* [q]
-             (m/== q '(nil)))
+             (== q '(nil)))
            '((nil))))
 
 (assert (= (run* [q]
-             (m/== q {:foo nil}))
+             (== q {:foo nil}))
            '({:foo nil})))
 
 (assert (= (run* [q]
-             (m/== q {nil :foo}))
+             (== q {nil :foo}))
            '({nil :foo})))
 
 ;; -----------------------------------------------------------------------------
@@ -827,7 +823,7 @@
 (println "occurs check")
 
 (assert (= (run* [q]
-             (m/== q [q]))
+             (== q [q]))
            ()))
 
 ;; -----------------------------------------------------------------------------
@@ -837,24 +833,24 @@
 
 (assert (= (run* [p]
              (fresh [a b]
-               (m/== b ())
-               (m/== '(0 1) (lcons a b))
-               (m/== p [a b])))
+               (== b ())
+               (== '(0 1) (lcons a b))
+               (== p [a b])))
            ()))
 
 (assert (= (run* [p]
              (fresh [a b]
-               (m/== b '(1))
-               (m/== '(0) (lcons a b))
-               (m/== p [a b])))
+               (== b '(1))
+               (== '(0) (lcons a b))
+               (== p [a b])))
            ()))
 
 (assert (= (run* [p]
              (fresh [a b c d]
-               (m/== () b)
-               (m/== '(1) d)
-               (m/== (lcons a b) (lcons c d))
-               (m/== p [a b c d])))
+               (== () b)
+               (== '(1) d)
+               (== (lcons a b) (lcons c d))
+               (== p [a b c d])))
            ()))
 
 ;; -----------------------------------------------------------------------------
@@ -917,7 +913,7 @@
 (defn zebrao [hs]
   (mu/symbol-macrolet [_ (lvar)]
    (all
-    (m/== (list _ _ (list _ _ 'milk _ _) _ _) hs)
+    (== (list _ _ (list _ _ 'milk _ _) _ _) hs)
     (firsto hs (list 'norwegian _ _ _ _))
     (nexto (list 'norwegian _ _ _ _) (list _ _ _ _ 'blue) hs)
     (righto (list _ _ _ _ 'ivory) (list _ _ _ _ 'green) hs)

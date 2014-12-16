@@ -29,6 +29,6 @@
                (cljs.core.logic/to-stream
                  (remove cljs.core.logic/failed?
                    (map (fn [potential#]
-                          ((cljs.core.logic.macros/== query# potential#) subs#))
+                          ((cljs.core.logic/== query# potential#) subs#))
                      facts#))))))
          {:rel-name ~kname :indexes ~indexes}))))
