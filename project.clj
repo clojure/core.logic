@@ -9,7 +9,7 @@
   :test-paths ["src/test/clojure"]
 
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojurescript "0.0-2411" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2496" :scope "provided"]
                  [org.clojure/tools.macro "0.1.2"]
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
