@@ -1,4 +1,5 @@
 (ns cljs.core.logic.pldb
+  (:require-macros cljs.core.logic.pldb)
   (:require [cljs.core.logic :as l :include-macros true]))
 
 ;; ----------------------------------------
