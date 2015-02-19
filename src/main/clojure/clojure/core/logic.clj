@@ -1182,6 +1182,21 @@
        (-inc
         (mplus* ~@(bind-conde-clauses a clauses))))))
 
+(defn or*
+  "A function version of conde, which takes a list of goals and tries them as if via conde.
+   Note that or* only does disjunction, ie (or* [a b c]) is the same as (conde [a] [b] [c]).
+   If you need something like (conde [a b] [c]), you can use and*, or all:
+   (or* [(and* a b) c])."
+  [goals]
+  (letfn [(mplus'
+            ([e] e)
+            ([e & es]
+               (mplus e (fn [] (apply mplus' es)))))]
+   (fn [a]
+     (fn []
+       (apply mplus' (for [goal goals]
+                       (bind a goal)))))))
+
 (defn- lvar-bind [sym]
   ((juxt identity
          (fn [s] `(lvar '~s))) sym))
@@ -1254,6 +1269,12 @@
   "Like fresh but does does not create logic variables."
   ([] `clojure.core.logic/s#)
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
+
+(defn and*
+  "A function version of all, which takes a list of goals and succeeds only fi they all succeed."
+  [goals]
+  (fn [a]
+    (reduce bind a goals)))
 
 (defn solutions
   ([s g]

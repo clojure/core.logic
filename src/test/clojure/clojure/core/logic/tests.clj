@@ -692,18 +692,22 @@
 (def f1 (fresh [] f1))
 
 (deftest test-divergence-1
-  (is (= (run 1 [q]
-           (conde
-             [f1]
-             [(== false false)]))
-         '(_0))))
+  (is (= '(_0)
+         (run 1 [q]
+              (conde
+                [f1]
+                [(== false false)]))
+         (run 1 [q]
+              (or* [f1 (== false false)])))))
 
 (deftest test-divergence-2
-  (is (= (run 1 [q]
-           (conde
-             [f1 (== false false)]
-             [(== false false)]))
-         '(_0))))
+  (is (= '(_0)
+         (run 1 [q]
+              (conde
+                [f1 (== false false)]
+                [(== false false)]))
+         (run 1 [q]
+              (or* [(and* [f1 (== false false)]) (== false false)])))))
 
 (def f2
   (fresh []
@@ -713,8 +717,14 @@
             [(== false false)])]
       [(== false false)])))
 
+(def f2-function
+  (fresh []
+         (or* [(and* [f2 (or* [f2 (== false false)])])
+               (== false false)])))
+
 (deftest test-divergence-3
   (is (= (run 5 [q] f2)
+         (run 5 [q] f2-function)
          '(_0 _0 _0 _0 _0))))
 
 ;; -----------------------------------------------------------------------------
