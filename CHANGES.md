@@ -1,3 +1,27 @@
+From 0.8.9 to 0.8.10
+====
+
+Changes
+----
+* CLJS macro inference support
+* `cljs/core/logic/macros.clj` -> `cljs/core/logic.clj` to be
+  compatible with `:include-macros`, `:refer-macros` usage
+  Breaking for CLJS
+
+Fixes
+----
+* Fixes LOGIC-118 by making prep* handle collections.
+* port LOGIC-163 to ClojureScript pldb
+* Namespace qualify pldb relations
+
+From 0.8.8 to 0.8.9
+====
+
+Fixes
+----
+
+* LOGIC-161: negative values should never appear in intervals
+
 From 0.8.7 to 0.8.8
 ====
 
