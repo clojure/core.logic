@@ -14,7 +14,7 @@
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
 
-  :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
+  :plugins [[lein-cljsbuild "1.0.5"]
             [cider/cider-nrepl "0.8.1"]]
 
   :cljsbuild
