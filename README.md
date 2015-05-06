@@ -13,6 +13,53 @@ as well as the extensions described in
 is designed to be easily extended to forms of logic programming beyond
 the ones provided.
 
+Releases and dependency information
+----
+
+Latest stable release: 0.8.10
+
+* [All released versions](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
+* [Development snapshot version](http://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
+
+[Leiningen](http://github.com/technomancy/leiningen/) dependency information:
+
+```
+[org.clojure/core.logic "0.8.10"]
+```
+
+[Maven](http://maven.apache.org) dependency information:
+
+```
+<dependency>
+  <groupId>org.clojure</groupId>
+  <artifactId>core.logic</artifactId>
+  <version>0.8.10</version>
+</dependency>
+```
+
+Example usage
+----
+
+```clojure
+(use 'clojure.core.logic)
+
+(run* [q]
+  (== q true))  
+;;=> (true)
+```
+
+Running the tests
+----
+
+Assuming you have V8 installed from source:
+
+```
+lein cljsbuild once test
+d8 resources/tests.js
+```
+
+If you have another JS engine installed use that instead.
+
 Reasoned Schemer
 ----
 
@@ -54,41 +101,6 @@ Profiler</a> and <a
 href="http://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET
 Profiler</a>, innovative and intelligent tools for profiling Java and
 .NET applications.
-
-Releases and dependency information
-----
-
-Latest stable release: 0.8.10
-
-* [All released versions](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
-* [Development snapshot version](http://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
-
-[Leiningen](http://github.com/technomancy/leiningen/) dependency information:
-
-```
-[org.clojure/core.logic "0.8.10"]
-```
-
-[Maven](http://maven.apache.org) dependency information:
-
-```
-<dependency>
-  <groupId>org.clojure</groupId>
-  <artifactId>core.logic</artifactId>
-  <version>0.8.10</version>
-</dependency>
-```
-
-Example usage
-----
-
-```clojure
-(use 'clojure.core.logic)
-
-(run* [q]
-  (== q true))  
-;;=> (true)
-```
 
 Developer information
 ----
