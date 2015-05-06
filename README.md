@@ -54,7 +54,7 @@ Running the tests
 Assuming you have V8 installed from source:
 
 ```
-lein cljsbuild once test
+lein cljsbuild once adv
 d8 resources/tests.js
 ```
 
