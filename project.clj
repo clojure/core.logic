@@ -14,7 +14,9 @@
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
 
-  :plugins [[lein-cljsbuild "1.0.5"]
+  :clean-targets ^{:protect false} ["resources/tests.js" "resources/out"]
+
+  :plugins [[lein-cljsbuild "1.0.6"]
             [cider/cider-nrepl "0.8.1"]]
 
   :cljsbuild
