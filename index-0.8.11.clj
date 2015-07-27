@@ -599,7 +599,7 @@
    :var-type "macro",
    :line 1448,
    :file "src/main/clojure/clojure/core/logic.clj"}
-  {:arglists ([m__5869__auto__]),
+  {:arglists ([m__6289__auto__]),
    :name "map->PMap",
    :namespace "clojure.core.logic",
    :source-url
@@ -613,7 +613,7 @@
    :var-type "function",
    :line 2518,
    :file "src/main/clojure/clojure/core/logic.clj"}
-  {:arglists ([m__5869__auto__]),
+  {:arglists ([m__6289__auto__]),
    :name "map->SubstValue",
    :namespace "clojure.core.logic",
    :source-url
@@ -627,7 +627,7 @@
    :var-type "function",
    :line 197,
    :file "src/main/clojure/clojure/core/logic.clj"}
-  {:arglists ([m__5869__auto__]),
+  {:arglists ([m__6289__auto__]),
    :name "map->SuspendedStream",
    :namespace "clojure.core.logic",
    :source-url
@@ -1529,7 +1529,7 @@
    :var-type "macro",
    :line 130,
    :file "src/main/clojure/clojure/core/logic/nominal.clj"}
-  {:arglists ([m__5869__auto__]),
+  {:arglists ([m__6289__auto__]),
    :name "map->Tie",
    :namespace "clojure.core.logic.nominal",
    :source-url
