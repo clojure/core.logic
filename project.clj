@@ -26,15 +26,21 @@
      :compiler {:optimizations :none
                 :output-to "resources/tests.js"
                 :output-dir "resources/out-dev"
-                :source-map true}}
+                :source-map true
+                :verbose true
+                :compiler-stats true}}
     {:id "simp"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :simple
                 :static-fns true
                 :output-to "resources/tests.js"
-                :output-dir "resources/out-simp"}}
+                :output-dir "resources/out-simp"
+                :verbose true
+                :compiler-stats true}}
     {:id "adv"
      :source-paths ["src/main/clojure/cljs" "src/test/cljs"]
      :compiler {:optimizations :advanced
                 :output-to "resources/tests.js"
-                :output-dir "resources/out-adv"}}]})
+                :output-dir "resources/out-adv"
+                :verbose true
+                :compiler-stats true}}]})
