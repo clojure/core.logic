@@ -607,7 +607,7 @@
    "https://github.com/clojure/core.logic/blob/f3f2b4c6c4a906c1fa512720aa09cb1abe312cd1/src/main/clojure/clojure/core/logic.clj#L2518",
    :line 2518,
    :var-type "function",
-   :arglists ([m__6289__auto__]),
+   :arglists ([m#]),
    :doc
    "Factory function for class clojure.core.logic.PMap, taking a map of keywords to field values.",
    :namespace "clojure.core.logic",
@@ -621,7 +621,7 @@
    "https://github.com/clojure/core.logic/blob/f3f2b4c6c4a906c1fa512720aa09cb1abe312cd1/src/main/clojure/clojure/core/logic.clj#L197",
    :line 197,
    :var-type "function",
-   :arglists ([m__6289__auto__]),
+   :arglists ([m#]),
    :doc
    "Factory function for class clojure.core.logic.SubstValue, taking a map of keywords to field values.",
    :namespace "clojure.core.logic",
@@ -635,7 +635,7 @@
    "https://github.com/clojure/core.logic/blob/f3f2b4c6c4a906c1fa512720aa09cb1abe312cd1/src/main/clojure/clojure/core/logic.clj#L1849",
    :line 1849,
    :var-type "function",
-   :arglists ([m__6289__auto__]),
+   :arglists ([m#]),
    :doc
    "Factory function for class clojure.core.logic.SuspendedStream, taking a map of keywords to field values.",
    :namespace "clojure.core.logic",
@@ -1013,6 +1013,7 @@
   {:name "AnswerCache",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/AnswerCache",
    :source-url nil,
@@ -1021,6 +1022,7 @@
   {:name "Choice",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/Choice",
    :source-url nil,
@@ -1029,6 +1031,7 @@
   {:name "ConstraintStore",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/ConstraintStore",
    :source-url nil,
@@ -1037,6 +1040,7 @@
   {:name "LCons",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/LCons",
    :source-url nil,
@@ -1045,6 +1049,7 @@
   {:name "LVar",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/LVar",
    :source-url nil,
@@ -1053,6 +1058,7 @@
   {:name "PMap",
    :var-type "record",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/PMap",
    :source-url nil,
@@ -1061,6 +1067,7 @@
   {:name "Pair",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/Pair",
    :source-url nil,
@@ -1069,6 +1076,7 @@
   {:name "SubstValue",
    :var-type "record",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/SubstValue",
    :source-url nil,
@@ -1077,6 +1085,7 @@
   {:name "Substitutions",
    :var-type "type",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/Substitutions",
    :source-url nil,
@@ -1085,6 +1094,7 @@
   {:name "SuspendedStream",
    :var-type "record",
    :namespace "clojure.core.logic",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic/SuspendedStream",
    :source-url nil,
@@ -1466,6 +1476,7 @@
   {:name "FiniteDomain",
    :var-type "type",
    :namespace "clojure.core.logic.fd",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/FiniteDomain",
    :source-url nil,
@@ -1474,6 +1485,7 @@
   {:name "IntervalFD",
    :var-type "type",
    :namespace "clojure.core.logic.fd",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/IntervalFD",
    :source-url nil,
@@ -1482,6 +1494,7 @@
   {:name "MultiIntervalFD",
    :var-type "type",
    :namespace "clojure.core.logic.fd",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.fd/MultiIntervalFD",
    :source-url nil,
@@ -1537,7 +1550,7 @@
    "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj#L264",
    :line 264,
    :var-type "function",
-   :arglists ([m__6289__auto__]),
+   :arglists ([m#]),
    :doc
    "Factory function for class clojure.core.logic.nominal.Tie, taking a map of keywords to field values.",
    :namespace "clojure.core.logic.nominal",
@@ -1546,6 +1559,7 @@
   {:name "Nom",
    :var-type "type",
    :namespace "clojure.core.logic.nominal",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.nominal/Nom",
    :source-url nil,
@@ -1554,6 +1568,7 @@
   {:name "Tie",
    :var-type "record",
    :namespace "clojure.core.logic.nominal",
+   :arglists nil,
    :wiki-url
    "http://clojure.github.com/core.logic//clojure.core.logic-api.html#clojure.core.logic.nominal/Tie",
    :source-url nil,
