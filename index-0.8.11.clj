@@ -1,38 +1,37 @@
 {:namespaces
  ({:doc nil,
    :name "clojure.core.logic",
-   :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html",
+   :wiki-url "http://clojure.github.io/core.logic/index.html",
    :source-url
    "https://github.com/clojure/core.logic/blob/f3f2b4c6c4a906c1fa512720aa09cb1abe312cd1/src/main/clojure/clojure/core/logic.clj"}
   {:doc nil,
    :name "clojure.core.logic.arithmetic",
    :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html#clojure.core.logic.arithmetic",
+   "http://clojure.github.io/core.logic/index.html#clojure.core.logic.arithmetic",
    :source-url
    "https://github.com/clojure/core.logic/blob/5bf5147afdb0fe04da658c3573ca63a922975d05/src/main/clojure/clojure/core/logic/arithmetic.clj"}
   {:doc nil,
    :name "clojure.core.logic.bench",
    :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html#clojure.core.logic.bench",
+   "http://clojure.github.io/core.logic/index.html#clojure.core.logic.bench",
    :source-url
    "https://github.com/clojure/core.logic/blob/b256c9ffe3b7fa46850cb3960414571c62293cb7/src/main/clojure/clojure/core/logic/bench.clj"}
   {:doc nil,
    :name "clojure.core.logic.fd",
    :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html#clojure.core.logic.fd",
+   "http://clojure.github.io/core.logic/index.html#clojure.core.logic.fd",
    :source-url
    "https://github.com/clojure/core.logic/blob/719c23f80280762ff20216a579d88efa32da2de7/src/main/clojure/clojure/core/logic/fd.clj"}
   {:doc nil,
    :name "clojure.core.logic.nominal",
    :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html#clojure.core.logic.nominal",
+   "http://clojure.github.io/core.logic/index.html#clojure.core.logic.nominal",
    :source-url
    "https://github.com/clojure/core.logic/blob/f329cfc6a9544859629275a59c30cef0ab3cedea/src/main/clojure/clojure/core/logic/nominal.clj"}
   {:doc nil,
    :name "clojure.core.logic.unifier",
    :wiki-url
-   "http://clojure.github.io/core.logic/clojure.core.logic-api.html#clojure.core.logic.unifier",
+   "http://clojure.github.io/core.logic/index.html#clojure.core.logic.unifier",
    :source-url
    "https://github.com/clojure/core.logic/blob/dba7c697ca45a7fee7595cd18d057c420261d498/src/main/clojure/clojure/core/logic/unifier.clj"}),
  :vars
