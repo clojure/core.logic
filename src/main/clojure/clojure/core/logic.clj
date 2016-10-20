@@ -1075,7 +1075,7 @@
      `(mplus ~e (fn [] (mplus* ~@e-rest)))))
 
 (defmacro -inc [& rest]
-  `(fn -inc [] ~@rest))
+  `(fn ~'-inc [] ~@rest))
 
 (extend-type Object
   ITake
