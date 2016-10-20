@@ -1,3 +1,11 @@
+From 0.8.10 to 0.8.11
+====
+
+Fixes
+----
+* Fixes bug where -inc created an anonymous function with a qualified name
+  (which is flagged by the Clojure 1.9 specs)
+
 From 0.8.9 to 0.8.10
 ====
 

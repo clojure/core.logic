@@ -16,7 +16,7 @@ the ones provided.
 Releases and dependency information
 ----
 
-Latest stable release: 0.8.10
+Latest stable release: 0.8.11
 
 * [All released versions](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
 * [Development snapshot version](http://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
@@ -24,7 +24,7 @@ Latest stable release: 0.8.10
 [Leiningen](http://github.com/technomancy/leiningen/) dependency information:
 
 ```
-[org.clojure/core.logic "0.8.10"]
+[org.clojure/core.logic "0.8.11"]
 ```
 
 [Maven](http://maven.apache.org) dependency information:
@@ -33,7 +33,7 @@ Latest stable release: 0.8.10
 <dependency>
   <groupId>org.clojure</groupId>
   <artifactId>core.logic</artifactId>
-  <version>0.8.10</version>
+  <version>0.8.11</version>
 </dependency>
 ```
 
@@ -112,6 +112,6 @@ Developer information
 Copyright and license
 ----
 
-Copyright © 2010-2015 David Nolen, Rich Hickey & contributors.
+Copyright © 2010-2016 David Nolen, Rich Hickey & contributors.
 
 Licensed under the EPL (see the file epl.html).
