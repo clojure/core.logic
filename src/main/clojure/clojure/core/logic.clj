@@ -1271,7 +1271,7 @@
   ([& goals] `(fn [a#] (bind* a# ~@goals))))
 
 (defn and*
-  "A function version of all, which takes a list of goals and succeeds only fi they all succeed."
+  "A function version of all, which takes a list of goals and succeeds only if they all succeed."
   [goals]
   (fn [a]
     (reduce bind a goals)))
