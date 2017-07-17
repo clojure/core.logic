@@ -1,4 +1,5 @@
 (ns clojure.core.logic.pldb
+  (:refer-clojure :exclude [indexed?])
   (:require [clojure.core.logic :as l]))
 
 ;; ----------------------------------------
