@@ -2447,8 +2447,10 @@
     (-reifyc [this v r a]
       (let [p* (-reify a (map (fn [[lhs rhs]] `(~lhs ~rhs)) p) r)]
         (if (empty? p*)
-          '()
-          `(~'!= ~@p*))))
+          nil
+          (if (not (empty? (recover-vars (walk* r p))))
+              nil ;; non-query variables can always be satisfied...
+              `(~'!= ~@p*)))))
     IConstraintOp
     (-rator [_] `!=)
     (-rands [_] (seq (recover-vars p)))

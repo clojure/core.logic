@@ -1076,6 +1076,445 @@
              (== d ())))
          ())))
 
+(deftest test-fix-meta-disequality-1
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= (list x y) q)))
+         '(_0))))
+
+(deftest test-fix-meta-disequality-2
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= x y)))
+         '(_0))))
+
+;; sanity tests from https://github.com/webyrd/faster-miniKanren/blob/master/disequality-tests.scm
+
+(deftest test-mk-disequality-0
+  (is (= (run* [q] (!= 5 q))
+         '((_0 :- (!= (_0 5)))))))
+
+(deftest test-mk-disequality-1
+  (is (= (run* [q]
+            (!= 3 q)
+            (== q 3))
+         '())))
+
+(deftest test-mk-disequality-2
+  (is (= (run* [q]
+            (== q 3)
+            (!= 3 q))
+         '())))
+
+(deftest test-mk-disequality-3
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= x y)
+             (== x y)))
+         '())))
+
+(deftest test-mk-disequality-4
+  (is (= (run* [q]
+           (fresh [x y]
+             (== x y)
+             (!= x y)))
+         '())))
+
+(deftest test-mk-disequality-5
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= x y)
+             (== 3 x)
+             (== 3 y)))
+         '())))
+
+(deftest test-mk-disequality-6
+  (is (= (run* [q]
+           (fresh [x y]
+             (== 3 x)
+             (!= x y)
+             (== 3 y)))
+         '())))
+
+(deftest test-mk-disequality-7
+  (is (= (run* [q]
+           (fresh [x y]
+             (== 3 x)
+             (== 3 y)
+             (!= x y)))
+         '())))
+
+(deftest test-mk-disequality-8
+  (is (= (run* [q]
+           (fresh [x y]
+             (== 3 x)
+             (== 3 y)
+             (!= y x)))
+         '())))
+
+(deftest test-mk-disequality-9
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== x y)
+             (== y z)
+             (!= x 4)
+             (== z (+ 2 2))))
+         '())))
+
+(deftest test-mk-disequality-10
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== x y)
+             (== y z)
+             (== z (+ 2 2))
+             (!= x 4)))
+         '())))
+
+(deftest test-mk-disequality-11
+  (is (= (run* [q]
+           (fresh [x y z]
+             (!= x 4)
+             (== y z)
+             (== x y)
+             (== z (+ 2 2))))
+         '())))
+
+(deftest test-mk-disequality-12
+  (is (= (run* [q]
+           (fresh [x y z]
+             (!= x y)
+             (== x [0 z 1])
+             (== y [0 1 1])))
+         '(_0))))
+
+(deftest test-mk-disequality-13
+  (is (= (run* [q]
+           (fresh [x y z]
+             (!= x y)
+             (== x [0 z 1])
+             (== y [0 1 1])
+             (== z 1)
+             (== [x y] q)))
+         '())))
+
+(deftest test-mk-disequality-14
+  (is (= (run* [q]
+           (fresh [x y z]
+             (!= x y)
+             (== x [0 z 1])
+             (== y [0 1 1])
+             (== z 0)))
+         '(_0))))
+
+(deftest test-mk-disequality-15
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== z 0)
+             (!= x y)
+             (== x [0 z 1])
+             (== y [0 1 1])))
+         '(_0))))
+
+(deftest test-mk-disequality-16
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== x [0 z 1])
+             (== y [0 1 1])
+             (!= x y)))
+         '(_0))))
+
+(deftest test-mk-disequality-17
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== z 1)
+             (!= x y)
+             (== x [0 z 1])
+             (== y [0 1 1])))
+         '())))
+
+(deftest test-mk-disequality-18
+  (is (= (run* [q]
+           (fresh [x y z]
+             (== z 1)
+             (== x [0 z 1])
+             (== y [0 1 1])
+             (!= x y)))
+         '())))
+
+(deftest test-mk-disequality-19
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== x 2)))
+         '(_0))))
+
+(deftest test-mk-disequality-20
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== y 1)))
+         '(_0))))
+
+(deftest test-mk-disequality-21
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== x 2)
+             (== y 1)))
+         '())))
+
+(deftest test-mk-disequality-22
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== [x y] q)))
+         '(((_0 _1) :- (!= (_0 2) (_1 1)))))))
+
+(deftest test-mk-disequality-23
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== x 2)
+             (== [x y] q)))
+         '(([2 _0] :- (!= (_0 1)))))))
+
+(deftest test-mk-disequality-24
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== x 2)
+             (== y 9)
+             (== [x y] q)))
+         '([2 9]))))
+
+(deftest test-mk-disequality-24b
+  (is (= (run* [q]
+           (fresh [a d]
+             (== [a d] q)
+             (!= q [5 6])
+             (== a 5)
+             (== d 6)))
+         '())))
+
+(deftest test-mk-disequality-25
+  (is (= (run* [q]
+           (fresh [x y]
+             (!= [x 1] [2 y])
+             (== x 2)
+             (== y 1)
+             (== [x y] q)))
+         '())))
+
+(deftest test-mk-disequality-26
+  (is (= (run* [q]
+           (fresh [a x z]
+             (!= a [x 1])
+             (== a [z 1])
+             (== x z)))
+         '())))
+
+;; TODO: currently fails
+;; (([5 _0] :- (!= ([_0 1] [5 1]))))
+;; (simplifiable constraint)
+#_(deftest test-mk-disequality-27
+  (is (= (run* [q]
+           (fresh [a x z]
+             (!= a [x 1])
+             (== a [z 1])
+             (== x 5)
+             (== [x z] q)))
+         '(([5 _0] :- (!= (_0 5)))))))
+
+(deftest test-mk-disequality-28
+  (is (= (run* [q]
+           (!= 3 4))
+         '(_0))))
+
+(deftest test-mk-disequality-29
+  (is (= (run* [q]
+           (!= 3 3))
+         '())))
+
+(deftest test-mk-disequality-30
+  (is (= (run* [q]
+           (!= 5 q)
+           (!= 6 q)
+           (== q 5))
+         '())))
+
+(deftest test-mk-disequality-31
+  (is (= (run* [q]
+           (fresh [a d]
+             (== [a d] q)
+             (!= q [5 6])
+             (== a 5)))
+         '(([5 _0] :- (!= (_0 6)))))))
+
+(deftest test-mk-disequality-32
+  (is (= (run* [q]
+           (fresh [a]
+              (== 3 a)
+              (!= a 4)))
+         '(_0))))
+
+;; TODO: currently fails
+;; ((_0 :- (!= (_0 4)) (!= (_0 3))))
+;; (benign reordering)
+#_(deftest test-mk-disequality-33
+  (is (= (run* [q]
+           (!= 4 q)
+           (!= 3 q))
+         '((_0 :- (!= (_0 3)) (!= (_0 4)))))))
+
+(deftest test-mk-disequality-34
+  (is (= (run* [q] (!= q 5) (!= q 5))
+         '((_0 :- (!= (_0 5)))))))
+
+(deftest test-mk-disequality-35
+  (let [foo (fn [x]
+              (fresh [a]
+                (!= x a)))]
+    (is (= (run* [q] (fresh [a] (foo a)))
+           '(_0)))))
+
+(deftest test-mk-disequality-36
+  (let [foo (fn [x]
+              (fresh [a]
+                (!= x a)))]
+    (is (= (run* [q] (fresh [b] (foo b)))
+           '(_0)))))
+
+(deftest test-mk-disequality-37
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+             (!= x y)))
+         '(([_0 _1] :- (!= (_0 _1)))))))
+
+(deftest test-mk-disequality-37b
+  (is (= (run* [q]
+           (fresh [a d]
+             (== [a d] q)
+             (!= q [5 6])))
+         '(([_0 _1] :- (!= (_0 5) (_1 6)))))))
+
+(deftest test-mk-disequality-37c
+  (is (= (run* [q]
+           (fresh [a d]
+             (== [a d] q)
+             (!= q [5 6])
+             (== a 3)))
+         '([3 _0]))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_1 _0))))
+;; (benign reordering)
+#_(deftest test-mk-disequality-38
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+             (!= y x)))
+         '(([_0 _1] :- (!= (_0 _1)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_1 _0)) (!= (_0 _1))))
+;; (redundant symmetric constraint)
+#_(deftest test-mk-disequality-39
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+             (!= x y)
+             (!= y x)))
+         '(([_0 _1] :- (!= (_0 _1)))))))
+
+(deftest test-mk-disequality-40
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+             (!= x y)
+             (!= x y)))
+         '(([_0 _1] :- (!= (_0 _1)))))))
+
+(deftest test-mk-disequality-41
+  (is (= (run* [q] (!= q 5) (!= 5 q))
+         '((_0 :- (!= (_0 5)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_0 5)) (!= (_0 5) (_1 6))))
+;; (spurious ground constraint)
+#_(deftest test-mk-disequality-42
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+             (!= [x y] [5 6])
+             (!= x 5)))
+         '(([_0 _1] :- (!= (_0 5)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_0 5)) (!= (_0 5) (_1 6))))
+;; (spurious ground constraint)
+#_(deftest test-mk-disequality-43
+  (is (= (run* [q]
+           (fresh [x y]
+             (== [x y] q)
+              (!= x 5)
+              (!= [x y] [5 6])))
+         '(([_0 _1] :- (!= (_0 5)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_0 5)) (!= (_0 5) (_1 6))))
+;; (spurious ground constraint)
+#_(deftest test-mk-disequality-44
+  (is (= (run* [q]
+           (fresh [x y]
+              (!= x 5)
+              (!= [x y] [5 6])
+              (== [x y] q)))
+         '(([_0 _1] :- (!= (_0 5)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_0 5)) (!= (_0 5) (_1 6))))
+;; (spurious ground constraint)
+#_(deftest test-mk-disequality-45
+  (is (= (run* [q]
+           (fresh [x y]
+              (!= 5 x)
+              (!= [x y] [5 6])
+              (== [x y] q)))
+         '(([_0 _1] :- (!= (_0 5)))))))
+
+;; TODO: currently fails
+;; (([_0 _1] :- (!= (_1 6) (_0 5)) (!= (_0 5))))
+;; (spurious ground constraint)
+#_(deftest test-mk-disequality-46
+  (is (= (run* [q]
+           (fresh [x y]
+              (!= 5 x)
+              (!= [y x] [6 5])
+              (== [x y] q)))
+         '(([_0 _1] :- (!= (_0 5)))))))
+
+(deftest test-mk-disequality-47
+  (is (= (run* [x]
+           (fresh [y z]
+             (!= x [y 2])
+             (== x [z 2])))
+         '([_0 2]))))
+
+(deftest test-mk-disequality-48
+  (is (= (run* [x]
+           (fresh [y z]
+             (!= x [y 2])
+             (== x [[z] 2])))
+         '([[_0] 2]))))
+
+(deftest test-mk-disequality-49
+  (is (= (run* [x]
+           (fresh [y z]
+             (!= x [[y] 2])
+             (== x [z 2])))
+         '([_0 2]))))
+
 ;; -----------------------------------------------------------------------------
 ;; tabled
 
