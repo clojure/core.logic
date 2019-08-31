@@ -13,7 +13,7 @@
 ;; Some references / inspiration:
 ;; alphaKanren - http://www.cs.indiana.edu/~webyrd/alphamk/alphamk.pdf
 ;; Nominal Unification - http://www.cl.cam.ac.uk/~amp12/papers/nomu/nomu-jv.pdf
-;; http://code.google.com/p/iucs-relational-research/source/browse/trunk/lib/minikanren/nominal.sls
+;; https://github.com/lkuper/relational-research/blob/master/lib/minikanren/nominal.sls
 
 ;; =============================================================================
 ;; Nominal unification protocols
