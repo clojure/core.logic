@@ -1,6 +1,6 @@
-(defproject org.clojure/core.logic "0.8.11-SNAPSHOT"
+(defproject org.clojure/core.logic "0.8.12-SNAPSHOT"
   :description "A logic/relational programming library for Clojure"
-  :parent [org.clojure/pom.contrib "0.0.25"]
+  :parent [org.clojure/pom.contrib "0.2.2"]
 
   :jvm-opts ^:replace ["-Xmx512m" "-server"]
 
@@ -10,14 +10,13 @@
 
   :dependencies [[org.clojure/clojure "1.7.0" :scope "provided"]
                  [org.clojure/clojurescript "0.0-3308" :scope "provided"]
-                 [org.clojure/tools.macro "0.1.2"]
+                 [org.clojure/tools.analyzer.jvm "0.7.2"]
                  ;[com.datomic/datomic-free "0.8.4270" :scope "provided"]
                  ]
 
   :clean-targets ^{:protect false} ["resources/tests.js" "resources/out"]
 
-  :plugins [[lein-cljsbuild "1.0.6"]
-            [cider/cider-nrepl "0.8.1"]]
+  :plugins [[lein-cljsbuild "1.0.6"]]
 
   :cljsbuild
   {:builds
