@@ -1,3 +1,12 @@
+From 0.8.11 to 0.8.12
+====
+
+Fixes
+----
+* Fixes LOGIC-184 warning from not excluding indexed?
+* Fixes docstring typo in and*
+* Infrastructure pom updates
+
 From 0.8.10 to 0.8.11
 ====
 
