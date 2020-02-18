@@ -16,7 +16,9 @@ the ones provided.
 Releases and dependency information
 ----
 
-Latest stable release: 0.8.12
+This project follows the version scheme MAJOR.MINOR.PATCH where each component provides some relative indication of the size of the change, but does not follow semantic versioning. In general, all changes endeavor to be non-breaking (by moving to new names rather than by breaking existing names).
+
+Latest stable release: 1.0.0
 
 * [All released versions](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
 * [Development snapshot version](https://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
@@ -24,7 +26,7 @@ Latest stable release: 0.8.12
 [Leiningen](https://github.com/technomancy/leiningen/) dependency information:
 
 ```
-[org.clojure/core.logic "0.8.12"]
+[org.clojure/core.logic "1.0.0"]
 ```
 
 [Maven](https://maven.apache.org) dependency information:
@@ -33,7 +35,7 @@ Latest stable release: 0.8.12
 <dependency>
   <groupId>org.clojure</groupId>
   <artifactId>core.logic</artifactId>
-  <version>0.8.12</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 
