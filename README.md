@@ -9,7 +9,7 @@ Byrd's dissertation
 [Relational Programming in miniKanren: Techniques, Applications, and Implementations](https://pqdtopen.proquest.com/#abstract?dispub=3380156)
 as well as the extensions described in
 [cKanren](http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf) and
-[αKanren](http://www.cs.indiana.edu/~webyrd/alphamk/alphamk.pdf). It
+[αKanren](http://webyrd.net/alphamk/alphamk.pdf). It
 is designed to be easily extended to forms of logic programming beyond
 the ones provided.
 
