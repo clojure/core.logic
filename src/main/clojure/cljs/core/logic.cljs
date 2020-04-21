@@ -472,8 +472,6 @@
 ;; -----------------------------------------------------------------------------
 ;; Unify IPersistentMap with X
 
-(def not-found (js-obj))
-
 (defn unify-with-map* [v u s]
   (if-not (cljs.core/== (count v) (count u))
     (fail s)
