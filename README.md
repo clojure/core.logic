@@ -23,6 +23,11 @@ Latest stable release: 1.0.0
 * [All released versions](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
 * [Development snapshot version](https://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
 
+[CLI/`deps.edn`](https://clojure.org/reference/deps_and_cli) dependency information:
+```clojure
+org.clojure/core.logic {:mvn/version "1.0.0"}
+```
+
 [Leiningen](https://github.com/technomancy/leiningen/) dependency information:
 
 ```
