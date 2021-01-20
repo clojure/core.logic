@@ -28,11 +28,15 @@
     </developer>
   </developers>
 
+  <properties>
+    <clojure.version>1.6.0</clojure.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>clojure</artifactId>
-      <version>1.6.0</version>
+      <version>${clojure.version}</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
