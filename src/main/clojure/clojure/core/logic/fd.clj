@@ -507,7 +507,7 @@
 
   IMemberCount
   (-member-count [this]
-    ;; NOTE: ugly hack around http://dev.clojure.org/jira/browse/CLJ-1202 - David
+    ;; NOTE: ugly hack around https://clojure.atlassian.net/browse/CLJ-1202 - David
     (reduce core/+ 0 (map #(-member-count %) is)))
 
   IInterval
