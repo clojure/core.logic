@@ -6,7 +6,7 @@ offers Prolog-like relational programming, constraint logic
 programming, and nominal logic programming for Clojure. At its heart
 is an original implementation of miniKanren as described in William
 Byrd's dissertation
-[Relational Programming in miniKanren: Techniques, Applications, and Implementations](https://pqdtopen.proquest.com/#abstract?dispub=3380156)
+[Relational Programming in miniKanren: Techniques, Applications, and Implementations](https://www.proquest.com/docview/304903505/E30282E6EF13453CPQ/1)
 as well as the extensions described in
 [cKanren](http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf) and
 [αKanren](http://webyrd.net/alphamk/alphamk.pdf). It
