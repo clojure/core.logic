@@ -1779,7 +1779,7 @@
 
 (defne appendo
   "A relation where x, y, and z are proper collections,
-  such that z is x appended to y"
+  such that z is y appended to x"
   [x y z]
   ([() _ y])
   ([[a . d] _ [a . r]] (appendo d y r)))
