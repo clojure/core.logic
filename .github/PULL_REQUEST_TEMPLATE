@@ -1,0 +1,14 @@
+Hi! Thanks for your interest in contributing to this project.
+
+Clojure contrib projects do not use GitHub issues or pull requests, and
+require a signed Contributor Agreement. If you would like to contribute,
+please read more about the CA and sign that first (this can be done online).
+
+Then go to this project's issue tracker in JIRA to create tickets, update
+tickets, or submit patches. For help in creating tickets and patches,
+please see:
+
+- Signing the CA: https://clojure.org/community/contributing
+- Creating Tickets: https://clojure.org/community/creating_tickets
+- Developing Patches: https://clojure.org/community/developing_patches
+- Contributing FAQ: https://clojure.org/community/contributing
