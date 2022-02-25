@@ -1,3 +1,8 @@
+From 1.0.0 to 1.0.1
+====
+
+* Fixes warning about `indexed?` in cljs impl
+
 From 0.8.12 to 1.0.0
 ====
 
