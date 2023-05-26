@@ -113,12 +113,11 @@ Developer information
 ----
 
 * [Bug Tracker](https://clojure.atlassian.net/browse/LOGIC)
-* [Continuous Integration](https://build.clojure.org/job/core.logic/)
-* [Compatibility Test Matrix](https://build.clojure.org/job/core.logic-test-matrix/)
+* [Continuous Integration](https://github.com/clojure/core.logic/actions/workflows/test.yml)
 
 Copyright and license
 ----
 
-Copyright © 2010-2020 David Nolen, Rich Hickey & contributors.
+Copyright © 2010-2023 David Nolen, Rich Hickey & contributors.
 
 Licensed under the EPL (see the file epl.html).
