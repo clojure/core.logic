@@ -8,7 +8,7 @@ is an original implementation of miniKanren as described in William
 Byrd's dissertation
 [Relational Programming in miniKanren: Techniques, Applications, and Implementations](https://www.proquest.com/docview/304903505/E30282E6EF13453CPQ/1)
 as well as the extensions described in
-[cKanren](http://www.schemeworkshop.org/2011/papers/Alvis2011.pdf) and
+[cKanren](https://www.schemeworkshop.org/2011/papers/Alvis2011.pdf) and
 [αKanren](http://webyrd.net/alphamk/alphamk.pdf). It
 is designed to be easily extended to forms of logic programming beyond
 the ones provided.
@@ -18,20 +18,20 @@ Releases and dependency information
 
 This project follows the version scheme MAJOR.MINOR.PATCH where each component provides some relative indication of the size of the change, but does not follow semantic versioning. In general, all changes endeavor to be non-breaking (by moving to new names rather than by breaking existing names).
 
-Latest stable release: 1.0.1
+Latest stable release: 1.1.0
 
 * [All released versions](https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.clojure%22%20AND%20a%3A%22core.logic%22)
 * [Development snapshot version](https://oss.sonatype.org/index.html#nexus-search;gav~org.clojure~core.logic~~~)
 
 [CLI/`deps.edn`](https://clojure.org/reference/deps_and_cli) dependency information:
 ```clojure
-org.clojure/core.logic {:mvn/version "1.0.1"}
+org.clojure/core.logic {:mvn/version "1.1.0"}
 ```
 
 [Leiningen](https://github.com/technomancy/leiningen/) dependency information:
 
 ```
-[org.clojure/core.logic "1.0.1"]
+[org.clojure/core.logic "1.1.0"]
 ```
 
 [Maven](https://maven.apache.org) dependency information:
@@ -40,7 +40,7 @@ org.clojure/core.logic {:mvn/version "1.0.1"}
 <dependency>
   <groupId>org.clojure</groupId>
   <artifactId>core.logic</artifactId>
-  <version>1.0.1</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
@@ -118,6 +118,6 @@ Developer information
 Copyright and license
 ----
 
-Copyright © 2010-2023 David Nolen, Rich Hickey & contributors.
+Copyright © David Nolen, Rich Hickey & contributors.
 
 Licensed under the EPL (see the file epl.html).

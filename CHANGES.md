@@ -1,3 +1,8 @@
+From 1.0.1 to 1.1.0
+====
+
+* Update parent pom version
+
 From 1.0.0 to 1.0.1
 ====
 
