@@ -9,7 +9,7 @@
   <licenses>
     <license>
       <name>Eclipse Public License 1.0</name>
-      <url>http://opensource.org/licenses/eclipse-1.0.php</url>
+      <url>https://opensource.org/license/epl-1-0/</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -17,19 +17,19 @@
   <parent>
     <groupId>org.clojure</groupId>
     <artifactId>pom.contrib</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
   </parent>
 
   <developers>
     <developer>
       <id>swannodette</id>
       <name>David Nolen</name>
-      <url>http://dosync.posterous.com</url>
+      <url>https://dosync.posterous.com</url>
     </developer>
   </developers>
 
   <properties>
-    <clojure.version>1.6.0</clojure.version>
+    <clojure.version>1.9.0</clojure.version>
   </properties>
 
   <dependencies>
@@ -49,7 +49,7 @@
   <scm>
     <connection>scm:git:git://github.com/clojure/core.logic.git</connection>
     <developerConnection>scm:git:git://github.com/clojure/core.logic.git</developerConnection>
-    <url>http://github.com/clojure/core.logic</url>
+    <url>https://github.com/clojure/core.logic</url>
     <tag>HEAD</tag>
   </scm>
 </project>
