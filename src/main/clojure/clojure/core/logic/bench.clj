@@ -98,7 +98,9 @@
    (membero ['japanese 'parliaments (lvar) (lvar) (lvar)] hs)
    (membero [(lvar) 'oldgolds (lvar) 'snails (lvar)] hs)
    (nexto [(lvar) (lvar) (lvar) 'horse (lvar)] [(lvar) 'kools (lvar) (lvar) (lvar)] hs)
-   (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)))
+   (nexto [(lvar) (lvar) (lvar) 'fox (lvar)] [(lvar) 'chesterfields (lvar) (lvar) (lvar)] hs)
+   (membero [(lvar) (lvar) 'water (lvar) (lvar)] hs)
+   (membero [(lvar) (lvar) (lvar) 'zebra (lvar)] hs)))
 
 (comment
   (run 1 [q] (zebrao q))
