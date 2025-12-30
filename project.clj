@@ -1,6 +1,6 @@
 (defproject org.clojure/core.logic "1.1.0-SNAPSHOT"
   :description "A logic/relational programming library for Clojure"
-  :parent [org.clojure/pom.contrib "0.2.2"]
+  :parent [org.clojure/pom.contrib "1.4.0"]
 
   :jvm-opts ^:replace ["-Xmx512m" "-server"]
 
